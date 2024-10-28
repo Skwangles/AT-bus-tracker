@@ -141,14 +141,14 @@ app.get('/image/:detail/:ts', function (req: { params: { ts: string, detail: str
 
   const imgPath = path.join(KEYFRAME_IMG_DIR, ts + KEYFRAME_IMG_EXTENSION)
   if (!imgPath) {
-console.error("Could not find file", imgPath);
+    console.error("Could not find file", imgPath);
     res.sendStatus(404);
     return;
   }
 
   if (fs.existsSync(imgPath)) {
 
-    processImage(res, imgPath, detail === "hires" ? 1920 : (detail === "lores" ? 960 : 200))
+    processImage(res, imgPath, detail === "hires" ? -1 : (detail === "lores" ? 960 : 200))
   }
   else {
     res.sendFile(path.join(KEYFRAME_IMG_DIR, "test.jpg"))
