@@ -4,10 +4,9 @@
   "description": "Backend to serve from database",
   "main": "src/main.ts",
   "scripts": {
-    "build": "cd ui && npm run build && cd .. && npm install && tsc -b",
+    "build": "cd ui && npm install && npm run build && cd .. && npm install && tsc -b",
     "start": "npm run build && node build/main.js",
-    "client": "npm start --prefix ui",
-    "db": "npx @databases/pg-schema-cli --database postgres://test:test@localhost:5432/campusvirtual --directory src/__generated__"
+    "client": "npm start --prefix ui"
   },
   "author": "",
   "license": "ISC",
