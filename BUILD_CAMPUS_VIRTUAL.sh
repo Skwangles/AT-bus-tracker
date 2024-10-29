@@ -9,7 +9,8 @@ cd Apps
 pwd
 
 # Installs MediaSDKTest tool for stitching videos
-sudo dpkg -i CampusVirtual-FileProcessing/libMediaSDK-dev_2.0-3_amd64_ubuntu18.04.deb
+# sudo dpkg -i CampusVirtual-FileProcessing/libMediaSDK-dev_2.0-3_amd64_ubuntu18.04.deb
+# Note: This SDK is only provided with purchase of a camera: https://www.insta360.com/sdk/home -- You must install it yourself
 
 cd PgSocketViewer && sudo npm install && cd ..
 

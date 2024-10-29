@@ -5,8 +5,10 @@ import {
   HOTSPOT_COLOUR,
   HOTSPOT_HIGHLIGHTED,
   HOTSPOT_OUTLINE,
+  OUTDOORS_LOCATION,
   SHOW_NAV_SEARCH,
   USE_GLB_MARKER_OBJECT,
+  WAIKATO_UNI_LEVELS_ORDER,
 } from './consts'
 // import { OrbitControls } from '@react-three/drei';
 import { API_PREFIX, showMap, COORDS_TO_METRES, PROJECT_NAME } from './consts'
@@ -51,6 +53,7 @@ interface NeighbourData {
 
 import { useGLTF } from '@react-three/drei'
 import { GLTF } from 'three-stdlib'
+import { ArrowDown, ArrowUp, MapPin, Sun } from 'react-feather'
 
 type GLTFResult = GLTF & {
   nodes: {
@@ -385,10 +388,10 @@ const VirtualTour: React.FC = () => {
     keyframe_id: 300,
     location: '',
   })
+
   const [floorWideNeighbours, setFloorWideNeighbours] = useState<any[]>([])
   const [locationGroup, setLocationGroup] = useState<string>('')
   const [highlightedPath, setHighlightedPath] = useState<number[]>([])
-
   const [allFloorNames, setAllFloorNames] = useState<string[]>([])
 
   const [camRotation, setCameraRotation] = useState<any>(() => {
@@ -428,7 +431,7 @@ const VirtualTour: React.FC = () => {
     })
 
     if (currentId == '-1' || (params.has('id') && params.get('id') != '-1')) {
-      changeFloor('G.G')
+      changeFloor('FG.G')
     }
   }, [])
 
@@ -500,9 +503,69 @@ const VirtualTour: React.FC = () => {
     }
   }, [currentId])
 
+  const getFloorUpOrDown = (floor: string, isUp = true) => {
+    if (!floor.includes('.')) return false
+    const splitName = floor.split('.')
+    if (splitName.length == 0 || splitName.length > 2) {
+      return false
+    }
+
+    let idx = WAIKATO_UNI_LEVELS_ORDER.indexOf(splitName[1])
+    if (isUp) {
+      idx += 1
+      while (idx < WAIKATO_UNI_LEVELS_ORDER.length) {
+        if (
+          allFloorNames.includes(
+            splitName[0] + '.' + WAIKATO_UNI_LEVELS_ORDER[idx]
+          )
+        ) {
+          return splitName[0] + '.' + WAIKATO_UNI_LEVELS_ORDER[idx]
+        }
+        idx += 1
+      }
+    } else {
+      idx -= 1
+      while (idx >= 0) {
+        if (
+          allFloorNames.includes(
+            splitName[0] + '.' + WAIKATO_UNI_LEVELS_ORDER[idx]
+          )
+        ) {
+          return splitName[0] + '.' + WAIKATO_UNI_LEVELS_ORDER[idx]
+        }
+        idx -= 1
+      }
+    }
+    return false
+  }
+
+  const [canGoUp, setCanGoUp] = useState(false)
+  const [canGoDown, setCanGoDown] = useState(false)
+
+  useEffect(() => {
+    setCanGoUp(!!getFloorUpOrDown(locationGroup, true))
+    setCanGoDown(!!getFloorUpOrDown(locationGroup, false))
+  }, [locationGroup])
+
+  const changeFloorUpOrDown = (floor: string, isUp: boolean) => {
+    const newFloor = getFloorUpOrDown(floor, isUp)
+    if (!newFloor) {
+      toast.warn(
+        'Cannot change floor - No floor is ' + (isUp ? 'above' : 'below')
+      )
+      return
+    }
+
+    if (allFloorNames.includes(newFloor)) {
+      console.log('Setting location to', newFloor)
+      changeFloor(newFloor)
+    }
+  }
+
   return (
     <>
       <div
+        className="w-fit flex flex-row justify-center items-center  mb-2 ml-2"
         style={{
           background: '#101010F0',
           color: 'white',
@@ -511,13 +574,38 @@ const VirtualTour: React.FC = () => {
           bottom: 0,
           zIndex: 999,
           fontSize: '2rem',
-          padding: '5px',
+          padding: '10px',
           borderRadius: '10px',
         }}
       >
-        Location: {currentPoint.location}
+        <MapPin className="mr-1" />
+        You are in: {currentPoint.location}
       </div>
-      <Instructions point={currentPoint} />
+      <div className="fixed bottom-0 right-0 z-50 flex flex-row items-end mb-2 mr-2">
+        <button
+          className="w-18 h-fit mr-2 bg-green-600"
+          disabled={!canGoUp}
+          onClick={() => changeFloorUpOrDown(locationGroup, true)}
+        >
+          <ArrowUp /> Floor
+        </button>
+        <button
+          className="w-18 h-fit mr-2 bg-green-600"
+          disabled={!canGoDown}
+          onClick={() => changeFloorUpOrDown(locationGroup, false)}
+        >
+          <ArrowDown /> Floor
+        </button>
+        <button
+          className="w-18 h-fit mr-2 bg-green-600"
+          disabled={!allFloorNames.includes(OUTDOORS_LOCATION)}
+          onClick={() => changeFloor(OUTDOORS_LOCATION)}
+        >
+          <Sun /> Go Outdoors
+        </button>
+
+        <Instructions point={currentPoint} />
+      </div>
       {showMap && (
         <Map
           floorName={locationGroup}
@@ -526,6 +614,7 @@ const VirtualTour: React.FC = () => {
           highlightedPath={highlightedPath}
         />
       )}
+
       {SHOW_NAV_SEARCH && allFloorNames.length > 0 && (
         <>
           <SearchBar
@@ -533,21 +622,20 @@ const VirtualTour: React.FC = () => {
             highlightCallback={calculateHighlightedPath}
             jumpToCallback={changeFloor}
           />
-          {highlightedPath.length > 0 && (
-            <button
-              style={{
-                top: 0,
-                right: 0,
-                position: 'fixed',
-                zIndex: 999,
-                background: '#4d4c4c',
-                color: 'white',
-              }}
-              onClick={() => setHighlightedPath([])}
-            >
-              Clear Highlight
-            </button>
-          )}
+          <div className="fixed right-0 top-0 flex flex-col z-50">
+            {highlightedPath.length > 0 && (
+              <button
+                className="bg-gray-600 z-50"
+                style={{
+                  // background: '#4d4c4c',
+                  color: 'white',
+                }}
+                onClick={() => setHighlightedPath([])}
+              >
+                Clear Highlight
+              </button>
+            )}
+          </div>
         </>
       )}
 
