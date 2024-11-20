@@ -4,13 +4,7 @@
 
 std::string path_to_stella = "Apps/SLAM/CampusVirtualInterface/build/";
 std::string path_to_fbow = "Apps/SLAM/FBoW/orb_vocab.fbow";
-std::string path_to_config = "Apps/SLAM/equirectangular.yaml";
-
-std::string db_user = "campusvirtual";
-std::string db_pwd = "Squeegee-Grandkid-Superhero8";
-std::string db_name = "cv";
-std::string db_port = "5432";
-
+std::string path_to_config = "Config/equirectangular.yaml";
 
 namespace po = boost::program_options;
 
@@ -18,20 +12,25 @@ int main(int argc, char** argv) {
     po::options_description desc("Allowed options");
     desc.add_options()
         ("help,h", "produce help message")
-        ("headless", po::value<bool>()->default_value(false), "Use headless (true|false)")
+        ("use_viewer", po::value<bool>()->default_value(true), "Use use_viewer (true|false)")
         ("project_dir", po::value<std::string>()->required(), "Campus virtual project directory")
-        ("media_dir", po::value<std::string>()->required(), "Media directory - videos")
-        ("map_dir", po::value<std::string>()->required(), "Map directory - maps")
-        ("videos", po::value<std::string>()->required(), "Comma-separated ordered videos")
-        ("in", po::value<std::string>(), "Input map (*.db)")
-        ("out", po::value<std::string>()->required(), "Output map (*.db)")
-        ("json_dir", po::value<std::string>(), "JSON group-to-timestamp file directory")
-        ("convertToGraph", "Convert to graph (optional)")
+        ("view_static", "View without processing (optional)")
         ("convertToPg", "Convert to Postgres (optional)")
-        ("picture-dir", po::value<std::string>()->default_value("pictures/"), "Keyframe image output dir - Default 'pictures/'");
+        ("in", po::value<std::string>(), "Input map (*.db)")
+        ("out", po::value<std::string>(), "Output map (*.db)")
+        ("media_dir", po::value<std::string>(), "Media directory - videos")
+        ("map_dir", po::value<std::string>(), "Map directory - maps") 
+        ("videos", po::value<std::string>(), "Comma-separated ordered videos")
+        ("json_dir", po::value<std::string>(), "JSON group-to-timestamp file directory")
+        ("picture-dir", po::value<std::string>()->default_value("pictures/"), "Keyframe image output dir - Default 'pictures/'")
+        ("config_file", po::value<std::string>()->default_value("equirectangular.yaml"), "Config file - Default 'equirectangular.yaml'")
+        ("db_user", po::value<std::string>()->default_value("campusvirtual"), "Database username")
+        ("db_pwd", po::value<std::string>()->default_value("Squeegee-Grandkid-Superhero8"), "Database password")
+        ("db_name", po::value<std::string>()->default_value("cv"), "Database name")
+        ("db_port", po::value<std::string>()->default_value("5432"), "Database port");
 
     po::positional_options_description pos_desc;
-    pos_desc.add("headless", 1);
+    pos_desc.add("use_viewer", 1);
     pos_desc.add("project_dir", 1);
     pos_desc.add("videos", 1);
 
@@ -45,26 +44,51 @@ int main(int argc, char** argv) {
             return 1;
         }
 
-        // Check for required arguments
-        if (!vm.count("project_dir") || !vm.count("videos") || !vm.count("out")) {
-            std::cout << "Missing required arguments!" << std::endl;
+        // Check for required arguments based on mode
+        bool view_statically = vm.count("view_static");
+        bool convert_to_pg = vm.count("convertToPg");
+
+        if (!vm.count("project_dir")) {
+            std::cout << "Missing required argument: project_dir" << std::endl;
             std::cout << desc << std::endl;
             return 1;
         }
 
-        bool use_headless = vm["headless"].as<bool>();
+        if (convert_to_pg) {
+            if (!vm.count("in") || !vm.count("map_dir")) {
+                std::cout << "For Postgres conversion, required arguments: in, map_dir" << std::endl;
+                std::cout << desc << std::endl;
+                return 1;
+            }
+        }
+        else if (view_statically) {
+            if (!vm.count("in") || !vm.count("map_dir")) {
+                std::cout << "For static viewing, required arguments: in, map_dir" << std::endl;
+                std::cout << desc << std::endl;
+                return 1;
+            }
+        }
+        else {
+            if (!vm.count("videos") || !vm.count("in") || !vm.count("out") || !vm.count("media_dir") || !vm.count("map_dir")) {
+                std::cout << "For normal mode, required arguments: videos, in, out, media_dir, map_dir, (optional: json_dir, picture-dir)" << std::endl;
+                std::cout << desc << std::endl;
+                return 1;
+            }
+        }
+
+        bool use_viewer = vm["use_viewer"].as<bool>();
         std::string project_dir = vm["project_dir"].as<std::string>();
-        std::string videos = vm["videos"].as<std::string>();
         std::string map_in = vm.count("in") ? vm["in"].as<std::string>() : "";
-        std::string map_out = vm["out"].as<std::string>();
-        std::string media_dir = vm["media_dir"].as<std::string>();
+        std::string map_out = vm.count("out") ? vm["out"].as<std::string>() : "";
+        std::string media_dir = vm.count("media_dir") ? vm["media_dir"].as<std::string>() : "";
         std::string map_dir = vm["map_dir"].as<std::string>();
-        std::string json_dir = vm["json_dir"].as<std::string>();
-        bool convert_to_graph = vm.count("convertToGraph");
-        bool convert_to_pg = vm.count("convertToPg");
+        std::string videos = vm.count("videos") ? vm["videos"].as<std::string>() : "";
+        std::string json_dir = vm.count("json_dir") ? vm["json_dir"].as<std::string>() : "";
         std::string picture_dir = vm["picture-dir"].as<std::string>();
-
-
+        std::string db_user = vm["db_user"].as<std::string>();
+        std::string db_pwd = vm["db_pwd"].as<std::string>();
+        std::string db_name = vm["db_name"].as<std::string>();
+        std::string db_port = vm["db_port"].as<std::string>();
 
         std::string command;
         if (convert_to_pg){
@@ -75,7 +99,7 @@ int main(int argc, char** argv) {
                               " --map-db-in " + map_dir + "/" + map_in +
                               " --db " + connection_string;
         }
-        else if (convert_to_graph){
+        else if (view_statically){
             command = project_dir + path_to_stella + "campus_virtual_viewer" +
                               " -c " + project_dir + path_to_config +
                               " -v " + project_dir + path_to_fbow +
@@ -93,7 +117,7 @@ int main(int argc, char** argv) {
                                         " --video-dir " +  media_dir + "/" +
                                         " --json-dir " + json_dir + "/" + // Only required for 'pairing JSON with frames' step
                                         " --picture-dir " + picture_dir + "/" +
-                                       (use_headless ? " --viewer none" : " --viewer iridescence_viewer");
+                                       (use_viewer ? " --viewer none" : " --viewer iridescence_viewer");
         }
         
         std::cout << "Command: " << command << std::endl;
