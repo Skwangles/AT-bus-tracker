@@ -247,3 +247,17 @@ int save_video_to_db(sqlite3 *db, std::string video_name, double start_timestamp
 
     return 0;
 }
+
+
+void save_timestamps_to_db(sqlite3* db, std::vector<timestamp_group> timestamp_group_list, std::vector<video_timestamp> video_timestamps_list){
+
+    for (auto& timestamp_group : timestamp_group_list) {
+        save_timestamp_groups_to_db(db, timestamp_group.group , timestamp_group.timestamp, timestamp_group.ms);
+        std::cout << "Group: " << timestamp_group.group << " Timestamp: " << timestamp_group.timestamp <<  " Ms: " << timestamp_group.ms << std::endl;
+    }
+
+    for (auto& video_timestamp : video_timestamps_list) {
+        save_video_to_db(db, video_timestamp.name , video_timestamp.start_timestamp, video_timestamp.stop_timestamp);
+        std::cout << "Video: " << video_timestamp.name << " Start: " << video_timestamp.start_timestamp << " End: " << video_timestamp.stop_timestamp << std::endl;
+    }
+}
