@@ -74,17 +74,7 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
     const cv::Mat mask = mask_img_path.empty() ? cv::Mat{} : cv::imread(mask_img_path, cv::IMREAD_GRAYSCALE);
 
     // create a viewer object
-    // and pass the frame_publisher and the map_publisher
-#ifdef HAVE_PANGOLIN_VIEWER
-    std::shared_ptr<pangolin_viewer::viewer> viewer;
-    if (viewer_string == "pangolin_viewer") {
-        viewer = std::make_shared<pangolin_viewer::viewer>(
-            stella_vslam::util::yaml_optional_ref(cfg->yaml_node_, "PangolinViewer"),
-            slam,
-            slam->get_frame_publisher(),
-            slam->get_map_publisher());
-    }
-#endif
+    // and pass the frame_publisher and the map_publishe
 #ifdef HAVE_IRIDESCENCE_VIEWER
     std::shared_ptr<iridescence_viewer::viewer> iridescence_viewer;
 
@@ -289,12 +279,7 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
         }
 
         // automatically close the viewer
-        if (auto_term) {
-            if (viewer_string == "pangolin_viewer") {
-#ifdef HAVE_PANGOLIN_VIEWER
-                viewer->request_terminate();
-#endif
-            }
+        if (auto_term) 
             if (viewer_string == "iridescence_viewer") {
 #ifdef HAVE_IRIDESCENCE_VIEWER
                 iridescence_viewer->request_terminate();
@@ -304,11 +289,6 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
     });
 
     // run the viewer in the current thread
-    if (viewer_string == "pangolin_viewer") {
-#ifdef HAVE_PANGOLIN_VIEWER
-        viewer->run();
-#endif
-    }
     if (viewer_string == "iridescence_viewer") {
 #ifdef HAVE_IRIDESCENCE_VIEWER
         iridescence_viewer->run();
@@ -412,22 +392,14 @@ int main(int argc, char* argv[]) {
     std::string viewer_string;
     if (viewer->is_set()) {
         viewer_string = viewer->value();
-        if (viewer_string != "pangolin_viewer"
-            && viewer_string != "iridescence_viewer"
+        if (viewer_string != "iridescence_viewer"
             && viewer_string != "none") {
             std::cerr << "invalid arguments (--viewer)" << std::endl
                       << std::endl
                       << op << std::endl;
             return EXIT_FAILURE;
         }
-#ifndef HAVE_PANGOLIN_VIEWER
-        if (viewer_string == "pangolin_viewer") {
-            std::cerr << "pangolin_viewer not linked" << std::endl
-                      << std::endl
-                      << op << std::endl;
-            return EXIT_FAILURE;
-        }
-#endif
+
 #ifndef HAVE_IRIDESCENCE_VIEWER
         if (viewer_string == "iridescence_viewer") {
             std::cerr << "iridescence_viewer not linked" << std::endl
@@ -440,8 +412,6 @@ int main(int argc, char* argv[]) {
     else {
 #ifdef HAVE_IRIDESCENCE_VIEWER
         viewer_string = "iridescence_viewer";
-#elif defined(HAVE_PANGOLIN_VIEWER)
-        viewer_string = "pangolin_viewer";
 #endif
     }
 
@@ -515,8 +485,11 @@ int main(int argc, char* argv[]) {
             json_obj = filename_to_json_obj(video_name, json_dir->value());
 
             if (json_obj != NULL){
-                std::cout << json_obj["name"] << std::endl;
+                std::cout << "--- JSON Object Contents ---" << std::endl;
+                std::cout << json_obj["video"] << std::endl;
                 std::cout << json_obj["data"] << std::endl;
+                std::cout << json_obj["special"] << std::endl;
+                std::cout << "--- JSON Object End ---" << std::endl;
             }
             else{
                 std::cout << "Failed to open JSON file " << video_name << std::endl;
@@ -598,16 +571,9 @@ int main(int argc, char* argv[]) {
         spdlog::error("Failed to open SQL database");
         return 1;
     }
-        
-    for (auto& timestamp_group : timestamp_group_list) {
-        save_timestamp_groups_to_db(db, timestamp_group.group , timestamp_group.timestamp, timestamp_group.ms);
-        std::cout << "Group: " << timestamp_group.group << " Timestamp: " << timestamp_group.timestamp <<  " Ms: " << timestamp_group.ms << std::endl;
-    }
-
-    for (auto& video_timestamp : video_timestamps_list) {
-        save_video_to_db(db, video_timestamp.name , video_timestamp.start_timestamp, video_timestamp.stop_timestamp);
-        std::cout << "Video: " << video_timestamp.name << " Start: " << video_timestamp.start_timestamp << " End: " << video_timestamp.stop_timestamp << std::endl;
-    }
+    
+    save_timestamps_to_db(db, timestamp_group_list, video_timestamps_list);
+    
 
     sqlite3_close(db);
     
@@ -619,3 +585,5 @@ int main(int argc, char* argv[]) {
 
     return 0;
 }
+
+
