@@ -4,7 +4,7 @@
 
 std::string path_to_stella = "Apps/SLAM/CampusVirtualInterface/build/";
 std::string path_to_fbow = "Apps/SLAM/FBoW/orb_vocab.fbow";
-std::string path_to_config = "Config/equirectangular.yaml";
+std::string path_to_config = "Config/";
 
 namespace po = boost::program_options;
 
@@ -70,7 +70,7 @@ int main(int argc, char** argv) {
         }
         else {
             if (!vm.count("videos") || !vm.count("in") || !vm.count("out") || !vm.count("media_dir") || !vm.count("map_dir")) {
-                std::cout << "For normal mode, required arguments: videos, in, out, media_dir, map_dir, (optional: json_dir, picture-dir)" << std::endl;
+                std::cout << "For normal mode, required arguments: videos, in, out, media_dir, map_dir, (optional: json_dir, picture-dir, config_file)" << std::endl;
                 std::cout << desc << std::endl;
                 return 1;
             }
@@ -89,26 +89,27 @@ int main(int argc, char** argv) {
         std::string db_pwd = vm["db_pwd"].as<std::string>();
         std::string db_name = vm["db_name"].as<std::string>();
         std::string db_port = vm["db_port"].as<std::string>();
+        std::string config_file = vm["config_file"].as<std::string>();
 
         std::string command;
         if (convert_to_pg){
             std::string connection_string = "postgresql://" + db_user + ":" + db_pwd + "@localhost:" + db_port + "/" + db_name;
             command = project_dir + path_to_stella + "slam_to_pg" +
-                              " -c " + project_dir + path_to_config +
+                              " -c " + project_dir + path_to_config  + config_file +
                               " -v " + project_dir + path_to_fbow +
                               " --map-db-in " + map_dir + "/" + map_in +
                               " --db " + connection_string;
         }
         else if (view_statically){
             command = project_dir + path_to_stella + "campus_virtual_viewer" +
-                              " -c " + project_dir + path_to_config +
+                              " -c " + project_dir + path_to_config + config_file+
                               " -v " + project_dir + path_to_fbow +
                               (map_in.empty() ? "" : " --map-db-in " + map_dir + "/" + map_in) +
                               " --map-db-out " +  map_dir + "/" + map_out;
         }
         else {
             command = project_dir + path_to_stella + "campus_virtual" +
-                                        " -c " + project_dir + path_to_config +
+                                        " -c " + project_dir + path_to_config + config_file +
                                         " -v " + project_dir + path_to_fbow +
                                         (map_in.empty() ? "" : " --map-db-in " + map_dir + "/" + map_in) +
                                         " --map-db-out " +  map_dir + "/" + map_out +
