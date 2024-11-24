@@ -37,7 +37,6 @@ cd .. # Back to parent dir
 # Build controller program
 g++ ENTRYPOINT/runCampusVirtual.cc -o runCampusVirtual -lboost_program_options
 
-g++ ENTRYPOINT/pair_json_to_timestamp.cc -o runProcessJsonFiles -lpqxx -lsqlite3 -lboost_program_options
 
 
 echo "Run 'node app.js' in CampusVirtual_socket_viewer to start the socket viewer - before running the CampusVirtualInterface."
