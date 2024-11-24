@@ -280,6 +280,7 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
 
         // automatically close the viewer
         if (auto_term) 
+        {
             if (viewer_string == "iridescence_viewer") {
 #ifdef HAVE_IRIDESCENCE_VIEWER
                 iridescence_viewer->request_terminate();

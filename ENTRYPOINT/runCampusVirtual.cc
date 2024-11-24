@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
         ("project_dir", po::value<std::string>()->required(), "Campus virtual project directory")
         ("view_static", "View without processing (optional)")
         ("convertToPg", "Convert to Postgres (optional)")
-        ("in", po::value<std::string>(), "Input map (*.db)")
+        ("in", po::value<std::string>(), "Input map (*.db) - Optional for normal mode")
         ("out", po::value<std::string>(), "Output map (*.db)")
         ("media_dir", po::value<std::string>(), "Media directory - videos")
         ("map_dir", po::value<std::string>(), "Map directory - maps") 
@@ -69,7 +69,7 @@ int main(int argc, char** argv) {
             }
         }
         else {
-            if (!vm.count("videos") || !vm.count("in") || !vm.count("out") || !vm.count("media_dir") || !vm.count("map_dir")) {
+            if (!vm.count("videos") || !vm.count("out") || !vm.count("media_dir") || !vm.count("map_dir")) {
                 std::cout << "For normal mode, required arguments: videos, in, out, media_dir, map_dir, (optional: json_dir, picture-dir, config_file)" << std::endl;
                 std::cout << desc << std::endl;
                 return 1;
