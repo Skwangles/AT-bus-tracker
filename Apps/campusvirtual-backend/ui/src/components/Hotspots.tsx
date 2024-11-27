@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import {
   COORDS_TO_METRES,
   HOTSPOT_COLOUR,
@@ -9,6 +9,9 @@ import {
 } from '../consts'
 import Model from './Model'
 import { useFrame } from '@react-three/fiber'
+
+// Utility function to detect mobile devices
+const isMobile = () => /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
 
 interface HotspotProps {
   position: [number, number, number]
@@ -35,7 +38,9 @@ const Hotspot: React.FC<HotspotProps> = ({
   isHighlighted,
   isEnd,
 }) => {
-  const sphereSize = 20 / COORDS_TO_METRES
+  // Increase size for mobile
+  const sizeMultiplier = isMobile() ? 1.5 : 1
+  const sphereSize = (20 / COORDS_TO_METRES) * sizeMultiplier
   const outlineSize = sphereSize * 1.09
   const dropHotspotsBelowEyeLevelOffset = 8 / COORDS_TO_METRES
 
@@ -43,6 +48,9 @@ const Hotspot: React.FC<HotspotProps> = ({
 
   const endRef = useRef<any>(null)
   const outlineEndRef = useRef<any>(null)
+
+  // State to track hover
+  const [isHovered, setIsHovered] = useState(false)
 
   useFrame((state, delta) => {
     if (
@@ -68,6 +76,8 @@ const Hotspot: React.FC<HotspotProps> = ({
         rotation={rotation}
         ref={endRef}
         onClick={onClick}
+        onPointerOver={() => setIsHovered(true)}
+        onPointerOut={() => setIsHovered(false)}
         receiveShadow
       >
         {isEnd ? (
@@ -79,7 +89,9 @@ const Hotspot: React.FC<HotspotProps> = ({
         )}
         <meshStandardMaterial
           color={
-            isEnd
+            isHovered
+              ? HOTSPOT_HIGHLIGHTED
+              : isEnd
               ? '#FFFF00'
               : isHighlighted
               ? HOTSPOT_HIGHLIGHTED

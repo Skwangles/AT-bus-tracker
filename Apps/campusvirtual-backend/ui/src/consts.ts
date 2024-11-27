@@ -1,4 +1,4 @@
-export const API_PREFIX = "http://localhost:3001"
+export const API_PREFIX = "http://dev.skwangles.com:38000"
 
 export const COORDS_TO_METRES = 40
 export const showMap = true;
@@ -23,5 +23,5 @@ export const WAIKATO_UNI_LEVELS_ORDER = ["B", "G", "0", "1", "2", "3"];
 
 export const HOTSPOT_COLOUR = '#E1251B'
 export const HOTSPOT_OUTLINE = '#FFFFFF'
-export const HOTSPOT_HIGHLIGHTED = '#0000FF'
+export const HOTSPOT_HIGHLIGHTED = '#000FF0'
 
