@@ -56,9 +56,19 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
           label: string
         }>
       }>(`${API_PREFIX}/api/floorplans/${floorplan}`)
-      console.log(response.data)
+      if (
+        !response.data ||
+        !response.data.nodes ||
+        !response.data.edges ||
+        !response.data.has_image
+      ) {
+        console.error('No data returned from floorplan', floorplan)
+        return
+      }
       const img = new Image()
-      img.src = `${API_PREFIX}/api/floorplans/${floorplan}/image`
+      if (floorplan) {
+        img.src = `${API_PREFIX}/api/floorplans/${floorplan}/image`
+      }
       setHasImage(Boolean(response.data.has_image))
       img.onload = () => {
         setImage(img)

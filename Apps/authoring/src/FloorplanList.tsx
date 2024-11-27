@@ -22,7 +22,7 @@ const FloorplanList: React.FC<FloorplanListProps> = ({
       }}
     >
       <h2>Floorplans</h2>
-      <ul>
+      <ul style={{ overflowY: 'auto', height: '100vh' }}>
         {floorplans.map((floorplan) => (
           <li
             key={floorplan}
