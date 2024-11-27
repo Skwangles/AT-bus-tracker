@@ -74,7 +74,7 @@ app.get('/point/:id/neighbours/:is_refined/:distance_thresh_m/:y_dist_thresh_m',
 
 
 
-app.get('/point/:id/:is_refined', async function (req: { params: { id: number, is_refined: string } }, res: { json: (arg0: any) => void }) {
+app.get('/point/:id/:is_refined', async function (req: { params: { id: number, is_refined: string } }, res) {
 
   const is_refined = Boolean(req.params.is_refined == 'true');
   const pointData = await readDB(`
@@ -83,8 +83,12 @@ app.get('/point/:id/:is_refined', async function (req: { params: { id: number, i
     LEFT JOIN ${is_refined ? "refined_" : ""}node_locations l ON n.keyframe_id = l.keyframe_id
     WHERE n.keyframe_id = ?;
     `, [Number(req.params.id)], true);
-
-  res.json({ ...pointData, pose: DbArrayToMatrix(pointData.pose) })
+  if (pointData && 'pose' in pointData) {
+    res.json({ ...pointData, pose: DbArrayToMatrix(pointData.pose) })
+  }
+  else {
+    res.status(400).send("Point ID given does not exist!").end()
+  }
 })
 
 app.get('/floors', async function (req: any, res: any) {

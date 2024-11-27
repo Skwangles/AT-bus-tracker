@@ -67,7 +67,7 @@ export async function aStarPathfinding(
   while (openSet.size > 0) {
     const currentId = openSet.pop()!;
 
-    const currentNodeData = (await readDB("SELECT n.keyframe_id, label, location FROM refined_nodes n JOIN refined_node_locations nl ON n.keyframe_id = nl.keyframe_id WHERE n.keyframe_id = $1", [currentId])).rows
+    const currentNodeData = (await readDB("SELECT n.keyframe_id, label, location FROM refined_nodes n JOIN refined_node_locations nl ON n.keyframe_id = nl.keyframe_id WHERE n.keyframe_id = ?", [currentId])).rows
     if (currentNodeData.length == 0) {
       return []; // An error occured, fail quickly
     }
@@ -84,11 +84,19 @@ export async function aStarPathfinding(
       return path.reverse();
     }
 
-    const currentPos = await getNodePosition(currentId)
+    const currentPos = await getNodePosition(currentId);
+    if (!currentPos) {
+      continue;
+    }
     const neighbours = await getNeighbours(currentId);
+
+
 
     for (const neighbour of neighbours) {
       const nodeData = await getNodePosition(neighbour.keyframe_id)
+      if (!nodeData) {
+        continue;
+      }
       const distance = calculateDistance(
         currentPos,
         nodeData

@@ -136,13 +136,13 @@ export function stripDirectoryTraversal(user_input: string, root: string) {
 }
 
 // Helper function to get node position
-export async function getNodePosition(keyframeId: number, use_trans = true) {
+export async function getNodePosition(keyframeId: number, use_trans = true): Promise<[number, number, number] | null> {
   const result = await readDB(
     "SELECT pose, x_trans, y_trans, z_trans FROM refined_nodes WHERE keyframe_id = ?LIMIT 1;",
     [keyframeId], true
   ) as any;
-  if (result) {
-    throw new Error("Could not find keyframe of ID: " + keyframeId);
+  if (!result) {
+    return null;
   }
 
   if (use_trans) {
@@ -151,15 +151,18 @@ export async function getNodePosition(keyframeId: number, use_trans = true) {
       result.y_trans * COORDS_TO_METRES,
       result.z_trans * COORDS_TO_METRES,
     ];
-    if (!ret) throw new Error("Return result was Null of getNodePosition");
+    if (!ret) {
+      console.error("Return result was Null of getNodePosition - using trans");
+      return null;
+    }
     return ret;
   }
 
   const ret = calculatePositionFromMatrix(DbArrayToMatrix(result.pose) ?? []);
-  if (!ret)
-    throw new Error(
-      "Return result was Null of getNodePosition - calculating from pose"
-    );
+  if (!ret) {
+    console.error("Return result was Null of getNodePosition - using pose");
+    return null;
+  }
   return ret;
 }
 

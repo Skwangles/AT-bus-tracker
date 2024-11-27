@@ -1,6 +1,7 @@
 import { Request, Response } from 'express'
 import { COORDS_TO_METRES, NEIGHBOURS_INCLUDES_PROXIMITY } from './consts';
 import { readDB } from './db';
+import { DbArrayToMatrix } from './utils';
 
 export async function searchNeighbour(is_refined: boolean, mainPointId: number, distanceThreshold: number, yDistThresh: number, currentPoint: { x_trans: any; y_trans: any; z_trans: any; }) {
   // Used BFS to find all points down the graph within a range
@@ -46,7 +47,8 @@ export async function searchNeighbour(is_refined: boolean, mainPointId: number, 
     console.log("Phsyical proximity: ", resultData)
     for (const row of resultData) {
       const id: number = Number(row["keyframe_id"])
-      output.push((await readDB(`SELECT keyframe_id, x_trans, y_trans, z_trans, ts, pose FROM ${is_refined ? "refined_" : ""}nodes WHERE keyframe_id = ?`, [id]))[0])
+      const node = await readDB(`SELECT keyframe_id, x_trans, y_trans, z_trans, ts, pose FROM ${is_refined ? "refined_" : ""}nodes WHERE keyframe_id = ?`, [id], true)
+      output.push({ ...node, pose: DbArrayToMatrix(node.pose) })
       result.add(id)
       queue.push({ keyframe_id: id, depth: 1 })
     }
@@ -81,7 +83,7 @@ export async function searchNeighbour(is_refined: boolean, mainPointId: number, 
 
         if (Number(mainPointId) !== Number(neighbourId) && !result.has(neighbourId)) {
           result.add(neighbourId);
-          output.push(neighbour)
+          output.push({ ...neighbour, pose: DbArrayToMatrix(neighbour.pose) });
         }
 
         if (!visited.has(neighbourId)) {

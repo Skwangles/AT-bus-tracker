@@ -3,7 +3,7 @@ import { COORDS_TO_METRES, KEYFRAME_IMG_EXTENSION, OUTDOORS_LOCATION_NAME, OUTDO
 import * as THREE from "three";
 
 // Helper function to get node position
-export async function getNodePosition(db: any, keyframeId: string, use_trans = true) {
+export async function getNodePosition(db: any, keyframeId: string, use_trans = true): Promise<[number, number, number] | null> {
   const nodeInfo = await getNodeInfo(db, keyframeId, use_trans);
   return nodeInfo["position"];
 }
@@ -27,16 +27,19 @@ export async function getNodeInfo(db: any, keyframeId: string, use_trans = true)
       node_info.y_trans * COORDS_TO_METRES,
       node_info.z_trans * COORDS_TO_METRES,
     ];
-    if (!ret) throw new Error("Return result was Null of getNodePosition");
+    if (!ret) {
+      console.error("Return result was Null of getNodePosition - using pose");
+      return null;
+    }
     node_info["position"] = ret;
     return node_info;
   }
 
   const ret = calculatePositionFromMatrix(result.rows[0]?.pose);
-  if (!ret)
-    throw new Error(
-      "Return result was Null of getNodePosition - calculating from pose"
-    );
+  if (!ret) {
+    console.error("Return result was Null of getNodePosition - calculating from pose");
+    return null;
+  }
   node_info["position"] = ret;
   return ret;
 
@@ -83,18 +86,18 @@ export async function getNeighbours(db: any, keyframeId: number, usePhysicalProx
 }
 
 // Helper function to calculate distance between two positions
-export function calculateXZDistance(pos1: number[], pos2: number[]): number {
+export function calculateXZDistance(pos1: number[], pos2: number[]): number | null {
   if (pos1.length < 3 || pos2.length < 3) {
-    throw new Error("Invalid position array passed - has less then 3 values");
+    console.error("Invalid position array passed - has less then 3 values");
+    return null;
   }
   const result = Math.sqrt(
     Math.pow(pos1[0] - pos2[0], 2) + Math.pow(pos1[2] - pos2[2], 2)
   );
 
   if (result == null || result < 0) {
-    throw new Error(
-      "Distance calculation was NaN: [" + pos1 + "] [" + pos2 + "] " + result
-    );
+    console.error("Distance calculation was NaN: [" + pos1 + "] [" + pos2 + "] " + result)
+    return null;
   }
 
   return result;
@@ -123,11 +126,20 @@ export async function replaceNode(db: any, keyframeId: number, position: [number
   for (const neighbour_id in direct_neighbours) {
     const neighbour = direct_neighbours[neighbour_id];
     const pos = await getNodePosition(db, neighbour.keyframe_id)
+    if (!pos) {
+      throw new Error(`Unrecoverable error - Return result was Null of getNodePosition - neighbour: ${neighbour.keyframe_id}`)
+    }
 
     for (const new_neighbour of direct_neighbours.slice(neighbour_id)) {
       if (new_neighbour.keyframe_id == neighbour.keyframe_id) continue;
       const newNeighbourPosition = await getNodePosition(db, new_neighbour.keyframe_id)
+      if (!newNeighbourPosition) {
+        throw new Error(`Unrecoverable error - Return result was Null of getNodePosition - neighbour: ${new_neighbour.keyframe_id}`)
+      }
       const distance = calculateXZDistance(newNeighbourPosition, pos);
+      if (distance == null) {
+        throw new Error(`Unrecoverable error - Return result was Null of calculateXZDistance - neighbour: ${new_neighbour.keyframe_id}`)
+      }
       const yDistance = Math.abs(newNeighbourPosition[2] - pos[2])
       if (!ignore_distance && (distance > (isOutdoors ? OUTDOORS_TARGET_CLOSENESS : TARGET_CLOSENESS) || yDistance > (isOutdoors ? OUTDOORS_Y_DIST_THRESHOLD : Y_DIST_THRESHOLD))) {
         console.debug("Cancelling delete - A new edge is too large - Distance:", distance, " ID:", neighbour.keyframe_id, " Compared ID:", new_neighbour.keyframe_id)
