@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import './Instructions.css'
+import '../css/Instructions.css'
 import { Info } from 'react-feather'
 // Type definitions
 interface InstructionsProps {

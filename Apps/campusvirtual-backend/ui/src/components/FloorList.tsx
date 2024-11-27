@@ -1,31 +1,31 @@
-import React, { useEffect, useState } from 'react';
-import './FloorList.css'; // Import your CSS file here
+import React, { useEffect, useState } from 'react'
+import '../css/FloorList.css' // Import your CSS file here
 
 // Type definitions
 interface FloorListProps {
-  floors: string[];
-    setManualFloorSelect: any;
+  floors: string[]
+  setManualFloorSelect: any
 }
 
-const FloorList: React.FC<FloorListProps> = ({ floors, setManualFloorSelect }) => {
-  const [isOpen, setIsOpen] = useState(true);
-  const [selectedFloor, setSelectedFloor] = useState<string>("");
+const FloorList: React.FC<FloorListProps> = ({
+  floors,
+  setManualFloorSelect,
+}) => {
+  const [isOpen, setIsOpen] = useState(true)
+  const [selectedFloor, setSelectedFloor] = useState<string>('')
 
   const handleFloorClick = (floor: string) => {
-    setSelectedFloor(floor);
+    setSelectedFloor(floor)
     // setTimeout(() => setSelectedFloor(""), 3000); // Hide dialog after 3 seconds
-  };
+  }
 
   useEffect(() => {
     setManualFloorSelect(selectedFloor)
   }, [selectedFloor])
 
   return (
-    <div className='floor-list-container'>
-      <button
-        className="drawer-toggle"
-        onClick={() => setIsOpen(!isOpen)}
-      >
+    <div className="floor-list-container">
+      <button className="drawer-toggle" onClick={() => setIsOpen(!isOpen)}>
         {isOpen ? 'Hide Floors' : 'Show Floors'}
       </button>
 
@@ -41,7 +41,7 @@ const FloorList: React.FC<FloorListProps> = ({ floors, setManualFloorSelect }) =
         </div>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default FloorList;
+export default FloorList

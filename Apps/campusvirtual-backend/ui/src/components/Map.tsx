@@ -7,8 +7,8 @@ import {
   HIDE_POINTS_ON_MAP_DURING_HIGHLIGHT,
   MAX_MAP_HEIGHT_PERCENT,
   USE_ORANGE_PERSON,
-} from './consts'
-import './Map.css'
+} from '../consts'
+import '../css/Map.css'
 import useImage from 'use-image'
 import axios from 'axios'
 interface Node {

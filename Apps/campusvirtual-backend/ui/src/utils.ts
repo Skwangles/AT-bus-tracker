@@ -1,5 +1,12 @@
-export function inv(pose) {
-  let res = new Array()
+import { COORDS_TO_METRES } from "./consts"
+import * as THREE from 'three'
+
+export function inv(pose: number[][]) {
+  if (!pose || pose.length !== 4 || pose[0].length !== 4 || pose[1].length !== 4 || pose[2].length !== 4 || pose[3].length !== 4) {
+    throw new Error('Invalid pose size. Expected a 4x4 matrix.')
+  }
+
+  const res: number[][] = []
   for (let i = 0; i < 3; i++) {
     res.push([0, 0, 0, 0])
   }
@@ -28,10 +35,43 @@ export function array2mat44(mat, array: number[]) {
   for (let i = 0; i < 4; i++) {
     const raw: number[] = []
     for (let j = 0; j < 4; j++) {
-      let k = i * 4 + j
+      const k = i * 4 + j
       const elm = array[k]
       raw.push(elm)
     }
     mat.push(raw)
   }
+}
+
+export const calculatePositionFromMatrix = (
+  matrix: number[]
+): [number, number, number] => {
+  const m = new THREE.Matrix4()
+  //@ts-expect-error It is in the right format
+  m.set(...matrix)
+  m.invert()
+  const position = new THREE.Vector3()
+  position.setFromMatrixPosition(m)
+  return [
+    -position.x * COORDS_TO_METRES,
+    -position.y * COORDS_TO_METRES,
+    position.z * COORDS_TO_METRES,
+  ]
+}
+
+export const getYRotation = (matrix: number[]) => {
+  // Ensure the matrix is 4x4
+  if (matrix.length !== 16) {
+    console.error('Invalid matrix size. Expected a 4x4 matrix', matrix)
+    throw new Error('Invalid matrix size. Expected a 4x4 matrix.')
+  }
+
+  // Extract the relevant elements
+  const m11 = matrix[0]
+  const m31 = matrix[8]
+
+  // Calculate the rotation angle around the Y-axis
+  const rotationY = Math.atan2(m31, m11)
+
+  return -rotationY // Rotation in radians
 }

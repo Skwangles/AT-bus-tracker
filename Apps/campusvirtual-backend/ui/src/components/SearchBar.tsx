@@ -1,6 +1,6 @@
 // src/SearchBar.tsx
 import React, { useState, ChangeEvent, MouseEvent } from 'react'
-import './SearchBar.css'
+import '../css/SearchBar.css'
 import { toast } from 'react-toastify'
 import { ArrowUpRight, Eye } from 'react-feather'
 // Define the type for the props
