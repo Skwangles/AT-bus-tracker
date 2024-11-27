@@ -87,7 +87,6 @@ const Hotspot: React.FC<HotspotProps> = ({
           }
         />
       </mesh>
-      ;
       <mesh
         position={position}
         rotation={rotation}

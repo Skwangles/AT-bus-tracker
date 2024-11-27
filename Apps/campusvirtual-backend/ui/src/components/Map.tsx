@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Stage, Image as KonvaImage, Line, Circle, Layer } from 'react-konva'
-import { Map as FeatherMap } from 'react-feather'
+import { Map as FeatherMap, X } from 'react-feather'
 import {
   API_PREFIX,
   HIDE_EDGES,
@@ -28,6 +28,9 @@ interface MinimapProps {
   setID: any
   currentId: string
   highlightedPath: number[]
+  isMobile: boolean
+  closeDrawer: boolean
+  setCloseDrawer: (value: boolean) => void
 }
 
 const Map: React.FC<MinimapProps> = ({
@@ -35,6 +38,9 @@ const Map: React.FC<MinimapProps> = ({
   setID,
   currentId,
   highlightedPath: highlightedPoints,
+  isMobile,
+  closeDrawer,
+  setCloseDrawer,
 }) => {
   const [nodes, setNodes] = useState<Node[]>([])
   const [edges, setEdges] = useState<Edge[]>([])
@@ -42,12 +48,6 @@ const Map: React.FC<MinimapProps> = ({
   const [image, setImage] = useState<HTMLImageElement | null>(null)
   const [stageWidth, setStageWidth] = useState<number>(800)
   const [stageHeight, setStageHeight] = useState<number>(800)
-  const [closeDrawer, setCloseDrawer] = useState<boolean>(false)
-  const [doorImg] = useImage('Door.svg')
-  const [blueDoorImg] = useImage('Door.png')
-  const [personImg] = useImage(
-    USE_ORANGE_PERSON ? 'person.png' : 'black-person.png'
-  )
 
   useEffect(() => {
     const fetchFloorplanData = async () => {
@@ -63,6 +63,15 @@ const Map: React.FC<MinimapProps> = ({
             type: number
           }>
         }>(`${API_PREFIX}/api/floorplans/${floorName}`)
+        if (
+          !response.data ||
+          !response.data.nodes ||
+          !response.data.edges ||
+          !response.data.has_image
+        ) {
+          console.error('No data returned from floorplan', floorName)
+          return
+        }
         const img = new Image()
         img.src = `${API_PREFIX}/api/floorplans/${floorName}/image`
         console.log('Has image', response.data)
@@ -109,133 +118,161 @@ const Map: React.FC<MinimapProps> = ({
 
   return (
     <div
-      style={{
-        zIndex: 999,
-        position: 'fixed',
-        display: 'flex',
-        flexDirection: 'column',
-        left: 0,
-        top: 0,
-      }}
+      className={`
+        ${
+          isMobile
+            ? 'fixed inset-0 bg-black/80 backdrop-blur-sm z-[1000]'
+            : 'fixed left-0 top-0 z-[900] flex flex-col'
+        }
+        ${!closeDrawer ? 'hidden' : ''}
+      `}
     >
       <button
-        className="flex flex-col items-center"
-        style={{ zIndex: 999, padding: '5px', margin: '5px' }}
-        onClick={() => {
-          setCloseDrawer(!closeDrawer)
-        }}
+        className="absolute top-4 right-4 bg-white/90 hover:bg-white rounded-full p-3 shadow-lg z-50 flex items-center justify-center transition-all"
+        onClick={() => setCloseDrawer(false)}
+        aria-label="Close map"
       >
-        <FeatherMap />
-        Toggle
+        <X className="w-5 h-5" aria-hidden="true" />
       </button>
-      <div style={{ backgroundColor: 'lightgray' }} className="minimap-wrapper">
-        {closeDrawer && hasImage && (
-          <Stage width={stageWidth} height={stageHeight}>
-            <Layer>
-              {image && (
-                <>
-                  <KonvaImage
-                    image={image}
-                    width={stageWidth}
-                    height={stageHeight}
-                  />
 
-                  {edges
-                    .filter((edge) =>
-                      HIDE_POINTS_ON_MAP_DURING_HIGHLIGHT &&
-                      highlightedPoints.length > 0
-                        ? highlightedPoints.includes(Number(edge.id0)) &&
-                          highlightedPoints.includes(Number(edge.id1))
-                        : true
-                    )
-                    .map((edge, index) => {
-                      const { x: x1, y: y1 } = getNodeCoords(edge.id0)
-                      const { x: x2, y: y2 } = getNodeCoords(edge.id1)
-                      if (HIDE_EDGES) {
-                        return <></>
-                      }
-                      return (
-                        <Line
-                          key={index}
-                          points={[x1, y1, x2, y2]}
-                          stroke="black"
-                          strokeWidth={2}
-                          lineCap="round"
-                          lineJoin="round"
-                        />
+      <div
+        className={`
+          ${
+            isMobile
+              ? 'fixed inset-0 flex items-center justify-center p-4'
+              : 'minimap-wrapper bg-white/90 backdrop-blur-sm rounded-lg shadow-lg m-2 p-2'
+          }
+        `}
+      >
+        {hasImage && (
+          <div
+            className={`
+            relative
+            ${
+              isMobile
+                ? 'w-full h-full flex items-center justify-center overflow-hidden'
+                : 'max-w-[400px]'
+            }
+          `}
+          >
+            <Stage
+              width={stageWidth}
+              height={stageHeight}
+              style={{
+                maxWidth: '100%',
+                maxHeight: isMobile ? '85vh' : '70vh',
+                transform: isMobile ? 'scale(0.95)' : 'none',
+                borderRadius: '8px',
+                backgroundColor: 'white',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+              }}
+            >
+              <Layer>
+                {image && (
+                  <>
+                    <KonvaImage
+                      image={image}
+                      width={stageWidth}
+                      height={stageHeight}
+                    />
+
+                    {edges
+                      .filter((edge) =>
+                        HIDE_POINTS_ON_MAP_DURING_HIGHLIGHT &&
+                        highlightedPoints.length > 0
+                          ? highlightedPoints.includes(Number(edge.id0)) &&
+                            highlightedPoints.includes(Number(edge.id1))
+                          : true
                       )
-                    })}
-                  {nodes
-                    .filter((node) =>
-                      HIDE_POINTS_ON_MAP_DURING_HIGHLIGHT &&
-                      highlightedPoints.length > 0
-                        ? highlightedPoints.includes(Number(node.id))
-                        : true
-                    )
-                    .map((node) => {
-                      if (String(node.id) === String(currentId)) {
-                        const iconWidth = 15
-                        const iconHeight = 30
+                      .map((edge, index) => {
+                        const { x: x1, y: y1 } = getNodeCoords(edge.id0)
+                        const { x: x2, y: y2 } = getNodeCoords(edge.id1)
+                        if (HIDE_EDGES) {
+                          return <></>
+                        }
                         return (
-                          <KonvaImage
-                            image={personImg}
-                            width={iconWidth}
-                            height={iconHeight}
-                            key={node.id}
-                            x={node.x * stageWidth - iconWidth / 2}
-                            y={node.y * stageHeight - iconHeight / 2}
-                            name={node.id}
-                            onMouseUp={handleMouseUp}
-                            onTouchEnd={handleMouseUp}
+                          <Line
+                            key={index}
+                            points={[x1, y1, x2, y2]}
+                            stroke="black"
+                            strokeWidth={2}
+                            lineCap="round"
+                            lineJoin="round"
                           />
                         )
-                      }
+                      })}
+                    {nodes
+                      .filter((node) =>
+                        HIDE_POINTS_ON_MAP_DURING_HIGHLIGHT &&
+                        highlightedPoints.length > 0
+                          ? highlightedPoints.includes(Number(node.id))
+                          : true
+                      )
+                      .map((node) => {
+                        if (String(node.id) === String(currentId)) {
+                          const iconWidth = 15
+                          const iconHeight = 30
+                          return (
+                            <KonvaImage
+                              image={personImg}
+                              width={iconWidth}
+                              height={iconHeight}
+                              key={node.id}
+                              x={node.x * stageWidth - iconWidth / 2}
+                              y={node.y * stageHeight - iconHeight / 2}
+                              name={node.id}
+                              onMouseUp={handleMouseUp}
+                              onTouchEnd={handleMouseUp}
+                            />
+                          )
+                        }
 
-                      if (node.type >= 50) {
-                        const iconWidth = 15
-                        const iconHeight = 20
-                        return (
-                          <KonvaImage
-                            image={
-                              highlightedPoints.includes(Number(node.id))
-                                ? blueDoorImg
-                                : doorImg
-                            }
-                            width={iconWidth}
-                            height={iconHeight}
-                            key={node.id}
-                            x={node.x * stageWidth - iconWidth / 2}
-                            y={node.y * stageHeight - iconHeight / 2}
-                            name={node.id}
-                            onMouseUp={handleMouseUp}
-                            onTouchEnd={handleMouseUp}
-                          />
-                        )
-                      } else {
-                        return (
-                          <Circle
-                            key={node.id}
-                            x={node.x * stageWidth}
-                            y={node.y * stageHeight}
-                            radius={5}
-                            fill={
-                              String(node.id) === String(currentId)
-                                ? 'yellow'
-                                : highlightedPoints.includes(Number(node.id))
-                                ? 'blue'
-                                : 'red'
-                            }
-                            name={node.id}
-                            onMouseUp={handleMouseUp}
-                            onTouchEnd={handleMouseUp}
-                          />
-                        )
-                      }
-                    })}
-                </>
-              )}
-            </Layer>
-          </Stage>
+                        if (node.type >= 50) {
+                          const iconWidth = 15
+                          const iconHeight = 20
+                          return (
+                            <KonvaImage
+                              image={
+                                highlightedPoints.includes(Number(node.id))
+                                  ? blueDoorImg
+                                  : doorImg
+                              }
+                              width={iconWidth}
+                              height={iconHeight}
+                              key={node.id}
+                              x={node.x * stageWidth - iconWidth / 2}
+                              y={node.y * stageHeight - iconHeight / 2}
+                              name={node.id}
+                              onMouseUp={handleMouseUp}
+                              onTouchEnd={handleMouseUp}
+                            />
+                          )
+                        } else {
+                          return (
+                            <Circle
+                              key={node.id}
+                              x={node.x * stageWidth}
+                              y={node.y * stageHeight}
+                              radius={5}
+                              fill={
+                                String(node.id) === String(currentId)
+                                  ? 'yellow'
+                                  : highlightedPoints.includes(Number(node.id))
+                                  ? 'blue'
+                                  : 'red'
+                              }
+                              name={node.id}
+                              onMouseUp={handleMouseUp}
+                              onTouchEnd={handleMouseUp}
+                            />
+                          )
+                        }
+                      })}
+                  </>
+                )}
+              </Layer>
+            </Stage>
+          </div>
         )}
       </div>
     </div>

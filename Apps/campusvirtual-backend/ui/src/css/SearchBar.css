@@ -1,57 +1,69 @@
-.go-button {
-  margin-top: 5px;
-  margin-left: 5px;
-  background-color: rgb(8, 184, 8);
-  color: black;
-}
-
-.go-button:disabled {
-  background-color: rgba(0, 128, 0, 0.3);
-  color: rgba(0, 0, 0, 0.3);
-}
-
-.go-button:hover:enabled {
-  background-color: rgb(0, 148, 0);
-}
-
-.search-bar {
+.search-container {
   position: fixed;
-  left: 40%;
-  top: 0%;
-  z-index: 999;
-}
-
-.search-bar input {
+  left: 50%;
+  transform: translateX(-50%);
+  top: 0px;
+  width: 100%;
+  max-width: 400px;
   padding: 10px;
-  font-size: 16px;
-  width: 300px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  z-index: 500;
 }
 
-.suggestions-list {
+.input-wrapper {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.clear-button {
   position: absolute;
-  top: 100%;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: #718096;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 2;
+}
+
+.clear-button:hover {
+  background: #e2e8f0;
+  color: #4a5568;
+}
+
+.dropdown-container {
+  position: absolute;
+  top: calc(100% + 4px);
   left: 0;
   width: 100%;
-  max-height: 20vh;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  max-height: 60vh;
   overflow-y: auto;
-  color: white;
-  background: rgba(0, 0, 0, 0.7);
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  margin: 0;
-  padding: 0;
-  list-style-type: none;
-  z-index: 1000;
 }
 
-.suggestions-list li {
-  padding: 10px;
-  cursor: pointer;
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  transition: background-color 0.2s ease;
 }
 
-.suggestions-list li:hover {
-  background: rgba(0, 0, 0, 0.3);
+.suggestion-item:hover {
+  background-color: #f7fafc;
+}
+
+@media (max-width: 768px) {
+  .search-container {
+    max-width: 280px;
+  }
 }

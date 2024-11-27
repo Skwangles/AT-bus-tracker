@@ -1,22 +1,37 @@
-import React, { useState } from 'react'
+import React from 'react'
 import '../css/Instructions.css'
-import { Info } from 'react-feather'
-// Type definitions
+import { Info, X } from 'react-feather'
+
 interface InstructionsProps {
   point: { keyframe_id: number; location: string; ts: string }
+  isOpen: boolean
+  setIsOpen: (isOpen: boolean) => void
+  className?: string
+  showToggle?: boolean
 }
 
-const Instructions: React.FC<InstructionsProps> = ({ point }) => {
-  const [isOpen, setIsOpen] = useState(false)
+const Instructions: React.FC<InstructionsProps> = ({
+  point,
+  isOpen,
+  setIsOpen,
+  className = '',
+  showToggle = true,
+}) => {
   return (
-    <div className="stats-container flex flex-col items-center align-center justify-center">
-      <button className="stat-drawer-toggle" onClick={() => setIsOpen(!isOpen)}>
-        <Info /> {isOpen ? 'Hide' : ''}
-      </button>
+    <div className={`stats-container ${className}`}>
+      {showToggle && (
+        <button
+          className={`stat-drawer-toggle ${isOpen ? 'open' : ''}`}
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          {isOpen ? <X size={20} /> : <Info size={20} />}
+          <span className="ml-2">{isOpen ? 'Close' : 'Help'}</span>
+        </button>
+      )}
 
       {isOpen && (
         <div className="stats">
-          General Usage
+          <h3 className="stats-heading">General Usage</h3>
           <ul>
             <li>Drag on the screen to move where you are looking</li>
             <li>Click on the Red orbs to jump to a different position</li>
@@ -24,7 +39,7 @@ const Instructions: React.FC<InstructionsProps> = ({ point }) => {
               The current region/location you are in is show in the bottom left
             </li>
           </ul>
-          Search
+          <h3 className="stats-heading">Search</h3>
           <ul>
             <li>
               Search for a region/location in the search bar and jump to it
@@ -39,7 +54,7 @@ const Instructions: React.FC<InstructionsProps> = ({ point }) => {
               shows when a path is highlighted)
             </li>
           </ul>
-          Map
+          <h3 className="stats-heading">Map</h3>
           <ul>
             <li>Toggle the map with a button in the top left</li>
             <li>Hover over the map to increase its size</li>

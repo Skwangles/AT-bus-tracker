@@ -8,7 +8,7 @@ import SphereWithHotspots from './SphereWithHotspots'
 import { HotspotObj } from './Hotspots'
 import { PointData } from './VirtualTour'
 
-interface NeighbourData {
+export interface NeighbourData {
   pose: number[]
   ts: string
   keyframe_id: string
