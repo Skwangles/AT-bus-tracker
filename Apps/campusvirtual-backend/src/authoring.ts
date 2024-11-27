@@ -1,5 +1,5 @@
 import express, { Router, Request, Response } from "express";
-import db from './db'
+import { readDB, writeDB } from './db'
 import path from "path";
 import multer from "multer";
 import bodyParser from 'body-parser'
@@ -46,7 +46,7 @@ if (ENABLE_AUTHORING_PAGE) {
 
       // Save the image path to the database
       const filePath = file.filename;
-      await db.query('UPDATE floorplan_images SET path = $1 WHERE location = $2', [filePath, name]);
+      await writeDB("UPDATE floorplan_images SET path = ? WHERE location = ?", [filePath, name]);
 
       res.send('File uploaded and path updated successfully.');
     } catch (error) {
@@ -60,9 +60,9 @@ if (ENABLE_AUTHORING_PAGE) {
     const { name } = req.params;
     const { points } = req.body;
     for (const point of points) {
-      await db.query("UPDATE floorplan_points SET x = $1, y = $2 WHERE keyframe_id = $3 AND location = $4;", [point.x, point.y, point.id, name]).then(
-        (val: any) => {
-          if (val.rowCount == 0) {
+      await writeDB("UPDATE floorplan_points SET x = ?, y = ? WHERE keyframe_id = ? AND location = ?;", [point.x, point.y, point.id, name]).then(
+        (changes: number) => {
+          if (changes == 0) {
             res.status(404).send("Could not find point to update")
             return;
           }
@@ -80,9 +80,9 @@ if (ENABLE_AUTHORING_PAGE) {
     const { name } = req.params;
     const { id, x, y } = req.body;
 
-    db.query("UPDATE floorplan_points SET x = $1, y = $2 WHERE keyframe_id = $3 AND location = $4;", [x, y, id, name]).then(
-      (val: any) => {
-        if (val.rowCount > 0) {
+    writeDB("UPDATE floorplan_points SET x = ?, y = ? WHERE keyframe_id = ? AND location = ?;", [x, y, id, name]).then(
+      (changes: number) => {
+        if (changes > 0) {
           res.sendStatus(200)
         }
         else {
@@ -104,39 +104,40 @@ if (ENABLE_AUTHORING_PAGE) {
       return;
     }
     label = label.replace("<", "\<").replace(">", "\>"); // THIS AREA MAY BE VULNERABLE TO XSS - Only if the attacker gets ahold of the authoring panel, please disable it in consts once you are done authoring
-    db.query("UPDATE refined_nodes SET label = $1 WHERE keyframe_id = $2", [label, id])
+    const changes = await writeDB("UPDATE refined_nodes SET label = ? WHERE keyframe_id = ?", [label, id])
+    res.status(changes > 0 ? 200 : 409).send(changes > 0 ? "Point labelled" : "Error occurred - The point may be a border point, which cannot be deleted")
   })
 
   app.delete('/api/point/:id/delete', async (req: Request, res: Response) => {
     const { id } = req.params;
 
-    const result = await replaceNode(db, Number(id))
+    const result = await replaceNode(Number(id))
     res.status(result ? 200 : 409).send(result ? "Point deleted" : "Error occurred - The point may be a border point, which cannot be deleted")
   })
 
   app.post('/api/point/:id1/connect/:id2', async (req: Request, res: Response) => {
     const { id1, id2 } = req.params;
 
-    const is_on_same_level = await db.query("SELECT kf1.keyframe_id, kf2.keyframe_id, kf1.location FROM floorplan_points kf1 JOIN floorplan_points kf2 ON kf1.location = kf2.location AND kf1.keyframe_id <> kf2.keyframe_id AND kf1.keyframe_id = $1 AND kf2.keyframe_id = $2 LIMIT 1;", [id1, id2])
-    if (is_on_same_level.rowCount == 0) {
+    const is_on_same_level = await readDB("SELECT kf1.keyframe_id, kf2.keyframe_id, kf1.location FROM floorplan_points kf1 JOIN floorplan_points kf2 ON kf1.location = kf2.location AND kf1.keyframe_id <> kf2.keyframe_id AND kf1.keyframe_id = ? AND kf2.keyframe_id = ? LIMIT 1;", [id1, id2])
+    if (is_on_same_level.length == 0) {
       res.status(409).send("Points are not on the same level!")
       return;
     }
 
-    const result = await connectNodes(db, Number(id1), Number(id2));
+    const result = await connectNodes(Number(id1), Number(id2));
     res.status(result ? 201 : 409).send(result ? "Points connected" : "Error occurred - The points may already be connected, or are border points!")
   })
 
   app.delete('/api/point/:id1/connect/:id2', async (req: Request, res: Response) => {
     const { id1, id2 } = req.params;
 
-    const is_edge = await db.query("SELECT * FROM refined_edges WHERE (keyframe_id0 = $1 AND keyframe_id1 = $2) OR (keyframe_id0 = $2 AND keyframe_id1 = $1) LIMIT 1;", [id1, id2])
-    if (is_edge.rowCount == 0) {
+    const is_edge = await readDB("SELECT * FROM refined_edges WHERE (keyframe_id0 = ? AND keyframe_id1 = ?) OR (keyframe_id0 = ? AND keyframe_id1 = ?) LIMIT 1;", [id1, id2, id2, id1])
+    if (is_edge.length == 0) {
       res.status(409).send("Points are not connected!")
       return;
     }
 
-    const result = await disconnectNodes(db, Number(id1), Number(id2));
+    const result = await disconnectNodes(Number(id1), Number(id2));
     res.status(result ? 201 : 409).send(result ? "Points connected" : "Error occurred - The points may already be disconnected, or are border points!")
   })
 }
@@ -145,14 +146,14 @@ app.get('/api/floorplans/:name/image', async function (req: { params: { name: st
   const name = String(req.params.name);
 
   // Using FROM nodes because its the superset
-  const result = await db.query("SELECT path FROM floorplan_images WHERE location = $1", [name])
-  if (!result || result.rowCount == 0) {
+  const result = await readDB("SELECT path FROM floorplan_images WHERE location = ?", [name])
+  if (!result || result.length == 0) {
     res.sendStatus(404);
     return;
   }
 
 
-  const pathString = path.join(FLOORPLAN_IMAGE_DIR, String(result.rows[0].path));
+  const pathString = path.join(FLOORPLAN_IMAGE_DIR, String(result[0].path));
   if (!pathString) {
     res.sendStatus(404); // Potential directory traversal attack found
     return;
@@ -169,33 +170,33 @@ app.get('/api/floorplans/:name', async (req: Request, res: Response) => {
   const { name } = req.params;
 
   // Includes keyframes bordering the floor (add 'AND type < 50' to exclude)
-  const pointResult = await db.query("SELECT f.keyframe_id, x, y, type, n.label FROM floorplan_points f JOIN refined_nodes n ON n.keyframe_id = f.keyframe_id WHERE location = $1", [name]);
-  const image = await db.query("SELECT path FROM floorplan_images WHERE location = $1 LIMIT 1;", [name])
+  const pointResult = await readDB("SELECT f.keyframe_id, x, y, type, n.label FROM floorplan_points f JOIN refined_nodes n ON n.keyframe_id = f.keyframe_id WHERE location = ?", [name]);
+  const image = await readDB("SELECT path FROM floorplan_images WHERE location = ? LIMIT 1;", [name])
 
-  const edges = await db.query(`SELECT  e.keyframe_id0, e.keyframe_id1 FROM refined_edges e JOIN floorplan_points f ON e.keyframe_id0 = f.keyframe_id JOIN floorplan_points f2 ON e.keyframe_id1 = f2.keyframe_id WHERE f.location = $1 AND f2.location = $1`, [name])
-  if (pointResult.rowCount && pointResult.rowCount > 0 && image.rowCount && image.rowCount > 0) {
-    res.json({ nodes: pointResult.rows, has_image: image.rows[0].path != '', image: image.rows[0].path, edges: edges.rows })
+  const edges = await readDB(`SELECT  e.keyframe_id0, e.keyframe_id1 FROM refined_edges e JOIN floorplan_points f ON e.keyframe_id0 = f.keyframe_id JOIN floorplan_points f2 ON e.keyframe_id1 = f2.keyframe_id WHERE f.location = ? AND f2.location = ?`, [name, name])
+  if (pointResult.length && pointResult.length > 0 && image.length && image.length > 0) {
+    res.json({ nodes: pointResult, has_image: image[0].path != '', image: image[0].path, edges: edges })
   } else {
     res.status(404).send('Floorplan not found');
   }
 });
 
 app.get('/api/floorplans', async (req: Request, res: Response) => {
-  const floorplanResults = await db.query("SELECT DISTINCT location FROM floorplan_images;")
-  res.json(floorplanResults.rows.map((val: { location: string }) => val.location));
+  const floorplanResults = await readDB("SELECT DISTINCT location FROM floorplan_images;")
+  res.json(floorplanResults.map((val: { location: string }) => val.location));
 });
 
 app.get('/api/image/:id', async function (req: { params: { id: number } }, res) {
   const id = Number(req.params.id);
 
   // Using FROM nodes because its the superset
-  const result = await db.query("SELECT ts FROM nodes WHERE keyframe_id = $1", [id])
-  if (!result || result.rowCount == 0) {
+  const result = await readDB("SELECT ts FROM nodes WHERE keyframe_id = ?", [id])
+  if (!result || result.length == 0) {
     res.sendStatus(404);
     return;
   }
 
-  const ts = Number(result.rows[0].ts).toFixed(5);
+  const ts = Number(result[0].ts).toFixed(5);
   if (ts === "NaN") {
     res.status(400).send("Image id was not a valid image ID")
     return;

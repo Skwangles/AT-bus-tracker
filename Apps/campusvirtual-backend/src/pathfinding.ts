@@ -1,9 +1,9 @@
-import { Client } from "pg";
-import db from "./db"
+import { readDB } from "./db";
 
 import { MinQueue } from 'heapify';
 import Pool from "pg-pool";
 import { getNeighbours, getNodePosition } from "./utils";
+import { Client } from "pg";
 
 interface Node {
   keyframe_id: number;
@@ -32,13 +32,13 @@ function calculateDistance(nodeA: [number, number, number], nodeB: [number, numb
 }
 
 
-async function fetchNode(client: Pool<Client>, nodeId: number): Promise<Node | null> {
-  const result = await client.query('SELECT id, x_trans, y_trans, z_trans FROM refined_nodes WHERE id = $1', [nodeId]);
-  return result.rows.length > 0 ? result.rows[0] as Node : null;
+async function fetchNode(nodeId: number): Promise<Node | null> {
+  const result = await readDB('SELECT id, x_trans, y_trans, z_trans FROM refined_nodes WHERE id = $1', [nodeId]);
+  return result.length > 0 ? result.rows[0] as Node : null;
 }
 
-async function fetchEdges(client: Pool<Client>, nodeId: number): Promise<Edge[]> {
-  const result = await client.query('SELECT keyframe_id0, keyframe_id1 FROM refined_edges WHERE keyframe_id0 = $1 OR keyframe_id1 = $1', [nodeId]);
+async function fetchEdges(nodeId: number): Promise<Edge[]> {
+  const result = await readDB('SELECT keyframe_id0, keyframe_id1 FROM refined_edges WHERE keyframe_id0 = $1 OR keyframe_id1 = $1', [nodeId, nodeId]);
   return result.rows as Edge[];
 }
 
@@ -51,7 +51,6 @@ async function fetchEdges(client: Pool<Client>, nodeId: number): Promise<Edge[]>
  * @returns 
  */
 export async function aStarPathfinding(
-  db: Pool<Client>,
   startId: number,
   endId: number,
   firstWith: string | null = null // Allow shortcircuit if it finds a point earlier that meets criteria
@@ -63,12 +62,12 @@ export async function aStarPathfinding(
 
   openSet.push(startId, 0);
   gScore.set(startId, 0);
-  fScore.set(startId, await heuristic(db, startId, endId));
+  fScore.set(startId, await heuristic(startId, endId));
 
   while (openSet.size > 0) {
     const currentId = openSet.pop()!;
 
-    const currentNodeData = (await db.query("SELECT n.keyframe_id, label, location FROM refined_nodes n JOIN refined_node_locations nl ON n.keyframe_id = nl.keyframe_id WHERE n.keyframe_id = $1", [currentId])).rows
+    const currentNodeData = (await readDB("SELECT n.keyframe_id, label, location FROM refined_nodes n JOIN refined_node_locations nl ON n.keyframe_id = nl.keyframe_id WHERE n.keyframe_id = $1", [currentId])).rows
     if (currentNodeData.length == 0) {
       return []; // An error occured, fail quickly
     }
@@ -85,11 +84,11 @@ export async function aStarPathfinding(
       return path.reverse();
     }
 
-    const currentPos = await getNodePosition(db, currentId)
-    const neighbours = await getNeighbours(db, currentId);
+    const currentPos = await getNodePosition(currentId)
+    const neighbours = await getNeighbours(currentId);
 
     for (const neighbour of neighbours) {
-      const nodeData = await getNodePosition(db, neighbour.keyframe_id)
+      const nodeData = await getNodePosition(neighbour.keyframe_id)
       const distance = calculateDistance(
         currentPos,
         nodeData
@@ -98,7 +97,7 @@ export async function aStarPathfinding(
       if (tentativeGScore < (gScore.get(neighbour.keyframe_id) ?? Infinity)) {
         cameFrom.set(neighbour.keyframe_id, currentId);
         gScore.set(neighbour.keyframe_id, tentativeGScore);
-        const neighborHeuristic = await heuristic(db, neighbour.keyframe_id, endId);
+        const neighborHeuristic = await heuristic(neighbour.keyframe_id, endId);
         fScore.set(neighbour.keyframe_id, tentativeGScore + neighborHeuristic);
         openSet.push(neighbour.keyframe_id, fScore.get(neighbour.keyframe_id) ?? Infinity);
       }
@@ -108,9 +107,9 @@ export async function aStarPathfinding(
   return []; // No path was found
 }
 
-async function heuristic(db: Pool<Client>, nodeId: number, endId: number): Promise<number> {
-  const node = await getNodePosition(db, nodeId);
-  const endNode = await getNodePosition(db, endId);
+async function heuristic(nodeId: number, endId: number): Promise<number> {
+  const node = await getNodePosition(nodeId);
+  const endNode = await getNodePosition(endId);
   if (node && endNode) {
     return calculateDistance(node, endNode);
   }

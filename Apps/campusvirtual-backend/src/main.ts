@@ -5,10 +5,11 @@ import fs from 'fs'
 import initData from './initData'
 import { COORDS_TO_METRES, ENABLE_AUTHORING_PAGE, KEYFRAME_IMG_DIR, KEYFRAME_IMG_EXTENSION, SEND_TEST_IMAGE } from './consts'
 import { searchNeighbour } from './neighbourSearch'
-import db from './db'
+import { readDB } from './db'
 import { processImage } from './images'
 import floorplanAPI from './authoring'
 import { aStarPathfinding } from './pathfinding'
+import { DbArrayToMatrix } from './utils'
 
 
 const app = express()
@@ -27,17 +28,22 @@ app.get('/point/:id/path/:location', async function (req, res) {
   console.log(locationCode)
 
   // Check label first, as these are manually annotated (and supposedly special) points
-  let locationResults = await db.query("SELECT n.keyframe_id FROM refined_nodes n WHERE n.label = $1 LIMIT 1;", [locationCode]);
-  if (locationResults.rowCount == 0) {
-    const firstPointWithLocation = (await db.query("SELECT n.keyframe_id FROM refined_nodes n JOIN refined_node_locations nl ON n.keyframe_id = nl.keyframe_id WHERE nl.location = $1 LIMIT 1;", [locationCode]));
-    if (firstPointWithLocation.rowCount === 0) {
+  let locationResults = await readDB("SELECT n.keyframe_id FROM refined_nodes n WHERE n.label = ? LIMIT 1;", [locationCode], true);
+  if (!locationResults) {
+    const firstPointWithLocation = (await readDB("SELECT n.keyframe_id FROM refined_nodes n JOIN refined_node_locations nl ON n.keyframe_id = nl.keyframe_id WHERE nl.location = ? LIMIT 1;", [locationCode], true));
+    if (firstPointWithLocation.length === 0) {
       res.status(400).send("End location could not be found");
       return
     }
     locationResults = firstPointWithLocation
   }
 
-  res.json({ path: await aStarPathfinding(db, point, locationResults.rows[0].keyframe_id) ?? [] })
+  if ('keyframe_id' in locationResults) {
+    res.json({ path: await aStarPathfinding(point, locationResults.keyframe_id) ?? [] })
+  }
+  else {
+    res.status(400).send("End location could not be found");
+  }
 });
 
 app.get('/point/:id/neighbours/:is_refined/:distance_thresh_m/:y_dist_thresh_m', async function (req, res) {
@@ -53,9 +59,9 @@ app.get('/point/:id/neighbours/:is_refined/:distance_thresh_m/:y_dist_thresh_m',
   }
 
   // Fetch the initial point
-  const { rows: [currentPoint] } = await db.query(
-    `SELECT x_trans, y_trans, z_trans FROM ${is_refined ? "refined_" : ""}nodes WHERE keyframe_id = $1`,
-    [mainPointId]
+  const currentPoint = await readDB(
+    `SELECT x_trans, y_trans, z_trans FROM ${is_refined ? "refined_" : ""}nodes WHERE keyframe_id = ?`,
+    [mainPointId], true
   );
   if (!currentPoint) {
     res.status(400).send("Point ID given does not exist!").end()
@@ -71,18 +77,18 @@ app.get('/point/:id/neighbours/:is_refined/:distance_thresh_m/:y_dist_thresh_m',
 app.get('/point/:id/:is_refined', async function (req: { params: { id: number, is_refined: string } }, res: { json: (arg0: any) => void }) {
 
   const is_refined = Boolean(req.params.is_refined == 'true');
-  const rows = await db.query(`
+  const pointData = await readDB(`
     SELECT n.keyframe_id, n.ts, n.pose, l.location, n.label
     FROM ${is_refined ? "refined_" : ""}nodes n
     LEFT JOIN ${is_refined ? "refined_" : ""}node_locations l ON n.keyframe_id = l.keyframe_id
-    WHERE n.keyframe_id = $1;
-    `, [Number(req.params.id)]);
+    WHERE n.keyframe_id = ?;
+    `, [Number(req.params.id)], true);
 
-  res.json(rows.rows[0])
+  res.json({ ...pointData, pose: DbArrayToMatrix(pointData.pose) })
 })
 
 app.get('/floors', async function (req: any, res: any) {
-  res.json((await db.query("SELECT DISTINCT location FROM refined_node_locations UNION SELECT DISTINCT label FROM refined_nodes WHERE label is not NULL AND label <> '';")).rows)
+  res.json((await readDB("SELECT DISTINCT location FROM refined_node_locations UNION SELECT DISTINCT label FROM refined_nodes WHERE label is not NULL AND label <> '';")))
   // Some labels and floor names may be vulnerable to XSS
 })
 
@@ -90,17 +96,17 @@ app.get('/floors', async function (req: any, res: any) {
 app.get('/floor/:floor/point/', async function (req: any, res: any) {
   console.log("Hit floor endpoint")
   // Get FIRST node which has that location
-  const nodeWithSpecialLabel = await db.query("SELECT keyframe_id, pose FROM refined_nodes WHERE label = $1", [req.params.floor])
+  const nodeWithSpecialLabel = await readDB("SELECT keyframe_id, pose FROM refined_nodes WHERE label = ?", [req.params.floor])
 
-  if (nodeWithSpecialLabel.rows.length != 0) {
+  if (nodeWithSpecialLabel.length != 0) {
     console.log("Found a label", nodeWithSpecialLabel)
-    res.json(nodeWithSpecialLabel.rows[0])
+    res.json(nodeWithSpecialLabel[0])
     return;
   }
-  const firstNodeWithLocation = await db.query("SELECT n.keyframe_id, l.location, n.label FROM refined_nodes n JOIN refined_node_locations l ON n.keyframe_id = l.keyframe_id WHERE l.location = $1 LIMIT 1", [req.params.floor])
-  if (firstNodeWithLocation.rows.length > 0) {
+  const firstNodeWithLocation = await readDB("SELECT n.keyframe_id, l.location, n.label FROM refined_nodes n JOIN refined_node_locations l ON n.keyframe_id = l.keyframe_id WHERE l.location = ? LIMIT 1", [req.params.floor])
+  if (firstNodeWithLocation.length > 0) {
     console.log("Returning rows")
-    res.json(firstNodeWithLocation.rows[0])
+    res.json(firstNodeWithLocation[0])
   }
   else {
     console.log("Could not find")
@@ -111,13 +117,14 @@ app.get('/floor/:floor/point/', async function (req: any, res: any) {
 app.get('/floorplan/:id/:is_refined', async function (req: any, res: any) {
   const id = Number(req.params.id);
   const is_refined = Boolean(req.params.is_refined);
-  const rows = await db.query(`
+  const rows = await readDB(`
 			SELECT n.keyframe_id, n.ts, n.pose, n.label
 			FROM ${is_refined ? "refined_" : ""}nodes n 
 			JOIN ${is_refined ? "refined_" : ""}node_locations l ON l.name = n.location
 			WHERE l.location = 
-				(SELECT location FROM ${is_refined ? "refined_" : ""}nodes WHERE keyframe_id = $1)`, [id])
-  res.json(rows.rows)
+				(SELECT location FROM ${is_refined ? "refined_" : ""}nodes WHERE keyframe_id = ?)`, [id])
+
+  res.json(rows.map((row: { keyframe_id: number, ts: string, pose: string | number[], label: string }) => ({ ...row, pose: DbArrayToMatrix(row.pose) })))
 })
 
 app.get('/image/:detail/:ts', function (req: { params: { ts: string, detail: string } }, res) {
