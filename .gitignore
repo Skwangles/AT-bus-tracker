@@ -16,3 +16,6 @@ runProcessJsonFiles
 .env
 
 EDS-Images/
+
+PgSocketViewer/
+floorplans/
