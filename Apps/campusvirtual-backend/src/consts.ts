@@ -9,6 +9,6 @@ export const KEYFRAME_IMG_EXTENSION = ".png"
 export const NEIGHBOURS_INCLUDES_PROXIMITY = false;
 
 export const USE_SQLITE = true;
-export const SQLITE_DB_PATH = "D:/Documents/Coding/CampusVirtual/demo.db"
+export const SQLITE_DB_PATH = "/home/skwangles/Documents/Honours/CampusVirtual/demo.db"
 
 export const ENABLE_AUTHORING_PAGE = true; // Sqlite is set to readonly when this is false
