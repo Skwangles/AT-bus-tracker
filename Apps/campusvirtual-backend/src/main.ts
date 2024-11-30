@@ -3,19 +3,33 @@ import cors from 'cors'
 import express from 'express'
 import fs from 'fs'
 import initData from './initData'
-import { COORDS_TO_METRES, ENABLE_AUTHORING_PAGE, KEYFRAME_IMG_DIR, KEYFRAME_IMG_EXTENSION, SEND_TEST_IMAGE } from './consts'
+import { COORDS_TO_METRES, ENABLE_AUTHORING_PAGE, FLOORPLAN_IMAGE_DIR, KEYFRAME_IMG_DIR, KEYFRAME_IMG_EXTENSION, SEND_TEST_IMAGE } from './consts'
 import { searchNeighbour } from './neighbourSearch'
 import { readDB } from './db'
 import { processImage } from './images'
 import floorplanAPI from './authoring'
 import { aStarPathfinding } from './pathfinding'
 import { DbArrayToMatrix } from './utils'
+import sharp from 'sharp'
 
+import type { Request, Response } from "express";
 
 const app = express()
 
 app.use(cors({ origin: '*' }))
 app.use(express.static(path.join(__dirname, '../ui/dist')))
+
+// Define resolution levels with their dimensions
+const RESOLUTION_LEVELS = {
+  'preview': { width: 64, height: 32 },
+  'lowest': { width: 256, height: 128 },
+  'low': { width: 512, height: 256 },
+  'medium': { width: 1024, height: 512 },
+  'high': { width: 2048, height: 1024 },
+  'ultra': { width: 4096, height: 2048 }
+} as const;
+
+type ResolutionLevel = keyof typeof RESOLUTION_LEVELS;
 
 // render browser
 app.get('/', function (req, res) {
@@ -131,35 +145,123 @@ app.get('/floorplan/:id/:is_refined', async function (req: any, res: any) {
   res.json(rows.map((row: { keyframe_id: number, ts: string, pose: string | number[], label: string }) => ({ ...row, pose: DbArrayToMatrix(row.pose) })))
 })
 
-app.get('/image/:detail/:ts', function (req: { params: { ts: string, detail: string } }, res) {
+app.get('/image/:resolution/:ts', async function (req: { params: { ts: string, resolution: string } }, res) {
   const ts = Number(req.params.ts).toFixed(5);
   if (ts === "NaN") {
     res.status(400).send("Image id was not a valid image ID")
     return;
   }
 
-  const detail = req.params.detail; // TODO: Add optimisation to send lores or hires as needed
-  if (detail !== "hires" && detail !== "lores" && detail !== "thumbnail") {
-    res.status(400).send("The image detail must be 'lores', 'thumbnail' or 'hires'");
+  const resolution = req.params.resolution as ResolutionLevel;
+  if (!(resolution in RESOLUTION_LEVELS)) {
+    res.status(400).send("Invalid resolution level. Must be one of: " + Object.keys(RESOLUTION_LEVELS).join(", "));
+    return;
   }
-
 
   if (SEND_TEST_IMAGE) {
     res.sendFile(path.join(KEYFRAME_IMG_DIR, "test.jpg"))
-    console.log("Sending Test")
     return;
   }
 
   const imgPath = path.join(KEYFRAME_IMG_DIR, ts + KEYFRAME_IMG_EXTENSION)
-  if (!imgPath) {
-    console.error("Could not find file", imgPath);
+  if (!fs.existsSync(imgPath)) {
+    res.sendFile(path.join(KEYFRAME_IMG_DIR, "test.jpg"))
+    return;
+  }
+
+  try {
+    const { width, height } = RESOLUTION_LEVELS[resolution];
+    
+    // Process and send the image at the requested resolution
+    const image = sharp(imgPath)
+      .resize(width, height, {
+        fit: 'fill',
+        withoutEnlargement: true
+      })
+      .jpeg({ quality: resolution === 'preview' ? 60 : 85 })
+
+    res.set('Content-Type', 'image/png')
+    image.pipe(res)
+  } catch (error) {
+    console.error('Error processing image:', error)
+    res.status(500).send('Error processing image')
+  }
+})
+
+
+app.get('/api/floorplans/:name/image', async function (req: { params: { name: string } }, res) {
+  const name = String(req.params.name);
+
+  // Using FROM nodes because its the superset
+  const result = await readDB("SELECT path FROM floorplan_images WHERE location = ?", [name])
+  if (!result || result.length == 0) {
     res.sendStatus(404);
     return;
   }
 
-  if (fs.existsSync(imgPath)) {
 
-    processImage(res, imgPath, detail === "hires" ? -1 : (detail === "lores" ? 960 : 200))
+  const pathString = path.join(FLOORPLAN_IMAGE_DIR, String(result[0].path));
+  if (!pathString) {
+    res.sendStatus(404); // Potential directory traversal attack found
+    return;
+  }
+  if (fs.existsSync(pathString)) {
+    res.sendFile(pathString)
+  }
+  else {
+    res.sendStatus(404);
+  }
+})
+
+app.get('/api/floorplans/:name', async (req: Request, res: Response) => {
+  const { name } = req.params;
+
+  // Includes keyframes bordering the floor (add 'AND type < 50' to exclude)
+  const pointResult = await readDB("SELECT f.keyframe_id, x, y, type, n.label FROM floorplan_points f JOIN refined_nodes n ON n.keyframe_id = f.keyframe_id WHERE location = ?", [name]);
+  const image = await readDB("SELECT path FROM floorplan_images WHERE location = ? LIMIT 1;", [name])
+
+  const edges = await readDB(`SELECT  e.keyframe_id0, e.keyframe_id1 FROM refined_edges e JOIN floorplan_points f ON e.keyframe_id0 = f.keyframe_id JOIN floorplan_points f2 ON e.keyframe_id1 = f2.keyframe_id WHERE f.location = ? AND f2.location = ?`, [name, name])
+  if (pointResult.length && pointResult.length > 0 && image.length && image.length > 0) {
+    res.json({ nodes: pointResult, has_image: image[0].path != '', image: image[0].path, edges: edges })
+  } else {
+    res.status(404).send('Floorplan not found');
+  }
+});
+
+app.get('/api/floorplans', async (req: Request, res: Response) => {
+  const floorplanResults = await readDB("SELECT DISTINCT location FROM floorplan_images;")
+  res.json(floorplanResults.map((val: { location: string }) => val.location));
+});
+
+app.get('/api/image/:id', async function (req: { params: { id: number } }, res) {
+  const id = Number(req.params.id);
+
+  // Using FROM nodes because its the superset
+  const result = await readDB("SELECT ts FROM nodes WHERE keyframe_id = ?", [id])
+  if (!result || result.length == 0) {
+    res.sendStatus(404);
+    return;
+  }
+
+  const ts = Number(result[0].ts).toFixed(5);
+  if (ts === "NaN") {
+    res.status(400).send("Image id was not a valid image ID")
+    return;
+  }
+
+  if (SEND_TEST_IMAGE) {
+    res.sendFile(path.join(KEYFRAME_IMG_DIR, "test.jpg"));
+    console.log("Sending Test")
+    return;
+  }
+  const pathString = path.join(KEYFRAME_IMG_DIR, Number(ts).toFixed(5).toString() + KEYFRAME_IMG_EXTENSION);
+  if (!pathString) {
+    res.sendStatus(404);
+    return; // Potential directory traversal attack
+  }
+
+  if (fs.existsSync(pathString)) {
+    res.sendFile(pathString)
   }
   else {
     res.sendFile(path.join(KEYFRAME_IMG_DIR, "test.jpg"))
