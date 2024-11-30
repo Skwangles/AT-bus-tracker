@@ -8,6 +8,13 @@ export const LocationChangeControls = ({
   locationGroup,
   allFloorNames,
   changeFloor,
+}: {
+  canGoUp: boolean
+  canGoDown: boolean
+  changeFloorUpOrDown: (locationGroup: string, up: boolean) => void
+  locationGroup: string
+  allFloorNames: string[]
+  changeFloor: (floor: string) => void
 }) => {
   return (
     <div className="flex flex-col items-center space-y-2 md:flex-row md:space-y-0 md:space-x-2">
