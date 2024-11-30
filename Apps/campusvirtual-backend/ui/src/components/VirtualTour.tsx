@@ -368,6 +368,7 @@ const VirtualTour: React.FC = () => {
           isMobile={isMobile}
           closeDrawer={closeDrawer}
           setCloseDrawer={setCloseDrawer}
+          cameraRotation={camRotation}
         />
       )}
 
@@ -463,6 +464,7 @@ const VirtualTour: React.FC = () => {
           isMobile={isMobile}
           closeDrawer={closeDrawer}
           setCloseDrawer={setCloseDrawer}
+          cameraRotation={camRotation}
         />
       )}
     </>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Stage, Line, Layer, Image as KonvaImage } from 'react-konva'
+import { Stage, Line, Layer, Image as KonvaImage, Arrow } from 'react-konva'
 import { X } from 'react-feather'
 import {
   API_PREFIX,
@@ -34,6 +34,7 @@ interface MinimapProps {
   isMobile: boolean
   closeDrawer: boolean
   setCloseDrawer: (value: boolean) => void
+  cameraRotation: { yaw: number, pitch: number }
 }
 
 const Map: React.FC<MinimapProps> = ({
@@ -44,14 +45,17 @@ const Map: React.FC<MinimapProps> = ({
   isMobile,
   closeDrawer,
   setCloseDrawer,
+  cameraRotation,
 }) => {
   const [nodes, setNodes] = useState<Node[]>([])
   const [edges, setEdges] = useState<Edge[]>([])
+  const [mapNode, setMapNode] = useState<Node | null>(null)
   const [hasImage, setHasImage] = useState<boolean>(false)
   const [stageWidth, setStageWidth] = useState<number>(800)
   const [stageHeight, setStageHeight] = useState<number>(800)
 
-  const [image] = useImage(`${API_PREFIX}/api/floorplans/${floorName}/image`, 'Anonymous')
+  const [image] = useImage(`${API_PREFIX}/api/floorplans/${floorName}/image`, 'anonymous')
+  const [personImage] = useImage(personImg)
 
   useEffect(() => {
     const fetchFloorplanData = async () => {
@@ -98,6 +102,15 @@ const Map: React.FC<MinimapProps> = ({
   }, [floorName])
 
   useEffect(() => {
+    const mapNode = nodes.find((node) => Number(node.id) === Number(currentId))
+    if (currentId && mapNode) {
+      if (mapNode.type < 50) {
+        setMapNode(mapNode)
+      }
+    }
+  }, [currentId, floorName])
+
+  useEffect(() => {
     if (image) {
       const aspectRatio = image.width / image.height
       const maxHeight = MAX_MAP_HEIGHT_PERCENT * window.innerHeight
@@ -107,8 +120,7 @@ const Map: React.FC<MinimapProps> = ({
     }
   }, [image])
 
-  const getNodeCoords = (id: string) => {
-    const node = nodes.find((node) => node.id === id)
+  const getNodeCoords = (id: string, node = nodes.find((node) => Number(node.id) === Number(id))) => { 
     if (!node) throw Error("Couldn't find node: " + id)
     return { x: node.x * stageWidth, y: node.y * stageHeight }
   }
@@ -126,6 +138,7 @@ const Map: React.FC<MinimapProps> = ({
     const closestNodeId = distanceToNode1 < distanceToNode2 ? edge.id0 : edge.id1
     setID(closestNodeId)
   }
+
 
   return (
     <div
@@ -195,6 +208,7 @@ const Map: React.FC<MinimapProps> = ({
                       : true
                   )
                   .map((edge, index) => {
+                  
                     const { x: x1, y: y1 } = getNodeCoords(edge.id0)
                     const { x: x2, y: y2 } = getNodeCoords(edge.id1)
                     if (HIDE_EDGES) {
@@ -208,19 +222,42 @@ const Map: React.FC<MinimapProps> = ({
                         strokeWidth={8} // Thicker line for better visibility
                         lineCap="round"
                         lineJoin="round"
-                        onMouseEnter={(e) => e.target.stroke('blue')} // Highlight on hover
-                        onMouseLeave={(e) => e.target.stroke('black')}
+                        onMouseEnter={(e) => {
+                          const shape = e.target as any;
+                          shape.stroke('blue');
+                          shape.getLayer()?.batchDraw();
+                        }}
+                        onMouseLeave={(e) => {
+                          const shape = e.target as any;
+                          shape.stroke('black');
+                          shape.getLayer()?.batchDraw();
+                        }}
                         onClick={(e) => handleLineClick(e, edge)}
                       />
                     )
                   })}
-                {currentId && (
+                {mapNode && personImage && (
                   <KonvaImage
-                    image={personImg}
-                    x={getNodeCoords(currentId).x - 15} // Adjust for icon width
-                    y={getNodeCoords(currentId).y - 15} // Adjust for icon height
-                    width={30} // Set icon width
-                    height={30} // Set icon height
+                    image={personImage}
+                    x={getNodeCoords(mapNode.id, mapNode).x - 10}
+                    y={getNodeCoords(mapNode.id, mapNode).y - 20}
+                    width={20}
+                    height={40}
+                  />
+                )}
+                {mapNode && cameraRotation && (
+                  <Arrow
+                    points={[
+                      getNodeCoords(mapNode.id, mapNode).x,
+                      getNodeCoords(mapNode.id, mapNode).y,
+                      getNodeCoords(mapNode.id, mapNode).x + Math.sin(cameraRotation.yaw) * 30,
+                      getNodeCoords(mapNode.id, mapNode).y + Math.cos(cameraRotation.yaw) * 30
+                    ]}
+                    pointerLength={10}
+                    pointerWidth={10}
+                    fill="red"
+                    stroke="red"
+                    strokeWidth={4}
                   />
                 )}
               </Layer>
