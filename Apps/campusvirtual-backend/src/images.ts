@@ -5,15 +5,17 @@ export const processImage = async (res: Response<any>, path: string, width: numb
   try {
     const image = sharp(path);
     let buffer;
-    if (width == -1){
-      buffer = await image.toBuffer()
-    }
-    else {
+    if (width == -1) {
+      buffer = await image.toBuffer();
+    } else {
       buffer = await image.resize(width).toBuffer();
     }
 
-    res.type('png').send(buffer);
+    res.set('Content-Type', 'image/png');
+    res.send(buffer);
   } catch (error) {
-    res.status(500).send('Error processing image');
+    if (!res.headersSent) {
+      res.status(500).send('Error processing image');
+    }
   }
 };
