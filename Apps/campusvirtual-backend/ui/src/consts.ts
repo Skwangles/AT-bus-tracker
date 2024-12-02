@@ -13,6 +13,10 @@ export const USE_GLB_MARKER_OBJECT = false;
 
 export const USE_ORANGE_PERSON = true;
 
+export const MAP_LINE_WIDTH = 8;
+export const MAP_LINE_COLOUR = 'black';
+export const MAP_LINE_HIGHLIGHT_COLOUR = 'blue';
+
 export const addQuotationMarks = false;
 export const MAX_MAP_HEIGHT_PERCENT = 0.7
 export const PROJECT_NAME = "CampusVirtual"

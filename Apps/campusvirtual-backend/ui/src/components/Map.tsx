@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react'
 import { Stage, Line, Layer, Image as KonvaImage, Arrow } from 'react-konva'
-import { X } from 'react-feather'
+import { Circle, X } from 'react-feather'
 import {
   API_PREFIX,
   HIDE_EDGES,
   HIDE_POINTS_ON_MAP_DURING_HIGHLIGHT,
+  MAP_LINE_COLOUR,
+  MAP_LINE_HIGHLIGHT_COLOUR,
+  MAP_LINE_WIDTH,
   MAX_MAP_HEIGHT_PERCENT,
 } from '../consts'
 import '../css/Map.css'
@@ -12,7 +15,9 @@ import axios from 'axios'
 import useImage from 'use-image'
 
 // Import the person image
-import personImg from '../assets/person.png'
+import personImgPng from '../assets/person.png'
+import highlightedDoorImgPng from '../assets/Door.png'
+import doorImageSvg from '../assets/Door.svg'
 
 interface Node {
   id: string
@@ -34,7 +39,7 @@ interface MinimapProps {
   isMobile: boolean
   closeDrawer: boolean
   setCloseDrawer: (value: boolean) => void
-  cameraRotation: { yaw: number, pitch: number }
+  cameraRotation: { yaw: number; pitch: number }
 }
 
 const Map: React.FC<MinimapProps> = ({
@@ -54,8 +59,13 @@ const Map: React.FC<MinimapProps> = ({
   const [stageWidth, setStageWidth] = useState<number>(800)
   const [stageHeight, setStageHeight] = useState<number>(800)
 
-  const [image] = useImage(`${API_PREFIX}/api/floorplans/${floorName}/image`, 'anonymous')
-  const [personImage] = useImage(personImg)
+  const [image] = useImage(
+    `${API_PREFIX}/api/floorplans/${floorName}/image`,
+    'anonymous'
+  )
+  const [personImage] = useImage(personImgPng)
+  const [highlightedDoorImage] = useImage(highlightedDoorImgPng)
+  const [doorImage] = useImage(doorImageSvg)
 
   useEffect(() => {
     const fetchFloorplanData = async () => {
@@ -120,7 +130,10 @@ const Map: React.FC<MinimapProps> = ({
     }
   }, [image])
 
-  const getNodeCoords = (id: string, node = nodes.find((node) => Number(node.id) === Number(id))) => { 
+  const getNodeCoords = (
+    id: string,
+    node = nodes.find((node) => Number(node.id) === Number(id))
+  ) => {
     if (!node) throw Error("Couldn't find node: " + id)
     return { x: node.x * stageWidth, y: node.y * stageHeight }
   }
@@ -135,10 +148,10 @@ const Map: React.FC<MinimapProps> = ({
     const distanceToNode1 = Math.sqrt((clickX - x1) ** 2 + (clickY - y1) ** 2)
     const distanceToNode2 = Math.sqrt((clickX - x2) ** 2 + (clickY - y2) ** 2)
 
-    const closestNodeId = distanceToNode1 < distanceToNode2 ? edge.id0 : edge.id1
+    const closestNodeId =
+      distanceToNode1 < distanceToNode2 ? edge.id0 : edge.id1
     setID(closestNodeId)
   }
-
 
   return (
     <div
@@ -208,7 +221,6 @@ const Map: React.FC<MinimapProps> = ({
                       : true
                   )
                   .map((edge, index) => {
-                  
                     const { x: x1, y: y1 } = getNodeCoords(edge.id0)
                     const { x: x2, y: y2 } = getNodeCoords(edge.id1)
                     if (HIDE_EDGES) {
@@ -218,19 +230,19 @@ const Map: React.FC<MinimapProps> = ({
                       <Line
                         key={index}
                         points={[x1, y1, x2, y2]}
-                        stroke="black"
-                        strokeWidth={8} // Thicker line for better visibility
+                        stroke={MAP_LINE_COLOUR}
+                        strokeWidth={MAP_LINE_WIDTH} // Thicker line for better visibility
                         lineCap="round"
                         lineJoin="round"
                         onMouseEnter={(e) => {
-                          const shape = e.target as any;
-                          shape.stroke('blue');
-                          shape.getLayer()?.batchDraw();
+                          const shape = e.target as any
+                          shape.stroke(MAP_LINE_HIGHLIGHT_COLOUR)
+                          shape.getLayer()?.batchDraw()
                         }}
                         onMouseLeave={(e) => {
-                          const shape = e.target as any;
-                          shape.stroke('black');
-                          shape.getLayer()?.batchDraw();
+                          const shape = e.target as any
+                          shape.stroke(MAP_LINE_COLOUR)
+                          shape.getLayer()?.batchDraw()
                         }}
                         onClick={(e) => handleLineClick(e, edge)}
                       />
@@ -245,13 +257,38 @@ const Map: React.FC<MinimapProps> = ({
                     height={40}
                   />
                 )}
+                {nodes.length > 0 &&
+                  nodes
+                    .filter(
+                      (node) =>
+                        node.type >= 50 &&
+                        (HIDE_POINTS_ON_MAP_DURING_HIGHLIGHT
+                          ? highlightedPoints.length > 0
+                            ? highlightedPoints.includes(Number(node.id))
+                            : true
+                          : true)
+                    )
+                    .map((node) => (
+                      <KonvaImage
+                        key={node.id}
+                        image={
+                          highlightedPoints.includes(Number(node.id))
+                            ? highlightedDoorImg
+                            : doorImage
+                        }
+                        x={node.x * stageWidth}
+                        y={node.y * stageHeight}
+                      />
+                    ))}
                 {mapNode && cameraRotation && (
                   <Arrow
                     points={[
                       getNodeCoords(mapNode.id, mapNode).x,
                       getNodeCoords(mapNode.id, mapNode).y,
-                      getNodeCoords(mapNode.id, mapNode).x + Math.sin(cameraRotation.yaw) * 30,
-                      getNodeCoords(mapNode.id, mapNode).y + Math.cos(cameraRotation.yaw) * 30
+                      getNodeCoords(mapNode.id, mapNode).x +
+                        Math.sin(cameraRotation.yaw) * 30,
+                      getNodeCoords(mapNode.id, mapNode).y +
+                        Math.cos(cameraRotation.yaw) * 30,
                     ]}
                     pointerLength={10}
                     pointerWidth={10}
