@@ -246,6 +246,11 @@ const VirtualTour: React.FC = () => {
     }
   }, [showMobileMenu])
 
+  const [referenceNode, setReferenceNode] = useState<{
+    id: string;
+    targetYaw: number;
+  } | null>(null)
+
   return (
     <>
       {/* Location indicator - make text smaller on mobile */}
@@ -369,6 +374,7 @@ const VirtualTour: React.FC = () => {
           closeDrawer={closeDrawer}
           setCloseDrawer={setCloseDrawer}
           cameraRotation={camRotation}
+          referenceNode={referenceNode}
         />
       )}
 
@@ -410,6 +416,7 @@ const VirtualTour: React.FC = () => {
             neighbours={floorWideNeighbours}
             isRefined={true}
             highlightedPath={highlightedPath}
+            setReferenceNode={setReferenceNode}
           />
         </Canvas>
       </div>
@@ -465,6 +472,7 @@ const VirtualTour: React.FC = () => {
           closeDrawer={closeDrawer}
           setCloseDrawer={setCloseDrawer}
           cameraRotation={camRotation}
+          referenceNode={referenceNode}
         />
       )}
     </>

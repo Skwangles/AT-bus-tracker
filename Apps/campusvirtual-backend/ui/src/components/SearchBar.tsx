@@ -149,11 +149,8 @@ const SearchBar: React.FC<SearchBarProps> = ({
                 Recent Searches
               </h3>
               {recentSearches.map((recent, index) => (
-                <div key={`recent-${index}`} className="suggestion-item">
-                  <span
-                    onClick={() => handleSuggestionClick(recent)}
-                    className="cursor-pointer hover:text-blue-500"
-                  >
+                <div key={`recent-${index}`} className="suggestion-item" onClick={() => handleSuggestionClick(recent)}>
+                  <span className="cursor-pointer hover:text-blue-500">
                     {recent}
                   </span>
                 </div>
@@ -169,9 +166,12 @@ const SearchBar: React.FC<SearchBarProps> = ({
                 </h3>
               )}
               {suggestions.map((suggestion, index) => (
-                <div key={index} className="suggestion-item">
+                <div
+                  key={index}
+                  className="suggestion-item"
+                  onClick={() => handleSuggestionClick(suggestion)}
+                >
                   <span
-                    onClick={() => handleSuggestionClick(suggestion)}
                     className="cursor-pointer hover:text-blue-500"
                   >
                     {suggestion}

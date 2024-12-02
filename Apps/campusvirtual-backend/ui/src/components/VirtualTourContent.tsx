@@ -23,6 +23,7 @@ const VirtualTourContent: React.FC<any> = ({
   setNeighbours,
   isRefined,
   highlightedPath,
+  setReferenceNode,
 }) => {
   const [hotspots, setHotspots] = useState<HotspotObj[]>([])
   const [currentImage, setCurrentImage] = useState<string | null>(null)
@@ -32,6 +33,32 @@ const VirtualTourContent: React.FC<any> = ({
   const [rotation, setRotation] = useState<[number, number, number]>([0, 0, 0])
 
   const { camera } = useThree()
+
+  const calculateReferenceNode = (pointData: PointData, neighboursData: NeighbourData[]) => {
+    const currentPos = calculatePositionFromMatrix(pointData.pose)
+    const sameFloorNeighbors = neighboursData.filter(neighbor => {
+      const neighborPos = calculatePositionFromMatrix(neighbor.pose)
+      return Math.abs(neighborPos[1] - currentPos[1]) < 0.1
+    })
+
+    if (sameFloorNeighbors.length === 0) return null
+
+    const referenceNeighbor = sameFloorNeighbors[Math.floor(Math.random() * sameFloorNeighbors.length)]
+    
+    const neighborPos = calculatePositionFromMatrix(referenceNeighbor.pose)
+    const directionVector = new THREE.Vector3(
+      neighborPos[0] - currentPos[0],
+      0,
+      neighborPos[2] - currentPos[2]
+    ).normalize()
+
+    const targetYaw = Math.atan2(directionVector.x, directionVector.z)
+
+    return {
+      id: referenceNeighbor.keyframe_id,
+      targetYaw
+    }
+  }
 
   const fetchPointData = async (pointId: string) => {
     try {
@@ -46,6 +73,11 @@ const VirtualTourContent: React.FC<any> = ({
       )
 
       const neighboursData = neighboursResponse.data
+
+      const referenceNode = calculateReferenceNode(pointData, neighboursData)
+      if (referenceNode) {
+        setReferenceNode(referenceNode)
+      }
 
       setCurrentPoint(pointData)
       setCurrentImage(Number(pointData.ts).toFixed(5))

@@ -31,7 +31,7 @@ interface Edge {
   id1: string
 }
 
-interface MinimapProps {
+interface MapProps {
   floorName: string
   setID: any
   currentId: string
@@ -40,9 +40,10 @@ interface MinimapProps {
   closeDrawer: boolean
   setCloseDrawer: (value: boolean) => void
   cameraRotation: { yaw: number; pitch: number }
+  referenceNode: { id: string; targetYaw: number } | null
 }
 
-const Map: React.FC<MinimapProps> = ({
+const Map: React.FC<MapProps> = ({
   floorName,
   setID,
   currentId,
@@ -51,6 +52,7 @@ const Map: React.FC<MinimapProps> = ({
   closeDrawer,
   setCloseDrawer,
   cameraRotation,
+  referenceNode,
 }) => {
   const [nodes, setNodes] = useState<Node[]>([])
   const [edges, setEdges] = useState<Edge[]>([])
@@ -66,6 +68,15 @@ const Map: React.FC<MinimapProps> = ({
   const [personImage] = useImage(personImgPng)
   const [highlightedDoorImage] = useImage(highlightedDoorImgPng)
   const [doorImage] = useImage(doorImageSvg)
+  
+  useEffect(() => {
+    const mapNode = nodes.find((node) => Number(node.id) === Number(currentId))
+    if (currentId && mapNode) {
+      if (mapNode.type < 50) {
+        setMapNode(mapNode)
+      }
+    }
+  }, [currentId, nodes, floorName])
 
   useEffect(() => {
     const fetchFloorplanData = async () => {
@@ -111,22 +122,25 @@ const Map: React.FC<MinimapProps> = ({
     fetchFloorplanData()
   }, [floorName])
 
-  useEffect(() => {
-    const mapNode = nodes.find((node) => Number(node.id) === Number(currentId))
-    if (currentId && mapNode) {
-      if (mapNode.type < 50) {
-        setMapNode(mapNode)
-      }
-    }
-  }, [currentId, floorName])
+
 
   useEffect(() => {
     if (image) {
       const aspectRatio = image.width / image.height
-      const maxHeight = MAX_MAP_HEIGHT_PERCENT * window.innerHeight
-      const width = maxHeight * aspectRatio
+      const maxHeight = Math.min(MAX_MAP_HEIGHT_PERCENT * window.innerHeight, window.innerHeight)
+      const maxWidth = window.innerWidth
+      
+      let width = maxHeight * aspectRatio
+      let height = maxHeight
+      
+      // If width exceeds maxWidth, scale both dimensions down
+      if (width > maxWidth) {
+        width = maxWidth
+        height = width / aspectRatio
+      }
+      
       setStageWidth(width)
-      setStageHeight(maxHeight)
+      setStageHeight(height)
     }
   }, [image])
 
@@ -153,19 +167,40 @@ const Map: React.FC<MinimapProps> = ({
     setID(closestNodeId)
   }
 
+  const calculateArrowRotation = () => {
+    if (!referenceNode || !nodes.length) return cameraRotation.yaw
+
+    // Find current and reference nodes
+    const currentNode = nodes.find(node => Number(node.id) === Number(currentId))
+    const refNode = nodes.find(node => Number(node.id) === Number(referenceNode.id))
+    
+    if (!currentNode || !refNode) return cameraRotation.yaw
+
+    // Calculate angle on map
+    const dx = refNode.x - currentNode.x
+    const dy = refNode.y - currentNode.y
+    const mapAngle = Math.atan2(dy, dx)
+
+    // Calculate world space difference between current camera yaw and target yaw
+    const worldRotationDiff = referenceNode.targetYaw - cameraRotation.yaw
+
+    // Adjust map angle by the world rotation difference
+    return mapAngle - worldRotationDiff
+  }
+
   return (
     <div
       className={`
         ${
           isMobile
             ? 'fixed inset-0 bg-black/80 backdrop-blur-sm z-[1000]'
-            : 'fixed left-0 top-0 z-[900] flex flex-col'
+            : 'fixed left-0 top-0 z-[1000] flex flex-col'
         }
         ${!closeDrawer ? 'hidden' : ''}
       `}
     >
       <button
-        className="absolute top-4 right-4 bg-white/90 hover:bg-white rounded-full p-3 shadow-lg z-50 flex items-center justify-center transition-all"
+        className="absolute top-4 right-4 bg-white/90 hover:bg-white rounded-full p-3 shadow-lg z-1001 flex items-center justify-center transition-all"
         onClick={() => setCloseDrawer(false)}
         aria-label="Close map"
       >
@@ -188,7 +223,7 @@ const Map: React.FC<MinimapProps> = ({
             ${
               isMobile
                 ? 'w-full h-full flex items-center justify-center overflow-hidden'
-                : 'max-w-[400px]'
+                : 'max-w-[800px]'
             }
           `}
           >
@@ -196,6 +231,8 @@ const Map: React.FC<MinimapProps> = ({
               width={stageWidth}
               height={stageHeight}
               style={{
+                width: '100%',
+                height: '100%',
                 maxWidth: '100%',
                 maxHeight: isMobile ? '85vh' : '70vh',
                 transform: isMobile ? 'scale(0.95)' : 'none',
@@ -205,7 +242,7 @@ const Map: React.FC<MinimapProps> = ({
               }}
             >
               <Layer>
-                {image && (
+                {image && ( // background image
                   <KonvaImage
                     image={image}
                     width={stageWidth}
@@ -231,7 +268,7 @@ const Map: React.FC<MinimapProps> = ({
                         key={index}
                         points={[x1, y1, x2, y2]}
                         stroke={MAP_LINE_COLOUR}
-                        strokeWidth={MAP_LINE_WIDTH} // Thicker line for better visibility
+                        strokeWidth={MAP_LINE_WIDTH}
                         lineCap="round"
                         lineJoin="round"
                         onMouseEnter={(e) => {
@@ -245,6 +282,7 @@ const Map: React.FC<MinimapProps> = ({
                           shape.getLayer()?.batchDraw()
                         }}
                         onClick={(e) => handleLineClick(e, edge)}
+                        onTouchStart={(e) => handleLineClick(e, edge)}
                       />
                     )
                   })}
@@ -273,11 +311,15 @@ const Map: React.FC<MinimapProps> = ({
                         key={node.id}
                         image={
                           highlightedPoints.includes(Number(node.id))
-                            ? highlightedDoorImg
+                            ? highlightedDoorImage
                             : doorImage
                         }
-                        x={node.x * stageWidth}
-                        y={node.y * stageHeight}
+                        x={node.x * stageWidth - 5}
+                        y={node.y * stageHeight - 15}
+                        width={20}
+                        height={30}
+                        onClick={(e) => setID(node.id)}
+                        onTouchStart={(e) => setID(node.id)}
                       />
                     ))}
                 {mapNode && cameraRotation && (
@@ -285,10 +327,8 @@ const Map: React.FC<MinimapProps> = ({
                     points={[
                       getNodeCoords(mapNode.id, mapNode).x,
                       getNodeCoords(mapNode.id, mapNode).y,
-                      getNodeCoords(mapNode.id, mapNode).x +
-                        Math.sin(cameraRotation.yaw) * 30,
-                      getNodeCoords(mapNode.id, mapNode).y +
-                        Math.cos(cameraRotation.yaw) * 30,
+                      getNodeCoords(mapNode.id, mapNode).x + Math.sin(calculateArrowRotation()) * 30,
+                      getNodeCoords(mapNode.id, mapNode).y + Math.cos(calculateArrowRotation()) * 30,
                     ]}
                     pointerLength={10}
                     pointerWidth={10}
