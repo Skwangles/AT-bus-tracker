@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react'
-import { Canvas } from '@react-three/fiber'
+import { Canvas, useThree } from '@react-three/fiber'
 import { SHOW_NAV_SEARCH, WAIKATO_UNI_LEVELS_ORDER } from '../consts'
 import { API_PREFIX, showMap, PROJECT_NAME } from '../consts'
 import axios from 'axios'
@@ -13,6 +13,7 @@ import { MapPin, ChevronUp, Map as FeatherMap, Info } from 'react-feather'
 import VirtualTourContent from './VirtualTourContent'
 import LocationChangeControls from './LocationChangeControls'
 import { NeighbourData } from './VirtualTourContent'
+import { AxesHelper, Camera, Vector3 } from 'three'
 
 export interface PointData {
   pose: number[]
@@ -30,10 +31,11 @@ const VirtualTour: React.FC = () => {
     }
     return '-1'
   })
+
   const [currentPoint, setCurrentPoint] = useState<PointData>({
     pose: [],
     ts: '',
-    keyframe_id: 300,
+    keyframe_id: -1,
     location: '',
   })
 
@@ -47,6 +49,8 @@ const VirtualTour: React.FC = () => {
   const [isInstructionsOpen, setInstructionsOpen] = useState(false)
   const [closeDrawer, setCloseDrawer] = useState(false)
 
+  const [calcAngleOfPointFunc, setCalcAngleOfPointFunc] =
+    useState<(target: number) => number>()
   const [camRotation, setCameraRotation] = useState<{
     yaw: number
     pitch: number
@@ -65,7 +69,7 @@ const VirtualTour: React.FC = () => {
 
     axios
       .get<{ keyframe_id: number }>(
-        API_PREFIX + '/floor/' + requestedFloor + '/point'
+        API_PREFIX + '/api/v1/floor/' + requestedFloor + '/point'
       )
       .then((value) => {
         console.log(value.data)
@@ -81,10 +85,12 @@ const VirtualTour: React.FC = () => {
 
   useEffect(() => {
     // RUN ON FIRST LOAD
-    axios.get<{ location: string }[]>(API_PREFIX + '/floors').then((result) => {
-      console.log('Floors', result.data)
-      setAllFloorNames(result.data.map((val) => String(val.location)))
-    })
+    axios
+      .get<{ location: string }[]>(API_PREFIX + '/api/v1/floors')
+      .then((result) => {
+        console.log('Floors', result.data)
+        setAllFloorNames(result.data.map((val) => String(val.location)))
+      })
 
     if (currentId == '-1' || !params.has('id') || params.get('id') == '-1') {
       changeFloor('FG.G')
@@ -129,7 +135,7 @@ const VirtualTour: React.FC = () => {
   const calculateHighlightedPath = async (selectedLocation: string) => {
     try {
       const response = await axios.get(
-        `${API_PREFIX}/point/${currentId}/path/${selectedLocation}`
+        `${API_PREFIX}/api/v1/point/${currentId}/path/${selectedLocation}`
       )
       console.log('API Response:', response.data)
       if (!response.data || !response.data.path) {
@@ -247,8 +253,8 @@ const VirtualTour: React.FC = () => {
   }, [showMobileMenu])
 
   const [referenceNode, setReferenceNode] = useState<{
-    id: string;
-    targetYaw: number;
+    id: string
+    targetYaw: number
   } | null>(null)
 
   return (
@@ -402,6 +408,7 @@ const VirtualTour: React.FC = () => {
           shadows
         >
           <ambientLight intensity={0.6} />
+          <axesHelper />
           <directionalLight castShadow />
           <CameraRotationControls
             initCameraRotation={camRotation}

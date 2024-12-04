@@ -36,7 +36,7 @@ app.get('/', function (req, res) {
   res.sendFile(path.join(__dirname, '../ui/dist', 'index.html'))
 })
 
-app.get('/point/:id/path/:location', async function (req, res) {
+app.get('/api/v1/point/:id/path/:location', async function (req, res) {
   const point = Number(req.params.id)
   const locationCode = String(req.params.location)
   console.log(locationCode)
@@ -60,7 +60,7 @@ app.get('/point/:id/path/:location', async function (req, res) {
   }
 });
 
-app.get('/point/:id/neighbours/:is_refined/:distance_thresh_m/:y_dist_thresh_m', async function (req, res) {
+app.get('/api/v1/point/:id/neighbours/:is_refined/:distance_thresh_m/:y_dist_thresh_m', async function (req, res) {
   const is_refined = Boolean(req.params.is_refined === 'true');
   const mainPointId = Number(req.params.id)
 
@@ -88,7 +88,7 @@ app.get('/point/:id/neighbours/:is_refined/:distance_thresh_m/:y_dist_thresh_m',
 
 
 
-app.get('/point/:id/:is_refined', async function (req: { params: { id: number, is_refined: string } }, res) {
+app.get('/api/v1/point/:id/:is_refined', async function (req: { params: { id: number, is_refined: string } }, res) {
 
   const is_refined = Boolean(req.params.is_refined == 'true');
   const pointData = await readDB(`
@@ -105,13 +105,13 @@ app.get('/point/:id/:is_refined', async function (req: { params: { id: number, i
   }
 })
 
-app.get('/floors', async function (req: any, res: any) {
+app.get('/api/v1/floors', async function (req: any, res: any) {
   res.json((await readDB("SELECT DISTINCT location FROM refined_node_locations UNION SELECT DISTINCT label FROM refined_nodes WHERE label is not NULL AND label <> '';")))
   // Some labels and floor names may be vulnerable to XSS
 })
 
 
-app.get('/floor/:floor/point/', async function (req: any, res: any) {
+app.get('/api/v1/floor/:floor/point/', async function (req: any, res: any) {
   console.log("Hit floor endpoint")
   // Get FIRST node which has that location
   const nodeWithSpecialLabel = await readDB("SELECT keyframe_id, pose FROM refined_nodes WHERE label = ?", [req.params.floor])
@@ -132,7 +132,7 @@ app.get('/floor/:floor/point/', async function (req: any, res: any) {
   }
 })
 
-app.get('/floorplan/:id/:is_refined', async function (req: any, res: any) {
+app.get('/api/v1/floorplan/:id/:is_refined', async function (req: any, res: any) {
   const id = Number(req.params.id);
   const is_refined = Boolean(req.params.is_refined);
   const rows = await readDB(`
@@ -145,7 +145,7 @@ app.get('/floorplan/:id/:is_refined', async function (req: any, res: any) {
   res.json(rows.map((row: { keyframe_id: number, ts: string, pose: string | number[], label: string }) => ({ ...row, pose: DbArrayToMatrix(row.pose) })))
 })
 
-app.get('/image/:resolution/:ts', async function (req: { params: { ts: string, resolution: string } }, res) {
+app.get('/api/v1/image/:resolution/:ts', async function (req: { params: { ts: string, resolution: string } }, res) {
   const ts = Number(req.params.ts).toFixed(5);
   if (ts === "NaN") {
     res.status(400).send("Image id was not a valid image ID")
@@ -171,7 +171,7 @@ app.get('/image/:resolution/:ts', async function (req: { params: { ts: string, r
 
   try {
     const { width, height } = RESOLUTION_LEVELS[resolution];
-    
+
     // Process and send the image at the requested resolution
     const image = sharp(imgPath)
       .resize(width, height, {
@@ -189,7 +189,7 @@ app.get('/image/:resolution/:ts', async function (req: { params: { ts: string, r
 })
 
 
-app.get('/api/floorplans/:name/image', async function (req: { params: { name: string } }, res) {
+app.get('/api/v1/floorplans/:name/image', async function (req: { params: { name: string } }, res) {
   const name = String(req.params.name);
 
   // Using FROM nodes because its the superset
@@ -213,7 +213,7 @@ app.get('/api/floorplans/:name/image', async function (req: { params: { name: st
   }
 })
 
-app.get('/api/floorplans/:name', async (req: Request, res: Response) => {
+app.get('/api/v1/floorplans/:name', async (req: Request, res: Response) => {
   const { name } = req.params;
 
   // Includes keyframes bordering the floor (add 'AND type < 50' to exclude)
@@ -228,12 +228,12 @@ app.get('/api/floorplans/:name', async (req: Request, res: Response) => {
   }
 });
 
-app.get('/api/floorplans', async (req: Request, res: Response) => {
+app.get('/api/v1/floorplans', async (req: Request, res: Response) => {
   const floorplanResults = await readDB("SELECT DISTINCT location FROM floorplan_images;")
   res.json(floorplanResults.map((val: { location: string }) => val.location));
 });
 
-app.get('/api/image/:id', async function (req: { params: { id: number } }, res) {
+app.get('/api/v1/image/:id', async function (req: { params: { id: number } }, res) {
   const id = Number(req.params.id);
 
   // Using FROM nodes because its the superset

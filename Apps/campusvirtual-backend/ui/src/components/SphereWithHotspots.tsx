@@ -16,12 +16,12 @@ interface SphereWithHotspotsProps {
 
 // Define resolution levels
 const RESOLUTION_LEVELS = [
-  { name: 'preview', delay: 0 },    // 64x32 instant preview
-  { name: 'lowest', delay: 100 },   // 256x128
-  { name: 'low', delay: 300 },      // 512x256
-  { name: 'medium', delay: 800 },   // 1024x512
-  { name: 'high', delay: 1500 },    // 2048x1024
-  { name: 'ultra', delay: 2500 },   // 4096x2048
+  { name: 'preview', delay: 0 }, // 64x32 instant preview
+  { name: 'lowest', delay: 100 }, // 256x128
+  { name: 'low', delay: 300 }, // 512x256
+  { name: 'medium', delay: 800 }, // 1024x512
+  { name: 'high', delay: 1500 }, // 2048x1024
+  { name: 'ultra', delay: 2500 }, // 4096x2048
 ]
 
 const SphereWithHotspots: React.FC<SphereWithHotspotsProps> = ({
@@ -32,8 +32,12 @@ const SphereWithHotspots: React.FC<SphereWithHotspotsProps> = ({
   rotation,
   highlightedOrbs,
 }) => {
-  const [currentTexture, setCurrentTexture] = useState<THREE.Texture>(new THREE.Texture())
-  const [previousTexture, setPreviousTexture] = useState<THREE.Texture | null>(null)
+  const [currentTexture, setCurrentTexture] = useState<THREE.Texture>(
+    new THREE.Texture()
+  )
+  const [previousTexture, setPreviousTexture] = useState<THREE.Texture | null>(
+    null
+  )
   const [isLoading, setIsLoading] = useState(true)
   const [transitionProgress, setTransitionProgress] = useState(0)
   const currentTextureUrlRef = useRef(textureUrl)
@@ -42,16 +46,17 @@ const SphereWithHotspots: React.FC<SphereWithHotspotsProps> = ({
   // Animation for texture transition
   useSpring({
     opacity: transitionProgress,
-    config: { duration: 500 }
+    config: { duration: 500 },
   })
 
   const loadTextureAtResolution = async (resolution: string) => {
     if (currentTextureUrlRef.current !== textureUrl) return null
-    
+
     try {
-      const texture = await new THREE.TextureLoader()
-        .loadAsync(`${API_PREFIX}/image/${resolution}/${textureUrl}`)
-      
+      const texture = await new THREE.TextureLoader().loadAsync(
+        `${API_PREFIX}/api/v1/image/${resolution}/${textureUrl}`
+      )
+
       // Only update if we're still on the same image
       if (currentTextureUrlRef.current === textureUrl) {
         return texture
@@ -69,11 +74,11 @@ const SphereWithHotspots: React.FC<SphereWithHotspotsProps> = ({
       setPreviousTexture(currentTexture)
       setTransitionProgress(0)
     }
-    
+
     // Clear any pending loads
-    loadingQueue.current.forEach(timeout => clearTimeout(timeout))
+    loadingQueue.current.forEach((timeout) => clearTimeout(timeout))
     loadingQueue.current = []
-    
+
     // Update reference
     currentTextureUrlRef.current = textureUrl
 
@@ -91,7 +96,7 @@ const SphereWithHotspots: React.FC<SphereWithHotspotsProps> = ({
     })
 
     return () => {
-      loadingQueue.current.forEach(timeout => clearTimeout(timeout))
+      loadingQueue.current.forEach((timeout) => clearTimeout(timeout))
       currentTextureUrlRef.current = ''
     }
   }, [textureUrl])
@@ -103,9 +108,9 @@ const SphereWithHotspots: React.FC<SphereWithHotspotsProps> = ({
       {/* Previous sphere for smooth transition */}
       {previousTexture && (
         <mesh rotation={rotation} position={position} scale={[-1, 1, 1]}>
-          <sphereGeometry args={[500, 64, 64]} />
-          <meshBasicMaterial 
-            map={previousTexture} 
+          <sphereGeometry args={[1000, 64, 64]} />
+          <meshBasicMaterial
+            map={previousTexture}
             side={THREE.BackSide}
             transparent
             opacity={1 - transitionProgress}
@@ -115,9 +120,9 @@ const SphereWithHotspots: React.FC<SphereWithHotspotsProps> = ({
 
       {/* Current sphere */}
       <mesh rotation={rotation} position={position} scale={[-1, 1, 1]}>
-        <sphereGeometry args={[500, 64, 64]} />
-        <meshBasicMaterial 
-          map={currentTexture} 
+        <sphereGeometry args={[1000, 64, 64]} />
+        <meshBasicMaterial
+          map={currentTexture}
           side={THREE.BackSide}
           transparent
           opacity={transitionProgress}
@@ -152,7 +157,8 @@ const SphereWithHotspots: React.FC<SphereWithHotspotsProps> = ({
             isHighlighted={highlightedOrbs.includes(Number(hotspot.id))}
             isEnd={
               highlightedOrbs.length > 0
-                ? highlightedOrbs[highlightedOrbs.length - 1] === Number(hotspot.id)
+                ? highlightedOrbs[highlightedOrbs.length - 1] ===
+                  Number(hotspot.id)
                 : false
             }
           />

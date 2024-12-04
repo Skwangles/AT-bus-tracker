@@ -62,13 +62,13 @@ const Map: React.FC<MapProps> = ({
   const [stageHeight, setStageHeight] = useState<number>(800)
 
   const [image] = useImage(
-    `${API_PREFIX}/api/floorplans/${floorName}/image`,
+    `${API_PREFIX}/api/v1/floorplans/${floorName}/image`,
     'anonymous'
   )
   const [personImage] = useImage(personImgPng)
   const [highlightedDoorImage] = useImage(highlightedDoorImgPng)
   const [doorImage] = useImage(doorImageSvg)
-  
+
   useEffect(() => {
     const mapNode = nodes.find((node) => Number(node.id) === Number(currentId))
     if (currentId && mapNode) {
@@ -91,7 +91,7 @@ const Map: React.FC<MapProps> = ({
             keyframe_id: number
             type: number
           }>
-        }>(`${API_PREFIX}/api/floorplans/${floorName}`)
+        }>(`${API_PREFIX}/api/v1/floorplans/${floorName}`)
         if (
           !response.data ||
           !response.data.nodes ||
@@ -122,23 +122,24 @@ const Map: React.FC<MapProps> = ({
     fetchFloorplanData()
   }, [floorName])
 
-
-
   useEffect(() => {
     if (image) {
       const aspectRatio = image.width / image.height
-      const maxHeight = Math.min(MAX_MAP_HEIGHT_PERCENT * window.innerHeight, window.innerHeight)
+      const maxHeight = Math.min(
+        MAX_MAP_HEIGHT_PERCENT * window.innerHeight,
+        window.innerHeight
+      )
       const maxWidth = window.innerWidth
-      
+
       let width = maxHeight * aspectRatio
       let height = maxHeight
-      
+
       // If width exceeds maxWidth, scale both dimensions down
       if (width > maxWidth) {
         width = maxWidth
         height = width / aspectRatio
       }
-      
+
       setStageWidth(width)
       setStageHeight(height)
     }
@@ -171,21 +172,33 @@ const Map: React.FC<MapProps> = ({
     if (!referenceNode || !nodes.length) return cameraRotation.yaw
 
     // Find current and reference nodes
-    const currentNode = nodes.find(node => Number(node.id) === Number(currentId))
-    const refNode = nodes.find(node => Number(node.id) === Number(referenceNode.id))
-    
+    const currentNode = nodes.find(
+      (node) => Number(node.id) === Number(currentId)
+    )
+    const refNode = nodes.find(
+      (node) => Number(node.id) === Number(referenceNode.id)
+    )
+
     if (!currentNode || !refNode) return cameraRotation.yaw
 
     // Calculate angle on map
     const dx = refNode.x - currentNode.x
     const dy = refNode.y - currentNode.y
-    const mapAngle = Math.atan2(dy, dx)
+    const mapAngleFromAxis = Math.atan2(dx * stageWidth, dy * stageWidth)
 
     // Calculate world space difference between current camera yaw and target yaw
-    const worldRotationDiff = referenceNode.targetYaw - cameraRotation.yaw
+    const worldRotationOffset =
+      (referenceNode.targetYaw - cameraRotation.yaw) % (2 * Math.PI)
 
     // Adjust map angle by the world rotation difference
-    return mapAngle - worldRotationDiff
+    console.log(
+      'DIFF',
+      currentNode,
+      refNode,
+      mapAngleFromAxis,
+      worldRotationOffset
+    )
+    return mapAngleFromAxis - worldRotationOffset
   }
 
   return (
@@ -327,8 +340,10 @@ const Map: React.FC<MapProps> = ({
                     points={[
                       getNodeCoords(mapNode.id, mapNode).x,
                       getNodeCoords(mapNode.id, mapNode).y,
-                      getNodeCoords(mapNode.id, mapNode).x + Math.sin(calculateArrowRotation()) * 30,
-                      getNodeCoords(mapNode.id, mapNode).y + Math.cos(calculateArrowRotation()) * 30,
+                      getNodeCoords(mapNode.id, mapNode).x +
+                        Math.sin(calculateArrowRotation()) * 30,
+                      getNodeCoords(mapNode.id, mapNode).y +
+                        Math.cos(calculateArrowRotation()) * 30,
                     ]}
                     pointerLength={10}
                     pointerWidth={10}

@@ -36,7 +36,7 @@ if (ENABLE_AUTHORING_PAGE) {
 
   const upload = multer({ storage })
 
-  app.post('/api/floorplans/:name/image', upload.single('file'), async (req: any, res) => {
+  app.post('/api/v1/floorplans/:name/image', upload.single('file'), async (req: any, res) => {
     try {
       const { name } = req.params;
       const file = req.file;
@@ -56,7 +56,7 @@ if (ENABLE_AUTHORING_PAGE) {
   });
 
 
-  app.post('/api/floorplans/:name/updatemultiple', async (req: Request, res: Response) => {
+  app.post('/api/v1/floorplans/:name/updatemultiple', async (req: Request, res: Response) => {
     const { name } = req.params;
     const { points } = req.body;
     for (const point of points) {
@@ -76,7 +76,7 @@ if (ENABLE_AUTHORING_PAGE) {
   });
 
 
-  app.post('/api/floorplans/:name/update', (req: Request, res: Response) => {
+  app.post('/api/v1/floorplans/:name/update', (req: Request, res: Response) => {
     const { name } = req.params;
     const { id, x, y } = req.body;
 
@@ -96,7 +96,7 @@ if (ENABLE_AUTHORING_PAGE) {
   });
 
 
-  app.post('/api/point/:id/label', async function (req, res) {
+  app.post('/api/v1/point/:id/label', async function (req, res) {
     let label = String(req.body.label)
     const id = Number(req.params.id)
     if (isNaN(id)) {
@@ -108,14 +108,14 @@ if (ENABLE_AUTHORING_PAGE) {
     res.status(changes > 0 ? 200 : 409).send(changes > 0 ? "Point labelled" : "Error occurred - The point may be a border point, which cannot be deleted")
   })
 
-  app.delete('/api/point/:id/delete', async (req: Request, res: Response) => {
+  app.delete('/api/v1/point/:id/delete', async (req: Request, res: Response) => {
     const { id } = req.params;
 
     const result = await replaceNode(Number(id))
     res.status(result ? 200 : 409).send(result ? "Point deleted" : "Error occurred - The point may be a border point, which cannot be deleted")
   })
 
-  app.post('/api/point/:id1/connect/:id2', async (req: Request, res: Response) => {
+  app.post('/api/v1/point/:id1/connect/:id2', async (req: Request, res: Response) => {
     const { id1, id2 } = req.params;
 
     const is_on_same_level = await readDB("SELECT kf1.keyframe_id, kf2.keyframe_id, kf1.location FROM floorplan_points kf1 JOIN floorplan_points kf2 ON kf1.location = kf2.location AND kf1.keyframe_id <> kf2.keyframe_id AND kf1.keyframe_id = ? AND kf2.keyframe_id = ? LIMIT 1;", [id1, id2])
@@ -128,7 +128,7 @@ if (ENABLE_AUTHORING_PAGE) {
     res.status(result ? 201 : 409).send(result ? "Points connected" : "Error occurred - The points may already be connected, or are border points!")
   })
 
-  app.delete('/api/point/:id1/connect/:id2', async (req: Request, res: Response) => {
+  app.delete('/api/v1/point/:id1/connect/:id2', async (req: Request, res: Response) => {
     const { id1, id2 } = req.params;
 
     const is_edge = await readDB("SELECT * FROM refined_edges WHERE (keyframe_id0 = ? AND keyframe_id1 = ?) OR (keyframe_id0 = ? AND keyframe_id1 = ?) LIMIT 1;", [id1, id2, id2, id1])

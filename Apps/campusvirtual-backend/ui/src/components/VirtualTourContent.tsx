@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import * as THREE from 'three'
-import { useThree } from '@react-three/fiber'
+import { useThree, Vector3 } from '@react-three/fiber'
 import axios from 'axios'
 import { API_PREFIX } from '../consts'
 import { calculatePositionFromMatrix, getYRotation } from '../utils'
@@ -34,42 +34,65 @@ const VirtualTourContent: React.FC<any> = ({
 
   const { camera } = useThree()
 
-  const calculateReferenceNode = (pointData: PointData, neighboursData: NeighbourData[]) => {
-    const currentPos = calculatePositionFromMatrix(pointData.pose)
-    const sameFloorNeighbors = neighboursData.filter(neighbor => {
-      const neighborPos = calculatePositionFromMatrix(neighbor.pose)
-      return Math.abs(neighborPos[1] - currentPos[1]) < 0.1
-    })
+  const calcAngleToTarget = (target: Vector3) => {
+    const yaw = Math.atan2(
+      target.x - camera.position.x,
+      target.z - camera.position.z
+    )
+    const yawDownNegativeZAxis = Math.PI - yaw
 
-    if (sameFloorNeighbors.length === 0) return null
+    // RotationController Euler uses Yaw in CCW
+    const yawCCW = -yawDownNegativeZAxis
 
-    const referenceNeighbor = sameFloorNeighbors[Math.floor(Math.random() * sameFloorNeighbors.length)]
-    
-    const neighborPos = calculatePositionFromMatrix(referenceNeighbor.pose)
-    const directionVector = new THREE.Vector3(
-      neighborPos[0] - currentPos[0],
-      0,
-      neighborPos[2] - currentPos[2]
-    ).normalize()
+    return yawCCW % (2 * Math.PI)
+  }
 
-    const targetYaw = Math.atan2(directionVector.x, directionVector.z)
+  const calculateReferenceNode = (
+    pointData: PointData,
+    neighboursData: NeighbourData[]
+  ) => {
+    if (
+      neighboursData.length === 1 &&
+      Number(neighboursData[0].keyframe_id) === Number(pointData.keyframe_id)
+    )
+      return 0 // Need 2 nodes to calculate an angle
+    if (neighboursData.length === 0 || neighboursData.length === 1) return null
+
+    // Get random/reference node that the Map.tsx floor will share - e.g. First or Last in array
+    let referenceNeighbour: NeighbourData
+    if (
+      Number(pointData.keyframe_id) === Number(neighboursData[0].keyframe_id)
+    ) {
+      referenceNeighbour = neighboursData[neighboursData.length - 1]
+    } else {
+      referenceNeighbour = neighboursData[0]
+    }
+
+    const neighbourPos = calculatePositionFromMatrix(referenceNeighbour.pose)
+    const neighbourVec = new THREE.Vector3(
+      neighbourPos[0],
+      neighbourPos[1],
+      neighbourPos[2]
+    )
 
     return {
-      id: referenceNeighbor.keyframe_id,
-      targetYaw
+      id: referenceNeighbour.keyframe_id,
+      targetYaw: calcAngleToTarget(neighbourVec),
     }
   }
 
   const fetchPointData = async (pointId: string) => {
     try {
       const pointResponse = await axios.get<PointData>(
-        `${API_PREFIX}/point/${pointId}/true`
+        `${API_PREFIX}/api/v1/point/${pointId}/true`
       )
       const pointData = pointResponse.data
       console.info('Point Data', pointData)
 
       const neighboursResponse = await axios.get<NeighbourData[]>(
-        `${API_PREFIX}/point/${pointId}/neighbours/${Boolean(isRefined)}/8/6`
+        `${API_PREFIX}/api/v1/point/${pointId}/neighbours/${Boolean(
+          isRefined
+        )}/8/6`
       )
 
       const neighboursData = neighboursResponse.data
