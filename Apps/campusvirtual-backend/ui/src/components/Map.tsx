@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Stage, Line, Layer, Image as KonvaImage, Arrow } from 'react-konva'
-import { Circle, X } from 'react-feather'
+import { X } from 'react-feather'
 import {
   API_PREFIX,
   HIDE_EDGES,
