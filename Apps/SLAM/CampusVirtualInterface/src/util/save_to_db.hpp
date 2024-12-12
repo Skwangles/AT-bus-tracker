@@ -31,7 +31,7 @@ public:
         : name(name), start_timestamp(start_timestamp), stop_timestamp(stop_timestamp) {}
 };
 
-std::vector<video_timestamp> load_video_timestamps(sqlite3* db) {
+std::vector<video_timestamp> load_video_timestamps_sqlite3(sqlite3* db) {
     std::vector<video_timestamp> results;
     sqlite3_stmt* stmt;
 
@@ -76,7 +76,7 @@ std::vector<timestamp_group> load_timestamp_groups(sqlite3* db) {
 }
 
 
-int save_timestamp_groups_to_db(sqlite3 *db, std::string group, double timestamp, double ms){
+int save_timestamp_groups_to_sqlite3(sqlite3 *db, std::string group, double timestamp, double ms){
     
     std::vector<std::pair<std::string, std::string>> columns{
         {"name", "BLOB"},
@@ -164,7 +164,7 @@ int save_timestamp_groups_to_db(sqlite3 *db, std::string group, double timestamp
 
 
 
-int save_video_to_db(sqlite3 *db, std::string video_name, double start_timestamp, double end_timestamp){
+int save_video_to_sqlite3(sqlite3 *db, std::string video_name, double start_timestamp, double end_timestamp){
     
     std::vector<std::pair<std::string, std::string>> columns{
         {"name", "BLOB"},
@@ -249,15 +249,15 @@ int save_video_to_db(sqlite3 *db, std::string video_name, double start_timestamp
 }
 
 
-void save_timestamps_to_db(sqlite3* db, std::vector<timestamp_group> timestamp_group_list, std::vector<video_timestamp> video_timestamps_list){
+void save_timestamps_to_sqlite3(sqlite3* db, std::vector<timestamp_group> timestamp_group_list, std::vector<video_timestamp> video_timestamps_list){
 
     for (auto& timestamp_group : timestamp_group_list) {
-        save_timestamp_groups_to_db(db, timestamp_group.group , timestamp_group.timestamp, timestamp_group.ms);
+        save_timestamp_groups_to_sqlite3(db, timestamp_group.group , timestamp_group.timestamp, timestamp_group.ms);
         std::cout << "Group: " << timestamp_group.group << " Timestamp: " << timestamp_group.timestamp <<  " Ms: " << timestamp_group.ms << std::endl;
     }
 
     for (auto& video_timestamp : video_timestamps_list) {
-        save_video_to_db(db, video_timestamp.name , video_timestamp.start_timestamp, video_timestamp.stop_timestamp);
+        save_video_to_sqlite3(db, video_timestamp.name , video_timestamp.start_timestamp, video_timestamp.stop_timestamp);
         std::cout << "Video: " << video_timestamp.name << " Start: " << video_timestamp.start_timestamp << " End: " << video_timestamp.stop_timestamp << std::endl;
     }
 }
