@@ -15,7 +15,8 @@ int main(int argc, char** argv) {
         ("use_viewer", po::value<bool>()->default_value(true), "Use use_viewer (true|false)")
         ("project_dir", po::value<std::string>()->required(), "Campus virtual project directory")
         ("view_static", "View without processing (optional)")
-        ("convertToPg", "Convert to Postgres (optional)")
+        ("convertToPg", "Convert SLAM map to Postgres DB (optional)")
+        ("convertToSQLite", "Convert SLAM map to SQLite3 DB (optional)")
         ("in", po::value<std::string>(), "Input map (*.db) - Optional for normal mode")
         ("out", po::value<std::string>(), "Output map (*.db)")
         ("media_dir", po::value<std::string>(), "Media directory - videos")
@@ -47,6 +48,7 @@ int main(int argc, char** argv) {
         // Check for required arguments based on mode
         bool view_statically = vm.count("view_static");
         bool convert_to_pg = vm.count("convertToPg");
+        bool convert_to_sqlite3 = vm.count("convertToSQLite");
 
         if (!vm.count("project_dir")) {
             std::cout << "Missing required argument: project_dir" << std::endl;
@@ -54,7 +56,7 @@ int main(int argc, char** argv) {
             return 1;
         }
 
-        if (convert_to_pg) {
+        if (convert_to_pg || convert_to_sqlite3) {
             if (!vm.count("in") || !vm.count("map_dir")) {
                 std::cout << "For Postgres conversion, required arguments: in, map_dir" << std::endl;
                 std::cout << desc << std::endl;
@@ -92,7 +94,13 @@ int main(int argc, char** argv) {
         std::string config_file = vm["config_file"].as<std::string>();
 
         std::string command;
-        if (convert_to_pg){
+        if (convert_to_sqlite3) {
+            command = project_dir + path_to_stella + "slam_to_sqlite" +
+                              " -c " + project_dir + path_to_config  + config_file +
+                              " -v " + project_dir + path_to_fbow +
+                              " --map-db-in " + map_dir + "/" + map_in +
+        }
+        else if (convert_to_pg){
             std::string connection_string = "postgresql://" + db_user + ":" + db_pwd + "@localhost:" + db_port + "/" + db_name;
             command = project_dir + path_to_stella + "slam_to_pg" +
                               " -c " + project_dir + path_to_config  + config_file +
@@ -101,14 +109,14 @@ int main(int argc, char** argv) {
                               " --db " + connection_string;
         }
         else if (view_statically){
-            command = project_dir + path_to_stella + "campus_virtual_viewer" +
+            command = project_dir + path_to_stella + "view" +
                               " -c " + project_dir + path_to_config + config_file+
                               " -v " + project_dir + path_to_fbow +
                               (map_in.empty() ? "" : " --map-db-in " + map_dir + "/" + map_in) +
                               " --map-db-out " +  map_dir + "/" + map_out;
         }
         else {
-            command = project_dir + path_to_stella + "campus_virtual" +
+            command = project_dir + path_to_stella + "map" +
                                         " -c " + project_dir + path_to_config + config_file +
                                         " -v " + project_dir + path_to_fbow +
                                         (map_in.empty() ? "" : " --map-db-in " + map_dir + "/" + map_in) +

@@ -43,6 +43,8 @@ namespace fs = ghc::filesystem;
 #include <gperftools/profiler.h>
 #endif
 
+#define USE_SQLITE3 true
+
 static int db_callback(std::vector<video_timestamp> *data, int argc, char **argv, char **azColName){
    data->push_back(video_timestamp(argv[0], std::atof(argv[1]), std::atof(argv[2])));
    return 0;
@@ -573,7 +575,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     
-    save_timestamps_to_db(db, timestamp_group_list, video_timestamps_list);
+    save_timestamps_to_sqlite3(db, timestamp_group_list, video_timestamps_list);
     
 
     sqlite3_close(db);
