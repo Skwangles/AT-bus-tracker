@@ -56,9 +56,16 @@ int main(int argc, char** argv) {
             return 1;
         }
 
-        if (convert_to_pg || convert_to_sqlite3) {
-            if (!vm.count("in") || !vm.count("map_dir")) {
-                std::cout << "For Postgres conversion, required arguments: in, map_dir" << std::endl;
+        if (convert_to_pg) {
+            if (!vm.count("in") || !vm.count("map_dir") || !vm.count("db_user") || !vm.count("db_pwd") || !vm.count("db_name") || !vm.count("db_name") || !vm.count("db_port")) {
+                std::cout << "For Postgres conversion, required arguments: in, map_dir, db_user, db_pwd, db_name, db_port" << std::endl;
+                std::cout << desc << std::endl;                           
+                return 1;                                                 
+            }
+        }
+        else if (convert_to_sqlite3) {
+            if (!vm.count("in") || !vm.count("out") || !vm.count("map_dir")) {
+                std::cout << "For Sqlite3 conversion, required arguments: in, map_dir, out" << std::endl;
                 std::cout << desc << std::endl;
                 return 1;
             }
@@ -98,22 +105,23 @@ int main(int argc, char** argv) {
             command = project_dir + path_to_stella + "slam_to_sqlite" +
                               " -c " + project_dir + path_to_config  + config_file +
                               " -v " + project_dir + path_to_fbow +
-                              " --map-db-in " + map_dir + "/" + map_in +
+                              " -i " + map_dir + "/" + map_in +
+                              " -o " + map_dir + "/" + map_out;
         }
         else if (convert_to_pg){
             std::string connection_string = "postgresql://" + db_user + ":" + db_pwd + "@localhost:" + db_port + "/" + db_name;
             command = project_dir + path_to_stella + "slam_to_pg" +
                               " -c " + project_dir + path_to_config  + config_file +
                               " -v " + project_dir + path_to_fbow +
-                              " --map-db-in " + map_dir + "/" + map_in +
+                              " -i " + map_dir + "/" + map_in +
                               " --db " + connection_string;
         }
         else if (view_statically){
             command = project_dir + path_to_stella + "view" +
                               " -c " + project_dir + path_to_config + config_file+
                               " -v " + project_dir + path_to_fbow +
-                              (map_in.empty() ? "" : " --map-db-in " + map_dir + "/" + map_in) +
-                              " --map-db-out " +  map_dir + "/" + map_out;
+                              (map_in.empty() ? "" : " -i " + map_dir + "/" + map_in) +
+                              " -o " +  map_dir + "/" + map_out;
         }
         else {
             command = project_dir + path_to_stella + "map" +

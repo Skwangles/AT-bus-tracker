@@ -50,6 +50,7 @@ void create_tables_if_not_exist(sqlite3* db) {
         DROP TABLE IF EXISTS nodes;
         DROP TABLE IF EXISTS edges;
         DROP TABLE IF EXISTS node_locations;
+        DROP TABLE IF EXISTS special_labels;
 
         CREATE TABLE nodes (
             ts REAL NOT NULL,
@@ -59,6 +60,12 @@ void create_tables_if_not_exist(sqlite3* db) {
             y_trans REAL,
             z_trans REAL,
             label TEXT DEFAULT NULL
+        );
+
+        CREATE TABLE special_labels (
+            keyframe_id INTEGER PRIMARY KEY NOT NULL,
+            label TEXT,
+            FOREIGN KEY (keyframe_id) REFERENCES nodes(keyframe_id)
         );
 
         CREATE TABLE edges (
@@ -83,6 +90,66 @@ void create_tables_if_not_exist(sqlite3* db) {
         spdlog::error("SQL error: {}", err_msg);
         sqlite3_free(err_msg);
     }
+}
+
+void special_labels_to_sqlite(sqlite3* db, const std::string& map_db_path) {
+    sqlite3* source_db = nullptr;
+    int ret = sqlite3_open(map_db_path.c_str(), &source_db);
+    if (ret != SQLITE_OK) {
+        spdlog::error("Failed to open source SQL database");
+        return;
+    }
+
+    auto special_points = load_special_point_timestamps(source_db);
+
+    sqlite3_stmt* stmt = nullptr;
+    const char* sql = "SELECT keyframe_id FROM nodes WHERE ABS(ts - ?) < 0.00001 LIMIT 1";
+    ret = sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr);
+    
+    if (ret != SQLITE_OK) {
+        spdlog::error("Failed to prepare statement: {}", sqlite3_errmsg(db));
+        sqlite3_close(source_db);
+        return;
+    }
+
+    sqlite3_stmt* insert_stmt = nullptr;
+    const char* insert_sql = "INSERT INTO special_labels (keyframe_id, label) VALUES (?, ?)";
+    ret = sqlite3_prepare_v2(db, insert_sql, -1, &insert_stmt, nullptr);
+
+    if (ret != SQLITE_OK) {
+        spdlog::error("Failed to prepare insert statement: {}", sqlite3_errmsg(db));
+        sqlite3_finalize(stmt);
+        sqlite3_close(source_db);
+        return;
+    }
+
+    for (const timestamp_annotation& special_point : special_points) {
+        sqlite3_bind_double(stmt, 1, special_point.timestamp);
+        
+        if (sqlite3_step(stmt) == SQLITE_ROW) {
+            int id = sqlite3_column_int(stmt, 0);
+            std::cout << "Special Point - Paired ts " << special_point.timestamp << " with keyframe_id " << id << std::endl;
+            
+            sqlite3_bind_int(insert_stmt, 1, id);
+            sqlite3_bind_text(insert_stmt, 2, special_point.group.c_str(), -1, SQLITE_STATIC);
+            
+            if (sqlite3_step(insert_stmt) != SQLITE_DONE) {
+                spdlog::error("Failed to insert node location: {}", sqlite3_errmsg(db));
+            }
+            
+            sqlite3_reset(insert_stmt);
+            sqlite3_clear_bindings(insert_stmt);
+        } else {
+            std::cout << "Special Point - Could not find a timestamp match for " << special_point.timestamp << " of group " << special_point.group << std::endl;
+        }
+        
+        sqlite3_reset(stmt);
+        sqlite3_clear_bindings(stmt);
+    }
+
+    sqlite3_finalize(stmt);
+    sqlite3_finalize(insert_stmt);
+    sqlite3_close(source_db);
 }
 
 void timestamp_groups_to_sqlite(sqlite3* db, const std::string& map_db_path) {
@@ -116,12 +183,12 @@ void timestamp_groups_to_sqlite(sqlite3* db, const std::string& map_db_path) {
         return;
     }
 
-    for (const timestamp_group& node_loc : node_locations) {
+    for (const timestamp_annotation& node_loc : node_locations) {
         sqlite3_bind_double(stmt, 1, node_loc.timestamp);
         
         if (sqlite3_step(stmt) == SQLITE_ROW) {
             int id = sqlite3_column_int(stmt, 0);
-            std::cout << "Paired ts " << node_loc.timestamp << " with keyframe_id " << id << std::endl;
+            std::cout << "Group - Paired ts " << node_loc.timestamp << " with keyframe_id " << id << std::endl;
             
             sqlite3_bind_int(insert_stmt, 1, id);
             sqlite3_bind_text(insert_stmt, 2, node_loc.group.c_str(), -1, SQLITE_STATIC);
@@ -133,7 +200,7 @@ void timestamp_groups_to_sqlite(sqlite3* db, const std::string& map_db_path) {
             sqlite3_reset(insert_stmt);
             sqlite3_clear_bindings(insert_stmt);
         } else {
-            std::cout << "Could not find a timestamp match for " << node_loc.timestamp << " of group " << node_loc.group << std::endl;
+            std::cout << "Group - Could not find a timestamp match for " << node_loc.timestamp << " of group " << node_loc.group << std::endl;
         }
         
         sqlite3_reset(stmt);
@@ -198,6 +265,7 @@ void convert_to_sqlite(const std::shared_ptr<stella_vslam::system>& slam,
             int ir = i / 4;
             int il = i % 4;
             pose_vec.push_back(pose(ir, il));
+
         }
 
         sqlite3_bind_int(node_stmt, 1, id);
@@ -215,6 +283,7 @@ void convert_to_sqlite(const std::shared_ptr<stella_vslam::system>& slam,
 
         // Handle edges
         auto insert_edge = [&edge_stmt, &db](int id0, int id1, int type) {
+            std::cout << "Inserting Edge: 0:" << id0 << " 1:" << id1 << " t:" << type << edge_stmt << std::endl;
             sqlite3_bind_int(edge_stmt, 1, id0);
             sqlite3_bind_int(edge_stmt, 2, id1);
             sqlite3_bind_int(edge_stmt, 3, type);
@@ -224,6 +293,8 @@ void convert_to_sqlite(const std::shared_ptr<stella_vslam::system>& slam,
             sqlite3_reset(edge_stmt);
             sqlite3_clear_bindings(edge_stmt);
         };
+
+        std::cout << "Processing Keyframe: " << id << " ts: " << ts;
 
         // Spanning children
         for (const auto& child : keyfrm->graph_node_->get_spanning_children()) {
@@ -258,6 +329,7 @@ void convert_to_sqlite(const std::shared_ptr<stella_vslam::system>& slam,
     sqlite3_finalize(edge_stmt);
 
     timestamp_groups_to_sqlite(db, map_db_path);
+    special_labels_to_sqlite(db, map_db_path);
 
     // Commit transaction
     ret = sqlite3_exec(db, "COMMIT", nullptr, nullptr, &err_msg);
@@ -281,8 +353,9 @@ int main(int argc, char* argv[]) {
     auto log_level = op.add<popl::Value<std::string>>("", "log-level", "log level", "info");
     auto config_file_path = op.add<popl::Value<std::string>>("c", "config", "config file path");
 
-    auto map_db_path_in = op.add<popl::Value<std::string>>("i", "map-db-in", "load a map from this path", "");
-    auto output_db_path = op.add<popl::Value<std::string>>("o", "output-db", "output SQLite database path", "slam.db");
+    auto map_dir = op.add<popl::Value<std::string>>("m", "map_dir", "Map directory", "");
+    auto map_db_path_in = op.add<popl::Value<std::string>>("i", "map-db-in", "load a map from this path");
+    auto output_db_path = op.add<popl::Value<std::string>>("o", "map-db-out", "output SQLite database path", "slam.db");
    
     try {
         op.parse(argc, argv);
@@ -306,7 +379,7 @@ int main(int argc, char* argv[]) {
         std::cerr << op << std::endl;
         return EXIT_FAILURE;
     }
-    if (!vocab_file_path->is_set() || !config_file_path->is_set()) {
+    if (!vocab_file_path->is_set() || !config_file_path->is_set() || !map_db_path_in->is_set() || !output_db_path->is_set()) {
         std::cerr << "invalid arguments" << std::endl;
         std::cerr << std::endl;
         std::cerr << op << std::endl;
@@ -327,7 +400,8 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-    std::string map_db_in = map_db_path_in->value();
+    std::string map_db_in = map_dir->value() + map_db_path_in->value();
+    std::string map_db_out = map_dir->value() + output_db_path->value();
 
     // build a slam system
     auto slam = std::make_shared<stella_vslam::system>(cfg, vocab_file_path->value());
@@ -353,7 +427,7 @@ int main(int argc, char* argv[]) {
     slam->startup(need_initialize);
     slam->disable_mapping_module();
 
-    convert_to_sqlite(slam, cfg, map_db_path_in->value(), output_db_path->value());
+    convert_to_sqlite(slam, cfg, map_db_in, map_db_out);
 
     slam->shutdown();
 

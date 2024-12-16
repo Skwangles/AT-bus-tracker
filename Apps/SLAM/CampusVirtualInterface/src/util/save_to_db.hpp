@@ -11,13 +11,13 @@
 #include <ghc/filesystem.hpp>
 namespace fs = ghc::filesystem;
 
-class timestamp_group {
+class timestamp_annotation {
 public:
     std::string group;
     double timestamp;
     double ms;
 
-    timestamp_group(std::string group, double timestamp, double ms)
+    timestamp_annotation(std::string group, double timestamp, double ms)
         : group(group), timestamp(timestamp),  ms(ms) {}
 };
 
@@ -53,8 +53,30 @@ std::vector<video_timestamp> load_video_timestamps_sqlite3(sqlite3* db) {
     return results;
 }
 
-std::vector<timestamp_group> load_timestamp_groups(sqlite3* db) {
-    std::vector<timestamp_group> results;
+std::vector<timestamp_annotation> load_special_point_timestamps(sqlite3* db) {
+    std::vector<timestamp_annotation> results;
+    sqlite3_stmt* stmt;
+
+    const char* sql = "SELECT name, timestamp, ms FROM special_point_timestamps";
+
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK) {
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            std::string annotation = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
+            double ts = sqlite3_column_double(stmt, 1);
+            double ms = sqlite3_column_double(stmt, 2);
+
+            results.emplace_back(timestamp_annotation(annotation, ts, ms));
+        }
+        sqlite3_finalize(stmt);
+    } else {
+        std::cerr << "Failed to execute query: " << sqlite3_errmsg(db) << std::endl;
+    }
+
+    return results;
+}
+
+std::vector<timestamp_annotation> load_timestamp_groups(sqlite3* db) {
+    std::vector<timestamp_annotation> results;
     sqlite3_stmt* stmt;
 
     const char* sql = "SELECT name, timestamp, ms FROM timestamp_groups";
@@ -65,7 +87,7 @@ std::vector<timestamp_group> load_timestamp_groups(sqlite3* db) {
             double ts = sqlite3_column_double(stmt, 1);
             double ms = sqlite3_column_double(stmt, 2);
 
-            results.emplace_back(timestamp_group(group, ts, ms));
+            results.emplace_back(timestamp_annotation(group, ts, ms));
         }
         sqlite3_finalize(stmt);
     } else {
@@ -74,6 +96,93 @@ std::vector<timestamp_group> load_timestamp_groups(sqlite3* db) {
 
     return results;
 }
+
+int save_special_point_timestamps_to_sqlite3(sqlite3 *db, std::string group, double timestamp, double ms){
+    
+    std::vector<std::pair<std::string, std::string>> columns{
+        {"name", "BLOB"},
+        {"timestamp", "REAL"},
+        {"ms", "NUMERIC"}
+        };
+
+    int ret = 0;
+    if (ret == SQLITE_OK) {
+        std::string stmt_str = "CREATE TABLE IF NOT EXISTS special_point_timestamps(id INTEGER PRIMARY KEY AUTOINCREMENT";
+        for (const auto& column : columns) {
+            stmt_str += ", " + column.first + " " + column.second;
+        }
+        stmt_str += ");";
+        ret = sqlite3_exec(db, stmt_str.c_str(), nullptr, nullptr, nullptr);
+    }
+
+    if (ret != SQLITE_OK) {
+        spdlog::error("SQLite error (create_table): {}", sqlite3_errmsg(db));
+        return false;
+    }
+
+    if (ret == SQLITE_OK) {
+        ret = sqlite3_exec(db, "BEGIN;", nullptr, nullptr, nullptr);
+    }
+
+    sqlite3_stmt* stmt = nullptr;
+    if (ret == SQLITE_OK) {
+        std::string stmt_str = "INSERT INTO special_point_timestamps(";
+        bool first = true;
+        for (const auto& column : columns) {
+            if (first) {
+                stmt_str += column.first;
+                first = false;
+            } else {
+                stmt_str += ", " + column.first;
+            }
+        }
+        stmt_str += ") VALUES(";
+        first = true;
+        for (size_t i = 0; i < columns.size(); ++i) {
+            if (first) {
+                stmt_str += "?";
+                first = false;
+            } else {
+                stmt_str += ", ?";
+            }
+        }
+        stmt_str += ")";
+        ret = sqlite3_prepare_v2(db, stmt_str.c_str(), -1, &stmt, nullptr);
+    }
+    if (ret != SQLITE_OK) {
+        spdlog::error("SQLite error (prepare): {}", sqlite3_errmsg(db));
+        return false;
+    }
+
+    if (ret == SQLITE_OK) {
+        ret = sqlite3_bind_blob(stmt, 1, group.c_str(), group.size(), SQLITE_TRANSIENT);
+    }
+    if (ret == SQLITE_OK) {
+        ret = sqlite3_bind_double(stmt, 2, timestamp);
+    }
+    if (ret == SQLITE_OK) {
+        ret = sqlite3_bind_double(stmt, 3, ms);
+    }
+    
+    
+
+    if (ret == SQLITE_OK) {
+            ret = sqlite3_step(stmt);
+    }
+    if (ret != SQLITE_DONE) {
+        spdlog::error("SQLite step failed: {}", sqlite3_errmsg(db));
+        return false;
+    }
+    sqlite3_finalize(stmt);
+    ret = sqlite3_exec(db, "COMMIT;", nullptr, nullptr, nullptr);
+    if (ret != SQLITE_OK) {
+        spdlog::error("SQLite error (commit): {}", sqlite3_errmsg(db));
+        return false;
+    }
+
+    return 0;
+}
+
 
 
 int save_timestamp_groups_to_sqlite3(sqlite3 *db, std::string group, double timestamp, double ms){
@@ -249,15 +358,16 @@ int save_video_to_sqlite3(sqlite3 *db, std::string video_name, double start_time
 }
 
 
-void save_timestamps_to_sqlite3(sqlite3* db, std::vector<timestamp_group> timestamp_group_list, std::vector<video_timestamp> video_timestamps_list){
+void save_timestamps_to_sqlite3(sqlite3* db, std::vector<timestamp_annotation> timestamp_group_list, std::vector<timestamp_annotation> special_points_list){
 
     for (auto& timestamp_group : timestamp_group_list) {
         save_timestamp_groups_to_sqlite3(db, timestamp_group.group , timestamp_group.timestamp, timestamp_group.ms);
         std::cout << "Group: " << timestamp_group.group << " Timestamp: " << timestamp_group.timestamp <<  " Ms: " << timestamp_group.ms << std::endl;
     }
-
-    for (auto& video_timestamp : video_timestamps_list) {
-        save_video_to_sqlite3(db, video_timestamp.name , video_timestamp.start_timestamp, video_timestamp.stop_timestamp);
-        std::cout << "Video: " << video_timestamp.name << " Start: " << video_timestamp.start_timestamp << " End: " << video_timestamp.stop_timestamp << std::endl;
+    
+    for (auto& special_point : special_points_list) {
+        save_special_point_timestamps_to_sqlite3(db, special_point.group , special_point.timestamp, special_point.ms);
+        std::cout << "Special Point: " << special_point.group << " Timestamp: " << special_point.timestamp <<  " Ms: " << special_point.ms << std::endl;
     }
+
 }

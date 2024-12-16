@@ -116,7 +116,7 @@ void timestamp_groups_to_pg(pqxx::work &txn, const std::string& map_db_path){
 
     auto node_locations = load_timestamp_groups(db);
 
-    for (const timestamp_group& node_loc : node_locations){
+    for (const timestamp_annotation& node_loc : node_locations){
         pqxx::result res = txn.exec_params("SELECT keyframe_id FROM nodes WHERE ABS(ts - $1) < 0.00001 LIMIT 1", node_loc.timestamp);
         if (std::size(res) == 0){
             std::cout << "Could not find a timestamp match for " << node_loc.timestamp << " of group " << node_loc.group << std::endl;

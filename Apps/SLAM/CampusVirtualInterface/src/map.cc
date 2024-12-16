@@ -34,6 +34,7 @@ namespace fs = ghc::filesystem;
 #include "util/save_to_db.hpp"
 #include "util/handle_json.hpp"
 #include "util/yaml.h"
+#include "util/frame_writing.hpp"
 
 #ifdef USE_STACK_TRACE_LOGGER
 #include <backward.hpp>
@@ -67,7 +68,8 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
                   const double start_timestamp,
                   const std::string& viewer_string,
                   nlohmann::json& json_obj,
-                  std::vector<timestamp_group> &timestamp_group_list,
+                  std::vector<timestamp_annotation>& timestamp_group_list,
+                  std::vector<timestamp_annotation>& special_point_group_list,
                   const std::string& image_output_dir = "pictures/",
                   const unsigned int slam_img_width = 1920,
                   const unsigned int slam_img_height = 960
@@ -155,6 +157,11 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
 
     bool is_not_end = true;
 
+    int32_t special_point_offset = 0;
+    std::vector<std::string> special_points;    
+
+    ThreadPool img_write_thread_pool(8);
+
     // run the slam in another thread
     std::thread thread([&]() {
         while (is_not_end) {
@@ -221,12 +228,24 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
                         params.push_back(100); // 0-100 - 100 = highest quality
                         // params.push_back(cv::IMWRITE_JPEG_PROGRESSIVE); // Progressive JPGs used for reduced loading times for frontend
                         // params.push_back(1); // 1 = true, 0 = false 
-                        cv::imwrite(filepath, frame, params); 
+
+
+                        img_write_thread_pool.enqueue([frame, filepath, params]() {
+                            // Do writing asynchronously
+                            cv::imwrite(filepath, frame, params);
+                        });
                         
                         if (json_obj != NULL){
                             
                             std::string group = find_group_from_json(json_obj, ms);
                             timestamp_group_list.emplace_back(group, timestamp, ms);
+                            
+                            
+                            special_point_offset = get_special_points(json_obj, ms, special_point_offset, special_points);
+                            for (auto annotation : special_points){
+                                special_point_group_list.emplace_back(annotation, timestamp, ms);
+                            }
+                            
                             std::cout << "Keyframe made - Location: " << group << std::endl;
                         }
                         else{
@@ -327,6 +346,14 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
             return EXIT_FAILURE;
         }
     }
+
+    if (!img_write_thread_pool.is_tasks_done()) {
+        while (!img_write_thread_pool.is_tasks_done()) {
+            std::cout << "Waiting on " << img_write_thread_pool.get_num_tasks_left() << " images to be written" << std::endl;
+            std::this_thread::sleep_for(chrono::milliseconds(1000));
+        }
+    }
+    std::cout << "All images are written: " << img_write_thread_pool.get_num_tasks_left() << " images left " << std::endl;
 
     return timestamp;
 }
@@ -436,6 +463,9 @@ int main(int argc, char* argv[]) {
     ProfilerStart("slam.prof");
 #endif
 
+    ///
+    /// If "IN" db is provided, copy the previous entries before they are overwritten
+    ///
     std::string map_db_in = map_db_path_in->value();
 
     db = nullptr;
@@ -445,8 +475,8 @@ int main(int argc, char* argv[]) {
         return false;
     }
 
-    std::vector<video_timestamp> video_timestamps_list = load_video_timestamps(db);
-    std::vector<timestamp_group> timestamp_group_list = load_timestamp_groups(db);
+    std::vector<timestamp_annotation> timestamp_group_list = load_timestamp_groups(db);
+    std::vector<timestamp_annotation> special_point_group_list = load_special_point_timestamps(db);
 
     sqlite3_close(db);
 
@@ -549,6 +579,7 @@ int main(int argc, char* argv[]) {
                                 viewer_string, 
                                 json_obj, 
                                 timestamp_group_list,
+                                special_point_group_list,
                                 img_output_dir->value(),
                                 img_size["cols"].as<unsigned int>(),
                                 img_size["rows"].as<unsigned int>()
@@ -558,8 +589,6 @@ int main(int argc, char* argv[]) {
             throw std::runtime_error("Invalid setup type: " + slam->get_camera()->get_setup_type_string());
         }
         std::cout << "Finish Timestamp" << finish_timestamp << std::endl;
-
-        video_timestamps_list.emplace_back(video_file_path, timestamp, finish_timestamp);
         
         timestamp = finish_timestamp + 1;
         std::cout << "Map database is saved to " << map_db_path_out->value() << std::endl;
@@ -575,8 +604,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     
-    save_timestamps_to_sqlite3(db, timestamp_group_list, video_timestamps_list);
-    
+    save_timestamps_to_sqlite3(db, timestamp_group_list, special_point_group_list);
 
     sqlite3_close(db);
     
