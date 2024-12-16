@@ -54,14 +54,17 @@ endif()
 
 set(EXECUTABLE_TARGETS "")
 
-add_executable(campus_virtual src/campus_virtual.cc)
-list(APPEND EXECUTABLE_TARGETS campus_virtual)
+add_executable(map src/map.cc)
+list(APPEND EXECUTABLE_TARGETS map)
 
 add_executable(slam_to_pg src/slam_to_postgres.cc)
 list(APPEND EXECUTABLE_TARGETS slam_to_pg)
 
-add_executable(campus_virtual_viewer src/campus_virtual_viewer.cc)
-list(APPEND EXECUTABLE_TARGETS campus_virtual_viewer)
+add_executable(slam_to_sqlite src/slam_to_sqlite.cc)
+list(APPEND EXECUTABLE_TARGETS slam_to_sqlite)
+
+add_executable(view src/view.cc)
+list(APPEND EXECUTABLE_TARGETS view)
 
 foreach(EXECUTABLE_TARGET IN LISTS EXECUTABLE_TARGETS)
     # Set output directory for executables
