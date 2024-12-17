@@ -62,13 +62,27 @@ It is slow, and intensive, however, will likely help
   - Has a headless and live mapping viewer option (see the map as it is built using iridescence as a map viewer)
   - Allows you to pass in multiple videos in an order based on a parent directory
   - Pairs JSON location files to keyframes based on timestamps
-  - Allows converting SLAM to postgres database for viewing
+  - Allows converting SLAM to postgres/sqlite database for viewing
+
+Note: The `type` field in the edges (or refined_edges) tables are 0 = normal edge, 1 = loop edge, 2 = edge between zones, -1 = Covisibility (i.e. frame has enough overlap in landmarks to be 'line of sight')
+
+### MapMerger
+
+In the case of trying to merge two maps together, you must have atleast two 'special points' marked with '$$' at the start, marking a merge point.
+At least these 2 merge points are needed to find what rotation and translation best aligns the points.
+Uses Procrustes Analysis to calculate the optimal rotation (only does so in
+XZ plane, because the points should already be horizontally aligned).
+VSLAM in equirectangular mode uses Y as the vertical coordinate (i.e. XZ = ground plane).
+
+TODO: Implement a manual alignment method
 
 ### campusvirutal-backend and ui/
 
 - React frontend using THREE.js to visualise the graph, pathfind, and navigate the info present in the PostgreSQL DB
   On first run, it loads all points from refined_nodes, refined_edges, and refined_node_locations into a db for map editing by the authoring page.
   so you MUST RUN THE GRAPH PRUNER FIRST!
+
+Note: The `type` field of the floorplan_points is 0-49 = Normal points (e.g. bathroom, drinking fountain, etc.), 50+ = Border nodes (e.g. doors, stairs, etc.) - The large number set is to give future extensibility to types
 
 ## graph-pruner
 

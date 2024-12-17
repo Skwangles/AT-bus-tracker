@@ -1,8 +1,9 @@
-# stella_vslam_examples
+# Modified Campus Virtual Interface
 
 ## License
 
 This module was originally included in xdspacelab/openvslam. Therefore, the license follows the original license of xdspacelab/openvslam (BSD 2-Clause).
+(Note: Though it is has since been modified, with only minor relations back to the original example script)
 
 The following files are derived from third-party libraries.
 
