@@ -59,12 +59,14 @@ void create_tables_if_not_exist(sqlite3* db) {
             x_trans REAL,
             y_trans REAL,
             z_trans REAL,
-            label TEXT DEFAULT NULL
+            label TEXT DEFAULT NULL,
+            zone TEXT DEFAULT NULL
         );
 
         CREATE TABLE special_labels (
             keyframe_id INTEGER PRIMARY KEY NOT NULL,
             label TEXT,
+            zone TEXT DEFAULT NULL,
             FOREIGN KEY (keyframe_id) REFERENCES nodes(keyframe_id)
         );
 
@@ -72,6 +74,7 @@ void create_tables_if_not_exist(sqlite3* db) {
             keyframe_id0 INTEGER NOT NULL,
             keyframe_id1 INTEGER NOT NULL,
             type INTEGER DEFAULT 2,
+            zone TEXT DEFAULT NULL,
             FOREIGN KEY (keyframe_id0) REFERENCES nodes(keyframe_id),
             FOREIGN KEY (keyframe_id1) REFERENCES nodes(keyframe_id),
             UNIQUE(keyframe_id0, keyframe_id1),
@@ -81,6 +84,7 @@ void create_tables_if_not_exist(sqlite3* db) {
         CREATE TABLE node_locations (
             keyframe_id INTEGER PRIMARY KEY NOT NULL,
             location TEXT,
+            zone TEXT DEFAULT NULL,
             FOREIGN KEY (keyframe_id) REFERENCES nodes(keyframe_id)
         );
     )";
