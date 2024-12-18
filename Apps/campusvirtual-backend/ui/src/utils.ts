@@ -43,6 +43,14 @@ export function array2mat44(mat, array: number[]) {
   }
 }
 
+const USE_TRANS = true;
+export function getPositionOfNode(point: { pose: number[], x_trans: number, y_trans: number, z_trans: number }) {
+  if (USE_TRANS) {
+    return [-point.x_trans * COORDS_TO_METRES, -point.y_trans * COORDS_TO_METRES, point.z_trans * COORDS_TO_METRES]
+  }
+  return calculatePositionFromMatrix(point.pose)
+}
+
 export const calculatePositionFromMatrix = (
   matrix: number[]
 ): [number, number, number] => {
