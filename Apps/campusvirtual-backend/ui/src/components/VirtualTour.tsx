@@ -12,6 +12,8 @@ import 'react-toastify/dist/ReactToastify.min.css'
 import { MapPin, ChevronUp, Map as FeatherMap, Info } from 'react-feather'
 import LocationChangeControls from './LocationChangeControls'
 import Canvas, { NeighbourData } from './Canvas'
+import { DesktopLayout } from './DesktopLayout'
+import { MobileLayout } from './MobileLayout'
 export interface PointData {
   pose: number[]
   ts: string
@@ -48,9 +50,10 @@ const VirtualTour: React.FC = () => {
   const [locationGroup, setLocationGroup] = useState<string>('')
   const [highlightedPath, setHighlightedPath] = useState<number[]>([])
   const [allFloorNames, setAllFloorNames] = useState<string[]>([])
-  const [showMobileMenu, setShowMobileMenu] = useState(false)
+  
   const [isInstructionsOpen, setInstructionsOpen] = useState(false)
   const [closeDrawer, setCloseDrawer] = useState(false)
+  const [firstLoad, setFirstLoad] = useState(false)
 
   const [camRotation, setCameraRotation] = useState<{
     yaw: number
@@ -229,12 +232,8 @@ const VirtualTour: React.FC = () => {
   // Add new state for screen size
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768)
 
-  useEffect(() => {
-    if (isMobile && !showMobileMenu) {
-      console.log('Closing instructions')
-      setInstructionsOpen(false)
-    }
-  }, [isMobile, showMobileMenu])
+
+
   // Add window resize listener
   useEffect(() => {
     const handleResize = () => {
@@ -244,15 +243,9 @@ const VirtualTour: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  const drawerRef = useRef<HTMLDivElement>(null)
 
-  const [drawerHeight, setDrawerHeight] = useState(0)
 
-  useEffect(() => {
-    if (drawerRef.current) {
-      setDrawerHeight(drawerRef.current.scrollHeight)
-    }
-  }, [showMobileMenu])
+
 
   const [referenceNode, setReferenceNode] = useState<{
     id: string
@@ -261,117 +254,12 @@ const VirtualTour: React.FC = () => {
 
   return (
     <>
-      {/* Location indicator - make text smaller on mobile */}
-      {/* Mobile menu button */}
-      {isMobile && (
-        <>
-          {/* Location indicator with chevron */}
-          <div
-            className={`fixed left-1/2 -translate-x-1/2 z-[999] bg-[#101010F0] text-white px-4 py-2 shadow-lg flex items-center gap-2 cursor-pointer ${
-              showMobileMenu ? 'rounded-t-xl' : 'rounded-xl'
-            }`}
-            style={{
-              bottom: showMobileMenu ? `${drawerHeight}px` : '1rem', // Adjust to align with drawer
-              transition: 'all 0.3s ease-in-out',
-            }}
-            onClick={() => setShowMobileMenu(!showMobileMenu)}
-          >
-            <MapPin className="w-5 h-5" />
-            <span>You are in: {currentPoint.location}</span>
-            <ChevronUp
-              className={`w-5 h-5 transition-transform duration-300 ${
-                showMobileMenu ? 'rotate-180' : ''
-              }`}
-            />
-          </div>
+      <MobileLayout isMobile={isMobile} currentPoint={currentPoint} setCurrentPoint={setCurrentPoint} allFloorNames={allFloorNames}
+      changeFloor={changeFloor} changeFloorUpOrDown={changeFloorUpOrDown} canGoDown={canGoDown} canGoUp={canGoUp} locationGroup={locationGroup} isInstructionsOpen={isInstructionsOpen} setInstructionsOpen={setInstructionsOpen} />
 
-          {/* Slide-up drawer */}
-          <div
-            ref={drawerRef}
-            className={`fixed left-1/2 -translate-x-1/2 bg-[#101010F0] text-white shadow-lg transition-all duration-300 ease-in-out ${
-              showMobileMenu ? 'rounded-b-xl' : 'rounded-xl'
-            }`}
-            style={{
-              bottom: showMobileMenu ? '0' : `-${drawerHeight}px`, // Use negative height to hide the drawer completely
-              width: '90%', // Match the width of the location indicator
-              maxHeight: '70vh', // Set a max height to prevent overflow
-              overflowY: 'auto', // Allow scrolling if content exceeds max height
-              transition: 'all 0.3s ease-in-out',
-              zIndex: 998,
-            }}
-          >
-            <div className="p-4 space-y-4">
-              {/* Floor controls */}
-              <div className="border-t border-gray-700 pt-4">
-                <LocationChangeControls
-                  canGoUp={canGoUp}
-                  canGoDown={canGoDown}
-                  changeFloorUpOrDown={changeFloorUpOrDown}
-                  locationGroup={locationGroup}
-                  allFloorNames={allFloorNames}
-                  changeFloor={changeFloor}
-                />
-              </div>
+      <DesktopLayout isMobile={isMobile} currentPoint={currentPoint} setCurrentPoint={setCurrentPoint} allFloorNames={allFloorNames}
+      changeFloor={changeFloor} changeFloorUpOrDown={changeFloorUpOrDown} canGoDown={canGoDown} canGoUp={canGoUp} locationGroup={locationGroup} isInstructionsOpen={isInstructionsOpen} setInstructionsOpen={setInstructionsOpen} />
 
-              {/* Instructions */}
-              {isInstructionsOpen && (
-                <Instructions
-                  point={currentPoint}
-                  isOpen={isInstructionsOpen}
-                  setIsOpen={setInstructionsOpen}
-                  className="mobile-instructions"
-                  showToggle={false}
-                />
-              )}
-            </div>
-          </div>
-
-          {/* Instructions button */}
-          <button
-            className="fixed bottom-4 right-4 z-[1001] bg-white/90 hover:bg-white rounded-full p-3 shadow-lg flex items-center justify-center"
-            onClick={() => setInstructionsOpen(!isInstructionsOpen)}
-          >
-            <Info className="w-5 h-5 text-black" />
-          </button>
-        </>
-      )}
-
-      {/* Desktop layout */}
-      {!isMobile && (
-        <>
-          <div className="fixed left-0 bottom-0 z-[999] m-4">
-            <div className="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl bg-black/90 text-white backdrop-blur-sm shadow-lg transition-all">
-              <MapPin className="w-6 h-6 text-blue-400" aria-hidden="true" />
-              <span className="truncate">
-                You are in:{' '}
-                <span className="text-blue-400">{currentPoint.location}</span>
-              </span>
-            </div>
-          </div>
-
-          {/* Position LocationChangeControls in the bottom right */}
-          <div className="fixed right-0 bottom-0 z-50 m-4">
-            <LocationChangeControls
-              canGoUp={canGoUp}
-              canGoDown={canGoDown}
-              changeFloorUpOrDown={changeFloorUpOrDown}
-              locationGroup={locationGroup}
-              allFloorNames={allFloorNames}
-              changeFloor={changeFloor}
-            />
-          </div>
-
-          <Instructions
-            point={currentPoint}
-            isOpen={isInstructionsOpen}
-            setIsOpen={setInstructionsOpen}
-            className="desktop-instructions"
-            showToggle={true}
-          />
-        </>
-      )}
-
-      {/* Adjust Map size and position for mobile */}
       {showMap && (
         <Map
           floorName={locationGroup}
@@ -386,8 +274,7 @@ const VirtualTour: React.FC = () => {
         />
       )}
 
-      {/* Move SearchBar to top */}
-      {SHOW_NAV_SEARCH && allFloorNames.length > 0 && (
+      {allFloorNames.length > 0 && (
         <div className="fixed top-0 left-0 right-0 z-[999]">
           <SearchBar
             data={allFloorNames}
@@ -397,7 +284,6 @@ const VirtualTour: React.FC = () => {
         </div>
       )}
 
-      {/* Adjust Canvas for mobile */}
       <div className="w-screen h-screen overflow-hidden fixed top-0 left-0">
         <ThreeCanvas
           style={{
@@ -430,22 +316,6 @@ const VirtualTour: React.FC = () => {
         </ThreeCanvas>
       </div>
 
-      {/* Adjust toast position for mobile */}
-      <ToastContainer
-        position={isMobile ? 'bottom-center' : 'top-right'}
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="light"
-        transition={Bounce}
-      />
-
-      {/* Add mobile map toggle button */}
       {isMobile && showMap && (
         <button
           className="fixed top-4 left-4 z-[1001] bg-white/90 hover:bg-white rounded-full p-3 shadow-lg flex items-center justify-center"
@@ -455,7 +325,6 @@ const VirtualTour: React.FC = () => {
         </button>
       )}
 
-      {/* Map toggle button - for both mobile and desktop */}
       {showMap && (
         <button
           className={`
@@ -470,7 +339,6 @@ const VirtualTour: React.FC = () => {
         </button>
       )}
 
-      {/* Map component */}
       {showMap && (
         <Map
           floorName={locationGroup}
@@ -484,6 +352,20 @@ const VirtualTour: React.FC = () => {
           referenceNode={referenceNode}
         />
       )}
+      
+      <ToastContainer
+        position={isMobile ? 'bottom-center' : 'top-right'}
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+        transition={Bounce}
+      />
     </>
   )
 }

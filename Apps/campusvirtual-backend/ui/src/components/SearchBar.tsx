@@ -76,6 +76,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
   const handleSuggestionClick = (suggestion: string) => {
     setQuery(suggestion)
     inputRef.current?.focus()
+    setIsFocused(false)
   }
 
   const handleAction = (location: string, action: 'highlight' | 'jump') => {
@@ -149,10 +150,8 @@ const SearchBar: React.FC<SearchBarProps> = ({
                 Recent Searches
               </h3>
               {recentSearches.map((recent, index) => (
-                <div key={`recent-${index}`} className="suggestion-item" onClick={() => handleSuggestionClick(recent)}>
-                  <span className="cursor-pointer hover:text-blue-500">
+                <div key={`recent-${index}`} className="suggestion-item cursor-pointer hover:text-blue-500" onClick={() => handleSuggestionClick(recent)}>
                     {recent}
-                  </span>
                 </div>
               ))}
             </div>
@@ -168,14 +167,10 @@ const SearchBar: React.FC<SearchBarProps> = ({
               {suggestions.map((suggestion, index) => (
                 <div
                   key={index}
-                  className="suggestion-item"
+                  className="suggestion-item cursor-pointer hover:text-blue-500"
                   onClick={() => handleSuggestionClick(suggestion)}
                 >
-                  <span
-                    className="cursor-pointer hover:text-blue-500"
-                  >
                     {suggestion}
-                  </span>
                 </div>
               ))}
             </div>
