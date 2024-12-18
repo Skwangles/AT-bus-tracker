@@ -1,4 +1,4 @@
-import db from "./db";
+import { readDB, writeDB } from "./db";
 
 
 import {
@@ -14,6 +14,7 @@ import {
   QUERY_PREFIX,
 } from "./consts";
 import { calculateImageSharpness, calculateXZDistance, convertTimestampToImagename, getNeighbours, getNextKeyframe, getNodeInfo, getNodePosition, isNodeOutdoors, replaceNode } from './utils'
+import { write } from "fs";
 
 // TODO: Look at  'A New Trajectory Reduction Method for Mobile Devices Operating Both Online and Offline' paper
 
@@ -34,14 +35,13 @@ async function get_sharpness(sharpnessValues: any, ts: number, image_directory =
  * (except if is a junction point, then never remove that one)
  */
 async function useGreedyTripleRingStrategy(
-  db: any,
   image_directory = KEYFRAME_IMG_DIR,
   extension = KEYFRAME_IMG_EXTENSION
 ) {
 
   const startTime = new Date().getTime()
   let sharpnessValues = {};
-  const firstFrame = await getNextKeyframe(db, -1);
+  const firstFrame = await getNextKeyframe(-1);
   if (!firstFrame) {
     throw new Error("Could not find the first frame!");
   }
@@ -66,10 +66,10 @@ async function useGreedyTripleRingStrategy(
 
     console.log("Stack size: ", stack.length)
     console.time("Get Node Info")
-    const node_info = await getNodeInfo(db, String(currentKeyframeId))
+    const node_info = await getNodeInfo(String(currentKeyframeId))
     currentTs = node_info["ts"]
     let currentPosition = node_info["position"]
-    const isOutdoors = await isNodeOutdoors(db, currentKeyframeId)
+    const isOutdoors = await isNodeOutdoors(currentKeyframeId)
     let is_current_deleted = false;
     console.timeEnd("Get Node Info")
 
@@ -80,13 +80,13 @@ async function useGreedyTripleRingStrategy(
     let neighboursHaveChanged = true;
     while (neighboursHaveChanged && !is_current_deleted) {
       console.time("Get Neighbours")
-      const neighbours = await getNeighbours(db, currentKeyframeId, false);
+      const neighbours = await getNeighbours(currentKeyframeId, false);
       console.timeEnd("Get Neighbours")
       neighboursHaveChanged = false;
 
       for (const neighbour of neighbours) {
         const neighbourId = Number(neighbour.keyframe_id);
-        const isNeighbourOutdoors = await isNodeOutdoors(db, neighbourId)
+        const isNeighbourOutdoors = await isNodeOutdoors(neighbourId)
         if (currentKeyframeId == neighbourId) continue
 
         addToStack(neighbourId);
@@ -95,7 +95,7 @@ async function useGreedyTripleRingStrategy(
         checkedNeighbours.add(neighbourId); // Not using 'visited' here, because we want the 'current' to delete a previous node if it was found sharper
 
         const ts = neighbour.ts;
-        const neighbourPosition = await getNodePosition(db, String(neighbourId));
+        const neighbourPosition = await getNodePosition(String(neighbourId));
         if (neighbourPosition == null) {
           throw new Error("Neighbour Position was null: ts: " + ts);
         }
@@ -128,7 +128,7 @@ async function useGreedyTripleRingStrategy(
             );
 
             console.time("Replace Node")
-            if (await replaceNode(db, neighbourId, neighbourPosition, distance <= (isOutdoors && isNeighbourOutdoors ? OUTDOORS_ALWAYS_MERGE_CLOSENESS : ALWAYS_MERGE_CLOSENESS), isOutdoors && isNeighbourOutdoors)) {
+            if (await replaceNode(neighbourId, neighbourPosition, distance <= (isOutdoors && isNeighbourOutdoors ? OUTDOORS_ALWAYS_MERGE_CLOSENESS : ALWAYS_MERGE_CLOSENESS), isOutdoors && isNeighbourOutdoors)) {
               neighboursHaveChanged = true;
               visited.add(neighbourId); // Its been deleted, so don't try visit it
             }
@@ -141,13 +141,13 @@ async function useGreedyTripleRingStrategy(
       }
     }
     if (is_current_deleted) {
-      const neighbours = await getNeighbours(db, currentKeyframeId)
+      const neighbours = await getNeighbours(currentKeyframeId)
       for (const neighbour of neighbours) {
         if (!checkedNeighbours.has(neighbour.keyframe_id)) addToStack(neighbour.keyframe_id)
       }
       console.log("Deleteing current node:", currentKeyframeId)
       console.time("Delete Node")
-      await replaceNode(db, currentKeyframeId, currentPosition, false, isOutdoors);
+      await replaceNode(currentKeyframeId, currentPosition, false, isOutdoors);
       console.timeEnd("Delete Node")
     }
   }
@@ -156,48 +156,85 @@ async function useGreedyTripleRingStrategy(
 
 
 
-async function copyDenseToRefined(db: any) {
-  await db.query("DROP TABLE IF EXISTS ${QUERY_PREFIX}edges CASCADE;");
-  await db.query("DROP TABLE IF EXISTS ${QUERY_PREFIX}node_locations CASCADE;");
-  await db.query("DROP TABLE IF EXISTS ${QUERY_PREFIX}nodes CASCADE;");
+async function createAWorkingCopy() {
+  await writeDB(`DROP TABLE IF EXISTS ${QUERY_PREFIX}edges;`);
+  await writeDB(`DROP TABLE IF EXISTS ${QUERY_PREFIX}node_locations;`);
+  await writeDB(`DROP TABLE IF EXISTS ${QUERY_PREFIX}nodes;`);
+  await writeDB(`DROP TABLE IF EXISTS ${QUERY_PREFIX}special_labels;`);
 
-  await db.query("SELECT * INTO ${QUERY_PREFIX}nodes FROM nodes;");
-  await db.query("SELECT * INTO ${QUERY_PREFIX}node_locations FROM node_locations;");
-  await db.query("SELECT * INTO ${QUERY_PREFIX}edges FROM edges;");
+  await writeDB(`
+        CREATE TABLE ${QUERY_PREFIX}nodes (
+            ts REAL NOT NULL,
+            keyframe_id INTEGER PRIMARY KEY,
+            pose BLOB NOT NULL,
+            x_trans REAL,
+            y_trans REAL,
+            z_trans REAL,
+            label TEXT DEFAULT NULL,
+            zone TEXT DEFAULT NULL
+        );`)
 
-  await db.query(`
-    BEGIN;
-    ALTER TABLE ${QUERY_PREFIX}edges ADD PRIMARY KEY (keyframe_id0, keyframe_id1);
-    ALTER TABLE ${QUERY_PREFIX}nodes ADD PRIMARY KEY (keyframe_id);
-    ALTER TABLE ${QUERY_PREFIX}node_locations ADD PRIMARY KEY (keyframe_id);
-    
-    ALTER TABLE ${QUERY_PREFIX}nodes ADD CONSTRAINT unique_node UNIQUE (keyframe_id);
-    ALTER TABLE ${QUERY_PREFIX}node_locations ADD CONSTRAINT node_locations_FK FOREIGN KEY (keyframe_id) REFERENCES ${QUERY_PREFIX}nodes (keyframe_id);
-    
-    ALTER TABLE ${QUERY_PREFIX}edges ADD CONSTRAINT ref_edge_id0_FK FOREIGN KEY (keyframe_id0) REFERENCES ${QUERY_PREFIX}nodes (keyframe_id);
-    ALTER TABLE ${QUERY_PREFIX}edges ADD CONSTRAINT ref_edge_id1_FK FOREIGN KEY (keyframe_id1) REFERENCES ${QUERY_PREFIX}nodes (keyframe_id);
-    ALTER TABLE ${QUERY_PREFIX}edges ADD CONSTRAINT unique_${QUERY_PREFIX}edge UNIQUE (keyframe_id0, keyframe_id1);
-    COMMIT;
-    `);
+  await writeDB(`
+        CREATE TABLE ${QUERY_PREFIX}special_labels (
+            keyframe_id INTEGER PRIMARY KEY NOT NULL,
+            label TEXT,
+            zone TEXT DEFAULT NULL,
+            FOREIGN KEY (keyframe_id) REFERENCES nodes(keyframe_id)
+        );`)
 
+  await writeDB(`
+        CREATE TABLE ${QUERY_PREFIX}edges (
+            keyframe_id0 INTEGER NOT NULL,
+            keyframe_id1 INTEGER NOT NULL,
+            type INTEGER DEFAULT 2,
+            zone TEXT DEFAULT NULL,
+            FOREIGN KEY (keyframe_id0) REFERENCES nodes(keyframe_id),
+            FOREIGN KEY (keyframe_id1) REFERENCES nodes(keyframe_id),
+            UNIQUE(keyframe_id0, keyframe_id1),
+            PRIMARY KEY (keyframe_id0, keyframe_id1)
+        );`)
+
+  await writeDB(`
+        CREATE TABLE ${QUERY_PREFIX}node_locations (
+            keyframe_id INTEGER PRIMARY KEY NOT NULL,
+            location TEXT,
+            zone TEXT DEFAULT NULL,
+            FOREIGN KEY (keyframe_id) REFERENCES nodes(keyframe_id)
+        );
+    `)
+
+
+  await writeDB(`INSERT INTO ${QUERY_PREFIX}nodes SELECT * FROM nodes;`);
+  await writeDB(`INSERT INTO ${QUERY_PREFIX}node_locations SELECT * FROM node_locations;`);
+  await writeDB(`INSERT INTO ${QUERY_PREFIX}edges SELECT * FROM edges;`);
+  await writeDB(`INSERT INTO ${QUERY_PREFIX}special_labels SELECT * FROM special_labels;`);
+
+  // await writeDB(`BEGIN;`);
+
+  // await writeDB(`ALTER TABLE ${QUERY_PREFIX}edges ADD PRIMARY KEY (keyframe_id0, keyframe_id1);`)
+  // await writeDB(`ALTER TABLE ${QUERY_PREFIX}nodes ADD PRIMARY KEY (keyframe_id);`)
+  // await writeDB(`ALTER TABLE ${QUERY_PREFIX}node_locations ADD PRIMARY KEY (keyframe_id);`)
+  // await writeDB(`ALTER TABLE ${QUERY_PREFIX}nodes ADD CONSTRAINT unique_node UNIQUE (keyframe_id);`)
+  // await writeDB(`ALTER TABLE ${QUERY_PREFIX}node_locations ADD CONSTRAINT node_locations_FK FOREIGN KEY (keyframe_id) REFERENCES ${QUERY_PREFIX}nodes (keyframe_id);`)
+
+  // await writeDB(`ALTER TABLE ${QUERY_PREFIX}edges ADD CONSTRAINT ref_edge_id0_FK FOREIGN KEY (keyframe_id0) REFERENCES ${QUERY_PREFIX}nodes (keyframe_id);`)
+  // await writeDB(`ALTER TABLE ${QUERY_PREFIX}edges ADD CONSTRAINT ref_edge_id1_FK FOREIGN KEY (keyframe_id1) REFERENCES ${QUERY_PREFIX}nodes (keyframe_id);`)
+  // await writeDB(`ALTER TABLE ${QUERY_PREFIX}edges ADD CONSTRAINT unique_${QUERY_PREFIX}edge UNIQUE (keyframe_id0, keyframe_id1);`)
+  // await writeDB(`COMMIT;`);
 }
 
 // Main function to prune nodes
 async function prune() {
-  // await createTables(db);
-  // await copyDenseToRefined(db);
+  await createAWorkingCopy();
   console.log("Copied across nodes, edges and node_locations");
   try {
-    // await db.query("BEGIN");
-    // Find the first node in the list
 
+    await useGreedyTripleRingStrategy();
 
-    await useGreedyTripleRingStrategy(db);
     console.log("Committing");
-    // await db.query("COMMIT");
   } catch (e) {
     console.log("Error:", e);
-    await db.query("ROLLBACK");
+    await writeDB("ROLLBACK");
   } finally {
   }
 }

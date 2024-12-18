@@ -1,21 +1,22 @@
 import sharp from "sharp";
 import { COORDS_TO_METRES, KEYFRAME_IMG_EXTENSION, OUTDOORS_LOCATION_NAME, OUTDOORS_TARGET_CLOSENESS, OUTDOORS_Y_DIST_THRESHOLD, QUERY_PREFIX, TARGET_CLOSENESS, Y_DIST_THRESHOLD } from "./consts";
 import * as THREE from "three";
+import { readDB, writeDB } from "./db";
+import { read } from "fs";
 
 // Helper function to get node position
-export async function getNodePosition(db: any, keyframeId: string, use_trans = true): Promise<[number, number, number] | null> {
-  const nodeInfo = await getNodeInfo(db, keyframeId, use_trans);
+export async function getNodePosition(keyframeId: string, use_trans = true): Promise<[number, number, number] | null> {
+  const nodeInfo = await getNodeInfo(keyframeId, use_trans);
   return nodeInfo["position"];
 }
 
+export async function getNodeInfo(keyframeId: string, use_trans = true) {
 
-export async function getNodeInfo(db: any, keyframeId: string, use_trans = true) {
-
-  const result = await db.query(
-    `SELECT ts, label, pose, x_trans, y_trans, z_trans FROM ${QUERY_PREFIX}nodes WHERE keyframe_id = $1 LIMIT 1;`,
+  const result = await readDB(
+    `SELECT ts, label, pose, x_trans, y_trans, z_trans FROM ${QUERY_PREFIX}nodes WHERE keyframe_id = ? LIMIT 1;`,
     [keyframeId]
   );
-  const positionInfo = result.rows;
+  const positionInfo = result;
   if (!positionInfo || positionInfo.length == 0) {
     throw new Error("Could not find keyframe of ID: " + keyframeId);
   }
@@ -35,7 +36,7 @@ export async function getNodeInfo(db: any, keyframeId: string, use_trans = true)
     return node_info;
   }
 
-  const ret = calculatePositionFromMatrix(result.rows[0]?.pose);
+  const ret = calculatePositionFromMatrix(result[0]?.pose);
   if (!ret) {
     console.error("Return result was Null of getNodePosition - calculating from pose");
     return null;
@@ -46,27 +47,27 @@ export async function getNodeInfo(db: any, keyframeId: string, use_trans = true)
 }
 
 // Helper function to get neighbours
-export async function getNeighbours(db: any, keyframeId: number, usePhysicalProximity = false): Promise<any[]> {
+export async function getNeighbours(keyframeId: number, usePhysicalProximity = false): Promise<any[]> {
 
 
 
-  const directNeighbours = await db.query(
+  const directNeighbours = await readDB(
     `SELECT e.keyframe_id1 as keyframe_id, n.ts, COUNT(e1.keyframe_id1) as degree FROM ${QUERY_PREFIX}edges e 
               JOIN ${QUERY_PREFIX}edges e1 ON e.keyframe_id1 = e1.keyframe_id0
               JOIN ${QUERY_PREFIX}nodes n ON e.keyframe_id1 = n.keyframe_id 
-              WHERE e.keyframe_id0 = $1 AND (e.type = 0 OR e.type = 1) AND (e1.type = 0 OR e1.type = 1) 
+              WHERE e.keyframe_id0 = ? AND (e.type = 0 OR e.type = 1) AND (e1.type = 0 OR e1.type = 1) 
               GROUP BY e.keyframe_id1, n.ts`,
     [keyframeId]
   );
 
   if (usePhysicalProximity) {
-    const result = await db.query(`WITH target_point AS (
+    const result = await readDB(`WITH target_point AS (
     SELECT 
         x_trans, 
         y_trans, 
         z_trans
     FROM ${QUERY_PREFIX}nodes
-    WHERE keyframe_id = $1
+    WHERE keyframe_id = ?
     )
     SELECT 
         *
@@ -76,13 +77,13 @@ export async function getNeighbours(db: any, keyframeId: number, usePhysicalProx
             POWER(rn.y_trans - target_point.y_trans, 2) +
             POWER(rn.x_trans - target_point.x_trans, 2) +
             POWER(rn.z_trans - target_point.z_trans, 2)
-        ) <= $2
+        ) <= ?
     )
-    WHERE rn.keyframe_id != $1;`, [keyframeId, TARGET_CLOSENESS / COORDS_TO_METRES])
-    return [...new Set([...directNeighbours.rows, ...result.rows])]
+    WHERE rn.keyframe_id != ?;`, [keyframeId, TARGET_CLOSENESS / COORDS_TO_METRES, keyframeId])
+    return [...new Set([...directNeighbours, ...result])]
   }
 
-  return directNeighbours.rows;
+  return directNeighbours;
 }
 
 // Helper function to calculate distance between two positions
@@ -103,36 +104,34 @@ export function calculateXZDistance(pos1: [number, number, number], pos2: [numbe
   return result;
 }
 
-export async function isNodeOutdoors(db: any, keyframeId: number) {
-  const locData = await db.query("SELECT location from ${QUERY_PREFIX}node_locations WHERE keyframe_id = $1", [keyframeId])
+export async function isNodeOutdoors(keyframeId: number) {
+  const locData = await readDB(`SELECT location from ${QUERY_PREFIX}node_locations WHERE keyframe_id = ?`, [keyframeId], false)
 
   // If no location, take the more restrictive approach
-  if (locData.rowCount === 0) return false;
+  if (locData.length === 0) return false;
 
-  return locData.rows[0]["location"] === OUTDOORS_LOCATION_NAME;
+  return locData[0]["location"] === OUTDOORS_LOCATION_NAME;
 }
 
 // Helper function to delete a node and its edges
-export async function replaceNode(db: any, keyframeId: number, position: [number, number, number], ignore_distance = false, isOutdoors = false) {
-  const direct_neighbours = (
-    await db.query(
-      `SELECT keyframe_id1 as keyframe_id FROM ${QUERY_PREFIX}edges WHERE keyframe_id0 = $1 AND (type = 0 OR type = 1)`,
-      [keyframeId]
-    )
-  ).rows;
+export async function replaceNode(keyframeId: number, position: [number, number, number], ignore_distance = false, isOutdoors = false) {
+  const direct_neighbours = await readDB(
+    `SELECT keyframe_id1 as keyframe_id FROM ${QUERY_PREFIX}edges WHERE keyframe_id0 = ? AND (type = 0 OR type = 1)`,
+    [keyframeId], false
+  )
 
-  await db.query("BEGIN;");
+  await writeDB("BEGIN;");
 
   for (const neighbour_id in direct_neighbours) {
     const neighbour = direct_neighbours[neighbour_id];
-    const pos = await getNodePosition(db, neighbour.keyframe_id)
+    const pos = await getNodePosition(neighbour.keyframe_id)
     if (!pos) {
       throw new Error(`Unrecoverable error - Return result was Null of getNodePosition - neighbour: ${neighbour.keyframe_id}`)
     }
 
     for (const new_neighbour of direct_neighbours.slice(neighbour_id)) {
       if (new_neighbour.keyframe_id == neighbour.keyframe_id) continue;
-      const newNeighbourPosition = await getNodePosition(db, new_neighbour.keyframe_id)
+      const newNeighbourPosition = await getNodePosition(new_neighbour.keyframe_id)
       if (!newNeighbourPosition) {
         throw new Error(`Unrecoverable error - Return result was Null of getNodePosition - neighbour: ${new_neighbour.keyframe_id}`)
       }
@@ -143,32 +142,32 @@ export async function replaceNode(db: any, keyframeId: number, position: [number
       const yDistance = Math.abs(newNeighbourPosition[2] - pos[2])
       if (!ignore_distance && (distance > (isOutdoors ? OUTDOORS_TARGET_CLOSENESS : TARGET_CLOSENESS) || yDistance > (isOutdoors ? OUTDOORS_Y_DIST_THRESHOLD : Y_DIST_THRESHOLD))) {
         console.debug("Cancelling delete - A new edge is too large - Distance:", distance, " ID:", neighbour.keyframe_id, " Compared ID:", new_neighbour.keyframe_id)
-        await db.query("ROLLBACK;")
+        await writeDB("ROLLBACK;")
         return false;
       }
-      await db.query(
-        `INSERT INTO ${QUERY_PREFIX}edges (keyframe_id0, keyframe_id1, type) VALUES ($1, $2, 1) ON CONFLICT (keyframe_id0, keyframe_id1) DO UPDATE SET type = 1;`,
+      await writeDB(
+        `INSERT INTO ${QUERY_PREFIX}edges (keyframe_id0, keyframe_id1, type) VALUES (?, ?, 1) ON CONFLICT (keyframe_id0, keyframe_id1) DO UPDATE SET type = 1;`,
         [neighbour.keyframe_id, new_neighbour.keyframe_id]
       );
-      await db.query(
-        `INSERT INTO ${QUERY_PREFIX}edges (keyframe_id1, keyframe_id0, type) VALUES ($1, $2, 1) ON CONFLICT (keyframe_id0, keyframe_id1) DO UPDATE SET type = 1;`,
+      await writeDB(
+        `INSERT INTO ${QUERY_PREFIX}edges (keyframe_id1, keyframe_id0, type) VALUES (?, ?, 1) ON CONFLICT (keyframe_id0, keyframe_id1) DO UPDATE SET type = 1;`,
         [neighbour.keyframe_id, new_neighbour.keyframe_id]
       );
     }
   }
 
-  await db.query(
-    `DELETE FROM ${QUERY_PREFIX}edges WHERE keyframe_id0 = $1 OR keyframe_id1 = $1;`,
-    [keyframeId]
+  await writeDB(
+    `DELETE FROM ${QUERY_PREFIX}edges WHERE keyframe_id0 = ? OR keyframe_id1 = ?;`,
+    [keyframeId, keyframeId]
   );
-  await db.query(`DELETE FROM ${QUERY_PREFIX}node_locations WHERE keyframe_id = $1`, [
+  await writeDB(`DELETE FROM ${QUERY_PREFIX}node_locations WHERE keyframe_id = ?`, [
     keyframeId,
   ]);
-  await db.query(`DELETE FROM ${QUERY_PREFIX}nodes WHERE keyframe_id = $1;`, [
+  await writeDB(`DELETE FROM ${QUERY_PREFIX}nodes WHERE keyframe_id = ?;`, [
     keyframeId,
   ]);
 
-  await db.query("COMMIT;")
+  await writeDB("COMMIT;")
   return true;
 }
 
@@ -207,14 +206,12 @@ export function convertTimestampToImagename(ts: Number | string) {
   return `${Number(ts).toFixed(5)}${KEYFRAME_IMG_EXTENSION}`
 }
 
-export async function getNextKeyframe(db: any, currentId: number) {
-  let {
-    rows: [nextFrame],
-  }: { rows: Array<{ keyframe_id: string; degree: number; ts: number }> } =
-    await db.query(
+export async function getNextKeyframe(currentId: number) {
+  let nextFrame: Array<{ keyframe_id: string; degree: number; ts: number }> =
+    await readDB(
       `SELECT n.keyframe_id, n.ts, COUNT(e1.keyframe_id1) as degree FROM ${QUERY_PREFIX}nodes n JOIN ${QUERY_PREFIX}edges e1 ON n.keyframe_id = e1.keyframe_id0
-            WHERE n.keyframe_id > $1 AND (e1.type = 0 OR e1.type = 1)  GROUP BY n.keyframe_id, n.ts LIMIT 1`,
+            WHERE n.keyframe_id > ? AND (e1.type = 0 OR e1.type = 1)  GROUP BY n.keyframe_id, n.ts LIMIT 1`,
       [currentId]
     );
-  return nextFrame;
+  return nextFrame[0];
 }

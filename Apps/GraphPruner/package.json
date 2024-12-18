@@ -20,6 +20,7 @@
     "three": "^0.167.1"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
     "@types/node": "^22.9.1",
     "@types/pg-pool": "^2.0.6",
     "@types/three": "^0.167.1",
