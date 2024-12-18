@@ -161,9 +161,11 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
     std::vector<std::string> special_points;    
 
     ThreadPool img_write_thread_pool(8);
-
+    
     // run the slam in another thread
     std::thread thread([&]() {
+
+        bool finished_initialising_tracking = false;
         while (is_not_end) {
 #ifdef HAVE_IRIDESCENCE_VIEWER
             while (true) {
@@ -221,7 +223,13 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
                  
                     std::string filepath = image_output_dir + timestamp_string + ".png";
 
-                    if (is_keyframe || num_frame == 0){
+                    if (is_keyframe && !finished_initialising_tracking) {
+                    // `is_keyframe` will not be true until the tracking has initialised, however, keyframes may still be made.
+                    // Once it becomes true once, that indicates it has been initialised
+                        finished_initialising_tracking = true;
+                    }
+
+                    if (is_keyframe || !finished_initialising_tracking){
                         
                         std::vector<int> params; 
                         params.push_back(cv::IMWRITE_JPEG_QUALITY); 
