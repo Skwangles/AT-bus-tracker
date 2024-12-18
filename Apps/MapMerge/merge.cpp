@@ -98,12 +98,12 @@ private:
     }
 
     /**
-     * @brief Compute Procrustes Analysis on the merge points
+     * @brief Compute Procrustes Analysis on the merge points - uses the translations of the World-to-Camera conversion i.e. trans_wc()
      * Only computer the 2D rotation of XZ (Y is the vertical axis) to avoid roll/pitch on points (Points should already be roll/pitch aligned from SLAM)
      * @param matching_nodes - Vector of points that should be the 'same point in different maps/coordinate systems'
      * @return Eigen::Affine3d - Rotation and translations matrix
      */
-    Eigen::Affine3d calculateGlobalTransformation(
+    Eigen::Affine3d calculateGlobalTransformation_wc(
         const std::vector<std::pair<NodeInfo, NodeInfo>>& matching_nodes
     ) {
         size_t num_points = matching_nodes.size();
@@ -198,7 +198,7 @@ private:
         spdlog::info("Number of Merge Points (min. 2): {}", merge_keyframes.size());
         
         spdlog::info("Calculating optimal transformation of Second DB to merge with First DB...");
-        Eigen::Affine3d global_transform = calculateGlobalTransformation(merge_keyframes);
+        Eigen::Affine3d global_transform = calculateGlobalTransformation_wc(merge_keyframes);
 
         int32_t id_offset = get_max_id(out_db) + 1; // 0 is a possible keyframe_id, so offset by 1
         spdlog::info("Computed ID Offset: {}", id_offset); 
@@ -267,20 +267,20 @@ private:
             spdlog::info("Creating a loop edge between {} and {}", id1, id2);
 
             sqlite3_bind_int(insert_loop_edge_stmt, 1, id1 );
-            sqlite3_bind_int(insert_loop_edge_stmt, 1, id2 );
+            sqlite3_bind_int(insert_loop_edge_stmt, 2, id2 );
             sqlite3_step(insert_loop_edge_stmt);
 
             sqlite3_reset(insert_loop_edge_stmt);
 
             // Insert edge going the other direction
             sqlite3_bind_int(insert_loop_edge_stmt, 1, id2 );
-            sqlite3_bind_int(insert_loop_edge_stmt, 1, id1 );
+            sqlite3_bind_int(insert_loop_edge_stmt, 2, id1 );
             sqlite3_step(insert_loop_edge_stmt);
         }
         sqlite3_finalize(insert_loop_edge_stmt);
     }
 
-    void copy_nodes(sqlite3* dst_db, sqlite3* src_db, int32_t id_offset, Eigen::Affine3d global_transform){
+    void copy_nodes(sqlite3* dst_db, sqlite3* src_db, int32_t id_offset, Eigen::Affine3d global_transform_wc){
         int ret;
         sqlite3_stmt* insert_node_stmt;
         const char* insert_node_query = "INSERT INTO nodes (ts, keyframe_id, pose, x_trans, y_trans, z_trans, label) VALUES (?, ?, ?, ?, ?, ?, ?)";
@@ -309,14 +309,15 @@ private:
             int blob_size = sqlite3_column_bytes(second_select_stmt, 2);
             memcpy(original_pose, blob, 16 * sizeof(double));
             
-            Eigen::Matrix4d pose = Eigen::Map<Eigen::Matrix4d>(original_pose, 4, 4);
-            Eigen::Affine3d affine_pose;
-            affine_pose.matrix() = pose;
+            Eigen::Matrix4d pose_cw = Eigen::Map<Eigen::Matrix4d>(original_pose, 4, 4);
+            Eigen::Affine3d affine_pose_wc;
+            affine_pose_wc.matrix() = pose_cw.inverse();
 
-            Eigen::Affine3d transformed_pose = global_transform * affine_pose;
+            Eigen::Affine3d transformed_pose = global_transform_wc * affine_pose_wc;
+            pose_cw = transformed_pose.matrix().inverse();
 
             std::vector<double> pose_vec;
-            Mat4dToVec(transformed_pose.matrix(), pose_vec);
+            Mat4dToVec(pose_cw, pose_vec);
 
             
             // Insert transformed second database nodes
@@ -330,7 +331,7 @@ private:
                 sqlite3_column_double(second_select_stmt, 4),
                 sqlite3_column_double(second_select_stmt, 5)
             );
-            Eigen::Vector3d transformed_trans = global_transform * trans_vec;
+            Eigen::Vector3d transformed_trans = global_transform_wc * trans_vec;
 
             sqlite3_bind_double(insert_node_stmt, 4, transformed_trans.x());  // x_trans
             sqlite3_bind_double(insert_node_stmt, 5, transformed_trans.y());  // y_trans
@@ -345,7 +346,7 @@ private:
         sqlite3_finalize(insert_node_stmt);
 
         // Commit transaction
-        sqlite3_exec(dst_db, "COMMIT TRANSACTION", nullptr, nullptr, nullptr);
+        sqlite3_exec(dst_db, "COMMIT;", nullptr, nullptr, nullptr);
     }
 
     void copy_edges(sqlite3* dst_db, sqlite3* src_db, int32_t id_offset) {
