@@ -4,6 +4,7 @@ import { MinQueue } from 'heapify';
 import Pool from "pg-pool";
 import { getNeighbours, getNodePosition } from "./utils";
 import { Client } from "pg";
+import { USE_QUERY_PREFIX, QUERY_PREFIX, EdgeType } from "./consts";
 
 interface Node {
   keyframe_id: number;
@@ -33,12 +34,12 @@ function calculateDistance(nodeA: [number, number, number], nodeB: [number, numb
 
 
 async function fetchNode(nodeId: number): Promise<Node | null> {
-  const result = await readDB('SELECT id, x_trans, y_trans, z_trans FROM refined_nodes WHERE id = $1', [nodeId]);
+  const result = await readDB(`SELECT id, x_trans, y_trans, z_trans FROM ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}nodes WHERE id = $1`, [nodeId]);
   return result.length > 0 ? result.rows[0] as Node : null;
 }
 
 async function fetchEdges(nodeId: number): Promise<Edge[]> {
-  const result = await readDB('SELECT keyframe_id0, keyframe_id1 FROM refined_edges WHERE keyframe_id0 = $1 OR keyframe_id1 = $1', [nodeId, nodeId]);
+  const result = await readDB(`SELECT keyframe_id0, keyframe_id1 FROM ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}edges WHERE keyframe_id0 = $1 OR keyframe_id1 = $1 AND type >= ${EdgeType.Normal}`, [nodeId, nodeId]);
   return result.rows as Edge[];
 }
 
@@ -67,7 +68,7 @@ export async function aStarPathfinding(
   while (openSet.size > 0) {
     const currentId = openSet.pop()!;
 
-    const currentNodeData = (await readDB("SELECT n.keyframe_id, label, location FROM refined_nodes n JOIN refined_node_locations nl ON n.keyframe_id = nl.keyframe_id WHERE n.keyframe_id = ?", [currentId])).rows
+    const currentNodeData = (await readDB(`SELECT n.keyframe_id, label, location FROM ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}nodes n JOIN ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}node_locations nl ON n.keyframe_id = nl.keyframe_id WHERE n.keyframe_id = ?`, [currentId])).rows
     if (currentNodeData.length == 0) {
       return []; // An error occured, fail quickly
     }

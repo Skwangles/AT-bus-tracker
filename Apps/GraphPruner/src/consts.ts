@@ -8,3 +8,5 @@ export const Y_DIST_THRESHOLD = 2
 export const KEYFRAME_IMG_EXTENSION = ".png"
 export const KEYFRAME_IMG_DIR = "/media/skwangles/KINGSTON/MEDIA/eds-pictures/"
 export const OUTDOORS_LOCATION_NAME = "outdoors"
+
+export const QUERY_PREFIX = "refined_"

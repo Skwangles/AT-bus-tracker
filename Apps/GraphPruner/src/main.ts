@@ -1,5 +1,6 @@
 import db from "./db";
 
+
 import {
   TARGET_CLOSENESS,
   ALWAYS_MERGE_CLOSENESS,
@@ -10,6 +11,7 @@ import {
   OUTDOORS_TARGET_CLOSENESS,
   OUTDOORS_ALWAYS_MERGE_CLOSENESS,
   OUTDOORS_Y_DIST_THRESHOLD,
+  QUERY_PREFIX,
 } from "./consts";
 import { calculateImageSharpness, calculateXZDistance, convertTimestampToImagename, getNeighbours, getNextKeyframe, getNodeInfo, getNodePosition, isNodeOutdoors, replaceNode } from './utils'
 
@@ -94,10 +96,17 @@ async function useGreedyTripleRingStrategy(
 
         const ts = neighbour.ts;
         const neighbourPosition = await getNodePosition(db, String(neighbourId));
+        if (neighbourPosition == null) {
+          throw new Error("Neighbour Position was null: ts: " + ts);
+        }
         const distance = calculateXZDistance(
           currentPosition,
           neighbourPosition
         );
+        if (distance == null) {
+          throw new Error("Distance calculation was null between - Current: " + currentPosition + " & Neighbour: " + neighbourPosition);
+
+        }
 
         const yDistance = Math.abs(neighbourPosition[1] - currentPosition[1]);
 
@@ -148,26 +157,26 @@ async function useGreedyTripleRingStrategy(
 
 
 async function copyDenseToRefined(db: any) {
-  await db.query("DROP TABLE IF EXISTS refined_edges CASCADE;");
-  await db.query("DROP TABLE IF EXISTS refined_node_locations CASCADE;");
-  await db.query("DROP TABLE IF EXISTS refined_nodes CASCADE;");
+  await db.query("DROP TABLE IF EXISTS ${QUERY_PREFIX}edges CASCADE;");
+  await db.query("DROP TABLE IF EXISTS ${QUERY_PREFIX}node_locations CASCADE;");
+  await db.query("DROP TABLE IF EXISTS ${QUERY_PREFIX}nodes CASCADE;");
 
-  await db.query("SELECT * INTO refined_nodes FROM nodes;");
-  await db.query("SELECT * INTO refined_node_locations FROM node_locations;");
-  await db.query("SELECT * INTO refined_edges FROM edges;");
+  await db.query("SELECT * INTO ${QUERY_PREFIX}nodes FROM nodes;");
+  await db.query("SELECT * INTO ${QUERY_PREFIX}node_locations FROM node_locations;");
+  await db.query("SELECT * INTO ${QUERY_PREFIX}edges FROM edges;");
 
   await db.query(`
     BEGIN;
-    ALTER TABLE refined_edges ADD PRIMARY KEY (keyframe_id0, keyframe_id1);
-    ALTER TABLE refined_nodes ADD PRIMARY KEY (keyframe_id);
-    ALTER TABLE refined_node_locations ADD PRIMARY KEY (keyframe_id);
+    ALTER TABLE ${QUERY_PREFIX}edges ADD PRIMARY KEY (keyframe_id0, keyframe_id1);
+    ALTER TABLE ${QUERY_PREFIX}nodes ADD PRIMARY KEY (keyframe_id);
+    ALTER TABLE ${QUERY_PREFIX}node_locations ADD PRIMARY KEY (keyframe_id);
     
-    ALTER TABLE refined_nodes ADD CONSTRAINT unique_node UNIQUE (keyframe_id);
-    ALTER TABLE refined_node_locations ADD CONSTRAINT node_locations_FK FOREIGN KEY (keyframe_id) REFERENCES refined_nodes (keyframe_id);
+    ALTER TABLE ${QUERY_PREFIX}nodes ADD CONSTRAINT unique_node UNIQUE (keyframe_id);
+    ALTER TABLE ${QUERY_PREFIX}node_locations ADD CONSTRAINT node_locations_FK FOREIGN KEY (keyframe_id) REFERENCES ${QUERY_PREFIX}nodes (keyframe_id);
     
-    ALTER TABLE refined_edges ADD CONSTRAINT ref_edge_id0_FK FOREIGN KEY (keyframe_id0) REFERENCES refined_nodes (keyframe_id);
-    ALTER TABLE refined_edges ADD CONSTRAINT ref_edge_id1_FK FOREIGN KEY (keyframe_id1) REFERENCES refined_nodes (keyframe_id);
-    ALTER TABLE refined_edges ADD CONSTRAINT unique_refined_edge UNIQUE (keyframe_id0, keyframe_id1);
+    ALTER TABLE ${QUERY_PREFIX}edges ADD CONSTRAINT ref_edge_id0_FK FOREIGN KEY (keyframe_id0) REFERENCES ${QUERY_PREFIX}nodes (keyframe_id);
+    ALTER TABLE ${QUERY_PREFIX}edges ADD CONSTRAINT ref_edge_id1_FK FOREIGN KEY (keyframe_id1) REFERENCES ${QUERY_PREFIX}nodes (keyframe_id);
+    ALTER TABLE ${QUERY_PREFIX}edges ADD CONSTRAINT unique_${QUERY_PREFIX}edge UNIQUE (keyframe_id0, keyframe_id1);
     COMMIT;
     `);
 

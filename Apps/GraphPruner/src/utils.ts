@@ -1,5 +1,5 @@
 import sharp from "sharp";
-import { COORDS_TO_METRES, KEYFRAME_IMG_EXTENSION, OUTDOORS_LOCATION_NAME, OUTDOORS_TARGET_CLOSENESS, OUTDOORS_Y_DIST_THRESHOLD, TARGET_CLOSENESS, Y_DIST_THRESHOLD } from "./consts";
+import { COORDS_TO_METRES, KEYFRAME_IMG_EXTENSION, OUTDOORS_LOCATION_NAME, OUTDOORS_TARGET_CLOSENESS, OUTDOORS_Y_DIST_THRESHOLD, QUERY_PREFIX, TARGET_CLOSENESS, Y_DIST_THRESHOLD } from "./consts";
 import * as THREE from "three";
 
 // Helper function to get node position
@@ -12,7 +12,7 @@ export async function getNodePosition(db: any, keyframeId: string, use_trans = t
 export async function getNodeInfo(db: any, keyframeId: string, use_trans = true) {
 
   const result = await db.query(
-    "SELECT ts, label, pose, x_trans, y_trans, z_trans FROM refined_nodes WHERE keyframe_id = $1 LIMIT 1;",
+    `SELECT ts, label, pose, x_trans, y_trans, z_trans FROM ${QUERY_PREFIX}nodes WHERE keyframe_id = $1 LIMIT 1;`,
     [keyframeId]
   );
   const positionInfo = result.rows;
@@ -23,8 +23,8 @@ export async function getNodeInfo(db: any, keyframeId: string, use_trans = true)
   const node_info = positionInfo[0];
   if (use_trans) {
     const ret: [number, number, number] = [
-      node_info.x_trans * COORDS_TO_METRES,
-      node_info.y_trans * COORDS_TO_METRES,
+      -node_info.x_trans * COORDS_TO_METRES,
+      -node_info.y_trans * COORDS_TO_METRES,
       node_info.z_trans * COORDS_TO_METRES,
     ];
     if (!ret) {
@@ -51,9 +51,9 @@ export async function getNeighbours(db: any, keyframeId: number, usePhysicalProx
 
 
   const directNeighbours = await db.query(
-    `SELECT e.keyframe_id1 as keyframe_id, n.ts, COUNT(e1.keyframe_id1) as degree FROM refined_edges e 
-              JOIN refined_edges e1 ON e.keyframe_id1 = e1.keyframe_id0
-              JOIN refined_nodes n ON e.keyframe_id1 = n.keyframe_id 
+    `SELECT e.keyframe_id1 as keyframe_id, n.ts, COUNT(e1.keyframe_id1) as degree FROM ${QUERY_PREFIX}edges e 
+              JOIN ${QUERY_PREFIX}edges e1 ON e.keyframe_id1 = e1.keyframe_id0
+              JOIN ${QUERY_PREFIX}nodes n ON e.keyframe_id1 = n.keyframe_id 
               WHERE e.keyframe_id0 = $1 AND (e.type = 0 OR e.type = 1) AND (e1.type = 0 OR e1.type = 1) 
               GROUP BY e.keyframe_id1, n.ts`,
     [keyframeId]
@@ -65,12 +65,12 @@ export async function getNeighbours(db: any, keyframeId: number, usePhysicalProx
         x_trans, 
         y_trans, 
         z_trans
-    FROM refined_nodes
+    FROM ${QUERY_PREFIX}nodes
     WHERE keyframe_id = $1
     )
     SELECT 
         *
-    FROM refined_nodes rn
+    FROM ${QUERY_PREFIX}nodes rn
     JOIN target_point ON (
         SQRT(
             POWER(rn.y_trans - target_point.y_trans, 2) +
@@ -86,7 +86,7 @@ export async function getNeighbours(db: any, keyframeId: number, usePhysicalProx
 }
 
 // Helper function to calculate distance between two positions
-export function calculateXZDistance(pos1: number[], pos2: number[]): number | null {
+export function calculateXZDistance(pos1: [number, number, number], pos2: [number, number, number]): number | null {
   if (pos1.length < 3 || pos2.length < 3) {
     console.error("Invalid position array passed - has less then 3 values");
     return null;
@@ -104,7 +104,7 @@ export function calculateXZDistance(pos1: number[], pos2: number[]): number | nu
 }
 
 export async function isNodeOutdoors(db: any, keyframeId: number) {
-  const locData = await db.query("SELECT location from refined_node_locations WHERE keyframe_id = $1", [keyframeId])
+  const locData = await db.query("SELECT location from ${QUERY_PREFIX}node_locations WHERE keyframe_id = $1", [keyframeId])
 
   // If no location, take the more restrictive approach
   if (locData.rowCount === 0) return false;
@@ -116,7 +116,7 @@ export async function isNodeOutdoors(db: any, keyframeId: number) {
 export async function replaceNode(db: any, keyframeId: number, position: [number, number, number], ignore_distance = false, isOutdoors = false) {
   const direct_neighbours = (
     await db.query(
-      "SELECT keyframe_id1 as keyframe_id FROM refined_edges WHERE keyframe_id0 = $1 AND (type = 0 OR type = 1)",
+      `SELECT keyframe_id1 as keyframe_id FROM ${QUERY_PREFIX}edges WHERE keyframe_id0 = $1 AND (type = 0 OR type = 1)`,
       [keyframeId]
     )
   ).rows;
@@ -147,24 +147,24 @@ export async function replaceNode(db: any, keyframeId: number, position: [number
         return false;
       }
       await db.query(
-        "INSERT INTO refined_edges (keyframe_id0, keyframe_id1, type) VALUES ($1, $2, 1) ON CONFLICT (keyframe_id0, keyframe_id1) DO UPDATE SET type = 1;",
+        `INSERT INTO ${QUERY_PREFIX}edges (keyframe_id0, keyframe_id1, type) VALUES ($1, $2, 1) ON CONFLICT (keyframe_id0, keyframe_id1) DO UPDATE SET type = 1;`,
         [neighbour.keyframe_id, new_neighbour.keyframe_id]
       );
       await db.query(
-        "INSERT INTO refined_edges (keyframe_id1, keyframe_id0, type) VALUES ($1, $2, 1) ON CONFLICT (keyframe_id0, keyframe_id1) DO UPDATE SET type = 1;",
+        `INSERT INTO ${QUERY_PREFIX}edges (keyframe_id1, keyframe_id0, type) VALUES ($1, $2, 1) ON CONFLICT (keyframe_id0, keyframe_id1) DO UPDATE SET type = 1;`,
         [neighbour.keyframe_id, new_neighbour.keyframe_id]
       );
     }
   }
 
   await db.query(
-    "DELETE FROM refined_edges WHERE keyframe_id0 = $1 OR keyframe_id1 = $1;",
+    `DELETE FROM ${QUERY_PREFIX}edges WHERE keyframe_id0 = $1 OR keyframe_id1 = $1;`,
     [keyframeId]
   );
-  await db.query("DELETE FROM refined_node_locations WHERE keyframe_id = $1", [
+  await db.query(`DELETE FROM ${QUERY_PREFIX}node_locations WHERE keyframe_id = $1`, [
     keyframeId,
   ]);
-  await db.query("DELETE FROM refined_nodes WHERE keyframe_id = $1;", [
+  await db.query(`DELETE FROM ${QUERY_PREFIX}nodes WHERE keyframe_id = $1;`, [
     keyframeId,
   ]);
 
@@ -212,7 +212,7 @@ export async function getNextKeyframe(db: any, currentId: number) {
     rows: [nextFrame],
   }: { rows: Array<{ keyframe_id: string; degree: number; ts: number }> } =
     await db.query(
-      `SELECT n.keyframe_id, n.ts, COUNT(e1.keyframe_id1) as degree FROM refined_nodes n JOIN refined_edges e1 ON n.keyframe_id = e1.keyframe_id0
+      `SELECT n.keyframe_id, n.ts, COUNT(e1.keyframe_id1) as degree FROM ${QUERY_PREFIX}nodes n JOIN ${QUERY_PREFIX}edges e1 ON n.keyframe_id = e1.keyframe_id0
             WHERE n.keyframe_id > $1 AND (e1.type = 0 OR e1.type = 1)  GROUP BY n.keyframe_id, n.ts LIMIT 1`,
       [currentId]
     );

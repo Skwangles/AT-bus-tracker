@@ -1,5 +1,5 @@
 import { writeDB, readDB } from './db'
-import { FLOOR_POINT_DEFAULT_TYPE, BORDERING_FLOOR_POINT_DEFAULT_TYPE } from './consts'
+import { FLOOR_POINT_DEFAULT_TYPE, BORDERING_FLOOR_POINT_DEFAULT_TYPE, QUERY_PREFIX, USE_QUERY_PREFIX } from './consts'
 export default async function initDB(quitIfTablesExist = false) {
   try {
     console.debug("Initalising data...")
@@ -12,7 +12,7 @@ export default async function initDB(quitIfTablesExist = false) {
       location TEXT NOT NULL,
       x DOUBLE PRECISION DEFAULT 0 NOT NULL,
       y DOUBLE PRECISION DEFAULT 0 NOT NULL,
-      keyframe_id INTEGER REFERENCES refined_nodes (keyframe_id),
+      keyframe_id INTEGER REFERENCES ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}nodes (keyframe_id),
       type INTEGER DEFAULT 0 NOT NULL,
       PRIMARY KEY(keyframe_id, location)
     );`);
@@ -28,16 +28,16 @@ export default async function initDB(quitIfTablesExist = false) {
   try {
     await writeDB("BEGIN;");
     // Do by location to avoid causing a possible crash/memory overload
-    const locationsResult = await readDB(`SELECT DISTINCT location FROM refined_node_locations;`)
+    const locationsResult = await readDB(`SELECT DISTINCT location FROM ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}node_locations;`)
     const locations = locationsResult.map((location: { location: string }) => location.location);
     console.log("Locations:", locations)
     for (const location of locations) {
-      const nodesResult = await readDB(`SELECT n.keyframe_id, l.location, n.x_trans, n.z_trans FROM refined_nodes n JOIN refined_node_locations l ON l.keyframe_id = n.keyframe_id WHERE l.location = ?;`, [location])
-      const borderNodesResult = await readDB(`SELECT keyframe_id1 as keyframe_id, l2.location, n.x_trans, n.z_trans FROM refined_edges e 
-                    JOIN refined_node_locations l 
+      const nodesResult = await readDB(`SELECT n.keyframe_id, l.location, n.x_trans, n.z_trans FROM ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}nodes n JOIN ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}node_locations l ON l.keyframe_id = n.keyframe_id WHERE l.location = ?;`, [location])
+      const borderNodesResult = await readDB(`SELECT keyframe_id1 as keyframe_id, l2.location, n.x_trans, n.z_trans FROM ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}edges e 
+                    JOIN ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}node_locations l 
                     ON e.keyframe_id0 = l.keyframe_id 
-                    JOIN refined_node_locations l2 ON e.keyframe_id1 = l2.keyframe_id
-                    JOIN refined_nodes n ON n.keyframe_id = e.keyframe_id1
+                    JOIN ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}node_locations l2 ON e.keyframe_id1 = l2.keyframe_id
+                    JOIN ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}nodes n ON n.keyframe_id = e.keyframe_id1
                     WHERE l.location = ? AND l2.location <> ?;
                     `, [location, location])
 
@@ -60,14 +60,14 @@ export default async function initDB(quitIfTablesExist = false) {
         // Don't need to wait for this
         const initX = clampToPostive((node.x_trans - minX) / (maxX - minX))
         const initY = clampToPostive((node.z_trans - minZ) / (maxZ - minZ))
-        writeDB("INSERT INTO floorplan_points (location, keyframe_id, type, x, y) VALUES (?, ?, ?, ?, ?) ON CONFLICT (keyframe_id, location) DO NOTHING;", [location, node.keyframe_id, FLOOR_POINT_DEFAULT_TYPE, initX, initY])
+        writeDB("INSERT INTO floorplan_points (location, keyframe_id, type, x, y) VALUES (?, ?, ?, ?, ?) ON CONFLICT (keyframe_id, location) IGNORE;", [location, node.keyframe_id, FLOOR_POINT_DEFAULT_TYPE, initX, initY])
       }
 
       for (const border_node of borderNodes) {
         const initX = clampToPostive((border_node.x_trans - minX) / (maxX - minX))
         const initY = clampToPostive((border_node.z_trans - minZ) / (maxZ - minZ))
 
-        writeDB("INSERT INTO floorplan_points (location, keyframe_id, type, x, y) VALUES (?, ?, ?, ?, ?) ON CONFLICT (keyframe_id, location) DO NOTHING;", [location, border_node.keyframe_id, BORDERING_FLOOR_POINT_DEFAULT_TYPE, initX, initY])
+        writeDB("INSERT INTO floorplan_points (location, keyframe_id, type, x, y) VALUES (?, ?, ?, ?, ?) ON CONFLICT (keyframe_id, location) IGNORE;", [location, border_node.keyframe_id, BORDERING_FLOOR_POINT_DEFAULT_TYPE, initX, initY])
       }
 
       writeDB(`INSERT INTO floorplan_images (location) VALUES (?) ON CONFLICT (location) DO NOTHING`, [location]);

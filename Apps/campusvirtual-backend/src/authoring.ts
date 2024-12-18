@@ -5,7 +5,7 @@ import multer from "multer";
 import bodyParser from 'body-parser'
 import fs from 'fs'
 import { disconnectNodes, connectNodes, replaceNode } from './utils'
-import { SEND_TEST_IMAGE, FLOORPLAN_IMAGE_DIR, KEYFRAME_IMG_DIR, KEYFRAME_IMG_EXTENSION, ENABLE_AUTHORING_PAGE } from './consts'
+import { SEND_TEST_IMAGE, FLOORPLAN_IMAGE_DIR, KEYFRAME_IMG_DIR, KEYFRAME_IMG_EXTENSION, ENABLE_AUTHORING_PAGE, QUERY_PREFIX, USE_QUERY_PREFIX } from './consts'
 const app = Router();
 
 if (ENABLE_AUTHORING_PAGE) {
@@ -104,7 +104,7 @@ if (ENABLE_AUTHORING_PAGE) {
       return;
     }
     label = label.replace("<", "\<").replace(">", "\>"); // THIS AREA MAY BE VULNERABLE TO XSS - Only if the attacker gets ahold of the authoring panel, please disable it in consts once you are done authoring
-    const changes = await writeDB("UPDATE refined_nodes SET label = ? WHERE keyframe_id = ?", [label, id])
+    const changes = await writeDB(`UPDATE ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}nodes SET label = ? WHERE keyframe_id = ?`, [label, id])
     res.status(changes > 0 ? 200 : 409).send(changes > 0 ? "Point labelled" : "Error occurred - The point may be a border point, which cannot be deleted")
   })
 
@@ -131,7 +131,7 @@ if (ENABLE_AUTHORING_PAGE) {
   app.delete('/api/v1/point/:id1/connect/:id2', async (req: Request, res: Response) => {
     const { id1, id2 } = req.params;
 
-    const is_edge = await readDB("SELECT * FROM refined_edges WHERE (keyframe_id0 = ? AND keyframe_id1 = ?) OR (keyframe_id0 = ? AND keyframe_id1 = ?) LIMIT 1;", [id1, id2, id2, id1])
+    const is_edge = await readDB(`SELECT * FROM ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}edges WHERE (keyframe_id0 = ? AND keyframe_id1 = ?) OR (keyframe_id0 = ? AND keyframe_id1 = ?) LIMIT 1;`, [id1, id2, id2, id1])
     if (is_edge.length == 0) {
       res.status(409).send("Points are not connected!")
       return;
