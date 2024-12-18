@@ -76,6 +76,13 @@
     "forward_list": "cpp",
     "ranges": "cpp",
     "valarray": "cpp",
-    "core": "cpp"
+    "core": "cpp",
+    "__bit_reference": "cpp",
+    "__locale": "cpp",
+    "__split_buffer": "cpp",
+    "__threading_support": "cpp",
+    "__verbose_abort": "cpp",
+    "ios": "cpp",
+    "locale": "cpp"
   }
 }
