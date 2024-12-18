@@ -1,9 +1,9 @@
-[submodule "FileProcessing"]
+[submodule "Apps/CampusVirtual-FileProcessing"]
 	path = Apps/CampusVirtual-FileProcessing
 	url = https://github.com/Skwangles/CampusVirtual-FileProcessing.git
-[submodule "SLAM/CampusVirtualInterface/3rd/filesystem"]
+[submodule "Apps/SLAM/CampusVirtualInterface/3rd/filesystem"]
 	path = Apps/SLAM/CampusVirtualInterface/3rd/filesystem
 	url = https://github.com/gulrak/filesystem.git
-[submodule "PgSocketViewer"]
-	path = Apps/PgSocketViewer
+[submodule "Apps/PgViewer"]
+	path = Apps/PgViewer
 	url = https://github.com/Skwangles/CampusVirtual-SocketViewer.git
