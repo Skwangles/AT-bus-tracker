@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import * as THREE from 'three'
-import { useThree, Vector3 } from '@react-three/fiber'
+import { useThree } from '@react-three/fiber'
 import axios from 'axios'
 import { API_PREFIX } from '../consts'
-import { calculatePositionFromMatrix, getYRotation } from '../utils'
+import { getPositionOfNode, getYRotation } from '../utils'
 import SphereWithHotspots from './SphereWithHotspots'
 import { HotspotObj } from './Hotspots'
 import { PointData } from './VirtualTour'
@@ -12,9 +12,12 @@ export interface NeighbourData {
   pose: number[]
   ts: string
   keyframe_id: string
+  x_trans: number
+  y_trans: number
+  z_trans: number
 }
 
-const VirtualTourContent: React.FC<any> = ({
+const Canvas: React.FC<any> = ({
   currentId,
   setCurrentId,
   currentPoint,
@@ -34,7 +37,7 @@ const VirtualTourContent: React.FC<any> = ({
 
   const { camera } = useThree()
 
-  const calcAngleToTarget = (target: Vector3) => {
+  const calcAngleToTarget = (target: { x: number; z: number }) => {
     const yaw = Math.atan2(
       target.x - camera.position.x,
       target.z - camera.position.z
@@ -68,7 +71,7 @@ const VirtualTourContent: React.FC<any> = ({
       referenceNeighbour = neighboursData[0]
     }
 
-    const neighbourPos = calculatePositionFromMatrix(referenceNeighbour.pose)
+    const neighbourPos = getPositionOfNode(referenceNeighbour)
     const neighbourVec = new THREE.Vector3(
       neighbourPos[0],
       neighbourPos[1],
@@ -84,15 +87,13 @@ const VirtualTourContent: React.FC<any> = ({
   const fetchPointData = async (pointId: string) => {
     try {
       const pointResponse = await axios.get<PointData>(
-        `${API_PREFIX}/api/v1/point/${pointId}/true`
+        `${API_PREFIX}/api/v1/point/${pointId}`
       )
       const pointData = pointResponse.data
       console.info('Point Data', pointData)
 
       const neighboursResponse = await axios.get<NeighbourData[]>(
-        `${API_PREFIX}/api/v1/point/${pointId}/neighbours/${Boolean(
-          isRefined
-        )}/8/6`
+        `${API_PREFIX}/api/v1/point/${pointId}/neighbours/8/6`
       )
 
       const neighboursData = neighboursResponse.data
@@ -107,14 +108,14 @@ const VirtualTourContent: React.FC<any> = ({
 
       setHotspots(
         neighboursData.map((neighbour) => {
-          const pos = calculatePositionFromMatrix(neighbour.pose)
+          const pos = getPositionOfNode(neighbour)
           const m = new THREE.Matrix4()
 
           //@ts-expect-error - neighbour.pose is in the right format
           m.set(...neighbour.pose)
 
           return {
-            position: pos,
+            position: [pos[0], pos[1], pos[2]],
             rotation: [0, getYRotation(neighbour.pose), 0],
             pose: m,
             id: neighbour.keyframe_id,
@@ -123,7 +124,7 @@ const VirtualTourContent: React.FC<any> = ({
         })
       )
 
-      const newPosition = calculatePositionFromMatrix(pointData.pose)
+      const newPosition = getPositionOfNode(pointData)
       setCurrentPosition(new THREE.Vector3(...newPosition))
       camera.position.set(newPosition[0], newPosition[1], newPosition[2])
 
@@ -156,4 +157,4 @@ const VirtualTourContent: React.FC<any> = ({
   )
 }
 
-export default VirtualTourContent
+export default Canvas

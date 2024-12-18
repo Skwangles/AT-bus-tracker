@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react'
-import { Canvas, useThree } from '@react-three/fiber'
+import { Canvas as ThreeCanvas } from '@react-three/fiber'
 import { SHOW_NAV_SEARCH, WAIKATO_UNI_LEVELS_ORDER } from '../consts'
 import { API_PREFIX, showMap, PROJECT_NAME } from '../consts'
 import axios from 'axios'
@@ -10,15 +10,15 @@ import SearchBar from './SearchBar'
 import { toast, ToastContainer, Bounce } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.min.css'
 import { MapPin, ChevronUp, Map as FeatherMap, Info } from 'react-feather'
-import VirtualTourContent from './VirtualTourContent'
 import LocationChangeControls from './LocationChangeControls'
-import { NeighbourData } from './VirtualTourContent'
-import { AxesHelper, Camera, Vector3 } from 'three'
-
+import Canvas, { NeighbourData } from './Canvas'
 export interface PointData {
   pose: number[]
   ts: string
   keyframe_id: number
+  x_trans: number
+  y_trans: number
+  z_trans: number
   location: string
 }
 
@@ -37,6 +37,9 @@ const VirtualTour: React.FC = () => {
     ts: '',
     keyframe_id: -1,
     location: '',
+    z_trans: 0,
+    x_trans: 0,
+    y_trans: 0,
   })
 
   const [floorWideNeighbours, setFloorWideNeighbours] = useState<
@@ -49,8 +52,6 @@ const VirtualTour: React.FC = () => {
   const [isInstructionsOpen, setInstructionsOpen] = useState(false)
   const [closeDrawer, setCloseDrawer] = useState(false)
 
-  const [calcAngleOfPointFunc, setCalcAngleOfPointFunc] =
-    useState<(target: number) => number>()
   const [camRotation, setCameraRotation] = useState<{
     yaw: number
     pitch: number
@@ -93,7 +94,7 @@ const VirtualTour: React.FC = () => {
       })
 
     if (currentId == '-1' || !params.has('id') || params.get('id') == '-1') {
-      changeFloor('FG.G')
+      changeFloor('indoors')
     }
   }, [])
 
@@ -115,6 +116,7 @@ const VirtualTour: React.FC = () => {
   }, [camRotation])
 
   useEffect(() => {
+    console.log('Location:', currentPoint.location)
     setLocationGroup(currentPoint.location)
   }, [currentPoint])
 
@@ -397,7 +399,7 @@ const VirtualTour: React.FC = () => {
 
       {/* Adjust Canvas for mobile */}
       <div className="w-screen h-screen overflow-hidden fixed top-0 left-0">
-        <Canvas
+        <ThreeCanvas
           style={{
             width: '100%',
             height: '100%',
@@ -414,7 +416,7 @@ const VirtualTour: React.FC = () => {
             initCameraRotation={camRotation}
             setCameraRotation={setCameraRotation}
           />
-          <VirtualTourContent
+          <Canvas
             currentId={currentId}
             setCurrentId={setCurrentId}
             currentPoint={currentPoint}
@@ -425,7 +427,7 @@ const VirtualTour: React.FC = () => {
             highlightedPath={highlightedPath}
             setReferenceNode={setReferenceNode}
           />
-        </Canvas>
+        </ThreeCanvas>
       </div>
 
       {/* Adjust toast position for mobile */}
