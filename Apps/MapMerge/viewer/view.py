@@ -2,11 +2,13 @@ import sqlite3
 import numpy as np
 import pyvista as pv
 
+query_prefix = "refined_"
+
 def load_nodes(db_path):
     """Load nodes from the SQLite database."""
     connection = sqlite3.connect(db_path)
     cursor = connection.cursor()
-    cursor.execute("SELECT keyframe_id, x_trans, y_trans, z_trans FROM nodes")
+    cursor.execute("SELECT keyframe_id, x_trans, y_trans, z_trans FROM "+ query_prefix+"nodes")
     nodes = np.array(cursor.fetchall())
     connection.close()
     return nodes
@@ -15,7 +17,7 @@ def load_edges(db_path):
     """Load edges from the SQLite database."""
     connection = sqlite3.connect(db_path)
     cursor = connection.cursor()
-    cursor.execute("SELECT keyframe_id0, keyframe_id1 FROM edges WHERE type >= 0") # 'Covisibility edges' are type = -1
+    cursor.execute("SELECT keyframe_id0, keyframe_id1 FROM "+ query_prefix+"edges WHERE type >= 0") # 'Covisibility edges' are type = -1
     edges = cursor.fetchall()  # List of tuples
     connection.close()
     return edges
