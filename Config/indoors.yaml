@@ -1,15 +1,15 @@
 # Equirectangular model for RICOH THETA S
 
 Camera:
-  name: "RICOH THETA S 960"
-  setup: "monocular"
-  model: "equirectangular"
+  name: 'RICOH THETA S 960'
+  setup: 'monocular'
+  model: 'equirectangular'
 
   fps: 30.0
-  cols: 5760
-  rows: 2880
+  cols: 1920
+  rows: 960
 
-  color_order: "RGB"
+  color_order: 'RGB'
 
 Preprocessing:
   min_size: 800
@@ -20,14 +20,14 @@ Preprocessing:
     - [0.8, 1.0, 0.7, 1.0]
 
 Feature:
-  name: "default ORB feature extraction setting"
+  name: 'default ORB feature extraction setting'
   scale_factor: 1.2
   num_levels: 8
   ini_fast_threshold: 20
   min_fast_threshold: 7
 
 Mapping:
-  backend: "g2o"
+  backend: 'g2o'
   baseline_dist_thr_ratio: 0.02
   redundant_obs_ratio_thr: 0.95
   num_covisibilities_for_landmark_generation: 20
@@ -35,13 +35,13 @@ Mapping:
   residual_deg_thr: 0.4
 
 Tracking:
-  backend: "g2o"
+  backend: 'g2o'
 
 LoopDetector:
-  backend: "g2o"
+  backend: 'g2o'
   enabled: true
   reject_by_graph_distance: true
-  min_distance_on_graph: 50
+  min_distance_on_graph: 20
 
 GraphOptimizer:
   min_num_shared_lms: 200
@@ -55,8 +55,7 @@ KeyframeInserter:
 Relocalizer:
   search_neighbor: true
 
-
 System:
-  map_format: "sqlite3"
+  map_format: 'sqlite3'
   num_grid_cols: 96
   num_grid_rows: 48
