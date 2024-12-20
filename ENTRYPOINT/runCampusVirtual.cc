@@ -24,7 +24,7 @@ int main(int argc, char** argv) {
         ("videos", po::value<std::string>(), "Comma-separated ordered videos")
         ("json_dir", po::value<std::string>(), "JSON group-to-timestamp file directory")
         ("picture-dir", po::value<std::string>()->default_value("pictures/"), "Keyframe image output dir - Default 'pictures/'")
-        ("config_file", po::value<std::string>()->default_value("equirectangular.yaml"), "Config file - Default 'equirectangular.yaml'")
+        ("config_file", po::value<std::string>()->default_value("indoors.yaml"), "Config file - Default 'indoors.yaml'")
         ("db_user", po::value<std::string>()->default_value("campusvirtual"), "Database username")
         ("db_pwd", po::value<std::string>()->default_value("Squeegee-Grandkid-Superhero8"), "Database password")
         ("db_name", po::value<std::string>()->default_value("cv"), "Database name")
