@@ -259,7 +259,6 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
                             }   
                             }
                         );
-                        spdlog::info("Did it fail {}", imwrite_failed);
                         
                         if (json_obj != NULL){
                             
