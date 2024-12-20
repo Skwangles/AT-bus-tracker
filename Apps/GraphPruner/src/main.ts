@@ -13,7 +13,7 @@ import {
   OUTDOORS_Y_DIST_THRESHOLD,
   QUERY_PREFIX,
 } from "./consts";
-import { calculateImageSharpness, calculateXZDistance, convertTimestampToImagename, getNeighbours, getNextKeyframe, getNodeInfo, getNodePosition, isNodeOutdoors, replaceNode } from './utils'
+import { calculateImageSharpness, calculateXZDistance, connectAllNeighboursIfNotAlready, convertTimestampToImagename, getNeighbours, getNextKeyframe, getNodeInfo, getNodePosition, getPhysicalProximityNeighbours, isNodeOutdoors, replaceNode } from './utils'
 import { write } from "fs";
 
 // TODO: Look at  'A New Trajectory Reduction Method for Mobile Devices Operating Both Online and Offline' paper
@@ -28,6 +28,44 @@ async function get_sharpness(sharpnessValues: any, ts: number, image_directory =
   )) ?? 0;
   sharpnessValues[ts] = val;
   return val;
+}
+
+async function connectCloseTogetherPoints(image_directory = KEYFRAME_IMG_DIR, extension = KEYFRAME_IMG_EXTENSION) {
+  let currentKeyframeId;
+  let currentTs;
+  let firstFrame = await getNextKeyframe(-1);
+  if (!firstFrame) return;
+  console.log(firstFrame)
+
+  currentKeyframeId = Number(firstFrame.keyframe_id);
+  currentTs = Number(firstFrame.ts);
+  if (isNaN(currentKeyframeId) || isNaN(currentTs)) {
+    console.error("NULL keyframe ID");
+    throw new Error("NULL keyframe ID - connectCloseTogetherPoints");
+
+  }
+
+  let count = 0;
+
+  await writeDB("BEGIN TRANSACTION;")
+  while (firstFrame) {
+    const neighbours = await getPhysicalProximityNeighbours(currentKeyframeId)
+    const result = await connectAllNeighboursIfNotAlready(currentKeyframeId, neighbours)
+
+    count += result;
+
+    firstFrame = await getNextKeyframe(currentKeyframeId);
+    if (!firstFrame) break;
+
+    currentKeyframeId = Number(firstFrame.keyframe_id);
+    currentTs = Number(firstFrame.ts);
+
+    if (isNaN(currentKeyframeId) || isNaN(currentTs)) {
+      break;
+    }
+  }
+  console.info("Wrote Edges: ", count)
+  await writeDB("COMMIT;")
 }
 
 /**
@@ -226,6 +264,7 @@ async function createAWorkingCopy() {
 // Main function to prune nodes
 async function prune() {
   await createAWorkingCopy();
+  await connectCloseTogetherPoints();
   console.log("Copied across nodes, edges and node_locations");
   try {
 

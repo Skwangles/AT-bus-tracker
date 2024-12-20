@@ -46,6 +46,46 @@ export async function getNodeInfo(keyframeId: string, use_trans = true) {
 
 }
 
+export async function connectAllNeighboursIfNotAlready(keyframeId: number, neighbours: any[]) {
+  const zoneObject = await readDB("SELECT zone FROM nodes WHERE keyframe_id = ? LIMIT 1;", [keyframeId]);
+  if (!zoneObject) throw new Error("Could not fetch keyframe: " + keyframeId)
+
+  let edgesCreated = 0
+
+  for (const neighbour of neighbours) {
+    try {
+      await writeDB("INSERT INTO edges (keyframe_id0, keyframe_id1, type, zone) VALUES (?, ?, 4, ?)", [keyframeId, neighbour.keyframe_id, zoneObject.zone]).then(value => { if (value > 0) edgesCreated++ })
+      await writeDB("INSERT INTO edges (keyframe_id0, keyframe_id1, type, zone) VALUES (?, ?, 4, ?)", [neighbour.keyframe_id, keyframeId, zoneObject.zone])
+    }
+    catch (e) { }
+  }
+  return edgesCreated
+}
+
+
+export async function getPhysicalProximityNeighbours(keyframeId: number, proximity = TARGET_CLOSENESS / COORDS_TO_METRES, vertical_proximity = (TARGET_CLOSENESS / 2) / COORDS_TO_METRES): Promise<any[]> {
+  const result = await readDB(`WITH target_point AS (
+    SELECT 
+        x_trans, 
+        y_trans, 
+        z_trans
+    FROM ${QUERY_PREFIX}nodes
+    WHERE keyframe_id = ?
+    )
+    SELECT 
+        *
+    FROM ${QUERY_PREFIX}nodes rn
+    JOIN target_point ON (
+            (POWER(rn.x_trans - target_point.x_trans, 2) +
+            POWER(rn.z_trans - target_point.z_trans, 2))
+         <= POWER(?, 2)
+         AND
+         POWER(rn.y_trans - target_point.y_trans, 2) <= POWER(?, 2)
+    )
+    WHERE rn.keyframe_id != ?;`, [keyframeId, proximity, vertical_proximity, keyframeId])
+  return result;
+}
+
 // Helper function to get neighbours
 export async function getNeighbours(keyframeId: number, usePhysicalProximity = false): Promise<any[]> {
 
@@ -73,11 +113,11 @@ export async function getNeighbours(keyframeId: number, usePhysicalProximity = f
         *
     FROM ${QUERY_PREFIX}nodes rn
     JOIN target_point ON (
-        SQRT(
+        (
             POWER(rn.y_trans - target_point.y_trans, 2) +
             POWER(rn.x_trans - target_point.x_trans, 2) +
             POWER(rn.z_trans - target_point.z_trans, 2)
-        ) <= ?
+        ) <= POWER(?, 2)
     )
     WHERE rn.keyframe_id != ?;`, [keyframeId, TARGET_CLOSENESS / COORDS_TO_METRES, keyframeId])
     return [...new Set([...directNeighbours, ...result])]
@@ -207,11 +247,8 @@ export function convertTimestampToImagename(ts: Number | string) {
 }
 
 export async function getNextKeyframe(currentId: number) {
-  let nextFrame: Array<{ keyframe_id: string; degree: number; ts: number }> =
-    await readDB(
-      `SELECT n.keyframe_id, n.ts, COUNT(e1.keyframe_id1) as degree FROM ${QUERY_PREFIX}nodes n JOIN ${QUERY_PREFIX}edges e1 ON n.keyframe_id = e1.keyframe_id0
-            WHERE n.keyframe_id > ? AND (e1.type = 0 OR e1.type = 1)  GROUP BY n.keyframe_id, n.ts LIMIT 1`,
-      [currentId]
-    );
-  return nextFrame[0];
+  return await readDB(
+    `SELECT keyframe_id, ts FROM ${QUERY_PREFIX}nodes WHERE keyframe_id > ? LIMIT 1`,
+    [currentId], true
+  );
 }
