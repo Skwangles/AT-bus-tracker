@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
         ("convertToSQLite", "Convert SLAM map to SQLite3 DB (optional)")
         ("in", po::value<std::string>(), "Input map (*.db) - Optional for normal mode")
         ("out", po::value<std::string>(), "Output map (*.db)")
-        ("media_dir", po::value<std::string>(), "Media directory - videos")
+        ("video_dir", po::value<std::string>(), "Media directory - videos")
         ("map_dir", po::value<std::string>(), "Map directory - maps") 
         ("videos", po::value<std::string>(), "Comma-separated ordered videos")
         ("json_dir", po::value<std::string>(), "JSON group-to-timestamp file directory")
@@ -78,7 +78,7 @@ int main(int argc, char** argv) {
             }
         }
         else {
-            if (!vm.count("videos") || !vm.count("out") || !vm.count("media_dir") || !vm.count("map_dir")) {
+            if (!vm.count("videos") || !vm.count("out") || !vm.count("video_dir") || !vm.count("map_dir")) {
                 std::cout << "For normal mode, required arguments: videos, in, out, media_dir, map_dir, (optional: json_dir, picture-dir, config_file)" << std::endl;
                 std::cout << desc << std::endl;
                 return 1;
@@ -89,7 +89,7 @@ int main(int argc, char** argv) {
         std::string project_dir = vm["project_dir"].as<std::string>();
         std::string map_in = vm.count("in") ? vm["in"].as<std::string>() : "";
         std::string map_out = vm.count("out") ? vm["out"].as<std::string>() : "";
-        std::string media_dir = vm.count("media_dir") ? vm["media_dir"].as<std::string>() : "";
+        std::string media_dir = vm.count("video_dir") ? vm["video_dir"].as<std::string>() : "";
         std::string map_dir = vm["map_dir"].as<std::string>();
         std::string videos = vm.count("videos") ? vm["videos"].as<std::string>() : "";
         std::string json_dir = vm.count("json_dir") ? vm["json_dir"].as<std::string>() : "";
@@ -103,37 +103,37 @@ int main(int argc, char** argv) {
         std::string command;
         if (convert_to_sqlite3) {
             command = project_dir + path_to_stella + "slam_to_sqlite" +
-                              " -c " + project_dir + path_to_config  + config_file +
-                              " -v " + project_dir + path_to_fbow +
-                              " -i " + map_dir + "/" + map_in +
-                              " -o " + map_dir + "/" + map_out;
+                              " -c '" + project_dir + path_to_config  + config_file + "'" +
+                              " -v '" + project_dir + path_to_fbow + "'" +
+                              " -i '" + map_dir + "/" + map_in + "'" +
+                              " -o '" + map_dir + "/" + map_out + "'";
         }
         else if (convert_to_pg){
             std::string connection_string = "postgresql://" + db_user + ":" + db_pwd + "@localhost:" + db_port + "/" + db_name;
             command = project_dir + path_to_stella + "slam_to_pg" +
-                              " -c " + project_dir + path_to_config  + config_file +
-                              " -v " + project_dir + path_to_fbow +
-                              " -i " + map_dir + "/" + map_in +
-                              " --db " + connection_string;
+                              " -c '" + project_dir + path_to_config  + config_file + "'" +
+                              " -v '" + project_dir + path_to_fbow + "'" +
+                              " -i '" + map_dir + "/" + map_in + "'" +
+                              " --db '" + connection_string + "'";
         }
         else if (view_statically){
             command = project_dir + path_to_stella + "view" +
-                              " -c " + project_dir + path_to_config + config_file+
-                              " -v " + project_dir + path_to_fbow +
-                              (map_in.empty() ? "" : " -i " + map_dir + "/" + map_in) +
-                              " -o " +  map_dir + "/" + map_out;
+                              " -c '" + project_dir + path_to_config + config_file + "'" +
+                              " -v '" + project_dir + path_to_fbow + "'" +
+                              (map_in.empty() ? "" : " -i '" + map_dir + "/" + map_in + "'") +
+                              " -o '" +  map_dir + "/" + map_out + "'";
         }
         else {
             command = project_dir + path_to_stella + "map" +
-                                        " -c " + project_dir + path_to_config + config_file +
-                                        " -v " + project_dir + path_to_fbow +
-                                        (map_in.empty() ? "" : " --map-db-in " + map_dir + "/" + map_in) +
-                                        " --map-db-out " +  map_dir + "/" + map_out +
-                                        " --videos " + videos +
+                                        " -c '" + project_dir + path_to_config + config_file + "'" +
+                                        " -v '" + project_dir + path_to_fbow + "'" +
+                                        (map_in.empty() ? "" : " --map-db-in '" + map_dir + "/" + map_in + "'") +
+                                        " --map-db-out '" +  map_dir + "/" + map_out + "'" +
+                                        " --videos '" + videos + "'" +
                                         " --no-sleep " + // Operate faster than real time
-                                        " --video-dir " +  media_dir + "/" +
-                                        " --json-dir " + json_dir + "/" + // Only required for 'pairing JSON with frames' step
-                                        " --picture-dir " + picture_dir + "/" +
+                                        " --video-dir '" +  media_dir + "/" + "'" +
+                                        " --json-dir '" + json_dir + "/" + "'" // Only required for 'pairing JSON with frames' step
+                                        " --picture-dir '" + picture_dir + "/" + "'" +
                                        (use_viewer ? " --viewer none" : " --viewer iridescence_viewer");
         }
         

@@ -54,6 +54,7 @@ static int db_callback(std::vector<video_timestamp> *data, int argc, char **argv
 const std::string DEFAULT_UNKNOWN_GROUP = "Unknown";
 
 
+
 int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
                   const std::shared_ptr<stella_vslam::config>& cfg,
                   const std::string& video_file_path,
@@ -70,12 +71,16 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
                   nlohmann::json& json_obj,
                   std::vector<timestamp_annotation>& timestamp_group_list,
                   std::vector<timestamp_annotation>& special_point_group_list,
+                  const bool exit_on_imwrite_fail,
                   const std::string& image_output_dir = "pictures/",
                   const unsigned int slam_img_width = 1920,
                   const unsigned int slam_img_height = 960
                   ) {
     // load the mask image
     const cv::Mat mask = mask_img_path.empty() ? cv::Mat{} : cv::imread(mask_img_path, cv::IMREAD_GRAYSCALE);
+    
+    std::mutex mtx_imwrite_failed;
+    bool imwrite_failed = false;
 
     // create a viewer object
     // and pass the frame_publisher and the map_publishe
@@ -142,7 +147,7 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
 
     auto video = cv::VideoCapture(video_file_path, cv::CAP_FFMPEG);
     if (!video.isOpened()) {
-        std::cerr << "Unable to open the video." << std::endl;
+        std::cerr << "Unable to open the video: " << video_file_path << std::endl;
         return EXIT_FAILURE;
     }
     video.set(0, start_time);
@@ -160,7 +165,7 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
     int32_t special_point_offset = 0;
     std::vector<std::string> special_points;    
 
-    ThreadPool img_write_thread_pool(8);
+    ThreadPool img_write_thread_pool(1);
     
     // run the slam in another thread
     std::thread thread([&]() {
@@ -185,6 +190,13 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
                 std::this_thread::sleep_for(std::chrono::microseconds(5000));
             }
 #endif
+            {
+                std::lock_guard<std::mutex> lock(mtx_imwrite_failed);
+                if (!exit_on_imwrite_fail && imwrite_failed) {
+                    spdlog::error("Failed to write keyframe image, exiting... (to continue regardless use --no-exit-imwrite-fail)");
+                    return EXIT_FAILURE;
+                }
+            } 
 
             // wait until the loop BA is finished
             if (wait_loop_ba) {
@@ -238,10 +250,16 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
                         // params.push_back(1); // 1 = true, 0 = false 
 
 
-                        img_write_thread_pool.enqueue([frame, filepath, params]() {
+                        img_write_thread_pool.enqueue([&,frame, filepath, params, &imwrite_failed, &mtx_imwrite_failed]() {
                             // Do writing asynchronously
-                            cv::imwrite(filepath, frame, params);
-                        });
+                            bool result = cv::imwrite(filepath, frame, params);
+                            if (!result){
+                                std::lock_guard<std::mutex> lock(mtx_imwrite_failed);
+                                imwrite_failed = true;
+                            }   
+                            }
+                        );
+                        spdlog::info("Did it fail {}", imwrite_failed);
                         
                         if (json_obj != NULL){
                             
@@ -316,6 +334,7 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
 #endif
             }
         }
+        return 0;
     });
 
     // run the viewer in the current thread
@@ -384,6 +403,7 @@ int main(int argc, char* argv[]) {
     auto start_time = op.add<popl::Value<unsigned int>>("s", "start-time", "time to start playing [milli seconds]", 0);
     auto no_sleep = op.add<popl::Switch>("", "no-sleep", "not wait for next frame in real time");
     auto wait_loop_ba = op.add<popl::Switch>("", "wait-loop-ba", "wait until the loop BA is finished");
+    auto exit_if_imwrite_fails = op.add<popl::Switch>("", "no-exit-imwrite-fail", "Do not terminate if cv::imwrite fails");
     auto log_level = op.add<popl::Value<std::string>>("", "log-level", "log level", "info");
     auto eval_log_dir = op.add<popl::Value<std::string>>("", "eval-log-dir", "store trajectory and tracking times at this path (Specify the directory where it exists.)", "");
     auto map_db_path_in = op.add<popl::Value<std::string>>("i", "map-db-in", "load a map from this path", "");
@@ -396,7 +416,7 @@ int main(int argc, char* argv[]) {
     auto videos = op.add<popl::Value<std::string>>("", "videos", "set of comma separated videos files to process (e.g. g-block.mp4,g-block2.mp4)");
     auto video_dir = op.add<popl::Value<std::string>>("", "video-dir", "directory containing video files, if not set must be part of the videos option");
     auto img_output_dir = op.add<popl::Value<std::string>>("p", "picture-dir", "Directory to put keyframe img snapshots in", "pictures/");
-   
+    
     try {
         op.parse(argc, argv);
     }
@@ -588,6 +608,7 @@ int main(int argc, char* argv[]) {
                                 json_obj, 
                                 timestamp_group_list,
                                 special_point_group_list,
+                                exit_if_imwrite_fails->is_set(),
                                 img_output_dir->value(),
                                 img_size["cols"].as<unsigned int>(),
                                 img_size["rows"].as<unsigned int>()
