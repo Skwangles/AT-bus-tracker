@@ -12,7 +12,7 @@ pwd
 # sudo dpkg -i CampusVirtual-FileProcessing/libMediaSDK-dev_2.0-3_amd64_ubuntu18.04.deb
 # Note: This SDK is only provided with purchase of a camera: https://www.insta360.com/sdk/home -- You must install it yourself
 
-cd PgSocketViewer && sudo npm install && cd ..
+cd PgViewer && sudo npm install && cd ..
 
 sudo ldconfig # update lookup library paths again - IMPORTANT if 'libxx.so' not found, note: libxx.so.7 <- 7 is the version number of the package
 
