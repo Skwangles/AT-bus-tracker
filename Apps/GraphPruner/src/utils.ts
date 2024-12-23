@@ -1,5 +1,5 @@
 import sharp from "sharp";
-import { COORDS_TO_METRES, KEYFRAME_IMG_EXTENSION, OUTDOORS_LOCATION_NAME, OUTDOORS_TARGET_CLOSENESS, OUTDOORS_Y_DIST_THRESHOLD, QUERY_PREFIX, TARGET_CLOSENESS, Y_DIST_THRESHOLD } from "./consts";
+import { COORDS_TO_METRES, EdgeType, KEYFRAME_IMG_EXTENSION, OUTDOORS_LOCATION_NAME, OUTDOORS_TARGET_CLOSENESS, OUTDOORS_Y_DIST_THRESHOLD, QUERY_PREFIX, TARGET_CLOSENESS, Y_DIST_THRESHOLD } from "./consts";
 import * as THREE from "three";
 import { readDB, writeDB } from "./db";
 import { read } from "fs";
@@ -47,42 +47,42 @@ export async function getNodeInfo(keyframeId: string, use_trans = true) {
 }
 
 export async function connectAllNeighboursIfNotAlready(keyframeId: number, neighbours: any[]) {
-  const zoneObject = await readDB("SELECT zone FROM nodes WHERE keyframe_id = ? LIMIT 1;", [keyframeId]);
+  const zoneObject = await readDB(`SELECT zone FROM ${QUERY_PREFIX}nodes WHERE keyframe_id = ? LIMIT 1;`, [keyframeId]);
   if (!zoneObject) throw new Error("Could not fetch keyframe: " + keyframeId)
 
   let edgesCreated = 0
 
   for (const neighbour of neighbours) {
     try {
-      await writeDB("INSERT INTO edges (keyframe_id0, keyframe_id1, type, zone) VALUES (?, ?, 4, ?)", [keyframeId, neighbour.keyframe_id, zoneObject.zone]).then(value => { if (value > 0) edgesCreated++ })
-      await writeDB("INSERT INTO edges (keyframe_id0, keyframe_id1, type, zone) VALUES (?, ?, 4, ?)", [neighbour.keyframe_id, keyframeId, zoneObject.zone])
+      await writeDB(`INSERT INTO ${QUERY_PREFIX}edges (keyframe_id0, keyframe_id1, type, zone) VALUES (?, ?, ?, ?) ON CONFLICT (keyframe_id0, keyframe_id1) DO UPDATE SET type=? WHERE type = ?`, [keyframeId, neighbour.keyframe_id, EdgeType.EdgeContraction, zoneObject.zone, EdgeType.EdgeContraction, EdgeType.Covisibility]).then(value => { if (value > 0) edgesCreated++ })
+      await writeDB(`INSERT INTO ${QUERY_PREFIX}edges (keyframe_id0, keyframe_id1, type, zone) VALUES (?, ?, ?, ?) ON CONFLICT (keyframe_id0, keyframe_id1) DO UPDATE SET type=? WHERE type = ?`, [neighbour.keyframe_id, keyframeId, EdgeType.EdgeContraction, zoneObject.zone, EdgeType.EdgeContraction, EdgeType.Covisibility])
     }
-    catch (e) { }
+    catch (e) { console.error("Error:" + e) }
   }
   return edgesCreated
 }
 
 
-export async function getPhysicalProximityNeighbours(keyframeId: number, proximity = TARGET_CLOSENESS / COORDS_TO_METRES, vertical_proximity = (TARGET_CLOSENESS / 2) / COORDS_TO_METRES): Promise<any[]> {
-  const result = await readDB(`WITH target_point AS (
-    SELECT 
-        x_trans, 
-        y_trans, 
+export async function getPhysicalProximityNeighbours(keyframeId: number, proximity = 1.5 / COORDS_TO_METRES): Promise<any[]> {
+  const result = await readDB(`WITH target_point AS(
+        SELECT 
+        x_trans,
+        y_trans,
         z_trans
     FROM ${QUERY_PREFIX}nodes
     WHERE keyframe_id = ?
     )
-    SELECT 
+
+    SELECT
         *
-    FROM ${QUERY_PREFIX}nodes rn
-    JOIN target_point ON (
-            (POWER(rn.x_trans - target_point.x_trans, 2) +
-            POWER(rn.z_trans - target_point.z_trans, 2))
-         <= POWER(?, 2)
-         AND
-         POWER(rn.y_trans - target_point.y_trans, 2) <= POWER(?, 2)
+        FROM ${QUERY_PREFIX}nodes rn
+    JOIN target_point ON(
+          SQRT(POWER(rn.x_trans - target_point.x_trans, 2) +
+          POWER(rn.z_trans - target_point.z_trans, 2) +
+         POWER(rn.y_trans - target_point.y_trans, 2))
+            <= ?
     )
-    WHERE rn.keyframe_id != ?;`, [keyframeId, proximity, vertical_proximity, keyframeId])
+    WHERE rn.keyframe_id != ?; `, [keyframeId, proximity, keyframeId])
   return result;
 }
 
@@ -95,31 +95,31 @@ export async function getNeighbours(keyframeId: number, usePhysicalProximity = f
     `SELECT e.keyframe_id1 as keyframe_id, n.ts, COUNT(e1.keyframe_id1) as degree FROM ${QUERY_PREFIX}edges e 
               JOIN ${QUERY_PREFIX}edges e1 ON e.keyframe_id1 = e1.keyframe_id0
               JOIN ${QUERY_PREFIX}nodes n ON e.keyframe_id1 = n.keyframe_id 
-              WHERE e.keyframe_id0 = ? AND (e.type = 0 OR e.type = 1) AND (e1.type = 0 OR e1.type = 1) 
+              WHERE e.keyframe_id0 = ? AND(e.type = 0 OR e.type = 1) AND(e1.type = 0 OR e1.type = 1) 
               GROUP BY e.keyframe_id1, n.ts`,
     [keyframeId]
   );
 
   if (usePhysicalProximity) {
-    const result = await readDB(`WITH target_point AS (
-    SELECT 
-        x_trans, 
-        y_trans, 
-        z_trans
+    const result = await readDB(`WITH target_point AS(
+              SELECT 
+              x_trans,
+              y_trans,
+              z_trans
     FROM ${QUERY_PREFIX}nodes
     WHERE keyframe_id = ?
     )
-    SELECT 
+      SELECT
         *
-    FROM ${QUERY_PREFIX}nodes rn
-    JOIN target_point ON (
-        (
+        FROM ${QUERY_PREFIX}nodes rn
+    JOIN target_point ON(
+          (
             POWER(rn.y_trans - target_point.y_trans, 2) +
             POWER(rn.x_trans - target_point.x_trans, 2) +
             POWER(rn.z_trans - target_point.z_trans, 2)
-        ) <= POWER(?, 2)
-    )
-    WHERE rn.keyframe_id != ?;`, [keyframeId, TARGET_CLOSENESS / COORDS_TO_METRES, keyframeId])
+          ) <= POWER(?, 2)
+        )
+    WHERE rn.keyframe_id != ?; `, [keyframeId, TARGET_CLOSENESS / COORDS_TO_METRES, keyframeId])
     return [...new Set([...directNeighbours, ...result])]
   }
 
@@ -145,7 +145,7 @@ export function calculateXZDistance(pos1: [number, number, number], pos2: [numbe
 }
 
 export async function isNodeOutdoors(keyframeId: number) {
-  const locData = await readDB(`SELECT location from ${QUERY_PREFIX}node_locations WHERE keyframe_id = ?`, [keyframeId], false)
+  const locData = await readDB(`SELECT location from ${QUERY_PREFIX}node_locations WHERE keyframe_id = ? `, [keyframeId], false)
 
   // If no location, take the more restrictive approach
   if (locData.length === 0) return false;
@@ -156,7 +156,7 @@ export async function isNodeOutdoors(keyframeId: number) {
 // Helper function to delete a node and its edges
 export async function replaceNode(keyframeId: number, position: [number, number, number], ignore_distance = false, isOutdoors = false) {
   const direct_neighbours = await readDB(
-    `SELECT keyframe_id1 as keyframe_id FROM ${QUERY_PREFIX}edges WHERE keyframe_id0 = ? AND (type = 0 OR type = 1)`,
+    `SELECT keyframe_id1 as keyframe_id FROM ${QUERY_PREFIX}edges WHERE keyframe_id0 = ? AND(type = 0 OR type = 1)`,
     [keyframeId], false
   )
 
@@ -166,18 +166,18 @@ export async function replaceNode(keyframeId: number, position: [number, number,
     const neighbour = direct_neighbours[neighbour_id];
     const pos = await getNodePosition(neighbour.keyframe_id)
     if (!pos) {
-      throw new Error(`Unrecoverable error - Return result was Null of getNodePosition - neighbour: ${neighbour.keyframe_id}`)
+      throw new Error(`Unrecoverable error - Return result was Null of getNodePosition - neighbour: ${neighbour.keyframe_id} `)
     }
 
     for (const new_neighbour of direct_neighbours.slice(neighbour_id)) {
       if (new_neighbour.keyframe_id == neighbour.keyframe_id) continue;
       const newNeighbourPosition = await getNodePosition(new_neighbour.keyframe_id)
       if (!newNeighbourPosition) {
-        throw new Error(`Unrecoverable error - Return result was Null of getNodePosition - neighbour: ${new_neighbour.keyframe_id}`)
+        throw new Error(`Unrecoverable error - Return result was Null of getNodePosition - neighbour: ${new_neighbour.keyframe_id} `)
       }
       const distance = calculateXZDistance(newNeighbourPosition, pos);
       if (distance == null) {
-        throw new Error(`Unrecoverable error - Return result was Null of calculateXZDistance - neighbour: ${new_neighbour.keyframe_id}`)
+        throw new Error(`Unrecoverable error - Return result was Null of calculateXZDistance - neighbour: ${new_neighbour.keyframe_id} `)
       }
       const yDistance = Math.abs(newNeighbourPosition[2] - pos[2])
       if (!ignore_distance && (distance > (isOutdoors ? OUTDOORS_TARGET_CLOSENESS : TARGET_CLOSENESS) || yDistance > (isOutdoors ? OUTDOORS_Y_DIST_THRESHOLD : Y_DIST_THRESHOLD))) {
@@ -186,24 +186,24 @@ export async function replaceNode(keyframeId: number, position: [number, number,
         return false;
       }
       await writeDB(
-        `INSERT INTO ${QUERY_PREFIX}edges (keyframe_id0, keyframe_id1, type) VALUES (?, ?, 1) ON CONFLICT (keyframe_id0, keyframe_id1) DO UPDATE SET type = 1;`,
+        `INSERT INTO ${QUERY_PREFIX}edges(keyframe_id0, keyframe_id1, type) VALUES(?, ?, 1) ON CONFLICT(keyframe_id0, keyframe_id1) DO UPDATE SET type = 1; `,
         [neighbour.keyframe_id, new_neighbour.keyframe_id]
       );
       await writeDB(
-        `INSERT INTO ${QUERY_PREFIX}edges (keyframe_id1, keyframe_id0, type) VALUES (?, ?, 1) ON CONFLICT (keyframe_id0, keyframe_id1) DO UPDATE SET type = 1;`,
+        `INSERT INTO ${QUERY_PREFIX}edges(keyframe_id1, keyframe_id0, type) VALUES(?, ?, 1) ON CONFLICT(keyframe_id0, keyframe_id1) DO UPDATE SET type = 1; `,
         [neighbour.keyframe_id, new_neighbour.keyframe_id]
       );
     }
   }
 
   await writeDB(
-    `DELETE FROM ${QUERY_PREFIX}edges WHERE keyframe_id0 = ? OR keyframe_id1 = ?;`,
+    `DELETE FROM ${QUERY_PREFIX}edges WHERE keyframe_id0 = ? OR keyframe_id1 = ?; `,
     [keyframeId, keyframeId]
   );
-  await writeDB(`DELETE FROM ${QUERY_PREFIX}node_locations WHERE keyframe_id = ?`, [
+  await writeDB(`DELETE FROM ${QUERY_PREFIX}node_locations WHERE keyframe_id = ? `, [
     keyframeId,
   ]);
-  await writeDB(`DELETE FROM ${QUERY_PREFIX}nodes WHERE keyframe_id = ?;`, [
+  await writeDB(`DELETE FROM ${QUERY_PREFIX}nodes WHERE keyframe_id = ?; `, [
     keyframeId,
   ]);
 
@@ -230,7 +230,7 @@ export function calculatePositionFromMatrix(
 // Function to calculate image blur using sharp
 export async function calculateImageSharpness(filePath: string): Promise<number> {
   try {
-    const sharpness = await sharp(filePath)
+    const sharpness = await sharp(filePath.trim())
       .stats()
       .then((stats) => {
         return stats.sharpness;
@@ -243,7 +243,7 @@ export async function calculateImageSharpness(filePath: string): Promise<number>
 }
 
 export function convertTimestampToImagename(ts: Number | string) {
-  return `${Number(ts).toFixed(5)}${KEYFRAME_IMG_EXTENSION}`
+  return `${Number(ts).toFixed(5)}${KEYFRAME_IMG_EXTENSION} `
 }
 
 export async function getNextKeyframe(currentId: number) {
