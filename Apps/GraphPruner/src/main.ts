@@ -1,5 +1,5 @@
 import { readDB, writeDB } from "./db";
-
+import cliProgress from 'cli-progress'
 
 import {
   TARGET_CLOSENESS,
@@ -12,6 +12,7 @@ import {
   OUTDOORS_ALWAYS_MERGE_CLOSENESS,
   OUTDOORS_Y_DIST_THRESHOLD,
   QUERY_PREFIX,
+  COORDS_TO_METRES,
 } from "./consts";
 import { calculateImageSharpness, calculateXZDistance, connectAllNeighboursIfNotAlready, convertTimestampToImagename, getNeighbours, getNextKeyframe, getNodeInfo, getNodePosition, getPhysicalProximityNeighbours, isNodeOutdoors, replaceNode } from './utils'
 import { write } from "fs";
@@ -30,17 +31,25 @@ async function get_sharpness(sharpnessValues: any, ts: number, image_directory =
   return val;
 }
 
-async function connectCloseTogetherPoints(image_directory = KEYFRAME_IMG_DIR, extension = KEYFRAME_IMG_EXTENSION) {
+async function connectCloseTogetherPoints(horiztonal_dist = 1.5 / COORDS_TO_METRES) {
   let currentKeyframeId;
   let currentTs;
+
+  const progBar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic)
+
+  const total_num = await readDB(`SELECT COUNT(*) as total FROM ${QUERY_PREFIX}nodes`, [], true)
+  if (!total_num) throw new Error("Could not fetch node count");
+
+  progBar.start(Number(total_num.total), 0)
+
   let firstFrame = await getNextKeyframe(-1);
   if (!firstFrame) return;
+
   console.log(firstFrame)
 
   currentKeyframeId = Number(firstFrame.keyframe_id);
   currentTs = Number(firstFrame.ts);
   if (isNaN(currentKeyframeId) || isNaN(currentTs)) {
-    console.error("NULL keyframe ID");
     throw new Error("NULL keyframe ID - connectCloseTogetherPoints");
 
   }
@@ -48,8 +57,9 @@ async function connectCloseTogetherPoints(image_directory = KEYFRAME_IMG_DIR, ex
   let count = 0;
 
   await writeDB("BEGIN TRANSACTION;")
-  while (firstFrame) {
-    const neighbours = await getPhysicalProximityNeighbours(currentKeyframeId)
+  while (!isNaN(currentKeyframeId)) {
+    progBar.increment()
+    const neighbours = await getPhysicalProximityNeighbours(currentKeyframeId, horiztonal_dist)
     const result = await connectAllNeighboursIfNotAlready(currentKeyframeId, neighbours)
 
     count += result;
@@ -61,16 +71,22 @@ async function connectCloseTogetherPoints(image_directory = KEYFRAME_IMG_DIR, ex
     currentTs = Number(firstFrame.ts);
 
     if (isNaN(currentKeyframeId) || isNaN(currentTs)) {
+      console.debug("Breaking on NaN: ", firstFrame)
       break;
     }
   }
   console.info("Wrote Edges: ", count)
+  progBar.update(total_num.total)
+  progBar.stop()
   await writeDB("COMMIT;")
 }
 
 /**
  * Loop through each node, if a node is within 5m keep the least blurry
- * (except if is a junction point, then never remove that one)
+ * Use QuATR reduction (Quality Aware Two Ring Reduction) 
+ * ring 1 - always connect proximity (connect UI issues)
+ * ring 2 - ideal distance
+ * beyond ring 2 - distance too large to remove
  */
 async function useGreedyTripleRingStrategy(
   image_directory = KEYFRAME_IMG_DIR,
@@ -96,7 +112,7 @@ async function useGreedyTripleRingStrategy(
     if (!visited.has(id)) stack.push(id)
   }
 
-  // Loop through every node
+  // DFT every node
   while (stack.length > 0) {
     const currentKeyframeId = stack.pop()!
     if (visited.has(currentKeyframeId)) continue; // Sanity check we aren't adding duplicates
@@ -117,6 +133,7 @@ async function useGreedyTripleRingStrategy(
     const checkedNeighbours = new Set();
     let neighboursHaveChanged = true;
     while (neighboursHaveChanged && !is_current_deleted) {
+
       console.time("Get Neighbours")
       const neighbours = await getNeighbours(currentKeyframeId, false);
       console.timeEnd("Get Neighbours")
@@ -132,6 +149,7 @@ async function useGreedyTripleRingStrategy(
         if (checkedNeighbours.has(neighbourId)) continue;
         checkedNeighbours.add(neighbourId); // Not using 'visited' here, because we want the 'current' to delete a previous node if it was found sharper
 
+        // 1. Horizontal Distance check
         const ts = neighbour.ts;
         const neighbourPosition = await getNodePosition(String(neighbourId));
         if (neighbourPosition == null) {
@@ -146,17 +164,22 @@ async function useGreedyTripleRingStrategy(
 
         }
 
+        // 2. Vertical distance check
         const yDistance = Math.abs(neighbourPosition[1] - currentPosition[1]);
 
         if (yDistance > (isOutdoors && isNeighbourOutdoors ? OUTDOORS_Y_DIST_THRESHOLD : Y_DIST_THRESHOLD)) {
           continue;
         }
 
+        // 3. Check if inside the QuATR reduction's two rings
         if (distance < (isOutdoors && isNeighbourOutdoors ? OUTDOORS_TARGET_CLOSENESS : TARGET_CLOSENESS) || distance < (isOutdoors && isNeighbourOutdoors ? OUTDOORS_ALWAYS_MERGE_CLOSENESS : ALWAYS_MERGE_CLOSENESS)) {
 
+          // 4. Calculate sharpness heuristic (note: this is the most costly step)
           console.time("Calc Sharpness")
           const neighbourSharpness = await get_sharpness(sharpnessValues, ts)
           console.timeEnd("Calc Sharpness");
+
+          // 5. Remove the lowest sharpness
           if (neighbourSharpness <= currentSharpness) {
             console.log(
               "Deleting neighbour",
@@ -172,12 +195,15 @@ async function useGreedyTripleRingStrategy(
             }
             console.timeEnd("Replace Node")
           } else {
+            // The next loop neighbour needs the current to still exist, so delete afterwards - continue to effectively remove all but the 'sharpest' neighbour, including the current point.
             if (is_current_deleted) continue;
             is_current_deleted = true;
           }
         }
       }
     }
+
+
     if (is_current_deleted) {
       const neighbours = await getNeighbours(currentKeyframeId)
       for (const neighbour of neighbours) {
@@ -195,10 +221,15 @@ async function useGreedyTripleRingStrategy(
 
 
 async function createAWorkingCopy() {
+  const progBar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic)
+
+  progBar.start(6, 0)
+
   await writeDB(`DROP TABLE IF EXISTS ${QUERY_PREFIX}edges;`);
   await writeDB(`DROP TABLE IF EXISTS ${QUERY_PREFIX}node_locations;`);
   await writeDB(`DROP TABLE IF EXISTS ${QUERY_PREFIX}nodes;`);
   await writeDB(`DROP TABLE IF EXISTS ${QUERY_PREFIX}special_labels;`);
+  progBar.increment(1, { msg: "Dropping tables" })
 
   await writeDB(`
         CREATE TABLE ${QUERY_PREFIX}nodes (
@@ -211,6 +242,7 @@ async function createAWorkingCopy() {
             label TEXT DEFAULT NULL,
             zone TEXT DEFAULT NULL
         );`)
+  progBar.increment(1, { msg: "Created working nodes table" })
 
   await writeDB(`
         CREATE TABLE ${QUERY_PREFIX}special_labels (
@@ -219,6 +251,7 @@ async function createAWorkingCopy() {
             zone TEXT DEFAULT NULL,
             FOREIGN KEY (keyframe_id) REFERENCES nodes(keyframe_id)
         );`)
+  progBar.increment(1, { msg: "Created working special_labels table" })
 
   await writeDB(`
         CREATE TABLE ${QUERY_PREFIX}edges (
@@ -231,6 +264,7 @@ async function createAWorkingCopy() {
             UNIQUE(keyframe_id0, keyframe_id1),
             PRIMARY KEY (keyframe_id0, keyframe_id1)
         );`)
+  progBar.increment(1, { msg: "Created working edges table" })
 
   await writeDB(`
         CREATE TABLE ${QUERY_PREFIX}node_locations (
@@ -241,24 +275,16 @@ async function createAWorkingCopy() {
         );
     `)
 
+  progBar.increment(1, { msg: "Created working node_locations table" })
+
 
   await writeDB(`INSERT INTO ${QUERY_PREFIX}nodes SELECT * FROM nodes;`);
   await writeDB(`INSERT INTO ${QUERY_PREFIX}node_locations SELECT * FROM node_locations;`);
   await writeDB(`INSERT INTO ${QUERY_PREFIX}edges SELECT * FROM edges;`);
   await writeDB(`INSERT INTO ${QUERY_PREFIX}special_labels SELECT * FROM special_labels;`);
+  progBar.increment(1, { msg: "INSERT INTO tables completed" })
+  progBar.stop()
 
-  // await writeDB(`BEGIN;`);
-
-  // await writeDB(`ALTER TABLE ${QUERY_PREFIX}edges ADD PRIMARY KEY (keyframe_id0, keyframe_id1);`)
-  // await writeDB(`ALTER TABLE ${QUERY_PREFIX}nodes ADD PRIMARY KEY (keyframe_id);`)
-  // await writeDB(`ALTER TABLE ${QUERY_PREFIX}node_locations ADD PRIMARY KEY (keyframe_id);`)
-  // await writeDB(`ALTER TABLE ${QUERY_PREFIX}nodes ADD CONSTRAINT unique_node UNIQUE (keyframe_id);`)
-  // await writeDB(`ALTER TABLE ${QUERY_PREFIX}node_locations ADD CONSTRAINT node_locations_FK FOREIGN KEY (keyframe_id) REFERENCES ${QUERY_PREFIX}nodes (keyframe_id);`)
-
-  // await writeDB(`ALTER TABLE ${QUERY_PREFIX}edges ADD CONSTRAINT ref_edge_id0_FK FOREIGN KEY (keyframe_id0) REFERENCES ${QUERY_PREFIX}nodes (keyframe_id);`)
-  // await writeDB(`ALTER TABLE ${QUERY_PREFIX}edges ADD CONSTRAINT ref_edge_id1_FK FOREIGN KEY (keyframe_id1) REFERENCES ${QUERY_PREFIX}nodes (keyframe_id);`)
-  // await writeDB(`ALTER TABLE ${QUERY_PREFIX}edges ADD CONSTRAINT unique_${QUERY_PREFIX}edge UNIQUE (keyframe_id0, keyframe_id1);`)
-  // await writeDB(`COMMIT;`);
 }
 
 // Main function to prune nodes
