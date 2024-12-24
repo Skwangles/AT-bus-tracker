@@ -1,16 +1,14 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Canvas as ThreeCanvas } from '@react-three/fiber'
-import { SHOW_NAV_SEARCH, WAIKATO_UNI_LEVELS_ORDER } from '../consts'
+import { WAIKATO_UNI_LEVELS_ORDER } from '../consts'
 import { API_PREFIX, showMap, PROJECT_NAME } from '../consts'
 import axios from 'axios'
 import CameraRotationControls from './RotationController'
-import Instructions from './Instructions'
 import Map from './Map'
 import SearchBar from './SearchBar'
 import { toast, ToastContainer, Bounce } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.min.css'
-import { MapPin, ChevronUp, Map as FeatherMap, Info } from 'react-feather'
-import LocationChangeControls from './LocationChangeControls'
+import { Map as FeatherMap } from 'react-feather'
 import Canvas, { NeighbourData } from './Canvas'
 import { DesktopLayout } from './DesktopLayout'
 import { MobileLayout } from './MobileLayout'
@@ -50,10 +48,9 @@ const VirtualTour: React.FC = () => {
   const [locationGroup, setLocationGroup] = useState<string>('')
   const [highlightedPath, setHighlightedPath] = useState<number[]>([])
   const [allFloorNames, setAllFloorNames] = useState<string[]>([])
-  
+
   const [isInstructionsOpen, setInstructionsOpen] = useState(false)
   const [closeDrawer, setCloseDrawer] = useState(false)
-  const [firstLoad, setFirstLoad] = useState(false)
 
   const [camRotation, setCameraRotation] = useState<{
     yaw: number
@@ -232,8 +229,6 @@ const VirtualTour: React.FC = () => {
   // Add new state for screen size
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768)
 
-
-
   // Add window resize listener
   useEffect(() => {
     const handleResize = () => {
@@ -243,10 +238,6 @@ const VirtualTour: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-
-
-
-
   const [referenceNode, setReferenceNode] = useState<{
     id: string
     targetYaw: number
@@ -254,11 +245,33 @@ const VirtualTour: React.FC = () => {
 
   return (
     <>
-      <MobileLayout isMobile={isMobile} currentPoint={currentPoint} setCurrentPoint={setCurrentPoint} allFloorNames={allFloorNames}
-      changeFloor={changeFloor} changeFloorUpOrDown={changeFloorUpOrDown} canGoDown={canGoDown} canGoUp={canGoUp} locationGroup={locationGroup} isInstructionsOpen={isInstructionsOpen} setInstructionsOpen={setInstructionsOpen} />
+      <MobileLayout
+        isMobile={isMobile}
+        currentPoint={currentPoint}
+        setCurrentPoint={setCurrentPoint}
+        allFloorNames={allFloorNames}
+        changeFloor={changeFloor}
+        changeFloorUpOrDown={changeFloorUpOrDown}
+        canGoDown={canGoDown}
+        canGoUp={canGoUp}
+        locationGroup={locationGroup}
+        isInstructionsOpen={isInstructionsOpen}
+        setInstructionsOpen={setInstructionsOpen}
+      />
 
-      <DesktopLayout isMobile={isMobile} currentPoint={currentPoint} setCurrentPoint={setCurrentPoint} allFloorNames={allFloorNames}
-      changeFloor={changeFloor} changeFloorUpOrDown={changeFloorUpOrDown} canGoDown={canGoDown} canGoUp={canGoUp} locationGroup={locationGroup} isInstructionsOpen={isInstructionsOpen} setInstructionsOpen={setInstructionsOpen} />
+      <DesktopLayout
+        isMobile={isMobile}
+        currentPoint={currentPoint}
+        setCurrentPoint={setCurrentPoint}
+        allFloorNames={allFloorNames}
+        changeFloor={changeFloor}
+        changeFloorUpOrDown={changeFloorUpOrDown}
+        canGoDown={canGoDown}
+        canGoUp={canGoUp}
+        locationGroup={locationGroup}
+        isInstructionsOpen={isInstructionsOpen}
+        setInstructionsOpen={setInstructionsOpen}
+      />
 
       {showMap && (
         <Map
@@ -352,7 +365,7 @@ const VirtualTour: React.FC = () => {
           referenceNode={referenceNode}
         />
       )}
-      
+
       <ToastContainer
         position={isMobile ? 'bottom-center' : 'top-right'}
         autoClose={5000}
