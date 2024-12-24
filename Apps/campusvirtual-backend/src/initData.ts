@@ -14,12 +14,12 @@ export default async function initDB(quitIfTablesExist = false) {
       y DOUBLE PRECISION DEFAULT 0 NOT NULL,
       keyframe_id INTEGER REFERENCES ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}nodes (keyframe_id),
       type INTEGER DEFAULT 0 NOT NULL,
-      PRIMARY KEY(keyframe_id, location)
+      PRIMARY KEY (keyframe_id, location)
     );`);
   }
   catch (e) {
 
-    console.log("Already built floorplan_images and floorplan_points!")
+    console.log("Already built floorplan_images and floorplan_points!: ", e)
     if (quitIfTablesExist) {
       console.log("Skipping map data init!")
       return;
@@ -43,7 +43,7 @@ export default async function initDB(quitIfTablesExist = false) {
 
       const nodes = nodesResult
       const borderNodes = borderNodesResult;
-      console.info(`Location ${location} - Nodes: ${nodesResult.rowCount}, Border Nodes: ${borderNodesResult.rowCount}`)
+      console.info(`Location ${location} - Nodes: ${nodesResult.length}, Border Nodes: ${borderNodesResult.length}`)
 
       const combined_nodes = [...nodes, ...borderNodes]
 
@@ -60,17 +60,17 @@ export default async function initDB(quitIfTablesExist = false) {
         // Don't need to wait for this
         const initX = clampToPostive((node.x_trans - minX) / (maxX - minX))
         const initY = clampToPostive((node.z_trans - minZ) / (maxZ - minZ))
-        writeDB("INSERT INTO floorplan_points (location, keyframe_id, type, x, y) VALUES (?, ?, ?, ?, ?) ON CONFLICT (keyframe_id, location) IGNORE;", [location, node.keyframe_id, FLOOR_POINT_DEFAULT_TYPE, initX, initY])
+        await writeDB("INSERT OR IGNORE INTO floorplan_points (location, keyframe_id, type, x, y) VALUES (?, ?, ?, ?, ?);", [location, node.keyframe_id, FLOOR_POINT_DEFAULT_TYPE, initX, initY])
       }
 
       for (const border_node of borderNodes) {
         const initX = clampToPostive((border_node.x_trans - minX) / (maxX - minX))
         const initY = clampToPostive((border_node.z_trans - minZ) / (maxZ - minZ))
 
-        writeDB("INSERT INTO floorplan_points (location, keyframe_id, type, x, y) VALUES (?, ?, ?, ?, ?) ON CONFLICT (keyframe_id, location) IGNORE;", [location, border_node.keyframe_id, BORDERING_FLOOR_POINT_DEFAULT_TYPE, initX, initY])
+        await writeDB("INSERT OR IGNORE INTO floorplan_points (location, keyframe_id, type, x, y) VALUES (?, ?, ?, ?, ?);", [location, border_node.keyframe_id, BORDERING_FLOOR_POINT_DEFAULT_TYPE, initX, initY])
       }
 
-      writeDB(`INSERT INTO floorplan_images (location) VALUES (?) ON CONFLICT (location) DO NOTHING`, [location]);
+      await writeDB(`INSERT OR IGNORE INTO floorplan_images (location) VALUES (?)`, [location]);
     }
 
     await writeDB("COMMIT;")
