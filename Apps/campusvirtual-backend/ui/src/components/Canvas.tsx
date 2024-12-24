@@ -93,7 +93,7 @@ const Canvas: React.FC<any> = ({
       console.info('Point Data', pointData)
 
       const neighboursResponse = await axios.get<NeighbourData[]>(
-        `${API_PREFIX}/api/v1/point/${pointId}/neighbours/8/6`
+        `${API_PREFIX}/api/v1/point/${pointId}/neighbours/8/2`
       )
 
       const neighboursData = neighboursResponse.data
