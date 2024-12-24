@@ -63,7 +63,8 @@ export async function connectAllNeighboursIfNotAlready(keyframeId: number, neigh
 }
 
 
-export async function getPhysicalProximityNeighbours(keyframeId: number, proximity = 1.5 / COORDS_TO_METRES): Promise<any[]> {
+export async function getPhysicalProximityNeighbours(keyframeId: number, proximity = 1.5 / COORDS_TO_METRES, vertical_prox = 1.5 / COORDS_TO_METRES): Promise<any[]> {
+
   const result = await readDB(`WITH target_point AS(
         SELECT 
         x_trans,
@@ -77,12 +78,13 @@ export async function getPhysicalProximityNeighbours(keyframeId: number, proximi
         *
         FROM ${QUERY_PREFIX}nodes rn
     JOIN target_point ON(
-          SQRT(POWER(rn.x_trans - target_point.x_trans, 2) +
-          POWER(rn.z_trans - target_point.z_trans, 2) +
-         POWER(rn.y_trans - target_point.y_trans, 2))
-            <= ?
-    )
-    WHERE rn.keyframe_id != ?; `, [keyframeId, proximity, keyframeId])
+          SQRT(
+            POW(rn.x_trans - target_point.x_trans, 2))
+            POW(rn.z_trans - target_point.z_trans, 2)
+          ) <= ?
+           AND ABS(rn.y_trans - target_point.y_trans, 2) <= ?
+        )
+    WHERE rn.keyframe_id != ?; `, [keyframeId, proximity, vertical_prox, keyframeId])
   return result;
 }
 
@@ -101,26 +103,8 @@ export async function getNeighbours(keyframeId: number, usePhysicalProximity = f
   );
 
   if (usePhysicalProximity) {
-    const result = await readDB(`WITH target_point AS(
-              SELECT 
-              x_trans,
-              y_trans,
-              z_trans
-    FROM ${QUERY_PREFIX}nodes
-    WHERE keyframe_id = ?
-    )
-      SELECT
-        *
-        FROM ${QUERY_PREFIX}nodes rn
-    JOIN target_point ON(
-          (
-            POWER(rn.y_trans - target_point.y_trans, 2) +
-            POWER(rn.x_trans - target_point.x_trans, 2) +
-            POWER(rn.z_trans - target_point.z_trans, 2)
-          ) <= POWER(?, 2)
-        )
-    WHERE rn.keyframe_id != ?; `, [keyframeId, TARGET_CLOSENESS / COORDS_TO_METRES, keyframeId])
-    return [...new Set([...directNeighbours, ...result])]
+    const results = await getPhysicalProximityNeighbours(keyframeId, TARGET_CLOSENESS / COORDS_TO_METRES)
+    return [...new Set([...directNeighbours, ...results])]
   }
 
   return directNeighbours;
