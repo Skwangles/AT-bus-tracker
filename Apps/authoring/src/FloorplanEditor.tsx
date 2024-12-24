@@ -55,7 +55,7 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
           type: number
           label: string
         }>
-      }>(`${API_PREFIX}/api/floorplans/${floorplan}`)
+      }>(`${API_PREFIX}/api/v1/floorplans/${floorplan}`)
       if (
         !response.data ||
         !response.data.nodes ||
@@ -67,7 +67,7 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
       }
       const img = new Image()
       if (floorplan) {
-        img.src = `${API_PREFIX}/api/floorplans/${floorplan}/image`
+        img.src = `${API_PREFIX}/api/v1/floorplans/${floorplan}/image`
       }
       setHasImage(Boolean(response.data.has_image))
       img.onload = () => {
@@ -230,7 +230,7 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
     setDragStartPos(null)
 
     for (const node of nodes.filter((node) => selectedPoints.has(node.id))) {
-      axios.post(`${API_PREFIX}/api/floorplans/${floorplan}/update`, {
+      axios.post(`${API_PREFIX}/api/v1/floorplans/${floorplan}/update`, {
         id: node.id,
         x: node.x,
         y: node.y,
@@ -240,7 +240,7 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
 
   const updateAllPoints = (nodes: Node[]) => {
     axios
-      .post(`${API_PREFIX}/api/floorplans/${floorplan}/updatemultiple`, {
+      .post(`${API_PREFIX}/api/v1/floorplans/${floorplan}/updatemultiple`, {
         points: nodes,
       })
       .catch((e) => {

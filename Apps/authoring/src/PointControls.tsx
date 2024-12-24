@@ -58,7 +58,7 @@ const PointControls = ({
           style={{ margin: '5px' }}
           onClick={async () => {
             const result = await axios.post(
-              `${API_PREFIX}/api/point/${id}/label`,
+              `${API_PREFIX}/api/v1/point/${id}/label`,
               { label: label }
             )
             if (result.status == 201) {
@@ -83,12 +83,14 @@ const PointControls = ({
           }}
         />
       </div>
-      <img width={400} height={200} src={`${API_PREFIX}/api/image/${id}`} />
+      <img width={400} height={200} src={`${API_PREFIX}/api/v1/image/${id}`} />
 
       <button
         style={{ margin: '5px' }}
         onClick={async () => {
-          const result = await axios.delete(`/api/point/${id}/delete`)
+          const result = await axios.delete(
+            `${API_PREFIX}/api/v1/point/${id}/delete`
+          )
           if (result.status == 200) {
             window.alert('Sucessfully removed!')
             reloadPoints()
@@ -113,7 +115,7 @@ const PointControls = ({
             if (!id2 || isNaN(id2)) return
 
             const result = await axios.post(
-              `${API_PREFIX}/api/point/${id}/connect/${id2}`
+              `${API_PREFIX}/api/v1/point/${id}/connect/${id2}`
             )
             if (result.status == 201) {
               window.alert(`Successfully connected ID: ${id} to ID 2: ${id2}`)
@@ -144,7 +146,7 @@ const PointControls = ({
             if (!id2 || isNaN(id2)) return
 
             const result = await axios.delete(
-              `${API_PREFIX}/api/point/${id}/connect/${id2}`
+              `${API_PREFIX}/api/v1/point/${id}/connect/${id2}`
             )
             if (result.status == 201) {
               window.alert(
