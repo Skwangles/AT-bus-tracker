@@ -153,14 +153,16 @@ def connect_points():
         return
     connection = sqlite3.connect(db_path)
     cursor = connection.cursor()
+    
+    print("Connecting", picked_id, "to", second_id)
 
-    result = cursor.execute("SELECT zone FROM " + table_name_prefix + "nodes WHERE keyframe_id = ?", picked_id)
+    find_zone_sql = "SELECT zone FROM " + table_name_prefix + "nodes WHERE keyframe_id = ?"
+    result = cursor.execute(find_zone_sql, (int(picked_id),))
     zone = result.fetchone()[0]
-    if not zone:
-        print("Zone was invalid:", zone)
+    print("Zone:", zone)
 
-    cursor.execute("INSERT INTO " + table_name_prefix + "edges (keyframe_id0, keyframe_id1, type, zone) VALUES (?, ?, ?, ?) ON CONFLICT (keyframe_id0, keyframe_id1) DO UPDATE SET type=? WHERE type = ?", picked_id, second_id, EDGE_TYPE_EDGECONTRACTION, zone, EDGE_TYPE_EDGECONTRACTION, EDGE_TYPE_COVISIBILITY)
-    cursor.execute("INSERT INTO " + table_name_prefix + "edges (keyframe_id0, keyframe_id1, type, zone) VALUES (?, ?, ?, ?) ON CONFLICT (keyframe_id0, keyframe_id1) DO UPDATE SET type=? WHERE type = ?", second_id, picked_id, EDGE_TYPE_EDGECONTRACTION, zone, EDGE_TYPE_EDGECONTRACTION, EDGE_TYPE_COVISIBILITY)
+    cursor.execute("INSERT INTO " + table_name_prefix + "edges (keyframe_id0, keyframe_id1, type, zone) VALUES (?, ?, ?, ?) ON CONFLICT (keyframe_id0, keyframe_id1) DO UPDATE SET type=? WHERE type = ?", (picked_id, second_id, EDGE_TYPE_EDGECONTRACTION, zone, EDGE_TYPE_EDGECONTRACTION, EDGE_TYPE_COVISIBILITY,))
+    cursor.execute("INSERT INTO " + table_name_prefix + "edges (keyframe_id0, keyframe_id1, type, zone) VALUES (?, ?, ?, ?) ON CONFLICT (keyframe_id0, keyframe_id1) DO UPDATE SET type=? WHERE type = ?", (second_id, picked_id, EDGE_TYPE_EDGECONTRACTION, zone, EDGE_TYPE_EDGECONTRACTION, EDGE_TYPE_COVISIBILITY,))
     if (cursor.rowcount > 0):
         print("Edge created successfully. Restart to load...")
     connection.commit()
@@ -177,7 +179,14 @@ def remove_point():
     print("Marked", picked_id, "for removal")
     removeable_ids.append(picked_id)
     
-
+def store_point():
+    global picked_id
+    global second_id
+    if picked_id == -1 or picked_id == None:
+        return
+    second_id = picked_id
+    print("Stored:", second_id)
+    
 def picked_point(picked):
     global picked_id
     id = idx_to_id[pos_map[str(picked)]]
@@ -235,7 +244,7 @@ def render(nodes_list, edges=None):
     plotter.add_key_event('d', callback=remove_point)
     plotter.add_key_event('e', callback=export_changes)
     plotter.add_key_event('n', callback=show_neighbours)
-    plotter.add_key_event('1', callback=lambda x: second_id = picked_id if picked_id != -1 else second_id)
+    plotter.add_key_event('1', callback=store_point)
     plotter.add_key_event('2', callback=connect_points)
     plotter.show()
 
