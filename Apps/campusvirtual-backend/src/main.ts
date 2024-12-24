@@ -102,7 +102,7 @@ app.get('/api/v1/point/:id', async function (req: { params: { id: number } }, re
 })
 
 app.get('/api/v1/floors', async function (req: any, res: any) {
-  res.json((await readDB(`SELECT DISTINCT location FROM ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}node_locations UNION SELECT DISTINCT label FROM nodes WHERE label is not NULL AND label <> '';`)))
+  res.json((await readDB(`SELECT DISTINCT l.location FROM ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}node_locations l UNION SELECT DISTINCT label FROM ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}special_labels s WHERE s.label is not NULL AND s.label <> '';`)))
   // Some labels and floor names may be vulnerable to XSS
 })
 
@@ -110,14 +110,14 @@ app.get('/api/v1/floors', async function (req: any, res: any) {
 app.get('/api/v1/floor/:floor/point/', async function (req: any, res: any) {
   console.log("Hit floor endpoint")
   // Get FIRST node which has that location
-  const nodeWithSpecialLabel = await readDB(`SELECT keyframe_id, pose, x_trans, y_trans, z_trans FROM ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}nodes WHERE label = ?`, [req.params.floor])
+  const nodeWithSpecialLabel = await readDB(`SELECT n.keyframe_id, pose, x_trans, y_trans, z_trans FROM ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}nodes n JOIN ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}special_labels s ON s.keyframe_id = n.keyframe_id WHERE s.label = ?`, [req.params.floor])
 
   if (nodeWithSpecialLabel.length != 0) {
     console.log("Found a label", nodeWithSpecialLabel)
     res.json(nodeWithSpecialLabel[0])
     return;
   }
-  const firstNodeWithLocation = await readDB(`SELECT n.keyframe_id, l.location, n.label FROM ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}nodes n JOIN ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}node_locations l ON n.keyframe_id = l.keyframe_id WHERE l.location = ? LIMIT 1`, [req.params.floor])
+  const firstNodeWithLocation = await readDB(`SELECT n.keyframe_id, l.location, s.label FROM ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}nodes n JOIN ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}special_labels s ON s.keyframe_id = n.keyframe_id JOIN ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}node_locations l ON n.keyframe_id = l.keyframe_id WHERE l.location = ? LIMIT 1`, [req.params.floor])
   if (firstNodeWithLocation.length > 0) {
     console.log("Returning rows")
     res.json(firstNodeWithLocation[0])
