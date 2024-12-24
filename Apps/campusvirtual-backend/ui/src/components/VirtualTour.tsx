@@ -305,7 +305,7 @@ const VirtualTour: React.FC = () => {
             overflow: 'hidden',
             touchAction: 'none',
           }}
-          camera={{ position: [0, 0, 10], fov: isMobile ? 60 : 75 }}
+          camera={{ position: [0, 0, 10], fov: isMobile ? 60 : 90 }}
           shadows
         >
           <ambientLight intensity={0.6} />
