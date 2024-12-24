@@ -57,9 +57,6 @@ set(EXECUTABLE_TARGETS "")
 add_executable(map src/map.cc)
 list(APPEND EXECUTABLE_TARGETS map)
 
-add_executable(slam_to_pg src/slam_to_postgres.cc)
-list(APPEND EXECUTABLE_TARGETS slam_to_pg)
-
 add_executable(slam_to_sqlite src/slam_to_sqlite.cc)
 list(APPEND EXECUTABLE_TARGETS slam_to_sqlite)
 
