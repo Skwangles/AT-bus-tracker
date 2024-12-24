@@ -17,13 +17,13 @@ echo "Running ProcessFiles"
 # ./ProcessFiles.out /Abs/Path/To/RawINSV /Abs/Path/To/Video /Abs/Path/To/RawJSON /Abs/Path/To/JSONOutput
 
 # Process the videos - Arg: <isHeadless> <Root CampusVirtual Dir> --videos <Comma-separated videos> --out <output sqlite3 db file name> --media_dir <Path to videos> --map_dir <path to Sqlite3 dbs - concatenated with --out value> --json_dir <path to JSON files> --picture-dir <outputted panorama images> 
-./runCampusVirtual false ./ --videos video1.mp4,video2.mp4 --out map.db --media_dir /Abs/Path/To/Video/ --map_dir /Abs/Path/To/Maps/ --json_dir /Abs/Path/To/JSON/ --picture-dir /Abs/Path/To/pictures
+./runCampusVirtual false ./ --videos video1.mp4,video2.mp4 --out map.db --video_dir /Abs/Path/To/Video/ --map_dir /Abs/Path/To/Maps/ --json_dir /Abs/Path/To/JSON/ --picture-dir /Abs/Path/To/pictures
 
 # View the 3D SLAM map - Args: <isHeadless> <Root CampusVirtual Dir> -- For all but map_dir, and --in you just need to give 'filler' args- Optional step - TODO: Add manual corrections and loop closures
 # ./runCampusVirtual false ./ --videos . --in map.db --out map-edited.db --media_dir . --map_dir /Abs/Path/To/Maps/ --json_dir . --convertToGraph
 
 # Export to postgres - Only <isHeadless> <Root dir>  --in <map name> and --map_dir <dir of map files> need actual values, the others can be 'fillers'
-./runCampusVirtual false ./ --videos . --in map.db --out . --media_dir /Abs/Path/To/Video/ --map_dir /Abs/Path/To/Maps/ --json_dir /Abs/Path/To/JSON/ --convertToPg
+./runCampusVirtual false ./ --videos . --in map.db --out . --video_dir /Abs/Path/To/Video/ --map_dir /Abs/Path/To/Maps/ --json_dir /Abs/Path/To/JSON/ --convertToPg
 
 # Prune the graph to viewing
 cd ./Apps/GraphPruner
