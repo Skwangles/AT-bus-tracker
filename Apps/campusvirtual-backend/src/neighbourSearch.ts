@@ -37,11 +37,11 @@ export async function searchNeighbour(mainPointId: number, distanceThreshold: nu
         keyframe_id
     FROM ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}nodes rn
     JOIN target_point ON (
-            abs(rn.y_trans - target_point.y_trans) <= ? 
-          AND
-            POWER(rn.x_trans - target_point.x_trans, 2) +
-            POWER(rn.z_trans - target_point.z_trans, 2)
+            SQRT(POWER(rn.x_trans - target_point.x_trans, 2) +
+            POWER(rn.z_trans - target_point.z_trans, 2))
          <= ?
+         AND   
+         ABS(rn.y_trans - target_point.y_trans) <= ? 
     )
     WHERE rn.keyframe_id != ?;`, [mainPointId, Math.pow(distanceThreshold / COORDS_TO_METRES, 2), yDistThresh / (COORDS_TO_METRES * 2), mainPointId])
     console.log("Phsyical proximity: ", resultData)
