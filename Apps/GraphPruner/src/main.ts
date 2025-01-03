@@ -38,6 +38,7 @@ async function connectCloseTogetherPoints(horiztonal_dist = 1.5 / COORDS_TO_METR
   const progBar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic)
 
   const total_num = await readDB(`SELECT COUNT(*) as total FROM ${QUERY_PREFIX}nodes`, [], true)
+  console.log(total_num)
   if (!total_num) throw new Error("Could not fetch node count");
 
   progBar.start(Number(total_num.total), 0)
@@ -239,17 +240,17 @@ async function createAWorkingCopy() {
             x_trans REAL,
             y_trans REAL,
             z_trans REAL,
-            label TEXT DEFAULT NULL,
             zone TEXT DEFAULT NULL
         );`)
   progBar.increment(1, { msg: "Created working nodes table" })
 
   await writeDB(`
         CREATE TABLE ${QUERY_PREFIX}special_labels (
-            keyframe_id INTEGER PRIMARY KEY NOT NULL,
+            keyframe_id INTEGER NOT NULL,
             label TEXT,
             zone TEXT DEFAULT NULL,
-            FOREIGN KEY (keyframe_id) REFERENCES nodes(keyframe_id)
+            FOREIGN KEY (keyframe_id) REFERENCES nodes(keyframe_id),
+            PRIMARY KEY (label, keyframe_id)
         );`)
   progBar.increment(1, { msg: "Created working special_labels table" })
 
@@ -278,7 +279,7 @@ async function createAWorkingCopy() {
   progBar.increment(1, { msg: "Created working node_locations table" })
 
 
-  await writeDB(`INSERT INTO ${QUERY_PREFIX}nodes SELECT * FROM nodes;`);
+  await writeDB(`INSERT INTO ${QUERY_PREFIX}nodes SELECT ts, keyframe_id, pose, x_trans, y_trans, z_trans, zone FROM nodes;`);
   await writeDB(`INSERT INTO ${QUERY_PREFIX}node_locations SELECT * FROM node_locations;`);
   await writeDB(`INSERT INTO ${QUERY_PREFIX}edges SELECT * FROM edges;`);
   await writeDB(`INSERT INTO ${QUERY_PREFIX}special_labels SELECT * FROM special_labels;`);

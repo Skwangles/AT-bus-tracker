@@ -8,6 +8,8 @@ let sqliteDb: betterSqlite3.Database;
 function initDB() {
   sqliteDb = betterSqlite3(SQLITE_DB_PATH, { readonly: true })
   writableSqliteDb = betterSqlite3(SQLITE_DB_PATH, { readonly: false })
+  writableSqliteDb.pragma('journal_mode = WAL')
+
   writableSqliteDb.function('POWER', (x, y) => Math.pow(Number(x), Number(y)))
   writableSqliteDb.function('ABS', (x) => Math.abs(Number(x)))
 
@@ -22,7 +24,10 @@ export async function writeDB(query: string, params: any[] = []): Promise<number
 }
 
 export async function readDB(query: string, params: (string | number)[] = [], isSingle: boolean = false): Promise<any | any[]> {
-  const preparedQuery = sqliteDb.prepare(query)
+  if (isSingle) {
+    return sqliteDb.prepare(query).get(params)
+  }
+  return sqliteDb.prepare(query).all(params)
 }
 
 initDB()
