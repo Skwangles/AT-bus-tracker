@@ -13,7 +13,7 @@ export async function getNodePosition(keyframeId: string, use_trans = true): Pro
 export async function getNodeInfo(keyframeId: string, use_trans = true) {
 
   const result = await readDB(
-    `SELECT ts, label, pose, x_trans, y_trans, z_trans FROM ${QUERY_PREFIX}nodes WHERE keyframe_id = ? LIMIT 1;`,
+    `SELECT ts, pose, x_trans, y_trans, z_trans FROM ${QUERY_PREFIX}nodes WHERE keyframe_id = ? LIMIT 1;`,
     [keyframeId]
   );
   const positionInfo = result;
@@ -65,6 +65,7 @@ export async function connectAllNeighboursIfNotAlready(keyframeId: number, neigh
 
 export async function getPhysicalProximityNeighbours(keyframeId: number, proximity = 1.5 / COORDS_TO_METRES, vertical_prox = 1.5 / COORDS_TO_METRES): Promise<any[]> {
 
+
   const result = await readDB(`WITH target_point AS(
         SELECT 
         x_trans,
@@ -79,10 +80,10 @@ export async function getPhysicalProximityNeighbours(keyframeId: number, proximi
         FROM ${QUERY_PREFIX}nodes rn
     JOIN target_point ON(
           SQRT(
-            POW(rn.x_trans - target_point.x_trans, 2))
-            POW(rn.z_trans - target_point.z_trans, 2)
+            (POWER(rn.x_trans - target_point.x_trans, 2)) +
+            (POWER(rn.z_trans - target_point.z_trans, 2))
           ) <= ?
-           AND ABS(rn.y_trans - target_point.y_trans, 2) <= ?
+           AND (ABS(rn.y_trans - target_point.y_trans)) <= ?
         )
     WHERE rn.keyframe_id != ?; `, [keyframeId, proximity, vertical_prox, keyframeId])
   return result;
