@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Canvas as ThreeCanvas } from '@react-three/fiber'
-import { WAIKATO_UNI_LEVELS_ORDER } from '../consts'
+import { STARTING_LOCATION_GROUP, WAIKATO_UNI_LEVELS_ORDER } from '../consts'
 import { API_PREFIX, showMap, PROJECT_NAME } from '../consts'
 import axios from 'axios'
 import CameraRotationControls from './RotationController'
@@ -93,8 +93,12 @@ const VirtualTour: React.FC = () => {
         setAllFloorNames(result.data.map((val) => String(val.location)))
       })
 
-    if (currentId == '-1' || !params.has('id') || params.get('id') == '-1') {
-      changeFloor('indoors')
+    if (
+      Number(currentId) === -1 ||
+      !params.has('id') ||
+      Number(params.get('id')) === -1
+    ) {
+      changeFloor(STARTING_LOCATION_GROUP)
     }
   }, [])
 

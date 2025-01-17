@@ -1,4 +1,4 @@
-export const API_PREFIX = "http://dev.skwangles.com:38000"
+export const API_PREFIX = ""
 
 export const COORDS_TO_METRES = 40
 export const showMap = true;
@@ -24,6 +24,8 @@ export const PROJECT_NAME = "CampusVirtual"
 
 export const OUTDOORS_LOCATION = "outdoors"
 export const WAIKATO_UNI_LEVELS_ORDER = ["B", "G", "0", "1", "2", "3"];
+
+export const STARTING_LOCATION_GROUP = "G"
 
 export const HOTSPOT_COLOUR = '#E1251B'
 export const HOTSPOT_OUTLINE = '#FFFFFF'
