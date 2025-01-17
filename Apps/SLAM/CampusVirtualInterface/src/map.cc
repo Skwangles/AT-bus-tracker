@@ -154,13 +154,8 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
 
     std::vector<double> track_times;
 
-    cv::Mat frame;
-    cv::Mat downsized_frame;
-
     unsigned int num_frame = 0;
     double timestamp = start_timestamp;
-
-    bool is_not_end = true;
 
     int32_t special_point_offset = 0;
     std::vector<std::string> special_points;    
@@ -169,7 +164,11 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
     
     // run the slam in another thread
     std::thread thread([&]() {
-
+        
+        bool is_not_end = true;
+        cv::Mat frame;
+        cv::Mat downsized_frame;
+        
         bool finished_initialising_tracking = false;
         while (is_not_end) {
 #ifdef HAVE_IRIDESCENCE_VIEWER
@@ -220,12 +219,10 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
 
             if (!frame.empty() && (num_frame % frame_skip == 0)) {
 
-
-
                 cv::resize(frame, downsized_frame, cv::Size(slam_img_width, slam_img_height));
 		        bool is_keyframe = slam->feed_monocular_frame_bool(downsized_frame, timestamp, mask);
                 
-                std::cout << "Frame - Progress: " <<  ((ms/1000) / (frame_count/fps)) * 100 << "% - ms: " << ms << std::endl;
+                
 
                 if (!image_output_dir.empty()) {
                     // Save image to work on front end
@@ -249,10 +246,10 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
                         // params.push_back(cv::IMWRITE_JPEG_PROGRESSIVE); // Progressive JPGs used for reduced loading times for frontend
                         // params.push_back(1); // 1 = true, 0 = false 
 
-
-                        img_write_thread_pool.enqueue([&,frame, filepath, params, &imwrite_failed, &mtx_imwrite_failed]() {
-                            // Do writing asynchronously
-                            bool result = cv::imwrite(filepath, frame, params);
+                        img_write_thread_pool.enqueue([ms, timestamp, by_copy_frame = frame.clone(), filepath, params, &imwrite_failed, &mtx_imwrite_failed]() {
+                            // Do writing in background
+                            std::cout << "Writing MS:" << ms << " for timestamp: " << timestamp << std::endl;
+                            bool result = cv::imwrite(filepath, by_copy_frame, params);
                             if (!result){
                                 std::lock_guard<std::mutex> lock(mtx_imwrite_failed);
                                 imwrite_failed = true;
@@ -260,6 +257,7 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
                             }
                         );
                         
+                        std::cout << "Frame - Progress: " <<  ((ms/1000) / (frame_count/fps)) * 100 << "% - ms: " << ms << std::endl;
                         if (json_obj != NULL){
                             
                             std::string group = find_group_from_json(json_obj, ms);
@@ -270,6 +268,7 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
                             for (auto annotation : special_points){
                                 special_point_group_list.emplace_back(annotation, timestamp, ms);
                             }
+                            
                             
                             std::cout << "Keyframe made - Location: " << group << std::endl;
                         }
