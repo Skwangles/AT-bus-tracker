@@ -3,10 +3,9 @@ import cors from 'cors'
 import express from 'express'
 import fs from 'fs'
 import initData from './initData'
-import { COORDS_TO_METRES, ENABLE_AUTHORING_PAGE, FLOORPLAN_IMAGE_DIR, KEYFRAME_IMG_DIR, KEYFRAME_IMG_EXTENSION, QUERY_PREFIX, SEND_TEST_IMAGE, USE_QUERY_PREFIX } from './consts'
+import { FLOORPLAN_IMAGE_DIR, KEYFRAME_IMG_DIR, KEYFRAME_IMG_EXTENSION, QUERY_PREFIX, SEND_TEST_IMAGE, SKIP_IF_MAP_ALREADY_CONFIGED, USE_QUERY_PREFIX } from './consts'
 import { searchNeighbour } from './neighbourSearch'
 import { readDB } from './db'
-import { processImage } from './images'
 import floorplanAPI from './authoring'
 import { aStarPathfinding } from './pathfinding'
 import { BlobArrayToMatrix } from './utils'
@@ -44,7 +43,7 @@ app.get('/api/v1/point/:id/path/:location', async function (req, res) {
   console.log(locationCode)
 
   // Check label first, as these are manually annotated (and supposedly special) points
-  let locationResults = await readDB(`SELECT n.keyframe_id FROM ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}nodes n WHERE n.label = ? LIMIT 1;`, [locationCode], true);
+  let locationResults = await readDB(`SELECT s.keyframe_id FROM ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}special_labels s WHERE s.label = ? LIMIT 1;`, [locationCode], true);
   if (!locationResults) {
     const firstPointWithLocation = (await readDB(`SELECT n.keyframe_id FROM ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}nodes n JOIN ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}node_locations nl ON n.keyframe_id = nl.keyframe_id WHERE nl.location = ? LIMIT 1;`, [locationCode], true));
     if (firstPointWithLocation.length === 0) {
@@ -90,7 +89,7 @@ app.get('/api/v1/point/:id/neighbours/:distance_thresh_m/:y_dist_thresh_m', asyn
 
 
 app.get('/api/v1/point/:id', async function (req: { params: { id: number } }, res) {
-  const pointData = await readDB(`SELECT n.keyframe_id, n.ts, n.pose, l.location, n.label, n.x_trans, n.y_trans, n.z_trans FROM ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}nodes n LEFT JOIN ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}node_locations l ON n.keyframe_id = l.keyframe_id WHERE n.keyframe_id = ?;`, [Number(req.params.id)], true);
+  const pointData = await readDB(`SELECT n.keyframe_id, n.ts, n.pose, l.location, n.x_trans, n.y_trans, n.z_trans FROM ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}nodes n LEFT JOIN ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}node_locations l ON n.keyframe_id = l.keyframe_id WHERE n.keyframe_id = ?;`, [Number(req.params.id)], true);
   console.log("Point Data: ", pointData)
   if (pointData && 'pose' in pointData) {
     console.log("Point: ", pointData);
@@ -200,7 +199,7 @@ app.get('/api/v1/floorplans/:name', async (req: Request, res: Response) => {
   const { name } = req.params;
 
   // Includes keyframes bordering the floor (add 'AND type < 50' to exclude)
-  const pointResult = await readDB(`SELECT f.keyframe_id, x, y, type, n.label FROM floorplan_points f JOIN ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}nodes n ON n.keyframe_id = f.keyframe_id WHERE location = ?`, [name]);
+  const pointResult = await readDB(`SELECT f.keyframe_id, x, y, type FROM floorplan_points f JOIN ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}nodes n ON n.keyframe_id = f.keyframe_id WHERE location = ?`, [name]);
   const image = await readDB("SELECT path FROM floorplan_images WHERE location = ? LIMIT 1;", [name])
 
   const edges = await readDB(`SELECT  e.keyframe_id0, e.keyframe_id1 FROM ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}edges e JOIN floorplan_points f ON e.keyframe_id0 = f.keyframe_id JOIN floorplan_points f2 ON e.keyframe_id1 = f2.keyframe_id WHERE f.location = ? AND f2.location = ?`, [name, name])
@@ -255,6 +254,6 @@ app.use(floorplanAPI)
 
 const port = 3001
 app.listen(port, () => {
-  initData(true)
+  initData(SKIP_IF_MAP_ALREADY_CONFIGED)
   console.log(`Server running on port ${port}`)
 })
