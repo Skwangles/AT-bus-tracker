@@ -60,14 +60,14 @@ export default async function initDB(quitIfTablesExist = false) {
         // Don't need to wait for this
         const initX = clampToPostive((node.x_trans - minX) / (maxX - minX))
         const initY = clampToPostive((node.z_trans - minZ) / (maxZ - minZ))
-        await writeDB("INSERT OR IGNORE INTO floorplan_points (location, keyframe_id, type, x, y) VALUES (?, ?, ?, ?, ?);", [location, node.keyframe_id, FLOOR_POINT_DEFAULT_TYPE, initX, initY])
+        await writeDB(`INSERT OR IGNORE INTO floorplan_points (location, keyframe_id, type, x, y) VALUES (?, ?, ?, ?, ?);`, [location, node.keyframe_id, FLOOR_POINT_DEFAULT_TYPE, initX, initY])
       }
 
       for (const border_node of borderNodes) {
         const initX = clampToPostive((border_node.x_trans - minX) / (maxX - minX))
         const initY = clampToPostive((border_node.z_trans - minZ) / (maxZ - minZ))
 
-        await writeDB("INSERT OR IGNORE INTO floorplan_points (location, keyframe_id, type, x, y) VALUES (?, ?, ?, ?, ?);", [location, border_node.keyframe_id, BORDERING_FLOOR_POINT_DEFAULT_TYPE, initX, initY])
+        await writeDB(`INSERT OR IGNORE INTO floorplan_points (location, keyframe_id, type, x, y) VALUES (?, ?, ?, ?, ?);`, [location, border_node.keyframe_id, BORDERING_FLOOR_POINT_DEFAULT_TYPE, initX, initY])
       }
 
       await writeDB(`INSERT OR IGNORE INTO floorplan_images (location) VALUES (?)`, [location]);
