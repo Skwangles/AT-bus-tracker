@@ -13,6 +13,7 @@ int main(int argc, char** argv) {
     desc.add_options()
         ("help,h", "produce help message")
         ("use_viewer", po::value<bool>()->default_value(true), "Use use_viewer (true|false)")
+        ("use_temporal", "Enable temporal mapping")
         ("project_dir", po::value<std::string>()->required(), "Campus virtual project directory")
         ("view_static", "View without processing (optional)")
         ("convertToPg", "Convert SLAM map to Postgres DB (optional)")
@@ -25,6 +26,7 @@ int main(int argc, char** argv) {
         ("json_dir", po::value<std::string>(), "JSON group-to-timestamp file directory")
         ("picture-dir", po::value<std::string>()->default_value("pictures/"), "Keyframe image output dir - Default 'pictures/'")
         ("config_file", po::value<std::string>()->default_value("indoors.yaml"), "Config file - Default 'indoors.yaml'")
+        ("ts", po::value<std::string>(), "Start time of the Timestamps (Can use to make sure timestamps don't overlap)")
         ("db_user", po::value<std::string>()->default_value("campusvirtual"), "Database username")
         ("db_pwd", po::value<std::string>()->default_value("Squeegee-Grandkid-Superhero8"), "Database password")
         ("db_name", po::value<std::string>()->default_value("cv"), "Database name")
@@ -34,6 +36,8 @@ int main(int argc, char** argv) {
     pos_desc.add("use_viewer", 1);
     pos_desc.add("project_dir", 1);
     pos_desc.add("videos", 1);
+
+    std::cout << "Processing args" << std::endl;
 
     po::variables_map vm;
     try {
@@ -49,6 +53,7 @@ int main(int argc, char** argv) {
         bool view_statically = vm.count("view_static");
         bool convert_to_pg = vm.count("convertToPg");
         bool convert_to_sqlite3 = vm.count("convertToSQLite");
+        bool use_temporal_mapping = vm.count("use_temporal");
 
         if (!vm.count("project_dir")) {
             std::cout << "Missing required argument: project_dir" << std::endl;
@@ -79,13 +84,14 @@ int main(int argc, char** argv) {
         }
         else {
             if (!vm.count("videos") || !vm.count("out") || !vm.count("video_dir") || !vm.count("map_dir")) {
-                std::cout << "For normal mode, required arguments: videos, in, out, media_dir, map_dir, (optional: json_dir, picture-dir, config_file)" << std::endl;
+                std::cout << "For normal mode, required arguments: use_viewer, root dir, videos, in, out, media_dir, map_dir, (optional: json_dir, picture-dir, config_file, ts, use_temporal)" << std::endl;
                 std::cout << desc << std::endl;
                 return 1;
             }
         }
 
         bool use_viewer = vm["use_viewer"].as<bool>();
+        std::string ts_start = vm.count("ts") ? vm["ts"].as<std::string>() : "";
         std::string project_dir = vm["project_dir"].as<std::string>();
         std::string map_in = vm.count("in") ? vm["in"].as<std::string>() : "";
         std::string map_out = vm.count("out") ? vm["out"].as<std::string>() : "";
@@ -99,9 +105,11 @@ int main(int argc, char** argv) {
         std::string db_name = vm["db_name"].as<std::string>();
         std::string db_port = vm["db_port"].as<std::string>();
         std::string config_file = vm["config_file"].as<std::string>();
+        
 
         std::string command;
         if (convert_to_sqlite3) {
+            std::cout << "Convert to SQLite" << std::endl;
             command = project_dir + path_to_stella + "slam_to_sqlite" +
                               " -c '" + project_dir + path_to_config  + config_file + "'" +
                               " -v '" + project_dir + path_to_fbow + "'" +
@@ -109,6 +117,7 @@ int main(int argc, char** argv) {
                               " -o '" + map_dir + "/" + map_out + "'";
         }
         else if (convert_to_pg){
+            std::cout << "Convert to postgresql" << std::endl;
             std::string connection_string = "postgresql://" + db_user + ":" + db_pwd + "@localhost:" + db_port + "/" + db_name;
             command = project_dir + path_to_stella + "slam_to_pg" +
                               " -c '" + project_dir + path_to_config  + config_file + "'" +
@@ -117,6 +126,7 @@ int main(int argc, char** argv) {
                               " --db '" + connection_string + "'";
         }
         else if (view_statically){
+            std::cout << "Viewing" << std::endl;
             command = project_dir + path_to_stella + "view" +
                               " -c '" + project_dir + path_to_config + config_file + "'" +
                               " -v '" + project_dir + path_to_fbow + "'" +
@@ -124,9 +134,11 @@ int main(int argc, char** argv) {
                               " -o '" +  map_dir + "/" + map_out + "'";
         }
         else {
+            std::cout << "Mapping" << std::endl;
             command = project_dir + path_to_stella + "map" +
                                         " -c '" + project_dir + path_to_config + config_file + "'" +
                                         " -v '" + project_dir + path_to_fbow + "'" +
+                                        (ts_start.size() > 0 ? " -t '" + ts_start + "'" : "" ) +
                                         (map_in.empty() ? "" : " --map-db-in '" + map_dir + "/" + map_in + "'") +
                                         " --map-db-out '" +  map_dir + "/" + map_out + "'" +
                                         " --videos '" + videos + "'" +
@@ -134,7 +146,8 @@ int main(int argc, char** argv) {
                                         " --video-dir '" +  media_dir + "/" + "'" +
                                         " --json-dir '" + json_dir + "/" + "'" // Only required for 'pairing JSON with frames' step
                                         " --picture-dir '" + picture_dir + "/" + "'" +
-                                       (use_viewer ? " --viewer none" : " --viewer iridescence_viewer");
+                                        (use_temporal_mapping ? " --temporal-mapping" : "") +
+                                        (use_viewer ? " --viewer none" : " --viewer iridescence_viewer");
         }
         
         std::cout << "Command: " << command << std::endl;
