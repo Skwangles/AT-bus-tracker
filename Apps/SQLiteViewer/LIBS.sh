@@ -1,1 +1,1 @@
-pip install pyvista numpy
+pip install pyvista numpy tqdm
