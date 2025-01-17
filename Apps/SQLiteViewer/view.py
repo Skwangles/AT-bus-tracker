@@ -55,10 +55,12 @@ def export_changes():
         connection = sqlite3.connect(db_path)
         cursor = connection.cursor()
         
-        print("Removing:", removeable_ids )
         
-        delete_edges = [(id, id,) for id in removeable_ids]
-        delete_nodes = [(id,) for id in removeable_ids]
+        
+        delete_edges = [(int(id), int(id),) for id in removeable_ids]
+        delete_nodes = [(int(id),) for id in removeable_ids]
+        
+        print("Removing:", delete_nodes )
         cursor.executemany("DELETE FROM " + table_name_prefix + "edges WHERE keyframe_id0 = ? OR keyframe_id1 = ?;", delete_edges)
         print("Wrote:", cursor.rowcount)
         cursor.executemany("DELETE FROM " + table_name_prefix + "node_locations WHERE keyframe_id = ?;", delete_nodes)
