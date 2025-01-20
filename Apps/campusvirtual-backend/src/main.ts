@@ -40,11 +40,12 @@ app.get('/', function (req, res) {
 app.get('/api/v1/point/:id/path/:location', async function (req, res) {
   const point = Number(req.params.id)
   const locationCode = String(req.params.location)
-  console.log(locationCode)
 
   // Check label first, as these are manually annotated (and supposedly special) points
   let locationResults = await readDB(`SELECT s.keyframe_id FROM ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}special_labels s WHERE s.label = ? LIMIT 1;`, [locationCode], true);
+  let isLabel = true;
   if (!locationResults) {
+    isLabel = false
     const firstPointWithLocation = (await readDB(`SELECT n.keyframe_id FROM ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}nodes n JOIN ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}node_locations nl ON n.keyframe_id = nl.keyframe_id WHERE nl.location = ? LIMIT 1;`, [locationCode], true));
     if (firstPointWithLocation.length === 0) {
       res.status(400).send("End location could not be found");
@@ -54,7 +55,7 @@ app.get('/api/v1/point/:id/path/:location', async function (req, res) {
   }
 
   if ('keyframe_id' in locationResults) {
-    res.json({ path: await aStarPathfinding(point, locationResults.keyframe_id) ?? [] })
+    res.json({ path: await aStarPathfinding(point, locationResults.keyframe_id, isLabel ? null : locationCode) ?? [] })
   }
   else {
     res.status(400).send("End location could not be found");
@@ -116,7 +117,7 @@ app.get('/api/v1/floor/:floor/point/', async function (req: any, res: any) {
     res.json(nodeWithSpecialLabel[0])
     return;
   }
-  const firstNodeWithLocation = await readDB(`SELECT n.keyframe_id, l.location, s.label FROM ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}nodes n JOIN ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}special_labels s ON s.keyframe_id = n.keyframe_id JOIN ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}node_locations l ON n.keyframe_id = l.keyframe_id WHERE l.location = ? LIMIT 1`, [req.params.floor])
+  const firstNodeWithLocation = await readDB(`SELECT n.keyframe_id, l.location FROM ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}nodes n JOIN ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}node_locations l ON n.keyframe_id = l.keyframe_id WHERE l.location = ? LIMIT 1`, [req.params.floor])
   if (firstNodeWithLocation.length > 0) {
     console.log("Returning rows")
     res.json(firstNodeWithLocation[0])
