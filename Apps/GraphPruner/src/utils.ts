@@ -1,5 +1,5 @@
 import sharp from "sharp";
-import { COORDS_TO_METRES, EdgeType, KEYFRAME_IMG_EXTENSION, OUTDOORS_LOCATION_NAME, OUTDOORS_TARGET_CLOSENESS, OUTDOORS_Y_DIST_THRESHOLD, QUERY_PREFIX, TARGET_CLOSENESS, Y_DIST_THRESHOLD } from "./consts";
+import { COORDS_TO_METRES, EdgeType, KEYFRAME_IMG_EXTENSION, NodeInfo, OUTDOORS_LOCATION_NAME, OUTDOORS_TARGET_CLOSENESS, OUTDOORS_Y_DIST_THRESHOLD, QUERY_PREFIX, TARGET_CLOSENESS, Y_DIST_THRESHOLD } from "./consts";
 import * as THREE from "three";
 import { readDB, writeDB } from "./db";
 import { read } from "fs";
@@ -7,21 +7,29 @@ import { read } from "fs";
 // Helper function to get node position
 export async function getNodePosition(keyframeId: string, use_trans = true): Promise<[number, number, number] | null> {
   const nodeInfo = await getNodeInfo(keyframeId, use_trans);
+  if (!nodeInfo) return null;
   return nodeInfo["position"];
 }
 
-export async function getNodeInfo(keyframeId: string, use_trans = true) {
+export async function getNumberOfNodes() {
+  return await readDB(`SELECT COUNT(*) as total FROM nodes;`, [], true)
+}
+
+export async function getNodeInfo(keyframeId: string, use_trans = true): Promise<NodeInfo | null> {
 
   const result = await readDB(
     `SELECT ts, pose, x_trans, y_trans, z_trans FROM ${QUERY_PREFIX}nodes WHERE keyframe_id = ? LIMIT 1;`,
-    [keyframeId]
+    [keyframeId], true
   );
-  const positionInfo = result;
-  if (!positionInfo || positionInfo.length == 0) {
+
+  if (!result) {
     throw new Error("Could not find keyframe of ID: " + keyframeId);
   }
 
-  const node_info = positionInfo[0];
+  const countOfLabels = await readDB(`SELECT COUNT(*) as total FROM ${QUERY_PREFIX}special_labels WHERE keyframe_id = ?`, [keyframeId], true)
+  const node_info = result;
+  node_info["label_count"] = Number(countOfLabels.total ?? -1)
+
   if (use_trans) {
     const ret: [number, number, number] = [
       -node_info.x_trans * COORDS_TO_METRES,
@@ -33,20 +41,22 @@ export async function getNodeInfo(keyframeId: string, use_trans = true) {
       return null;
     }
     node_info["position"] = ret;
-    return node_info;
+  }
+  else {
+    const ret = calculatePositionFromMatrix(result[0]?.pose);
+    if (!ret) {
+      console.error("Return result was Null of getNodePosition - calculating from pose");
+      return null;
+    }
+    node_info["position"] = ret;
   }
 
-  const ret = calculatePositionFromMatrix(result[0]?.pose);
-  if (!ret) {
-    console.error("Return result was Null of getNodePosition - calculating from pose");
-    return null;
-  }
-  node_info["position"] = ret;
-  return ret;
-
+  return node_info;
 }
 
 export async function connectAllNeighboursIfNotAlready(keyframeId: number, neighbours: any[]) {
+  if (isNaN(Number(keyframeId))) throw new Error("NaN keyframeId passed to connect all neighbours")
+
   const zoneObject = await readDB(`SELECT zone FROM ${QUERY_PREFIX}nodes WHERE keyframe_id = ? LIMIT 1;`, [keyframeId]);
   if (!zoneObject) throw new Error("Could not fetch keyframe: " + keyframeId)
 
@@ -64,7 +74,7 @@ export async function connectAllNeighboursIfNotAlready(keyframeId: number, neigh
 
 
 export async function getPhysicalProximityNeighbours(keyframeId: number, proximity = 1.5 / COORDS_TO_METRES, vertical_prox = 1.5 / COORDS_TO_METRES): Promise<any[]> {
-
+  if (isNaN(Number(keyframeId)) || isNaN(Number(proximity)) || isNaN(Number(vertical_prox))) throw new Error("Na passed to getPhysicalProximity - ID: " + keyframeId + " | Horizontal Proximity: " + proximity + " | Vertical Prox: " + vertical_prox)
 
   const result = await readDB(`WITH target_point AS(
         SELECT 
@@ -92,7 +102,7 @@ export async function getPhysicalProximityNeighbours(keyframeId: number, proximi
 // Helper function to get neighbours
 export async function getNeighbours(keyframeId: number, usePhysicalProximity = false): Promise<any[]> {
 
-
+  if (isNaN(Number(keyframeId))) throw new Error("NaN passed to getNeighbours")
 
   const directNeighbours = await readDB(
     `SELECT e.keyframe_id1 as keyframe_id, n.ts, COUNT(e1.keyframe_id1) as degree FROM ${QUERY_PREFIX}edges e 
@@ -130,6 +140,7 @@ export function calculateXZDistance(pos1: [number, number, number], pos2: [numbe
 }
 
 export async function isNodeOutdoors(keyframeId: number) {
+  if (isNaN(Number(keyframeId))) throw new Error("NaN passed to isNodeOutdoors")
   const locData = await readDB(`SELECT location from ${QUERY_PREFIX}node_locations WHERE keyframe_id = ? `, [keyframeId], false)
 
   // If no location, take the more restrictive approach
@@ -140,6 +151,7 @@ export async function isNodeOutdoors(keyframeId: number) {
 
 // Helper function to delete a node and its edges
 export async function replaceNode(keyframeId: number, position: [number, number, number], ignore_distance = false, isOutdoors = false) {
+  if (isNaN(Number(keyframeId))) throw new Error("NaN passed to replaceNode")
   const direct_neighbours = await readDB(
     `SELECT keyframe_id1 as keyframe_id FROM ${QUERY_PREFIX}edges WHERE keyframe_id0 = ? AND(type = 0 OR type = 1)`,
     [keyframeId], false
@@ -228,10 +240,13 @@ export async function calculateImageSharpness(filePath: string): Promise<number>
 }
 
 export function convertTimestampToImagename(ts: Number | string) {
+  if (isNaN(Number(ts))) throw new Error("NaN passed as timestamp for convertTimestampToImagename")
+
   return `${Number(ts).toFixed(5)}${KEYFRAME_IMG_EXTENSION} `
 }
 
 export async function getNextKeyframe(currentId: number) {
+  if (isNaN(Number(currentId))) throw new Error("NaN passed to getNextKeyframe")
   return await readDB(
     `SELECT keyframe_id, ts FROM ${QUERY_PREFIX}nodes WHERE keyframe_id > ? LIMIT 1`,
     [currentId], true
