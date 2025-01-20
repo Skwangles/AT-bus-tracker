@@ -125,6 +125,7 @@ mkdir -p ~/lib
 cd ~/lib
 git clone --recursive https://github.com/Skwangles/stella_vslam.git
 cd stella_vslam
+git checkout campusvirtual
 mkdir build -p && cd build
 cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
 make -j4
@@ -134,8 +135,10 @@ sudo make install
 # When building with support for IridescenceViewer - allows you to manually trigger loop closures
 cd ~/lib
 git clone --recursive https://github.com/Skwangles/iridescence_viewer.git
-mkdir -p iridescence_viewer/build
-cd iridescence_viewer/build
+cd iridescence_viewer
+git checkout campusvirtual
+mkdir -p build
+cd build
 cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_STANDARD_REQUIRED=ON ..
 make -j
 sudo make install
