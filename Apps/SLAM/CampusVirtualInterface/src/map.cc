@@ -45,6 +45,7 @@ namespace fs = ghc::filesystem;
 #endif
 
 #define USE_SQLITE3 true
+#define IMWRITE_THREAD_POOL_SIZE 4
 
 static int db_callback(std::vector<video_timestamp> *data, int argc, char **argv, char **azColName){
    data->push_back(video_timestamp(argv[0], std::atof(argv[1]), std::atof(argv[2])));
@@ -157,10 +158,10 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
     unsigned int num_frame = 0;
     double timestamp = start_timestamp;
 
-    int32_t special_point_offset = 0;
+    int32_t last_assigned_special_point_idx = 0; 
     std::vector<std::string> special_points;    
 
-    ThreadPool img_write_thread_pool(1);
+    ThreadPool img_write_thread_pool(IMWRITE_THREAD_POOL_SIZE);
     
     // run the slam in another thread
     std::thread thread([&]() {
@@ -206,10 +207,15 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
 
             
             is_not_end = video.read(frame);
-            double ms = video.get(cv::CAP_PROP_POS_MSEC);
+
+            double ms_since_start = video.get(cv::CAP_PROP_POS_MSEC);
             double frame_count = video.get(cv::CAP_PROP_FRAME_COUNT);
             double fps = video.get(cv::CAP_PROP_FPS);
-            timestamp = start_timestamp + (ms/1000);
+
+            if (ms_since_start > 0)
+            {
+                timestamp = start_timestamp + (ms_since_start/1000);
+            }
             
             
 
@@ -246,9 +252,9 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
                         // params.push_back(cv::IMWRITE_JPEG_PROGRESSIVE); // Progressive JPGs used for reduced loading times for frontend
                         // params.push_back(1); // 1 = true, 0 = false 
 
-                        img_write_thread_pool.enqueue([ms, timestamp, by_copy_frame = frame.clone(), filepath, params, &imwrite_failed, &mtx_imwrite_failed]() {
+                        img_write_thread_pool.enqueue([ms_since_start, timestamp, by_copy_frame = frame.clone(), filepath, params, &imwrite_failed, &mtx_imwrite_failed]() {
                             // Do writing in background
-                            std::cout << "Writing MS:" << ms << " for timestamp: " << timestamp << std::endl;
+                            std::cout << "Writing MS:" << ms_since_start << " for timestamp: " << timestamp << std::endl;
                             bool result = cv::imwrite(filepath, by_copy_frame, params);
                             if (!result){
                                 std::lock_guard<std::mutex> lock(mtx_imwrite_failed);
@@ -257,23 +263,23 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
                             }
                         );
                         
-                        std::cout << "Frame - Progress: " <<  ((ms/1000) / (frame_count/fps)) * 100 << "% - ms: " << ms << std::endl;
+                        std::cout << "Frame - Progress: " <<  ((ms_since_start/1000) / (frame_count/fps)) * 100 << "% - ms: " << ms_since_start << std::endl;
                         if (json_obj != NULL){
                             
-                            std::string group = find_group_from_json(json_obj, ms);
-                            timestamp_group_list.emplace_back(group, timestamp, ms);
+                            std::string group = find_group_from_json(json_obj, ms_since_start);
+                            timestamp_group_list.emplace_back(group, timestamp, ms_since_start);
                             
                             
-                            special_point_offset = get_special_points(json_obj, ms, special_point_offset, special_points);
+                            last_assigned_special_point_idx = get_special_points(json_obj, ms_since_start, last_assigned_special_point_idx, special_points);
                             for (auto annotation : special_points){
-                                special_point_group_list.emplace_back(annotation, timestamp, ms);
+                                special_point_group_list.emplace_back(annotation, timestamp, ms_since_start);
                             }
                             
                             
                             std::cout << "Keyframe made - Location: " << group << std::endl;
                         }
                         else{
-                            timestamp_group_list.emplace_back(DEFAULT_UNKNOWN_GROUP, timestamp, ms);
+                            timestamp_group_list.emplace_back(DEFAULT_UNKNOWN_GROUP, timestamp, ms_since_start);
                             std::cout << "JSON Obj was null! - Using default:" << DEFAULT_UNKNOWN_GROUP << std::endl;
                         }
                         
@@ -313,8 +319,11 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
                 break;
             }
 #endif
-            if (num_frame > 10 && ms == 0){
-                break; // The video has finished and is spitting out 0ms
+            if (num_frame > 1 && ms_since_start == 0) {
+                if (is_not_end){
+                    spdlog::error("OpenCV thinks video is not ended, when MSEC is 0");
+                }
+                break; // MSec will be 0 when the video ends
             }
         }
 
@@ -332,6 +341,7 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
 #endif
             }
         }
+
         return 0;
     });
 
