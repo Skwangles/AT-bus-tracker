@@ -41,7 +41,9 @@ sudo ldconfig # update lookup library paths - IMPORTANT if 'libxx.so' not found.
 
 # Install Custom FBoW used
 cd /tmp
+if [ ! -d FBoW ] ; then
 git clone https://github.com/stella-cv/FBoW.git
+fi
 cd FBoW
 mkdir build -p && cd build
 cmake \
@@ -59,7 +61,9 @@ sudo apt install libopencv-dev
 
 # Install g2o
 cd /tmp
+if [ ! -d g2o ] ; then
 git clone https://github.com/RainerKuemmerle/g2o.git
+fi
 cd g2o
 git checkout 20230223_git
 
@@ -81,7 +85,10 @@ make -j4 && sudo make install
 
 # Install backward-cpp - 
 cd /tmp
+if [ ! -d backward-cpp ] ; then
 git clone https://github.com/bombela/backward-cpp.git
+fi
+
 cd backward-cpp
 git checkout 5ffb2c879ebdbea3bdb8477c671e32b1c984beaa
 mkdir build -p && cd build
@@ -95,7 +102,10 @@ make -j4 && sudo make install
 ################# VIEWERS #####################
 # Install Iridescence
 cd /tmp
+
+if [ ! -d iridescence ] ; then
 git clone https://github.com/koide3/iridescence.git
+fi
 cd iridescence
 git checkout 085322e0c949f75b67d24d361784e85ad7f197ab
 git submodule update --init --recursive
@@ -108,7 +118,10 @@ make -j4 && sudo make install
 
 sudo apt install -y libprotobuf-dev protobuf-compiler
 cd /tmp
+
+if [ ! -d socket.io-client-cpp ] ; then
 git clone https://github.com/shinsumicco/socket.io-client-cpp.git
+fi
 cd socket.io-client-cpp
 git submodule init
 git submodule update
@@ -126,7 +139,9 @@ sudo make install
 # Install stella_vslam core library
 mkdir -p ~/lib
 cd ~/lib
+if [ ! -d stella_vslam ] ; then
 git clone --recursive https://github.com/Skwangles/stella_vslam.git
+fi
 cd stella_vslam
 git checkout campusvirtual
 mkdir build -p && cd build
@@ -137,7 +152,9 @@ sudo make install
 
 # When building with support for IridescenceViewer - allows you to manually trigger loop closures
 cd ~/lib
+if [ ! -d iridescence_viewer ] ; then
 git clone --recursive https://github.com/Skwangles/iridescence_viewer.git
+fi
 cd iridescence_viewer
 git checkout campusvirtual
 mkdir -p build
@@ -148,7 +165,9 @@ sudo make install
 
 # When building with support for SocketViewer
 cd ~/lib
+if [ ! -d campus_virtual_socket_publisher ] ; then
 git clone --recursive https://github.com/Skwangles/campus_virtual_socket_publisher.git # Custom socket_publisher which doesn't send current frame, only the map - forked from https://github.com/stella-cv/socket_publisher.git
+fi
 mkdir -p campus_virtual_socket_publisher/build
 cd campus_virtual_socket_publisher/build
 cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ..

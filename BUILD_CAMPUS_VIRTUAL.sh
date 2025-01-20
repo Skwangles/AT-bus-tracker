@@ -14,6 +14,10 @@ pwd
 
 cd PgViewer && npm install && cd ..
 
+cd authoring && npm install && npm run build && cd ..
+
+cd GraphPruner && npm install && npm run build && cd ..
+
 sudo ldconfig # update lookup library paths again - IMPORTANT if 'libxx.so' not found, note: libxx.so.7 <- 7 is the version number of the package
 
 # IF G2O gives a QT error - sudo apt install -y qtcreator qtbase5-dev qt5-qmake cmake
