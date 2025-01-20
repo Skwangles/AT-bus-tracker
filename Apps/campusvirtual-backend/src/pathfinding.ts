@@ -35,12 +35,12 @@ function calculateDistance(nodeA: [number, number, number], nodeB: [number, numb
 
 async function fetchNode(nodeId: number): Promise<Node | null> {
   const result = await readDB(`SELECT id, x_trans, y_trans, z_trans FROM ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}nodes WHERE id = $1`, [nodeId]);
-  return result.length > 0 ? result.rows[0] as Node : null;
+  return result.length > 0 ? result[0] as Node : null;
 }
 
 async function fetchEdges(nodeId: number): Promise<Edge[]> {
   const result = await readDB(`SELECT keyframe_id0, keyframe_id1 FROM ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}edges WHERE keyframe_id0 = $1 OR keyframe_id1 = $1 AND type >= ${EdgeType.Normal}`, [nodeId, nodeId]);
-  return result.rows as Edge[];
+  return result as Edge[];
 }
 
 /**
@@ -56,7 +56,7 @@ export async function aStarPathfinding(
   endId: number,
   firstWith: string | null = null // Allow shortcircuit if it finds a point earlier that meets criteria
 ): Promise<number[]> {
-  const openSet = new MinQueue();
+  const openSet = new MinQueue(500);
   const cameFrom = new Map<number, number>();
   const gScore = new Map<number, number>();
   const fScore = new Map<number, number>();
@@ -68,13 +68,15 @@ export async function aStarPathfinding(
   while (openSet.size > 0) {
     const currentId = openSet.pop()!;
 
-    const currentNodeData = (await readDB(`SELECT n.keyframe_id, label, location FROM ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}nodes n JOIN ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}node_locations nl ON n.keyframe_id = nl.keyframe_id WHERE n.keyframe_id = ?`, [currentId])).rows
+    const currentNodeData = (await readDB(`SELECT n.keyframe_id, location FROM ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}nodes n 
+      JOIN ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}node_locations n1 ON n.keyframe_id = n1.keyframe_id 
+      WHERE n.keyframe_id = ?`, [currentId]))
     if (currentNodeData.length == 0) {
       return []; // An error occured, fail quickly
     }
     const currentNode = currentNodeData[0]
 
-    if (currentId === endId || (firstWith && (currentNode.label == firstWith || currentNode.location == firstWith))) {
+    if (currentId === endId || (firstWith && currentNode.location == firstWith)) {
       // Backtrack to find final path
       const path: number[] = [];
       let node = endId;
@@ -108,6 +110,7 @@ export async function aStarPathfinding(
         gScore.set(neighbour.keyframe_id, tentativeGScore);
         const neighborHeuristic = await heuristic(neighbour.keyframe_id, endId);
         fScore.set(neighbour.keyframe_id, tentativeGScore + neighborHeuristic);
+
         openSet.push(neighbour.keyframe_id, fScore.get(neighbour.keyframe_id) ?? Infinity);
       }
     }
