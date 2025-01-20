@@ -1,5 +1,8 @@
 echo "DO NOT RUN WITH SUDO - otherwise the 'root' user will own the g2o, iridescence, and other libraries in /tmp, which means it won't compile with the right access to libs"
 
+git submodule init
+git submodule update
+
 # Stella libs - https://stella-cv.readthedocs.io/en/latest/installation.html
 sudo apt update -y
 sudo apt upgrade -y --no-install-recommends
