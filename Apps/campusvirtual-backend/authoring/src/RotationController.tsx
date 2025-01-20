@@ -1,8 +1,8 @@
 import { useThree } from "@react-three/fiber";
 import { useRef, useEffect } from "react";
-import { Euler } from "three";
+import { Euler } from "../node_modules/@types/three";
 
-const CameraRotationControls = ({  }) => {
+const CameraRotationControls = ({}) => {
   const { camera, gl } = useThree();
 
   const controlsRef = useRef({
