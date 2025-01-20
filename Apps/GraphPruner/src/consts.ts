@@ -1,7 +1,7 @@
 export const COORDS_TO_METRES = 10;
 export const TARGET_CLOSENESS = 5;
-export const ALWAYS_MERGE_CLOSENESS = 1.5;
-export const OUTDOORS_ALWAYS_MERGE_CLOSENESS = 0.5;
+export const ALWAYS_MERGE_CLOSENESS = 0.5;
+export const OUTDOORS_ALWAYS_MERGE_CLOSENESS = 1;
 export const OUTDOORS_TARGET_CLOSENESS = 7;
 export const OUTDOORS_Y_DIST_THRESHOLD = 2;
 export const Y_DIST_THRESHOLD = 2
@@ -20,4 +20,14 @@ export enum EdgeType {
   Loop,
   MergePoint,
   EdgeContraction
+}
+
+export interface NodeInfo {
+  position: any
+  label_count: number
+  ts: number | string
+  pose: number[]
+  x_trans: number
+  y_trans: number
+  z_trans: number
 }
