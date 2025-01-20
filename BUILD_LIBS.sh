@@ -136,7 +136,7 @@ cd ~/lib
 git clone --recursive https://github.com/Skwangles/iridescence_viewer.git
 mkdir -p iridescence_viewer/build
 cd iridescence_viewer/build
-cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
+cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_STANDARD_REQUIRED=ON ..
 make -j
 sudo make install
 
