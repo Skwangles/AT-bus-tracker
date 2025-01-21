@@ -35,7 +35,7 @@ Super important that you do it _recursive_, as we have submodules that need clon
 - To use the (optional - you can skip if you don't want a minimap, or to do any refinement) Authoring interface, in campusvirtual-backend consts.ts and set ENABLE_AUTHORING_PAGE to 'true', then 'npm run build' in the Apps/authoring directory.
 - To view the polished interface, open Apps/campusvirtual-backend and run `npm run start` and visit `localhost:3001` (and `localhost:3001/authoring` for the author page)
 
-e.g. `./runCampusVirtual <view SLAM headless/without a viewer (true|false)> ./ <video1.mp4,video2.mp4,video3.mp4> --out <test.db> --media_dir <absolute path to dir of Video/ e.g. /campusvirtua/Video> --map_dir <abs path of Map/> --json_dir <absolute path to JSON/ e.g. /campusvirtual/JSON/> --picture-dir <abs path to save 360 keyframe images to>`
+e.g. `./runCampusVirtual <view SLAM headless/without a viewer (true|false)> ./ <video1.mp4,video2.mp4,video3.mp4> --out <test.db> --video_dir <absolute path to dir of Video/ e.g. /campusvirtua/Video> --map_dir <abs path of Map/> --json_dir <absolute path to JSON/ e.g. /campusvirtual/JSON/> --picture-dir <abs path to save 360 keyframe images to>`
 
 ## Optional Further Steps
 
