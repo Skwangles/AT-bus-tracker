@@ -9,8 +9,8 @@ echo "Running ProcessFiles"
 # ./ProcessFiles.out /media/skwangles/KINGSTON/MEDIA/RawINSV/Zones /media/skwangles/KINGSTON/MEDIA/RawINSV/Zones/Video
 
 
-# ./runCampusVirtual false ./ --videos VID_20241213_154018_00_054.mp4 --out zone1.db --media_dir /media/skwangles/KINGSTON/MEDIA/RawINSV/Zones/Video/ --map_dir /media/skwangles/KINGSTON/MEDIA/RawINSV/Zones/Maps/ --json_dir /media/skwangles/KINGSTON/MEDIA/RawINSV/Zones/JSON/ --picture-dir /media/skwangles/KINGSTON/MEDIA/RawINSV/Zones/pictures/
-# ./runCampusVirtual false ./ --videos VID_20241213_154153_00_055.mp4 --out zone2.db --media_dir /media/skwangles/KINGSTON/MEDIA/RawINSV/Zones/Video/ --map_dir /media/skwangles/KINGSTON/MEDIA/RawINSV/Zones/Maps/ --json_dir /media/skwangles/KINGSTON/MEDIA/RawINSV/Zones/JSON/ --picture-dir /media/skwangles/KINGSTON/MEDIA/RawINSV/Zones/pictures/
+# ./runCampusVirtual false ./ --videos VID_20241213_154018_00_054.mp4 --out zone1.db --video_dir /media/skwangles/KINGSTON/MEDIA/RawINSV/Zones/Video/ --map_dir /media/skwangles/KINGSTON/MEDIA/RawINSV/Zones/Maps/ --json_dir /media/skwangles/KINGSTON/MEDIA/RawINSV/Zones/JSON/ --picture-dir /media/skwangles/KINGSTON/MEDIA/RawINSV/Zones/pictures/
+# ./runCampusVirtual false ./ --videos VID_20241213_154153_00_055.mp4 --out zone2.db --video_dir /media/skwangles/KINGSTON/MEDIA/RawINSV/Zones/Video/ --map_dir /media/skwangles/KINGSTON/MEDIA/RawINSV/Zones/Maps/ --json_dir /media/skwangles/KINGSTON/MEDIA/RawINSV/Zones/JSON/ --picture-dir /media/skwangles/KINGSTON/MEDIA/RawINSV/Zones/pictures/
 
 
 ./runCampusVirtual false ./ --in zone1.db --out output1.db --map_dir /media/skwangles/KINGSTON/MEDIA/RawINSV/Zones/Maps/ --convertToSQLite
