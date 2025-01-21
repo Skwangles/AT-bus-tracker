@@ -40,10 +40,10 @@ endif()
 # if(campus_virtual_socket_publisher_FOUND)
 #     message(STATUS "Viewer for Campus Virtual: SocketPublisher")
 # endif()
-# find_package(socket_publisher QUIET)
-# if(socket_publisher_FOUND)
-#     message(STATUS "Viewer for examples: SocketPublisher")
-# endif()
+find_package(socket_publisher QUIET)
+if(socket_publisher_FOUND)
+    message(STATUS "Viewer for examples: SocketPublisher")
+endif()
 
 find_package(iridescence_viewer) # Used for development, and the editing session
 if(iridescence_viewer_FOUND)
@@ -53,6 +53,9 @@ endif()
 # ----- Build example executables -----
 
 set(EXECUTABLE_TARGETS "")
+
+add_executable(loop_closure src/loop_closure.cc)
+list(APPEND EXECUTABLE_TARGETS loop_closure)
 
 add_executable(map src/map.cc)
 list(APPEND EXECUTABLE_TARGETS map)
@@ -79,12 +82,12 @@ foreach(EXECUTABLE_TARGET IN LISTS EXECUTABLE_TARGETS)
     #     # Link viewer
     #     target_link_libraries(${EXECUTABLE_TARGET} PRIVATE pangolin_viewer::pangolin_viewer)
     # endif()
-    # if(socket_publisher_FOUND)
-    #     # Set macro flag
-    #     target_compile_definitions(${EXECUTABLE_TARGET} PRIVATE HAVE_SOCKET_PUBLISHER)
-    #     # Link viewer
-    #     target_link_libraries(${EXECUTABLE_TARGET} PRIVATE socket_publisher::socket_publisher)
-    # endif()
+    if(socket_publisher_FOUND)
+        # Set macro flag
+        target_compile_definitions(${EXECUTABLE_TARGET} PRIVATE HAVE_SOCKET_PUBLISHER)
+        # Link viewer
+        target_link_libraries(${EXECUTABLE_TARGET} PRIVATE socket_publisher::socket_publisher)
+    endif()
     # if(campus_virtual_socket_publisher_FOUND)
     #     # Set macro flag
     #     target_compile_definitions(${EXECUTABLE_TARGET} PRIVATE HAVE_CAMPUS_VIRTUAL_SOCKET_PUBLISHER)
