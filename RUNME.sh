@@ -25,9 +25,21 @@ echo "Running ProcessFiles"
 # Export to postgres - Only <isHeadless> <Root dir>  --in <map name> and --map_dir <dir of map files> need actual values, the others can be 'fillers'
 ./runCampusVirtual false ./ --videos . --in map.db --out . --video_dir /Abs/Path/To/Video/ --map_dir /Abs/Path/To/Maps/ --json_dir /Abs/Path/To/JSON/ --convertToSQLite
 
+
+# python3 -m venv Apps/SQLiteViewer/env
+# source Apps/SQLiteViewer/env/bin/activate
+
+# ./Apps/SQLiteViewer/LIBS.sh
+# python3 Apps/SQLiteViewer/view.py '/path/to/db.db' refined_
+
+# pip3 install pillow
+# python3 Apps/SharpnessCalculator/sharpness.py /abs/img/dir /abs/output/file.json
+
+
+
 # Prune the graph to viewing
 cd ./Apps/GraphPruner
-npm run start
+npm run start -- --img_dir=/Abs/Path/To/Imgs --
 
 # Setup and Run Front-end
 # Build Authoring page - This page should be disabled in campusvirtual-backend/consts.ts once ready for public serving
