@@ -9,6 +9,7 @@ import concurrent.futures
 # Function to calculate the sharpness of an image
 def calculate_sharpness(image_path):
     try:
+        print("Processing: ", image_path)
         # Open the image file
         with Image.open(image_path) as img:
             # Convert to grayscale
@@ -37,15 +38,15 @@ def process_images(directory):
     sharpness_results = {}
     with concurrent.futures.ThreadPoolExecutor() as executor:
         # Map the function to all image files
+        print("Starting sharpness calculation on:", len(image_files))
         results = executor.map(calculate_sharpness, image_files)
-
         # Collect results into a dictionary
         for image_path, sharpness in results:
             if sharpness is not None:
                 sharpness_results[os.path.basename(image_path)] = sharpness
             else:
                 sharpness_results[os.path.basename(image_path)] = "Error"
-
+    print("Finished")
     return sharpness_results
 
 
