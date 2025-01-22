@@ -53,6 +53,8 @@ def process_images(directory):
 
 # Save the sharpness results to a JSON file
 def save_sharpness_results(results, output_file):
+    if os.path.isfile(output_file):
+        os.remove(output_file)
     with open(output_file, "w") as f:
         json.dump(results, f, indent=4)
 
@@ -75,6 +77,14 @@ def main():
     # Parse arguments
     args = parser.parse_args()
 
+    if not os.path.isdir(args.search_directory):
+        print("Image directory does not exist")
+
+    if os.path.isfile(args.output_file):
+        user_in = input("Output file already exists - recompute?: (y/N)")
+        if (user_in != 'y' and user_in != 'Y'):
+            return
+    
     # Process images and calculate sharpness
     sharpness_results = process_images(args.search_directory)
 
