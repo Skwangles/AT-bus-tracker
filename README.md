@@ -27,13 +27,14 @@ Super important that you do it _recursive_, as we have submodules that need clon
 - Convert your `.insv` and `.insp` files and associated JSON files (they are just copied across, so you can do that manually) with the FileProcessing tool to mp4s and images (use `run.sh`)
 - Modify `RUNME.sh` to run the controller on the videos you want, or just manually run the `g++ ./runCampusVirtual.cc -o runCampusVirtual -lboost_program_options` to build and then use as desired.
   - Note: In RUNME, running runCampusVirtual with --convertToSQLite or --convertToPg will export the SLAM map to CampusVirtual's working format
-- (TO BE IMPLEMENTED) On each map file run the Apps/PrebakeProximity to detect points closeby but not connected to bake in edges, so these proximities don't need to be computed at runtime.
-- On each map file, run the Apps/GraphPruner with `npm run start`, this is **REQUIRED** before running the authoring interface and campusvirtual-backend parts
+- Run SharpnessCalculator to produce a JSON file to preprocess image sharpness for the GraphPruner (otherwise GraphPruner will calculate them at runtime in an expensive process)
+- On each map file, run the Apps/GraphPruner with `npm run start -- --img_dir=/path/to/dir/ ...args`, before running the authoring interface and campusvirtual-backend parts (`npm run start -- --h` to view args)
 - (TO BE IMPLEMENTED) To merge two SQLite databases together, these will first try to auto align based on 2+ overlapping 'merge points' identified during mapping.
   Note: (TO BE IMPLEMENTED) If there is only 1 merge point you will have to manually rotate and align points using iridesence because there aren't enough points to automate it.
 - To view the raw full graph and open the Apps/PgSocketViewer in a separate terminal and run `node app.js`
-- To use the (optional - you can skip if you don't want a minimap, or to do any refinement) Authoring interface, in campusvirtual-backend consts.ts and set ENABLE_AUTHORING_PAGE to 'true', then 'npm run build' in the Apps/authoring directory.
-- To view the polished interface, open Apps/campusvirtual-backend and run `npm run start` and visit `localhost:3001` (and `localhost:3001/authoring` for the author page)
+- To use the (optional - you can skip if you don't want a minimap, or to do any refinement) Authoring interface, in campusvirtual-backend consts.ts and set ENABLE_AUTHORING_PAGE to 'true' in campusvirtual-backend/src/consts.ts.
+- Extract only the used panoramic images to a different directory, use the ImageSplitter project with `npm run start -- --input_dir=/path/in/ --output_dir=/path/out/`
+- To view the polished interface, open Apps/campusvirtual-backend (edit the src/consts.ts file) and run `npm run start` and visit `localhost:3001` (and `localhost:3001/authoring` for the author page)
 
 e.g. `./runCampusVirtual <view SLAM headless/without a viewer (true|false)> ./ <video1.mp4,video2.mp4,video3.mp4> --out <test.db> --video_dir <absolute path to dir of Video/ e.g. /campusvirtua/Video> --map_dir <abs path of Map/> --json_dir <absolute path to JSON/ e.g. /campusvirtual/JSON/> --picture-dir <abs path to save 360 keyframe images to>`
 
@@ -48,6 +49,7 @@ It is slow, and intensive, however, will likely help
 ### CampusVirtual-FileProcessing - Insta360 SDK and image processor
 
 - Interface on top of Insta360's Linux SDK for image/video stitching
+- You must `sudo apt-get install ./sdk.deb` the SDK from Insta360 by applying for it a : https://www.insta360.com/sdk/apply
 
 ### SLAM - Stella VSLAM modifications
 
@@ -76,7 +78,7 @@ VSLAM in equirectangular mode uses Y as the vertical coordinate (i.e. XZ = groun
 
 TODO: Implement a manual alignment method
 
-### campusvirutal-backend and ui/
+### campusvirutal-backend and ui/ and authoring/
 
 - React frontend using THREE.js to visualise the graph, pathfind, and navigate the info present in the PostgreSQL DB
   On first run, it loads all points from refined_nodes, refined_edges, and refined_node_locations into a db for map editing by the authoring page.
@@ -84,11 +86,20 @@ TODO: Implement a manual alignment method
 
 Note: The `type` field of the floorplan_points is 0-49 = Normal points (e.g. bathroom, drinking fountain, etc.), 50+ = Border nodes (e.g. doors, stairs, etc.) - The large number set is to give future extensibility to types
 
+## SharpnessCalculator
+
+Used to preprocess the laplacian sharpness of the images.
+Outputs a JSON file that the GraphPruner uses to speed up.
+`python3 sharpness.py /abs/img/dir/ /abs/output/file.json`
+
 ## graph-pruner
 
 Pruner for the node, edges, and node_locations tables in PostgreSQL DB, before writing out to refined_X versions of the aforementioned tables.
 This pruner uses its consts.ts to prune the underlying model, and output them in a format ready for campusvirtual-backend to serve.
 It uses DFS to traverse the graph and prune the paths.
+Accepts a JSON file to lookup the sharpness of images instead of calculating them at run time (expensive operation)
+
+e.g. `npm run start -- --img_dir='/media/skwangles/KINGSTON/TGA - Out/pictures/' --preproc_sharpness_json='/media/skwangles/KINGSTON/TGA - Out/sharpness.json' --table_prefix='prune_test_'`
 
 # runCampusVirtual CLI
 
