@@ -22,33 +22,32 @@ echo "Running ProcessFiles"
 # View the 3D SLAM map - Optional step - TODO: Add manual corrections and loop closures
 # ./runCampusVirtual false ./ --videos . --in map.db --out map-edited.db --video_dir . --map_dir /Abs/Path/To/Maps/ --json_dir . --view_static
 
-# Export to postgres - Only <isHeadless> <Root dir>  --in <map name> and --map_dir <dir of map files> need actual values, the others can be 'fillers'
+# Export to SQLite - Only <isHeadless> <Root dir>  --in <map name> and --map_dir <dir of map files> need actual values, the others can be 'fillers'
 ./runCampusVirtual false ./ --videos . --in map.db --out . --video_dir /Abs/Path/To/Video/ --map_dir /Abs/Path/To/Maps/ --json_dir /Abs/Path/To/JSON/ --convertToSQLite
 
+# Python Environment
+python3 -m venv Apps/SQLiteViewer/env
+source Apps/SQLiteViewer/env/bin/activate
 
-# python3 -m venv Apps/SQLiteViewer/env
-# source Apps/SQLiteViewer/env/bin/activate
+./Apps/SQLiteViewer/LIBS.sh
+python3 Apps/SQLiteViewer/view.py '/path/to/db.db' refined_
 
-# ./Apps/SQLiteViewer/LIBS.sh
-# python3 Apps/SQLiteViewer/view.py '/path/to/db.db' refined_
-
-# pip3 install pillow
-# python3 Apps/SharpnessCalculator/sharpness.py /abs/img/dir /abs/output/file.json
-
-
+pip3 install pillow
+python3 Apps/SharpnessCalculator/sharpness.py /abs/img/dir /abs/output/file.json
 
 # Prune the graph to viewing
 cd ./Apps/GraphPruner
-npm run start -- --img_dir=/Abs/Path/To/Imgs --
+npm run start -- --img_dir='/media/skwangles/KINGSTON/TGA - Out/pictures' --preproc_sharpness_json='/media/skwangles/KINGSTON/TGA - Out/sharpness.json' --table_prefix='prune_test_'
+cd ..
 
-# Setup and Run Front-end
-# Build Authoring page - This page should be disabled in campusvirtual-backend/consts.ts once ready for public serving
-# Visit localhost:3001/authoring (campusvirtual-viewer's url with /authoring path) to align points to minimap
-cd Apps/authoring && npm run build && cd ../..
+# Extract only the images we need
+cd ./Apps/ImageSplitter
+npm run start -- --input_dir=/path/in/ --output_dir=/path/out/
+cd ..
 
+# Start the front-end (please make sure the campusvirtual-backend/consts.ts)
+cd campusvirtual-backend
+npm run build
+npm run start
 
-# Create a TMux session with both the PgSocketViewer and the CampusVirtual-Viewer running
-sudo apt update
-sudo apt install tmux 
-./START_SERVERS.sh
 
