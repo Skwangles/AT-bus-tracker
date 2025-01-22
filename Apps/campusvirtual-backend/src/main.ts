@@ -3,7 +3,7 @@ import cors from 'cors'
 import express from 'express'
 import fs from 'fs'
 import initData from './initData'
-import { FLOORPLAN_IMAGE_DIR, KEYFRAME_IMG_DIR, KEYFRAME_IMG_EXTENSION, QUERY_PREFIX, SEND_TEST_IMAGE, SKIP_IF_MAP_ALREADY_CONFIGED, USE_QUERY_PREFIX } from './consts'
+import { FLOORPLAN_IMG_DIR, KEYFRAME_IMG_DIR, KEYFRAME_IMG_EXTENSION, QUERY_PREFIX, SEND_TEST_IMAGE, SKIP_IF_MAP_ALREADY_CONFIGED, USE_QUERY_PREFIX } from './consts'
 import { searchNeighbour } from './neighbourSearch'
 import { readDB } from './db'
 import floorplanAPI from './authoring'
@@ -183,7 +183,7 @@ app.get('/api/v1/floorplans/:name/image', async function (req: { params: { name:
   }
 
 
-  const pathString = path.join(FLOORPLAN_IMAGE_DIR, String(result[0].path));
+  const pathString = path.join(FLOORPLAN_IMG_DIR, String(result[0].path));
   if (!pathString) {
     res.sendStatus(404); // Potential directory traversal attack found
     return;
@@ -255,6 +255,6 @@ app.use(floorplanAPI)
 
 const port = 3001
 app.listen(port, () => {
-  initData(SKIP_IF_MAP_ALREADY_CONFIGED)
+  initData(Boolean(SKIP_IF_MAP_ALREADY_CONFIGED))
   console.log(`Server running on port ${port}`)
 })

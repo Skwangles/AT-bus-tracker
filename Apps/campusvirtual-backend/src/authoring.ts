@@ -7,7 +7,7 @@ import fs from "fs";
 import { disconnectNodes, connectNodes, replaceNode } from "./utils";
 import {
   SEND_TEST_IMAGE,
-  FLOORPLAN_IMAGE_DIR,
+  FLOORPLAN_IMG_DIR,
   KEYFRAME_IMG_DIR,
   KEYFRAME_IMG_EXTENSION,
   ENABLE_AUTHORING_PAGE,
@@ -34,7 +34,7 @@ if (ENABLE_AUTHORING_PAGE) {
       cb: (arg0: null, arg1: string) => void
     ) => {
       // Ensure the uploads directory exists
-      const uploadDir = FLOORPLAN_IMAGE_DIR;
+      const uploadDir = FLOORPLAN_IMG_DIR;
       if (!fs.existsSync(uploadDir)) {
         fs.mkdirSync(uploadDir);
       }
@@ -132,8 +132,7 @@ if (ENABLE_AUTHORING_PAGE) {
     }
     label = label.replace("<", "<").replace(">", ">"); // THIS AREA MAY BE VULNERABLE TO XSS - Only if the attacker gets ahold of the authoring panel, please disable it in consts once you are done authoring
     const changes = await writeDB(
-      `UPDATE ${
-        USE_QUERY_PREFIX ? QUERY_PREFIX : ""
+      `UPDATE ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""
       }nodes SET label = ? WHERE keyframe_id = ?`,
       [label, id]
     );
@@ -193,8 +192,7 @@ if (ENABLE_AUTHORING_PAGE) {
       const { id1, id2 } = req.params;
 
       const is_edge = await readDB(
-        `SELECT * FROM ${
-          USE_QUERY_PREFIX ? QUERY_PREFIX : ""
+        `SELECT * FROM ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""
         }edges WHERE (keyframe_id0 = ? AND keyframe_id1 = ?) OR (keyframe_id0 = ? AND keyframe_id1 = ?) LIMIT 1;`,
         [id1, id2, id2, id1]
       );
