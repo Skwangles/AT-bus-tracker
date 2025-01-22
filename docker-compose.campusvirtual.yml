@@ -1,0 +1,17 @@
+services:
+  backend:
+    build:
+      context: ./Apps/campusvirtual-backend
+      dockerfile: Dockerfile
+    ports:
+      - '3001:3001'
+    env_file: .env
+    volumes:
+      - '${KEYFRAME_IMG_DIR}:/app/served-img/'
+      - '${FLOORPLAN_IMG_DIR}:/app/served-floorplans/'
+      - '${SQLITE_DB_DIR}:/app/served-map/'
+    environment:
+      - NODE_ENV=production
+      - KEYFRAME_IMG_DIR=/app/served-img/
+      - FLOORPLAN_IMG_DIR=/app/served-floorplans/
+      - SQLITE_DB_DIR=/app/served-map/
