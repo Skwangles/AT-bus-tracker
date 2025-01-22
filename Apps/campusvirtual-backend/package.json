@@ -22,6 +22,8 @@
     "@types/three": "^0.167.2",
     "better-sqlite3": "^11.6.0",
     "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "env": "^0.0.2",
     "express": "^4.19.2",
     "fs": "^0.0.1-security",
     "heapify": "^0.6.0",
@@ -35,6 +37,7 @@
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.12",
+    "@types/dotenv": "^6.1.1",
     "@types/multer": "^1.4.11",
     "typescript": "^5.5.3"
   }
