@@ -129,8 +129,8 @@ app.get('/api/v1/floor/:floor/point/', async function (req: any, res: any) {
 })
 
 app.get('/api/v1/image/:resolution/:ts', async function (req: { params: { ts: string, resolution: string } }, res) {
-  const ts = Number(req.params.ts).toFixed(5);
-  if (ts === "NaN") {
+  const ts = Number(req.params.ts);
+  if (isNaN(ts)) {
     res.status(400).send("Image id was not a valid image ID")
     return;
   }
@@ -146,7 +146,7 @@ app.get('/api/v1/image/:resolution/:ts', async function (req: { params: { ts: st
     return;
   }
 
-  const imgPath = path.join(KEYFRAME_IMG_DIR, ts + KEYFRAME_IMG_EXTENSION)
+  const imgPath = path.join(KEYFRAME_IMG_DIR, ts.toFixed(5) + KEYFRAME_IMG_EXTENSION)
   if (!fs.existsSync(imgPath)) {
     res.sendFile(path.join(KEYFRAME_IMG_DIR, "test.jpg"))
     return;
