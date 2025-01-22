@@ -34,3 +34,18 @@ export interface NodeInfo {
   y_trans: number;
   z_trans: number;
 }
+
+export interface Config {
+  table_prefix: string
+  coords_to_metres: number
+  outer_ring: number
+  inner_ring: number
+  otdr_outer_ring: number
+  otdr_inner_ring: number
+  img_dir: string
+  img_ext: string
+  y_dist_thresh: number
+  otdr_y_dist_thresh: number
+  preproc_sharpness_json: string,
+  sharpness?: { [filename: string]: number }
+}

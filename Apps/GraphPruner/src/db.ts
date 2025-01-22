@@ -1,13 +1,11 @@
-import Pool from "pg-pool";
 import betterSqlite3 from "better-sqlite3";
-import { DFLT_SQLITE_DB_PATH } from "./consts";
 
 let writableSqliteDb: betterSqlite3.Database;
 let sqliteDb: betterSqlite3.Database;
 
-function initDB() {
-  sqliteDb = betterSqlite3(DFLT_SQLITE_DB_PATH, { readonly: true });
-  writableSqliteDb = betterSqlite3(DFLT_SQLITE_DB_PATH, { readonly: false });
+export function initDB(path: string) {
+  sqliteDb = betterSqlite3(path, { readonly: true });
+  writableSqliteDb = betterSqlite3(path, { readonly: false });
   writableSqliteDb.pragma("journal_mode = WAL");
 
   writableSqliteDb.function("POWER", (x, y) => Math.pow(Number(x), Number(y)));
@@ -35,5 +33,4 @@ export async function readDB(
   return sqliteDb.prepare(query).all(params);
 }
 
-initDB();
 export { readDB as dbQuery };

@@ -13,14 +13,16 @@ import {
   DFLT_OUTDOORS_Y_DIST_THRESHOLD,
   DFLT_Y_DIST_THRESHOLD,
   DFLT_KEYFRAME_IMG_EXTENSION,
+  Config,
 } from "./consts";
 
 // Helper function to get node position
 export async function getNodePosition(
+  config: Config,
   keyframeId: string,
   use_trans = true
 ): Promise<[number, number, number] | null> {
-  const nodeInfo = await getNodeInfo(keyframeId, use_trans);
+  const nodeInfo = await getNodeInfo(config, keyframeId, use_trans);
   if (!nodeInfo) return null;
   return nodeInfo["position"];
 }
@@ -30,11 +32,12 @@ export async function getNumberOfNodes() {
 }
 
 export async function getNodeInfo(
+  config: Config,
   keyframeId: string,
-  use_trans = true
+  use_trans = true,
 ): Promise<NodeInfo | null> {
   const result = await readDB(
-    `SELECT ts, pose, x_trans, y_trans, z_trans FROM ${DFLT_TABLE_PREFIX}nodes WHERE keyframe_id = ? LIMIT 1;`,
+    `SELECT ts, pose, x_trans, y_trans, z_trans FROM ${config.table_prefix}nodes WHERE keyframe_id = ? LIMIT 1;`,
     [keyframeId],
     true
   );
@@ -44,7 +47,7 @@ export async function getNodeInfo(
   }
 
   const countOfLabels = await readDB(
-    `SELECT COUNT(*) as total FROM ${DFLT_TABLE_PREFIX}special_labels WHERE keyframe_id = ?`,
+    `SELECT COUNT(*) as total FROM ${config.table_prefix}special_labels WHERE keyframe_id = ?`,
     [keyframeId],
     true
   );
@@ -53,9 +56,9 @@ export async function getNodeInfo(
 
   if (use_trans) {
     const ret: [number, number, number] = [
-      -node_info.x_trans * DFLT_COORDS_TO_METRES,
-      -node_info.y_trans * DFLT_COORDS_TO_METRES,
-      node_info.z_trans * DFLT_COORDS_TO_METRES,
+      -node_info.x_trans * config.coords_to_metres,
+      -node_info.y_trans * config.coords_to_metres,
+      node_info.z_trans * config.coords_to_metres,
     ];
     if (!ret) {
       console.error("Return result was Null of getNodePosition - using pose");
@@ -63,7 +66,7 @@ export async function getNodeInfo(
     }
     node_info["position"] = ret;
   } else {
-    const ret = calculatePositionFromMatrix(result[0]?.pose);
+    const ret = calculatePositionFromMatrix(config, result[0]?.pose);
     if (!ret) {
       console.error(
         "Return result was Null of getNodePosition - calculating from pose"
@@ -77,6 +80,7 @@ export async function getNodeInfo(
 }
 
 export async function connectAllNeighboursIfNotAlready(
+  config: Config,
   keyframeId: number,
   neighbours: any[]
 ) {
@@ -84,7 +88,7 @@ export async function connectAllNeighboursIfNotAlready(
     throw new Error("NaN keyframeId passed to connect all neighbours");
 
   const zoneObject = await readDB(
-    `SELECT zone FROM ${DFLT_TABLE_PREFIX}nodes WHERE keyframe_id = ? LIMIT 1;`,
+    `SELECT zone FROM ${config.table_prefix}nodes WHERE keyframe_id = ? LIMIT 1;`,
     [keyframeId]
   );
   if (!zoneObject) throw new Error("Could not fetch keyframe: " + keyframeId);
@@ -94,7 +98,7 @@ export async function connectAllNeighboursIfNotAlready(
   for (const neighbour of neighbours) {
     try {
       await writeDB(
-        `INSERT INTO ${DFLT_TABLE_PREFIX}edges (keyframe_id0, keyframe_id1, type, zone) VALUES (?, ?, ?, ?) ON CONFLICT (keyframe_id0, keyframe_id1) DO UPDATE SET type=? WHERE type = ?`,
+        `INSERT INTO ${config.table_prefix}edges (keyframe_id0, keyframe_id1, type, zone) VALUES (?, ?, ?, ?) ON CONFLICT (keyframe_id0, keyframe_id1) DO UPDATE SET type=? WHERE type = ?`,
         [
           keyframeId,
           neighbour.keyframe_id,
@@ -107,7 +111,7 @@ export async function connectAllNeighboursIfNotAlready(
         if (value > 0) edgesCreated++;
       });
       await writeDB(
-        `INSERT INTO ${DFLT_TABLE_PREFIX}edges (keyframe_id0, keyframe_id1, type, zone) VALUES (?, ?, ?, ?) ON CONFLICT (keyframe_id0, keyframe_id1) DO UPDATE SET type=? WHERE type = ?`,
+        `INSERT INTO ${config.table_prefix}edges (keyframe_id0, keyframe_id1, type, zone) VALUES (?, ?, ?, ?) ON CONFLICT (keyframe_id0, keyframe_id1) DO UPDATE SET type=? WHERE type = ?`,
         [
           neighbour.keyframe_id,
           keyframeId,
@@ -125,10 +129,10 @@ export async function connectAllNeighboursIfNotAlready(
 }
 
 export async function getPhysicalProximityNeighbours(
+  config: Config,
   keyframeId: number,
   proximity: number,
-  vertical_prox: number,
-  table_prefix: string
+  vertical_prox: number
 ): Promise<any[]> {
   if (
     isNaN(Number(keyframeId)) ||
@@ -137,11 +141,11 @@ export async function getPhysicalProximityNeighbours(
   )
     throw new Error(
       "Na passed to getPhysicalProximity - ID: " +
-        keyframeId +
-        " | Horizontal Proximity: " +
-        proximity +
-        " | Vertical Prox: " +
-        vertical_prox
+      keyframeId +
+      " | Horizontal Proximity: " +
+      proximity +
+      " | Vertical Prox: " +
+      vertical_prox
     );
 
   const result = await readDB(
@@ -150,13 +154,13 @@ export async function getPhysicalProximityNeighbours(
         x_trans,
         y_trans,
         z_trans
-    FROM ${DFLT_TABLE_PREFIX}nodes
+    FROM ${config.table_prefix}nodes
     WHERE keyframe_id = ?
     )
 
     SELECT
         *
-        FROM ${DFLT_TABLE_PREFIX}nodes rn
+        FROM ${config.table_prefix}nodes rn
     JOIN target_point ON(
           SQRT(
             (POWER(rn.x_trans - target_point.x_trans, 2)) +
@@ -172,15 +176,16 @@ export async function getPhysicalProximityNeighbours(
 
 // Helper function to get neighbours
 export async function getNeighbours(
+  config: Config,
   keyframeId: number,
   usePhysicalProximity = false
 ): Promise<any[]> {
   if (isNaN(Number(keyframeId))) throw new Error("NaN passed to getNeighbours");
 
   const directNeighbours = await readDB(
-    `SELECT e.keyframe_id1 as keyframe_id, n.ts, COUNT(e1.keyframe_id1) as degree FROM ${DFLT_TABLE_PREFIX}edges e 
-              JOIN ${DFLT_TABLE_PREFIX}edges e1 ON e.keyframe_id1 = e1.keyframe_id0
-              JOIN ${DFLT_TABLE_PREFIX}nodes n ON e.keyframe_id1 = n.keyframe_id 
+    `SELECT e.keyframe_id1 as keyframe_id, n.ts, COUNT(e1.keyframe_id1) as degree FROM ${config.table_prefix}edges e 
+              JOIN ${config.table_prefix}edges e1 ON e.keyframe_id1 = e1.keyframe_id0
+              JOIN ${config.table_prefix}nodes n ON e.keyframe_id1 = n.keyframe_id 
               WHERE e.keyframe_id0 = ? AND(e.type = 0 OR e.type = 1) AND(e1.type = 0 OR e1.type = 1) 
               GROUP BY e.keyframe_id1, n.ts`,
     [keyframeId]
@@ -188,8 +193,10 @@ export async function getNeighbours(
 
   if (usePhysicalProximity) {
     const results = await getPhysicalProximityNeighbours(
+      config,
       keyframeId,
-      DFLT_TARGET_CLOSENESS / DFLT_COORDS_TO_METRES
+      config.outer_ring,
+      config.y_dist_thresh,
     );
     return [...new Set([...directNeighbours, ...results])];
   }
@@ -220,11 +227,11 @@ export function calculateXZDistance(
   return result;
 }
 
-export async function isNodeOutdoors(keyframeId: number) {
+export async function isNodeOutdoors(config: Config, keyframeId: number) {
   if (isNaN(Number(keyframeId)))
     throw new Error("NaN passed to isNodeOutdoors");
   const locData = await readDB(
-    `SELECT location from ${DFLT_TABLE_PREFIX}node_locations WHERE keyframe_id = ? `,
+    `SELECT location from ${config.table_prefix}node_locations WHERE keyframe_id = ? `,
     [keyframeId],
     false
   );
@@ -237,6 +244,7 @@ export async function isNodeOutdoors(keyframeId: number) {
 
 // Helper function to delete a node and its edges
 export async function replaceNode(
+  config: Config,
   keyframeId: number,
   position: [number, number, number],
   ignore_distance = false,
@@ -244,7 +252,7 @@ export async function replaceNode(
 ) {
   if (isNaN(Number(keyframeId))) throw new Error("NaN passed to replaceNode");
   const direct_neighbours = await readDB(
-    `SELECT keyframe_id1 as keyframe_id FROM ${DFLT_TABLE_PREFIX}edges WHERE keyframe_id0 = ? AND(type = 0 OR type = 1)`,
+    `SELECT keyframe_id1 as keyframe_id FROM ${config.table_prefix}edges WHERE keyframe_id0 = ? AND(type = 0 OR type = 1)`,
     [keyframeId],
     false
   );
@@ -253,7 +261,7 @@ export async function replaceNode(
 
   for (const neighbour_id in direct_neighbours) {
     const neighbour = direct_neighbours[neighbour_id];
-    const pos = await getNodePosition(neighbour.keyframe_id);
+    const pos = await getNodePosition(config, neighbour.keyframe_id);
     if (!pos) {
       throw new Error(
         `Unrecoverable error - Return result was Null of getNodePosition - neighbour: ${neighbour.keyframe_id} `
@@ -263,6 +271,7 @@ export async function replaceNode(
     for (const new_neighbour of direct_neighbours.slice(neighbour_id)) {
       if (new_neighbour.keyframe_id == neighbour.keyframe_id) continue;
       const newNeighbourPosition = await getNodePosition(
+        config,
         new_neighbour.keyframe_id
       );
       if (!newNeighbourPosition) {
@@ -281,12 +290,12 @@ export async function replaceNode(
         !ignore_distance &&
         (distance >
           (isOutdoors
-            ? DFLT_OUTDOORS_TARGET_CLOSENESS
-            : DFLT_TARGET_CLOSENESS) ||
+            ? config.otdr_outer_ring
+            : config.outer_ring) ||
           yDistance >
-            (isOutdoors
-              ? DFLT_OUTDOORS_Y_DIST_THRESHOLD
-              : DFLT_Y_DIST_THRESHOLD))
+          (isOutdoors
+            ? config.otdr_y_dist_thresh
+            : config.y_dist_thresh))
       ) {
         console.debug(
           "Cancelling delete - A new edge is too large - Distance:",
@@ -300,26 +309,26 @@ export async function replaceNode(
         return false;
       }
       await writeDB(
-        `INSERT INTO ${DFLT_TABLE_PREFIX}edges(keyframe_id0, keyframe_id1, type) VALUES(?, ?, 1) ON CONFLICT(keyframe_id0, keyframe_id1) DO UPDATE SET type = 1; `,
+        `INSERT INTO ${config.table_prefix}edges(keyframe_id0, keyframe_id1, type) VALUES(?, ?, 1) ON CONFLICT(keyframe_id0, keyframe_id1) DO UPDATE SET type = 1; `,
         [neighbour.keyframe_id, new_neighbour.keyframe_id]
       );
       await writeDB(
-        `INSERT INTO ${DFLT_TABLE_PREFIX}edges(keyframe_id1, keyframe_id0, type) VALUES(?, ?, 1) ON CONFLICT(keyframe_id0, keyframe_id1) DO UPDATE SET type = 1; `,
+        `INSERT INTO ${config.table_prefix}edges(keyframe_id1, keyframe_id0, type) VALUES(?, ?, 1) ON CONFLICT(keyframe_id0, keyframe_id1) DO UPDATE SET type = 1; `,
         [neighbour.keyframe_id, new_neighbour.keyframe_id]
       );
     }
   }
 
   await writeDB(
-    `DELETE FROM ${DFLT_TABLE_PREFIX}edges WHERE keyframe_id0 = ? OR keyframe_id1 = ?; `,
+    `DELETE FROM ${config.table_prefix}edges WHERE keyframe_id0 = ? OR keyframe_id1 = ?; `,
     [keyframeId, keyframeId]
   );
   await writeDB(
-    `DELETE FROM ${DFLT_TABLE_PREFIX}node_locations WHERE keyframe_id = ? `,
+    `DELETE FROM ${config.table_prefix}node_locations WHERE keyframe_id = ? `,
     [keyframeId]
   );
   await writeDB(
-    `DELETE FROM ${DFLT_TABLE_PREFIX}nodes WHERE keyframe_id = ?; `,
+    `DELETE FROM ${config.table_prefix}nodes WHERE keyframe_id = ?; `,
     [keyframeId]
   );
 
@@ -328,6 +337,7 @@ export async function replaceNode(
 }
 
 export function calculatePositionFromMatrix(
+  config: Config,
   matrix: number[]
 ): [number, number, number] {
   const m = new THREE.Matrix4();
@@ -337,9 +347,9 @@ export function calculatePositionFromMatrix(
   const position = new THREE.Vector3();
   position.setFromMatrixPosition(m);
   return [
-    -position.x * DFLT_COORDS_TO_METRES,
-    -position.y * DFLT_COORDS_TO_METRES,
-    position.z * DFLT_COORDS_TO_METRES,
+    -position.x * config.coords_to_metres,
+    -position.y * config.coords_to_metres,
+    position.z * config.coords_to_metres,
   ];
 }
 
@@ -360,18 +370,18 @@ export async function calculateImageSharpness(
   }
 }
 
-export function convertTimestampToImagename(ts: Number | string) {
+export function convertTimestampToImagename(config: Config, ts: Number | string) {
   if (isNaN(Number(ts)))
     throw new Error("NaN passed as timestamp for convertTimestampToImagename");
 
-  return `${Number(ts).toFixed(5)}${DFLT_KEYFRAME_IMG_EXTENSION} `;
+  return `${Number(ts).toFixed(5)}${config.img_ext} `;
 }
 
-export async function getNextKeyframe(currentId: number) {
+export async function getNextKeyframe(config: Config, currentId: number) {
   if (isNaN(Number(currentId)))
     throw new Error("NaN passed to getNextKeyframe");
   return await readDB(
-    `SELECT keyframe_id, ts FROM ${DFLT_TABLE_PREFIX}nodes WHERE keyframe_id > ? LIMIT 1`,
+    `SELECT keyframe_id, ts FROM ${config.table_prefix}nodes WHERE keyframe_id > ? LIMIT 1`,
     [currentId],
     true
   );
