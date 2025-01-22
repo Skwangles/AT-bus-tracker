@@ -37,7 +37,7 @@ python3 Apps/SharpnessCalculator/sharpness.py /abs/img/dir /abs/output/file.json
 
 # Prune the graph to viewing
 cd ./Apps/GraphPruner
-npm run start -- --img_dir='/media/skwangles/KINGSTON/TGA - Out/pictures' --preproc_sharpness_json='/media/skwangles/KINGSTON/TGA - Out/sharpness.json' --table_prefix='prune_test_'
+npm run start -- --img_dir='/path/to/pictures' --preproc_sharpness_json='/path/to/sharpness.json' --table_prefix='refined_'
 cd ..
 
 # Extract only the images we need
