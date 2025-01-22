@@ -16,7 +16,13 @@ import {
   Config,
 } from "./consts";
 
-// Helper function to get node position
+/**
+ * Get XYZ position of a node - is convenience interface on top of getNodeInfo, so is not a faster method
+ * @param config 
+ * @param keyframeId 
+ * @param use_trans 
+ * @returns 
+ */
 export async function getNodePosition(
   config: Config,
   keyframeId: string,
@@ -27,10 +33,21 @@ export async function getNodePosition(
   return nodeInfo["position"];
 }
 
+/**
+ * Get Number of keyframe nodes from DB 
+ * @returns number
+ */
 export async function getNumberOfNodes() {
   return await readDB(`SELECT COUNT(*) as total FROM nodes;`, [], true);
 }
 
+/**
+ * Get node information, including if it has any special_labels
+ * @param config 
+ * @param keyframeId 
+ * @param use_trans 
+ * @returns 
+ */
 export async function getNodeInfo(
   config: Config,
   keyframeId: string,
@@ -242,100 +259,13 @@ export async function isNodeOutdoors(config: Config, keyframeId: number) {
   return locData[0]["location"] === DFLT_OUTDOORS_LOCATION_NAME;
 }
 
-// Helper function to delete a node and its edges
-export async function replaceNode(
-  config: Config,
-  keyframeId: number,
-  position: [number, number, number],
-  ignore_distance = false,
-  isOutdoors = false
-) {
-  if (isNaN(Number(keyframeId))) throw new Error("NaN passed to replaceNode");
-  const direct_neighbours = await readDB(
-    `SELECT keyframe_id1 as keyframe_id FROM ${config.table_prefix}edges WHERE keyframe_id0 = ? AND(type = 0 OR type = 1)`,
-    [keyframeId],
-    false
-  );
 
-  await writeDB("BEGIN;");
-
-  for (const neighbour_id in direct_neighbours) {
-    const neighbour = direct_neighbours[neighbour_id];
-    const pos = await getNodePosition(config, neighbour.keyframe_id);
-    if (!pos) {
-      throw new Error(
-        `Unrecoverable error - Return result was Null of getNodePosition - neighbour: ${neighbour.keyframe_id} `
-      );
-    }
-
-    for (const new_neighbour of direct_neighbours.slice(neighbour_id)) {
-      if (new_neighbour.keyframe_id == neighbour.keyframe_id) continue;
-      const newNeighbourPosition = await getNodePosition(
-        config,
-        new_neighbour.keyframe_id
-      );
-      if (!newNeighbourPosition) {
-        throw new Error(
-          `Unrecoverable error - Return result was Null of getNodePosition - neighbour: ${new_neighbour.keyframe_id} `
-        );
-      }
-      const distance = calculateXZDistance(newNeighbourPosition, pos);
-      if (distance == null) {
-        throw new Error(
-          `Unrecoverable error - Return result was Null of calculateXZDistance - neighbour: ${new_neighbour.keyframe_id} `
-        );
-      }
-      const yDistance = Math.abs(newNeighbourPosition[2] - pos[2]);
-      if (
-        !ignore_distance &&
-        (distance >
-          (isOutdoors
-            ? config.otdr_outer_ring
-            : config.outer_ring) ||
-          yDistance >
-          (isOutdoors
-            ? config.otdr_y_dist_thresh
-            : config.y_dist_thresh))
-      ) {
-        console.debug(
-          "Cancelling delete - A new edge is too large - Distance:",
-          distance,
-          " ID:",
-          neighbour.keyframe_id,
-          " Compared ID:",
-          new_neighbour.keyframe_id
-        );
-        await writeDB("ROLLBACK;");
-        return false;
-      }
-      await writeDB(
-        `INSERT INTO ${config.table_prefix}edges(keyframe_id0, keyframe_id1, type) VALUES(?, ?, 1) ON CONFLICT(keyframe_id0, keyframe_id1) DO UPDATE SET type = 1; `,
-        [neighbour.keyframe_id, new_neighbour.keyframe_id]
-      );
-      await writeDB(
-        `INSERT INTO ${config.table_prefix}edges(keyframe_id1, keyframe_id0, type) VALUES(?, ?, 1) ON CONFLICT(keyframe_id0, keyframe_id1) DO UPDATE SET type = 1; `,
-        [neighbour.keyframe_id, new_neighbour.keyframe_id]
-      );
-    }
-  }
-
-  await writeDB(
-    `DELETE FROM ${config.table_prefix}edges WHERE keyframe_id0 = ? OR keyframe_id1 = ?; `,
-    [keyframeId, keyframeId]
-  );
-  await writeDB(
-    `DELETE FROM ${config.table_prefix}node_locations WHERE keyframe_id = ? `,
-    [keyframeId]
-  );
-  await writeDB(
-    `DELETE FROM ${config.table_prefix}nodes WHERE keyframe_id = ?; `,
-    [keyframeId]
-  );
-
-  await writeDB("COMMIT;");
-  return true;
-}
-
+/**
+ * 4x4 pose matrix to XYZ
+ * @param config 
+ * @param matrix 
+ * @returns 
+ */
 export function calculatePositionFromMatrix(
   config: Config,
   matrix: number[]
@@ -374,7 +304,7 @@ export function convertTimestampToImagename(config: Config, ts: Number | string)
   if (isNaN(Number(ts)))
     throw new Error("NaN passed as timestamp for convertTimestampToImagename");
 
-  return `${Number(ts).toFixed(5)}${config.img_ext} `;
+  return `${Number(ts).toFixed(5)}${config.img_ext}`.trim();
 }
 
 export async function getNextKeyframe(config: Config, currentId: number) {

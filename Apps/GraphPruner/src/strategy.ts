@@ -1,7 +1,8 @@
 import { config } from "process";
 import { Config, NodeInfo } from "./consts";
-import { calculateImageSharpness, calculateXZDistance, convertTimestampToImagename, getNeighbours, getNextKeyframe, getNodeInfo, getNumberOfNodes, isNodeOutdoors, replaceNode } from "./utils";
+import { calculateImageSharpness, calculateXZDistance, convertTimestampToImagename, getNeighbours, getNextKeyframe, getNodeInfo, getNodePosition, getNumberOfNodes, isNodeOutdoors, replaceNode } from "./utils";
 import cliProgress from 'cli-progress'
+import { readDB, writeDB } from "./db";
 /**
  *
  * @param isCurrentNodeOutdoor
@@ -42,6 +43,109 @@ async function get_sharpness(
     )) ?? 0;
   config['sharpness'][fullImageName] = val;
   return val;
+}
+
+
+/**
+ * Remove nodes ONLY if they removal does not compromise the OUTER ring 
+ * @param config 
+ * @param keyframeId 
+ * @param position 
+ * @param ignore_distance 
+ * @param isOutdoors 
+ * @returns 
+ */
+export async function replaceNode(
+  config: Config,
+  keyframeId: number,
+  position: [number, number, number],
+  ignore_distance = false,
+  isOutdoors = false
+) {
+  if (isNaN(Number(keyframeId))) throw new Error("NaN passed to replaceNode");
+  const direct_neighbours = await readDB(
+    `SELECT keyframe_id1 as keyframe_id FROM ${config.table_prefix}edges WHERE keyframe_id0 = ? AND(type = 0 OR type = 1)`,
+    [keyframeId],
+    false
+  );
+
+  await writeDB("BEGIN;");
+
+  for (const neighbour_id in direct_neighbours) {
+    const neighbour = direct_neighbours[neighbour_id];
+    const pos = await getNodePosition(config, neighbour.keyframe_id);
+    if (!pos) {
+      throw new Error(
+        `Unrecoverable error - Return result was Null of getNodePosition - neighbour: ${neighbour.keyframe_id} `
+      );
+    }
+
+    for (const new_neighbour of direct_neighbours.slice(neighbour_id)) {
+      if (new_neighbour.keyframe_id == neighbour.keyframe_id) continue;
+      const newNeighbourPosition = await getNodePosition(
+        config,
+        new_neighbour.keyframe_id
+      );
+      if (!newNeighbourPosition) {
+        throw new Error(
+          `Unrecoverable error - Return result was Null of getNodePosition - neighbour: ${new_neighbour.keyframe_id} `
+        );
+      }
+      const distance = calculateXZDistance(newNeighbourPosition, pos);
+      if (distance == null) {
+        throw new Error(
+          `Unrecoverable error - Return result was Null of calculateXZDistance - neighbour: ${new_neighbour.keyframe_id} `
+        );
+      }
+      const yDistance = Math.abs(newNeighbourPosition[2] - pos[2]);
+      if (
+        !ignore_distance &&
+        (distance >
+          (isOutdoors
+            ? config.otdr_outer_ring
+            : config.outer_ring) ||
+          yDistance >
+          (isOutdoors
+            ? config.otdr_y_dist_thresh
+            : config.y_dist_thresh))
+      ) {
+        console.debug(
+          "Cancelling delete - A new edge is too large - Distance:",
+          distance,
+          " ID:",
+          neighbour.keyframe_id,
+          " Compared ID:",
+          new_neighbour.keyframe_id
+        );
+        await writeDB("ROLLBACK;");
+        return false;
+      }
+      await writeDB(
+        `INSERT INTO ${config.table_prefix}edges(keyframe_id0, keyframe_id1, type) VALUES(?, ?, 1) ON CONFLICT(keyframe_id0, keyframe_id1) DO UPDATE SET type = 1; `,
+        [neighbour.keyframe_id, new_neighbour.keyframe_id]
+      );
+      await writeDB(
+        `INSERT INTO ${config.table_prefix}edges(keyframe_id1, keyframe_id0, type) VALUES(?, ?, 1) ON CONFLICT(keyframe_id0, keyframe_id1) DO UPDATE SET type = 1; `,
+        [neighbour.keyframe_id, new_neighbour.keyframe_id]
+      );
+    }
+  }
+
+  await writeDB(
+    `DELETE FROM ${config.table_prefix}edges WHERE keyframe_id0 = ? OR keyframe_id1 = ?; `,
+    [keyframeId, keyframeId]
+  );
+  await writeDB(
+    `DELETE FROM ${config.table_prefix}node_locations WHERE keyframe_id = ? `,
+    [keyframeId]
+  );
+  await writeDB(
+    `DELETE FROM ${config.table_prefix}nodes WHERE keyframe_id = ?; `,
+    [keyframeId]
+  );
+
+  await writeDB("COMMIT;");
+  return true;
 }
 
 /**
@@ -162,9 +266,9 @@ export async function useGreedyTripleRingStrategy(
           distance < (useOutdoors ? config.otdr_inner_ring : config.inner_ring)
         ) {
           // 4. Calculate sharpness heuristic (note: this is the most costly step)
-          console.time("Calc Sharpness");
+          console.time("Image Sharpness Calculation");
           const neighbourSharpness = await get_sharpness(config, ts);
-          console.timeEnd("Calc Sharpness");
+          console.timeEnd("Image Sharpness Calculation");
 
           // 5. Remove the lowest sharpness
           if (

@@ -86,7 +86,12 @@ const config: Config = {
 }
 console.info("Args:", config)
 
-
+/**
+ * Make sure all nodes that are right next to each other in space (i.e. two parallel lines) are connected
+ * @param horiztonal_dist 
+ * @param vert_dist 
+ * @returns 
+ */
 async function connectCloseTogetherPoints(
   horiztonal_dist = INNER_RING / CONVERSION_CRD2MTR,
   vert_dist = Y_DIST / CONVERSION_CRD2MTR
@@ -157,7 +162,9 @@ async function connectCloseTogetherPoints(
 }
 
 
-
+/**
+ * Copy nodes, edges, etc. to new tables with a table prefix
+ */
 async function createAWorkingCopy() {
   const progBar = new cliProgress.SingleBar(
     {},
