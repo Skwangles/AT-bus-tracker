@@ -40,8 +40,9 @@ def process_images(directory):
         # Map the function to all image files
         print("Starting sharpness calculation on:", len(image_files))
         results = executor.map(calculate_sharpness, image_files)
+        
         # Collect results into a dictionary
-        for image_path, sharpness in results:
+        for image_path, sharpness in list(results):
             if sharpness is not None:
                 sharpness_results[os.path.basename(image_path)] = sharpness
             else:
