@@ -1,4 +1,14 @@
-echo "DO NOT RUN WITH SUDO - otherwise the 'root' user will own the g2o, iridescence, and other libraries in /tmp, which means it won't compile with the right access to libs"
+if [ $(id -u) -e 0 ]; then
+    echo "Do not run with SUDO, otherwise you won't be able to compile necessary libraries as accessible to the user"
+    echo "If only root user exists, remove the first IF from ./BUILD_LIBS.sh"
+    echo "The program will prompt for root access when neccessary"
+    exit
+fi
+
+LIBS_DIR="$CV_HOME_DIR"/libs
+NON_MODIFIABLE_LIBS_DIR="$CV_HOME_DIR"/libs/tmp
+mkdir -p $LIBS_DIR
+mkdir -p $NON_MODIFIABLE_LIBS_DIR 
 
 git submodule init
 git submodule update
@@ -26,10 +36,6 @@ sudo apt install libeigen3-dev libspdlog-dev libsuitesparse-dev qtdeclarative5-d
 sudo apt install -y libglm-dev libglfw3-dev libpng-dev libjpeg-dev libeigen3-dev libboost-filesystem-dev libboost-program-options-dev
 # (Or build eigen from source if still not found)
 
-# (if you plan on using PangolinViewer)
-# Pangolin dependencies
-# sudo apt install -y libglew-dev
-
 # (if you plan on using SocketViewer)
 # Protobuf dependencies
 sudo apt install -y autogen autoconf libtool
@@ -40,7 +46,7 @@ sudo apt install -y npm
 sudo ldconfig # update lookup library paths - IMPORTANT if 'libxx.so' not found.
 
 # Install Custom FBoW used
-cd /tmp
+cd $NON_MODIFIABLE_LIBS_DIR
 if [ ! -d FBoW ] ; then
 git clone https://github.com/stella-cv/FBoW.git
 fi
@@ -60,7 +66,7 @@ sudo apt install libeigen3-dev
 sudo apt install libopencv-dev
 
 # Install g2o
-cd /tmp
+cd $NON_MODIFIABLE_LIBS_DIR
 if [ ! -d g2o ] ; then
 git clone https://github.com/RainerKuemmerle/g2o.git
 fi
@@ -84,7 +90,7 @@ cmake -DCMAKE_BUILD_TYPE=Release \
 make -j4 && sudo make install
 
 # Install backward-cpp - 
-cd /tmp
+cd $NON_MODIFIABLE_LIBS_DIR
 if [ ! -d backward-cpp ] ; then
 git clone https://github.com/bombela/backward-cpp.git
 fi
@@ -101,8 +107,7 @@ make -j4 && sudo make install
 
 ################# VIEWERS #####################
 # Install Iridescence
-cd /tmp
-
+cd $NON_MODIFIABLE_LIBS_DIR
 if [ ! -d iridescence ] ; then
 git clone https://github.com/koide3/iridescence.git
 fi
@@ -117,8 +122,8 @@ make -j4 && sudo make install
 
 
 sudo apt install -y libprotobuf-dev protobuf-compiler
-cd /tmp
 
+cd $NON_MODIFIABLE_LIBS_DIR
 if [ ! -d socket.io-client-cpp ] ; then
 git clone https://github.com/shinsumicco/socket.io-client-cpp.git
 fi
@@ -137,8 +142,7 @@ sudo make install
 ############### BUILD STELLA VSLAM ###############
 
 # Install stella_vslam core library
-mkdir -p ~/lib
-cd ~/lib
+cd $LIBS_DIR
 if [ ! -d stella_vslam ] ; then
 git clone --recursive https://github.com/Skwangles/stella_vslam.git
 fi
@@ -151,7 +155,7 @@ sudo make install
 # MAYBE TRY PATCH THE STELLA WITH MY MODIFICATIONS
 
 # When building with support for IridescenceViewer - allows you to manually trigger loop closures
-cd ~/lib
+cd $LIBS_DIR
 if [ ! -d iridescence_viewer ] ; then
 git clone --recursive https://github.com/Skwangles/iridescence_viewer.git
 fi
@@ -164,7 +168,7 @@ make -j
 sudo make install
 
 # When building with support for SocketViewer
-cd ~/lib
+cd $LIBS_DIR
 if [ ! -d campus_virtual_socket_publisher ] ; then
 git clone --recursive https://github.com/Skwangles/campus_virtual_socket_publisher.git # Custom socket_publisher which doesn't send current frame, only the map - forked from https://github.com/stella-cv/socket_publisher.git
 fi
@@ -175,5 +179,3 @@ make -j
 sudo make install
 
 sudo ldconfig
-
-echo "IF YOU RAN 'sudo ./BUILD_LIBS.sh' - you will need to run 'sudo chown' the /tmp/g2o, /tmp/iridescence, /tmp/backward-cpp, and /tmp/socket.io-client-cpp and /tmp/FBoW folders to fix their access for CampusVirtual"

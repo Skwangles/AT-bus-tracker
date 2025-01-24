@@ -1,11 +1,19 @@
 ########## CAMPUS VIRTUAL SPECIFIC CODE ##########
 echo "DO NOT RUN WITH SUDO - MUST BE RUN IN parent CampusVirtual/"
+echo "Must update .env.vars with latest variables, and rename to .env"
+
+if [ $(id -u) -e 0 ]; then
+  echo "Do not run with sudo"
+  echo "if you still want to run as the root user, comment out this IF in BUILD_CAMPUS_VIRTUAL.sh"
+  exit
+fi
+
 
 # Install custom socket_viewer which acts like Google Street View - forked from https://github.com/stella-cv/socket_viewer.git
 # cd PgSocketViewer && sudo npm install && cd ..
 # Make sure to run this in a separate terminal before running the CampusVirtualInterface with `node app.js`
 
-cd Apps
+cd "$CV_HOME_DIR"/Apps
 pwd
 
 # Installs MediaSDKTest tool for stitching videos
@@ -16,26 +24,15 @@ sudo ldconfig # update lookup library paths again - IMPORTANT if 'libxx.so' not 
 
 # IF G2O gives a QT error - sudo apt install -y qtcreator qtbase5-dev qt5-qmake cmake
 
-# Build ProcessFiles
-cd CampusVirtual-FileProcessing/ && g++ ProcessFiles.cpp -o ProcessFiles && cd ..
-pwd
-
-
-mkdir -p SLAM/CampusVirtualInterface/build
-cd SLAM/CampusVirtualInterface/build 
+echo "Building VSLAM CampusVirtual interface"
+mkdir -p "$CV_HOME_DIR"/SLAM/CampusVirtualInterface/build
+cd "$CV_HOME_DIR"/SLAM/CampusVirtualInterface/build 
 cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_STACK_TRACE_LOGGER=ON ..
-make -j4
+make -j4 && sudo make install
 
-cd ../../..
+echo "Building CLI interfaces"
+cd "$CV_HOME_DIR"/ENTRYPOINT
+make && sudo make install
 
-pwd
-
-cd .. # Back to parent dir
-
-# Build controller program
-g++ ENTRYPOINT/runCampusVirtual.cc -o runCampusVirtual -lboost_program_options
-
-
-
-echo "Run 'node app.js' in CampusVirtual_socket_viewer to start the socket viewer - before running the CampusVirtualInterface."
-
+cd "$CV_HOME_DIR"/Apps/CampusVirtual-FileProcessing
+make && sudo make install
