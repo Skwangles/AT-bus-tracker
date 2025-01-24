@@ -24,13 +24,10 @@ int main(int argc, char** argv) {
         ("map_dir", po::value<std::string>(), "Map directory - maps") 
         ("videos", po::value<std::string>(), "Comma-separated ordered videos")
         ("json_dir", po::value<std::string>(), "JSON group-to-timestamp file directory")
-        ("picture-dir", po::value<std::string>()->default_value("pictures/"), "Keyframe image output dir - Default 'pictures/'")
+        ("picture_dir", po::value<std::string>()->default_value("pictures/"), "Keyframe image output dir - Default 'pictures/'")
         ("config_file", po::value<std::string>()->default_value("indoors.yaml"), "Config file - Default 'indoors.yaml'")
         ("ts", po::value<std::string>(), "Start time of the Timestamps (Can use to make sure timestamps don't overlap)")
-        ("db_user", po::value<std::string>()->default_value("campusvirtual"), "Database username")
-        ("db_pwd", po::value<std::string>()->default_value("Squeegee-Grandkid-Superhero8"), "Database password")
-        ("db_name", po::value<std::string>()->default_value("cv"), "Database name")
-        ("db_port", po::value<std::string>()->default_value("5432"), "Database port");
+        ("ts_dp", po::value<unsigned int>()->default_value(5), "Decimal places for the timestamp names of keyframe images (e.g. 5dp = 0.12345.png)");
 
     po::positional_options_description pos_desc;
     pos_desc.add("use_viewer", 1);
@@ -51,7 +48,6 @@ int main(int argc, char** argv) {
 
         // Check for required arguments based on mode
         bool view_statically = vm.count("view_static");
-        bool convert_to_pg = vm.count("convertToPg");
         bool convert_to_sqlite3 = vm.count("convertToSQLite");
         bool use_temporal_mapping = vm.count("use_temporal");
 
@@ -59,14 +55,6 @@ int main(int argc, char** argv) {
             std::cout << "Missing required argument: project_dir" << std::endl;
             std::cout << desc << std::endl;
             return 1;
-        }
-
-        if (convert_to_pg) {
-            if (!vm.count("in") || !vm.count("map_dir") || !vm.count("db_user") || !vm.count("db_pwd") || !vm.count("db_name") || !vm.count("db_name") || !vm.count("db_port")) {
-                std::cout << "For Postgres conversion, required arguments: in, map_dir, db_user, db_pwd, db_name, db_port" << std::endl;
-                std::cout << desc << std::endl;                           
-                return 1;                                                 
-            }
         }
         else if (convert_to_sqlite3) {
             if (!vm.count("in") || !vm.count("out") || !vm.count("map_dir")) {
@@ -99,7 +87,7 @@ int main(int argc, char** argv) {
         std::string map_dir = vm["map_dir"].as<std::string>();
         std::string videos = vm.count("videos") ? vm["videos"].as<std::string>() : "";
         std::string json_dir = vm.count("json_dir") ? vm["json_dir"].as<std::string>() : "";
-        std::string picture_dir = vm["picture-dir"].as<std::string>();
+        std::string picture_dir = vm["picture_dir"].as<std::string>();
         std::string db_user = vm["db_user"].as<std::string>();
         std::string db_pwd = vm["db_pwd"].as<std::string>();
         std::string db_name = vm["db_name"].as<std::string>();
@@ -110,32 +98,23 @@ int main(int argc, char** argv) {
         std::string command;
         if (convert_to_sqlite3) {
             std::cout << "Convert to SQLite" << std::endl;
-            command = project_dir + path_to_stella + "slam_to_sqlite" +
+            command = "cv_slam_to_sqlite" +
                               " -c '" + project_dir + path_to_config  + config_file + "'" +
                               " -v '" + project_dir + path_to_fbow + "'" +
                               " -i '" + map_dir + "/" + map_in + "'" +
                               " -o '" + map_dir + "/" + map_out + "'";
         }
-        else if (convert_to_pg){
-            std::cout << "Convert to postgresql" << std::endl;
-            std::string connection_string = "postgresql://" + db_user + ":" + db_pwd + "@localhost:" + db_port + "/" + db_name;
-            command = project_dir + path_to_stella + "slam_to_pg" +
-                              " -c '" + project_dir + path_to_config  + config_file + "'" +
-                              " -v '" + project_dir + path_to_fbow + "'" +
-                              " -i '" + map_dir + "/" + map_in + "'" +
-                              " --db '" + connection_string + "'";
-        }
         else if (view_statically){
             std::cout << "Viewing" << std::endl;
-            command = project_dir + path_to_stella + "view" +
-                              " -c '" + project_dir + path_to_config + config_file + "'" +
-                              " -v '" + project_dir + path_to_fbow + "'" +
-                              (map_in.empty() ? "" : " -i '" + map_dir + "/" + map_in + "'") +
-                              " -o '" +  map_dir + "/" + map_out + "'";
+            command = "cv_view_map" +
+                        " -c '" + project_dir + path_to_config + config_file + "'" +
+                        " -v '" + project_dir + path_to_fbow + "'" +
+                        (map_in.empty() ? "" : " -i '" + map_dir + "/" + map_in + "'") +
+                        " -o '" +  map_dir + "/" + map_out + "'";
         }
         else {
             std::cout << "Mapping" << std::endl;
-            command = project_dir + path_to_stella + "map" +
+            command = "cv_map" +
                                         " -c '" + project_dir + path_to_config + config_file + "'" +
                                         " -v '" + project_dir + path_to_fbow + "'" +
                                         (ts_start.size() > 0 ? " -t '" + ts_start + "'" : "" ) +
@@ -146,6 +125,7 @@ int main(int argc, char** argv) {
                                         " --video-dir '" +  media_dir + "/" + "'" +
                                         " --json-dir '" + json_dir + "/" + "'" // Only required for 'pairing JSON with frames' step
                                         " --picture-dir '" + picture_dir + "/" + "'" +
+                                        " --ts-dp '" + vm["ts_dp"].as<std::string>() + "'" + 
                                         (use_temporal_mapping ? " --temporal-mapping" : "") +
                                         (use_viewer ? " --viewer none" : " --viewer iridescence_viewer");
         }
