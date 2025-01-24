@@ -23,7 +23,7 @@ export const PROJECT_NAME = "CampusVirtual"
 
 
 export const OUTDOORS_LOCATION = "outdoors"
-export const WAIKATO_UNI_LEVELS_ORDER = ["B", "G", "0", "1", "2", "3"];
+export const WAIKATO_UNI_LEVELS_ORDER = ["B", "G", "0", "1", "2", "3", "4"];
 
 export const STARTING_LOCATION_GROUP = "G"
 
