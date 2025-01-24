@@ -54,17 +54,17 @@ endif()
 
 set(EXECUTABLE_TARGETS "")
 
-add_executable(loop_closure src/loop_closure.cc)
-list(APPEND EXECUTABLE_TARGETS loop_closure)
+add_executable(cv_loop_closure src/loop_closure.cc)
+list(APPEND EXECUTABLE_TARGETS cv_loop_closure)
 
-add_executable(map src/map.cc)
-list(APPEND EXECUTABLE_TARGETS map)
+add_executable(cv_map src/map.cc)
+list(APPEND EXECUTABLE_TARGETS cv_map)
 
-add_executable(slam_to_sqlite src/slam_to_sqlite.cc)
-list(APPEND EXECUTABLE_TARGETS slam_to_sqlite)
+add_executable(cv_slam_to_sqlite src/slam_to_sqlite.cc)
+list(APPEND EXECUTABLE_TARGETS cv_slam_to_sqlite)
 
-add_executable(view src/view.cc)
-list(APPEND EXECUTABLE_TARGETS view)
+add_executable(cv_view_map src/view.cc)
+list(APPEND EXECUTABLE_TARGETS cv_view_map)
 
 foreach(EXECUTABLE_TARGET IN LISTS EXECUTABLE_TARGETS)
     # Set output directory for executables
