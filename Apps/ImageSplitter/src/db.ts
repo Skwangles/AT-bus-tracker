@@ -1,5 +1,4 @@
 import betterSqlite3 from "better-sqlite3";
-import { DFLT_SQLITE_DB_PATH } from "./consts";
 
 let writableSqliteDb: betterSqlite3.Database;
 let sqliteDb: betterSqlite3.Database;
