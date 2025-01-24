@@ -7,12 +7,13 @@ SESH="campusvirtual_session"
 # if [$? != 0]; then
   tmux new-session -d -s $SESH -n "viewer"
 
-  tmux send-keys -t $SESH:viewer "cd Apps/campusvirtual-backend" C-m
+  tmux send-keys -t $SESH:viewer "cd $(CV_HOME_DIR)/Apps/campusvirtual-backend" C-m
+  tmux send-keys -t $SESH:viewer "npm run build" C-m
   tmux send-keys -t $SESH:viewer "npm run start" C-m
 
   tmux new-window -t $SESH -n "SocketViewer"
-  tmux send-keys -t $SESH:SocketViewer "cd Apps/PgSocketViewer" C-m
-  tmux send-keys -t $SESH:SocketViewer "node app.js" C-m
+  tmux send-keys -t $SESH:SocketViewer "cd Apps/SQLiteViewer" C-m
+  tmux send-keys -t $SESH:SocketViewer "npm run start" C-m
 # fi
 tmux attach -t $SESH
 
