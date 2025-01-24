@@ -15,6 +15,8 @@ export const DFLT_TABLE_PREFIX = "refined_";
 export const DFLT_USE_SQLITE = true;
 export const DFLT_SQLITE_DB_PATH =
   "/media/skwangles/KINGSTON/TGA - Out/MAPS/tga-building.db";
+
+export const DFLT_USE_PRECALCULATED_IMAGE_SHARPNESS = true
 export const DFLT_PREPROCESSED_IMG_SHARPNESS_JSON = "sharpness.json";
 
 export enum EdgeType {

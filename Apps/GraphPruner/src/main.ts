@@ -1,13 +1,14 @@
 import { initDB, readDB, writeDB } from "./db";
+import path from 'node:path'
 import cliProgress from "cli-progress";
 import fs from 'node:fs'
+import dotenv from 'dotenv'
 import {
   DFLT_TARGET_CLOSENESS,
   DFLT_ALWAYS_MERGE_CLOSENESS,
   DFLT_Y_DIST_THRESHOLD,
   DFLT_KEYFRAME_IMG_DIR,
   DFLT_KEYFRAME_IMG_EXTENSION,
-  DFLT_OUTDOORS_LOCATION_NAME,
   DFLT_OUTDOORS_TARGET_CLOSENESS,
   DFLT_OUTDOORS_ALWAYS_MERGE_CLOSENESS,
   DFLT_OUTDOORS_Y_DIST_THRESHOLD,
@@ -17,23 +18,16 @@ import {
   Config,
   DFLT_PREPROCESSED_IMG_SHARPNESS_JSON,
   DFLT_SQLITE_DB_PATH,
+  DFLT_USE_PRECALCULATED_IMAGE_SHARPNESS,
 } from "./consts";
 
 import {
-  calculateImageSharpness,
-  calculateXZDistance,
   connectAllNeighboursIfNotAlready,
-  convertTimestampToImagename,
-  getNeighbours,
   getNextKeyframe,
-  getNodeInfo,
-  getNodePosition,
-  getNumberOfNodes,
   getPhysicalProximityNeighbours,
-  isNodeOutdoors,
-  replaceNode,
 } from "./utils";
 import { useGreedyTripleRingStrategy } from "./strategy";
+dotenv.config()
 
 const args = require("yargs").argv;
 if (args.h) {
@@ -51,25 +45,28 @@ if (args.h) {
     --y_dist_thresh=${DFLT_Y_DIST_THRESHOLD}
     --otdr_y_dist_thresh=${DFLT_OUTDOORS_Y_DIST_THRESHOLD}
     --preproc_sharpness_json=${DFLT_PREPROCESSED_IMG_SHARPNESS_JSON}
+    --use_sharpness_json=${DFLT_USE_PRECALCULATED_IMAGE_SHARPNESS}
     `
   )
   process.exit(0)
 }
 
-const SQLITE_DB = args.db ?? DFLT_SQLITE_DB_PATH
-const IMG_DIR = args.img_dir ?? DFLT_KEYFRAME_IMG_DIR;
-const IMG_EXT = args.img_ext ?? DFLT_KEYFRAME_IMG_EXTENSION;
-const OUTER_RING = args.outer_prox ?? DFLT_TARGET_CLOSENESS;
-const INNER_RING = args.inner_prox ?? DFLT_ALWAYS_MERGE_CLOSENESS;
+const SQLITE_DB = args.db ?? (process.env.CV_DB_DIR && process.env.CV_EXPORT_DB_NAME ? path.join(process.env.CV_DB_DIR, process.env.CV_EXPORT_DB_NAME) : DFLT_SQLITE_DB_PATH)
+const IMG_DIR = args.img_dir ?? process.env.CV_KEYFRAME_IMG_DIR ?? DFLT_KEYFRAME_IMG_DIR
+const IMG_EXT = args.img_ext ?? process.env.CV_KEYFRAME_IMG_EXTENSION ?? DFLT_KEYFRAME_IMG_EXTENSION;
+const OUTER_RING = Number(args.outer_prox ?? process.env.CV_PRUNE_TARGET_CLOSENESS ?? DFLT_TARGET_CLOSENESS);
+const INNER_RING = Number(args.inner_prox ?? process.env.CV_PRUNE_ALWAYS_MERGE_CLOSENESS ?? DFLT_ALWAYS_MERGE_CLOSENESS);
 const OTDR_OUTER_RING =
-  args.outdoor_outer_prox ?? DFLT_OUTDOORS_TARGET_CLOSENESS;
+  Number(args.outdoor_outer_prox ?? process.env.CV_PRUNE_OUTDOORS_TARGET_CLOSENESS ?? DFLT_OUTDOORS_TARGET_CLOSENESS);
 const OTDR_INNER_RING =
-  args.outdoor_inner_prox ?? DFLT_OUTDOORS_ALWAYS_MERGE_CLOSENESS;
-const Y_DIST = args.y_dist ?? DFLT_Y_DIST_THRESHOLD;
-const OTDR_Y_DIST = args.outdoor_y_dist ?? DFLT_OUTDOORS_Y_DIST_THRESHOLD;
-const TABLE_PREFIX = args.table_prefix ?? DFLT_TABLE_PREFIX;
-const CONVERSION_CRD2MTR = args.coords_to_metres ?? DFLT_COORDS_TO_METRES;
-const PREPROC_SHARPNESS_JSON = args.preproc_sharpness_json ?? DFLT_PREPROCESSED_IMG_SHARPNESS_JSON
+  Number(args.outdoor_inner_prox ?? process.env.CV_PRUNE_OUTDOORS_ALWAYS_MERGE_CLOSENESS ?? DFLT_OUTDOORS_ALWAYS_MERGE_CLOSENESS);
+const Y_DIST = Number(args.y_dist ?? process.env.CV_PRUNE_Y_DIST_THRESHOLD ?? DFLT_Y_DIST_THRESHOLD);
+const OTDR_Y_DIST = Number(args.outdoor_y_dist ?? process.env.CV_PRUNE_OUTDOORS_Y_DIST_THRESHOLD ?? DFLT_OUTDOORS_Y_DIST_THRESHOLD);
+const TABLE_PREFIX = args.table_prefix ?? process.env.CV_PRUNE_TABLE_PREFIX ?? DFLT_TABLE_PREFIX;
+const CONVERSION_CRD2MTR = Number(args.coords_to_metres ?? process.env.CV_COORDS_TO_METRES ?? DFLT_COORDS_TO_METRES);
+
+const USE_PREPROC_SHARPNESS_JSON = args.use_sharpness_json ?? process.env.CV_PRUNE_USE_PRECALCULATED_IMAGE_SHARPNESS ?? DFLT_USE_PRECALCULATED_IMAGE_SHARPNESS
+const PREPROC_SHARPNESS_JSON = args.preproc_sharpness_json ?? process.env.CV_PRECALCULATE_IMAGE_SHARPNESS_JSON_PATH ?? DFLT_PREPROCESSED_IMG_SHARPNESS_JSON
 
 const config: Config = {
   table_prefix: TABLE_PREFIX,
@@ -244,17 +241,19 @@ async function prune() {
   await createAWorkingCopy();
   await connectCloseTogetherPoints();
 
-
-  const sharpness_values = JSON.parse(fs.readFileSync(config.preproc_sharpness_json, 'utf8'));
-  config["sharpness"] = sharpness_values
-  console.log("Copied across nodes, edges and node_locations");
+  if (USE_PREPROC_SHARPNESS_JSON) {
+    console.info("Using preprocessed image sharpnesses")
+    const sharpness_values = JSON.parse(fs.readFileSync(config.preproc_sharpness_json, 'utf8'));
+    config["sharpness"] = sharpness_values
+  }
+  console.info("Copied across nodes, edges and node_locations");
   try {
 
     await useGreedyTripleRingStrategy(config);
 
-    console.log("Committing");
+    console.info("Committing");
   } catch (e) {
-    console.log("Error:", e);
+    console.info("Error:", e);
     await writeDB("ROLLBACK");
   } finally {
   }
