@@ -1,5 +1,5 @@
 import { writeDB, readDB } from './db'
-import { FLOOR_POINT_DEFAULT_TYPE, BORDERING_FLOOR_POINT_DEFAULT_TYPE, QUERY_PREFIX, USE_QUERY_PREFIX } from './consts'
+import { FLOOR_POINT_DEFAULT_TYPE, BORDERING_FLOOR_POINT_DEFAULT_TYPE, TABLE_PREFIX, USE_TABLE_PREFIX } from './consts'
 export default async function initDB(quitIfTablesExist = false) {
   try {
     console.debug("Initalising data...")
@@ -12,7 +12,7 @@ export default async function initDB(quitIfTablesExist = false) {
       location TEXT NOT NULL,
       x DOUBLE PRECISION DEFAULT 0 NOT NULL,
       y DOUBLE PRECISION DEFAULT 0 NOT NULL,
-      keyframe_id INTEGER REFERENCES ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}nodes (keyframe_id),
+      keyframe_id INTEGER REFERENCES ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes (keyframe_id),
       type INTEGER DEFAULT 0 NOT NULL,
       PRIMARY KEY (keyframe_id, location)
     );`);
@@ -28,16 +28,16 @@ export default async function initDB(quitIfTablesExist = false) {
   try {
     await writeDB("BEGIN;");
     // Do by location to avoid causing a possible crash/memory overload
-    const locationsResult = await readDB(`SELECT DISTINCT location FROM ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}node_locations;`)
+    const locationsResult = await readDB(`SELECT DISTINCT location FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations;`)
     const locations = locationsResult.map((location: { location: string }) => location.location);
     console.log("Locations:", locations)
     for (const location of locations) {
-      const nodesResult = await readDB(`SELECT n.keyframe_id, l.location, n.x_trans, n.z_trans FROM ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}nodes n JOIN ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}node_locations l ON l.keyframe_id = n.keyframe_id WHERE l.location = ?;`, [location])
-      const borderNodesResult = await readDB(`SELECT keyframe_id1 as keyframe_id, l2.location, n.x_trans, n.z_trans FROM ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}edges e 
-                    JOIN ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}node_locations l 
+      const nodesResult = await readDB(`SELECT n.keyframe_id, l.location, n.x_trans, n.z_trans FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l ON l.keyframe_id = n.keyframe_id WHERE l.location = ?;`, [location])
+      const borderNodesResult = await readDB(`SELECT keyframe_id1 as keyframe_id, l2.location, n.x_trans, n.z_trans FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}edges e 
+                    JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l 
                     ON e.keyframe_id0 = l.keyframe_id 
-                    JOIN ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}node_locations l2 ON e.keyframe_id1 = l2.keyframe_id
-                    JOIN ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}nodes n ON n.keyframe_id = e.keyframe_id1
+                    JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l2 ON e.keyframe_id1 = l2.keyframe_id
+                    JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n ON n.keyframe_id = e.keyframe_id1
                     WHERE l.location = ? AND l2.location <> ?;
                     `, [location, location])
 

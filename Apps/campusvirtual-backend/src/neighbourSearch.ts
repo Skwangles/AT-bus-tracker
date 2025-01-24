@@ -1,5 +1,5 @@
 import { Request, Response } from 'express'
-import { COORDS_TO_METRES, EdgeType, NEIGHBOURS_INCLUDES_PROXIMITY, QUERY_PREFIX, USE_QUERY_PREFIX } from './consts';
+import { COORDS_TO_METRES, EdgeType, NEIGHBOURS_INCLUDES_PROXIMITY, TABLE_PREFIX, USE_TABLE_PREFIX } from './consts';
 import { readDB } from './db';
 import { BlobArrayToMatrix } from './utils';
 
@@ -30,12 +30,12 @@ export async function searchNeighbour(mainPointId: number, distanceThreshold: nu
         x_trans, 
         y_trans, 
         z_trans
-    FROM ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}nodes
+    FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes
     WHERE keyframe_id = ?
     )
     SELECT 
         keyframe_id
-    FROM ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}nodes rn
+    FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes rn
     JOIN target_point ON (
             SQRT(POWER(rn.x_trans - target_point.x_trans, 2) +
             POWER(rn.z_trans - target_point.z_trans, 2))
@@ -47,7 +47,7 @@ export async function searchNeighbour(mainPointId: number, distanceThreshold: nu
     console.log("Phsyical proximity: ", resultData)
     for (const row of resultData) {
       const id: number = Number(row["keyframe_id"])
-      const node = await readDB(`SELECT keyframe_id, x_trans, y_trans, z_trans, ts, pose FROM ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}nodes WHERE keyframe_id = ?`, [id], true)
+      const node = await readDB(`SELECT keyframe_id, x_trans, y_trans, z_trans, ts, pose FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes WHERE keyframe_id = ?`, [id], true)
       output.push({ ...node, pose: BlobArrayToMatrix(node.pose) })
       result.add(id)
       queue.push({ keyframe_id: id, depth: 1 })
@@ -67,8 +67,8 @@ export async function searchNeighbour(mainPointId: number, distanceThreshold: nu
               n.z_trans,
               n.ts,
               n.pose
-       FROM ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}edges e
-       JOIN ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}nodes n ON e.keyframe_id1 = n.keyframe_id
+       FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}edges e
+       JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n ON e.keyframe_id1 = n.keyframe_id
        WHERE e.keyframe_id0 = ? AND e.type >= ${EdgeType.Normal}`,
       [keyframe_id]
     );

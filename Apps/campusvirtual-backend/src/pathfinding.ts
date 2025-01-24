@@ -4,7 +4,7 @@ import { MinQueue } from 'heapify';
 import Pool from "pg-pool";
 import { getNeighbours, getNodePosition } from "./utils";
 import { Client } from "pg";
-import { USE_QUERY_PREFIX, QUERY_PREFIX, EdgeType } from "./consts";
+import { USE_TABLE_PREFIX, TABLE_PREFIX, EdgeType } from "./consts";
 
 interface Node {
   keyframe_id: number;
@@ -34,12 +34,12 @@ function calculateDistance(nodeA: [number, number, number], nodeB: [number, numb
 
 
 async function fetchNode(nodeId: number): Promise<Node | null> {
-  const result = await readDB(`SELECT id, x_trans, y_trans, z_trans FROM ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}nodes WHERE id = $1`, [nodeId]);
+  const result = await readDB(`SELECT id, x_trans, y_trans, z_trans FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes WHERE id = $1`, [nodeId]);
   return result.length > 0 ? result[0] as Node : null;
 }
 
 async function fetchEdges(nodeId: number): Promise<Edge[]> {
-  const result = await readDB(`SELECT keyframe_id0, keyframe_id1 FROM ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}edges WHERE keyframe_id0 = $1 OR keyframe_id1 = $1 AND type >= ${EdgeType.Normal}`, [nodeId, nodeId]);
+  const result = await readDB(`SELECT keyframe_id0, keyframe_id1 FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}edges WHERE keyframe_id0 = $1 OR keyframe_id1 = $1 AND type >= ${EdgeType.Normal}`, [nodeId, nodeId]);
   return result as Edge[];
 }
 
@@ -68,8 +68,8 @@ export async function aStarPathfinding(
   while (openSet.size > 0) {
     const currentId = openSet.pop()!;
 
-    const currentNodeData = (await readDB(`SELECT n.keyframe_id, location FROM ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}nodes n 
-      JOIN ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""}node_locations n1 ON n.keyframe_id = n1.keyframe_id 
+    const currentNodeData = (await readDB(`SELECT n.keyframe_id, location FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n 
+      JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations n1 ON n.keyframe_id = n1.keyframe_id 
       WHERE n.keyframe_id = ?`, [currentId]))
     if (currentNodeData.length == 0) {
       return []; // An error occured, fail quickly

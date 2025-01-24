@@ -11,8 +11,8 @@ import {
   KEYFRAME_IMG_DIR,
   KEYFRAME_IMG_EXTENSION,
   ENABLE_AUTHORING_PAGE,
-  QUERY_PREFIX,
-  USE_QUERY_PREFIX,
+  TABLE_PREFIX,
+  USE_TABLE_PREFIX,
 } from "./consts";
 const app = Router();
 
@@ -132,7 +132,7 @@ if (ENABLE_AUTHORING_PAGE) {
     }
     label = label.replace("<", "<").replace(">", ">"); // THIS AREA MAY BE VULNERABLE TO XSS - Only if the attacker gets ahold of the authoring panel, please disable it in consts once you are done authoring
     const changes = await writeDB(
-      `UPDATE ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""
+      `UPDATE ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""
       }nodes SET label = ? WHERE keyframe_id = ?`,
       [label, id]
     );
@@ -192,7 +192,7 @@ if (ENABLE_AUTHORING_PAGE) {
       const { id1, id2 } = req.params;
 
       const is_edge = await readDB(
-        `SELECT * FROM ${USE_QUERY_PREFIX ? QUERY_PREFIX : ""
+        `SELECT * FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""
         }edges WHERE (keyframe_id0 = ? AND keyframe_id1 = ?) OR (keyframe_id0 = ? AND keyframe_id1 = ?) LIMIT 1;`,
         [id1, id2, id2, id1]
       );
