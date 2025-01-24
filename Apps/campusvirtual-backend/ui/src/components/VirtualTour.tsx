@@ -172,34 +172,26 @@ const VirtualTour: React.FC = () => {
   }, [currentId])
 
   const getFloorUpOrDown = (floor: string, isUp = true) => {
-    if (!floor.includes('.')) return false
+    // if (!floor.includes('.')) return false
     const splitName = floor.split('.')
-    if (splitName.length == 0 || splitName.length > 2) {
+    if (splitName.length == 0) {
       return false
     }
 
-    let idx = WAIKATO_UNI_LEVELS_ORDER.indexOf(splitName[1])
+    let idx = WAIKATO_UNI_LEVELS_ORDER.indexOf(splitName[0])
     if (isUp) {
       idx += 1
       while (idx < WAIKATO_UNI_LEVELS_ORDER.length) {
-        if (
-          allFloorNames.includes(
-            splitName[0] + '.' + WAIKATO_UNI_LEVELS_ORDER[idx]
-          )
-        ) {
-          return splitName[0] + '.' + WAIKATO_UNI_LEVELS_ORDER[idx]
+        if (allFloorNames.includes(WAIKATO_UNI_LEVELS_ORDER[idx])) {
+          return WAIKATO_UNI_LEVELS_ORDER[idx]
         }
         idx += 1
       }
     } else {
       idx -= 1
       while (idx >= 0) {
-        if (
-          allFloorNames.includes(
-            splitName[0] + '.' + WAIKATO_UNI_LEVELS_ORDER[idx]
-          )
-        ) {
-          return splitName[0] + '.' + WAIKATO_UNI_LEVELS_ORDER[idx]
+        if (allFloorNames.includes(WAIKATO_UNI_LEVELS_ORDER[idx])) {
+          return WAIKATO_UNI_LEVELS_ORDER[idx]
         }
         idx -= 1
       }
