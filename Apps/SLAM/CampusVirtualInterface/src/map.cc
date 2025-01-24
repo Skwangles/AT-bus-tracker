@@ -68,6 +68,7 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
                   const std::string& eval_log_dir,
                   const std::string& map_db_path,
                   const double start_timestamp,
+                  const int ts_dp,
                   const std::string& viewer_string,
                   nlohmann::json& json_obj,
                   std::vector<timestamp_annotation>& timestamp_group_list,
@@ -233,7 +234,7 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
                 if (!image_output_dir.empty()) {
                     // Save image to work on front end
                     std::stringstream stream;
-                    stream << std::fixed << std::setprecision(5) << timestamp; // Sqlite3 REAL datatype seems only accurate to 5dp, so use 5dp for identifier
+                    stream << std::fixed << std::setprecision(ts_dp) << timestamp; // Sqlite3 REAL datatype seems only accurate to 5dp, so use 5dp for identifier
                     std::string timestamp_string = stream.str();              
                  
                     std::string filepath = image_output_dir + timestamp_string + ".png";
@@ -424,7 +425,7 @@ int main(int argc, char* argv[]) {
     auto videos = op.add<popl::Value<std::string>>("", "videos", "set of comma separated videos files to process (e.g. g-block.mp4,g-block2.mp4)");
     auto video_dir = op.add<popl::Value<std::string>>("", "video-dir", "directory containing video files, if not set must be part of the videos option");
     auto img_output_dir = op.add<popl::Value<std::string>>("p", "picture-dir", "Directory to put keyframe img snapshots in", "pictures/");
-    
+    auto ts_dp = op.add<popl::Value<unsigned int>>("", "ts-dp", "Decimal places of Keyframe Image names derived from keyframe timestamp (ts) - Default: 5, e.g. 5dp -> `0.12345.png`", 5);
     try {
         op.parse(argc, argv);
     }
@@ -612,6 +613,7 @@ int main(int argc, char* argv[]) {
                                 eval_log_dir->value(),
                                 map_db_path_out->value(),
                                 timestamp,
+                                ts_dp->value(),
                                 viewer_string, 
                                 json_obj, 
                                 timestamp_group_list,
