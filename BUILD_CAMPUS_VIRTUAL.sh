@@ -2,7 +2,9 @@
 echo "DO NOT RUN WITH SUDO - MUST BE RUN IN parent CampusVirtual/"
 echo "Must update .env.vars with latest variables, and rename to .env"
 
-if [ $(id -u) -e 0 ]; then
+source .env
+
+if [ $(id -u) -eq 0 ]; then
   echo "Do not run with sudo"
   echo "if you still want to run as the root user, comment out this IF in BUILD_CAMPUS_VIRTUAL.sh"
   exit
@@ -25,8 +27,8 @@ sudo ldconfig # update lookup library paths again - IMPORTANT if 'libxx.so' not 
 # IF G2O gives a QT error - sudo apt install -y qtcreator qtbase5-dev qt5-qmake cmake
 
 echo "Building VSLAM CampusVirtual interface"
-mkdir -p "$CV_HOME_DIR"/SLAM/CampusVirtualInterface/build
-cd "$CV_HOME_DIR"/SLAM/CampusVirtualInterface/build 
+mkdir -p "$CV_HOME_DIR"/Apps/SLAM/CampusVirtualInterface/build
+cd "$CV_HOME_DIR"/Apps/SLAM/CampusVirtualInterface/build 
 cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_STACK_TRACE_LOGGER=ON ..
 make -j4 && sudo make install
 

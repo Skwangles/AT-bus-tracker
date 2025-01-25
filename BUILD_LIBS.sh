@@ -1,9 +1,16 @@
-if [ $(id -u) -e 0 ]; then
+if [ $(id -u) -eq 0 ]; then
     echo "Do not run with SUDO, otherwise you won't be able to compile necessary libraries as accessible to the user"
     echo "If only root user exists, remove the first IF from ./BUILD_LIBS.sh"
     echo "The program will prompt for root access when neccessary"
     exit
 fi
+
+if [ ! -z "$CV_LIBS_CONFIGURED" ]; then 
+    echo "Libs already built, skipping."
+    exit
+fi
+
+source .env
 
 LIBS_DIR="$CV_HOME_DIR"/libs
 NON_MODIFIABLE_LIBS_DIR="$CV_HOME_DIR"/libs/tmp
@@ -179,3 +186,5 @@ make -j
 sudo make install
 
 sudo ldconfig
+
+export CV_LIBS_CONFIGURED=1
