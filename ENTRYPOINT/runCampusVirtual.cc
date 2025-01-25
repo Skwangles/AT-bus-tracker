@@ -20,14 +20,14 @@ int main(int argc, char** argv) {
         ("convertToSQLite", "Convert SLAM map to SQLite3 DB (optional)")
         ("in", po::value<std::string>(), "Input map (*.db) - Optional for normal mode")
         ("out", po::value<std::string>(), "Output map (*.db)")
+        ("export_path", po::value<std::string>(), "Export path (*.db) for CampusVirtual DB")
         ("video_dir", po::value<std::string>(), "Media directory - videos")
         ("map_dir", po::value<std::string>(), "Map directory - maps") 
         ("videos", po::value<std::string>(), "Comma-separated ordered videos")
         ("json_dir", po::value<std::string>(), "JSON group-to-timestamp file directory")
         ("picture_dir", po::value<std::string>()->default_value("pictures/"), "Keyframe image output dir - Default 'pictures/'")
         ("config_file", po::value<std::string>()->default_value("indoors.yaml"), "Config file - Default 'indoors.yaml'")
-        ("ts", po::value<std::string>(), "Start time of the Timestamps (Can use to make sure timestamps don't overlap)")
-        ("ts_dp", po::value<unsigned int>()->default_value(5), "Decimal places for the timestamp names of keyframe images (e.g. 5dp = 0.12345.png)");
+        ("ts", po::value<std::string>(), "Start time of the Timestamps (Can use to make sure timestamps don't overlap)");
 
     po::positional_options_description pos_desc;
     pos_desc.add("use_viewer", 1);
@@ -57,13 +57,15 @@ int main(int argc, char** argv) {
             return 1;
         }
         else if (convert_to_sqlite3) {
-            if (!vm.count("in") || !vm.count("out") || !vm.count("map_dir")) {
-                std::cout << "For Sqlite3 conversion, required arguments: in, map_dir, out" << std::endl;
+            std::cout << "Export to SQLite Mode" << std::endl;
+            if (!vm.count("in") || !vm.count("export_path") || !vm.count("map_dir")) {
+                std::cout << "For Sqlite3 conversion, required arguments: in, map_dir, export_path" << std::endl;
                 std::cout << desc << std::endl;
                 return 1;
             }
         }
         else if (view_statically) {
+            std::cout << "Static View Mode" << std::endl;
             if (!vm.count("in") || !vm.count("map_dir")) {
                 std::cout << "For static viewing, required arguments: in, map_dir" << std::endl;
                 std::cout << desc << std::endl;
@@ -71,14 +73,17 @@ int main(int argc, char** argv) {
             }
         }
         else {
+            std::cout << "Mapping Mode" << std::endl;
             if (!vm.count("videos") || !vm.count("out") || !vm.count("video_dir") || !vm.count("map_dir")) {
-                std::cout << "For normal mode, required arguments: use_viewer, root dir, videos, in, out, media_dir, map_dir, (optional: json_dir, picture-dir, config_file, ts, use_temporal)" << std::endl;
+                std::cout << "For normal mode, required arguments: use_viewer, root dir, videos, in, out, media_dir, map_dir, (optional: json_dir, picture_dir, config_file, ts, use_temporal)" << std::endl;
                 std::cout << desc << std::endl;
                 return 1;
             }
         }
 
+        std::cout << "Loading Args" << std::endl;
         bool use_viewer = vm["use_viewer"].as<bool>();
+
         std::string ts_start = vm.count("ts") ? vm["ts"].as<std::string>() : "";
         std::string project_dir = vm["project_dir"].as<std::string>();
         std::string map_in = vm.count("in") ? vm["in"].as<std::string>() : "";
@@ -88,34 +93,27 @@ int main(int argc, char** argv) {
         std::string videos = vm.count("videos") ? vm["videos"].as<std::string>() : "";
         std::string json_dir = vm.count("json_dir") ? vm["json_dir"].as<std::string>() : "";
         std::string picture_dir = vm["picture_dir"].as<std::string>();
-        std::string db_user = vm["db_user"].as<std::string>();
-        std::string db_pwd = vm["db_pwd"].as<std::string>();
-        std::string db_name = vm["db_name"].as<std::string>();
-        std::string db_port = vm["db_port"].as<std::string>();
         std::string config_file = vm["config_file"].as<std::string>();
-        
+        std::string export_path = vm.count("export_path") ? vm["export_path"].as<std::string>() : "";
 
         std::string command;
         if (convert_to_sqlite3) {
             std::cout << "Convert to SQLite" << std::endl;
-            command = "cv_slam_to_sqlite" +
-                              " -c '" + project_dir + path_to_config  + config_file + "'" +
+            command = "cv_slam_to_sqlite -c '" + project_dir + path_to_config + config_file + "'" +
                               " -v '" + project_dir + path_to_fbow + "'" +
                               " -i '" + map_dir + "/" + map_in + "'" +
-                              " -o '" + map_dir + "/" + map_out + "'";
+                              " -o '" + export_path + "'";
         }
         else if (view_statically){
             std::cout << "Viewing" << std::endl;
-            command = "cv_view_map" +
-                        " -c '" + project_dir + path_to_config + config_file + "'" +
+            command = "cv_view_map -c '" + project_dir + path_to_config + config_file + "'" +
                         " -v '" + project_dir + path_to_fbow + "'" +
                         (map_in.empty() ? "" : " -i '" + map_dir + "/" + map_in + "'") +
                         " -o '" +  map_dir + "/" + map_out + "'";
         }
         else {
             std::cout << "Mapping" << std::endl;
-            command = "cv_map" +
-                                        " -c '" + project_dir + path_to_config + config_file + "'" +
+            command = "cv_map -c '" + project_dir + path_to_config + config_file + "'" +
                                         " -v '" + project_dir + path_to_fbow + "'" +
                                         (ts_start.size() > 0 ? " -t '" + ts_start + "'" : "" ) +
                                         (map_in.empty() ? "" : " --map-db-in '" + map_dir + "/" + map_in + "'") +
@@ -125,13 +123,13 @@ int main(int argc, char** argv) {
                                         " --video-dir '" +  media_dir + "/" + "'" +
                                         " --json-dir '" + json_dir + "/" + "'" // Only required for 'pairing JSON with frames' step
                                         " --picture-dir '" + picture_dir + "/" + "'" +
-                                        " --ts-dp '" + vm["ts_dp"].as<std::string>() + "'" + 
                                         (use_temporal_mapping ? " --temporal-mapping" : "") +
                                         (use_viewer ? " --viewer none" : " --viewer iridescence_viewer");
         }
         
         std::cout << "Command: " << command << std::endl;
-        system(command.c_str());
+        int32_t ret_val = system(command.c_str());
+        return ret_val;
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
