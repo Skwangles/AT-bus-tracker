@@ -51,7 +51,7 @@ if (args.h) {
   process.exit(0)
 }
 
-const SQLITE_DB = args.db ?? (process.env.CV_DB_DIR && process.env.CV_EXPORT_DB_NAME ? path.join(process.env.CV_DB_DIR, process.env.CV_EXPORT_DB_NAME) : DFLT_SQLITE_DB_PATH)
+const SQLITE_DB = args.db ?? (process.env.CV_DB_DIR && process.env.CV_PRUNE_DB_NAME ? path.join(process.env.CV_DB_DIR, process.env.CV_PRUNE_DB_NAME) : DFLT_SQLITE_DB_PATH)
 const IMG_DIR = args.img_dir ?? process.env.CV_KEYFRAME_IMG_DIR ?? DFLT_KEYFRAME_IMG_DIR
 const IMG_EXT = args.img_ext ?? process.env.CV_KEYFRAME_IMG_EXTENSION ?? DFLT_KEYFRAME_IMG_EXTENSION;
 const OUTER_RING = Number(args.outer_prox ?? process.env.CV_PRUNE_TARGET_CLOSENESS ?? DFLT_TARGET_CLOSENESS);
@@ -172,9 +172,13 @@ async function createAWorkingCopy() {
 
   await writeDB(`DROP TABLE IF EXISTS ${config.table_prefix}edges;`);
   await writeDB(`DROP TABLE IF EXISTS ${config.table_prefix}node_locations;`);
-  await writeDB(`DROP TABLE IF EXISTS ${config.table_prefix}nodes;`);
   await writeDB(`DROP TABLE IF EXISTS ${config.table_prefix}special_labels;`);
+  await writeDB(`DROP TABLE IF EXISTS floorplan_points;`);
+  await writeDB(`DROP TABLE IF EXISTS floorplan_images;`);
+  await writeDB(`DROP TABLE IF EXISTS ${config.table_prefix}nodes;`);
+
   progBar.increment(1, { msg: "Dropping tables" });
+  console.log("Dropped tables")
 
   await writeDB(`
         CREATE TABLE ${config.table_prefix}nodes (

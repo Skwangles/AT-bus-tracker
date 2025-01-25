@@ -1,6 +1,5 @@
-import { config } from "process";
 import { Config, NodeInfo } from "./consts";
-import { calculateImageSharpness, calculateXZDistance, convertTimestampToImagename, getNeighbours, getNextKeyframe, getNodeInfo, getNodePosition, getNumberOfNodes, isNodeOutdoors, replaceNode } from "./utils";
+import { calculateImageSharpness, calculateXZDistance, convertTimestampToImagename, getNeighbours, getNextKeyframe, getNodeInfo, getNodePosition, getNumberOfNodes, isNodeOutdoors } from "./utils";
 import cliProgress from 'cli-progress'
 import { readDB, writeDB } from "./db";
 /**
