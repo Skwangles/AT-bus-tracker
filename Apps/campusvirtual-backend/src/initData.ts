@@ -19,7 +19,7 @@ export default async function initDB(quitIfTablesExist = false) {
   }
   catch (e) {
 
-    console.log("Already built floorplan_images and floorplan_points!: ", e)
+    console.log("Already built floorplan_images and floorplan_points!")
     if (quitIfTablesExist) {
       console.log("Skipping map data init!")
       return;

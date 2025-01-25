@@ -35,4 +35,3 @@ export const SKIP_IF_MAP_ALREADY_CONFIGED: boolean = process.env.CV_SERVER_DONT_
 
 console.debug("DB files in dir:", fs.readdirSync(SQLITE_DB_DIR))
 console.debug("Number of images in image dir:", fs.readdirSync(KEYFRAME_IMG_DIR).length)
-console.debug("Env", process.env)
