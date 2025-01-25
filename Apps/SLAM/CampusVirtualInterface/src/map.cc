@@ -455,6 +455,12 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
+    // Check directories exist
+    if (!fs::exists(vocab_file_path->value()) || !fs::exists(config_file_path->value()) ){
+        std::cerr << "Vocab filepath or config file path do not exist" << std::endl;
+        return EXIT_FAILURE;
+    }
+
     // viewer
     std::string viewer_string;
     if (viewer->is_set()) {
@@ -504,18 +510,32 @@ int main(int argc, char* argv[]) {
     /// If "IN" db is provided, copy the previous entries before they are overwritten
     ///
     std::string map_db_in = map_db_path_in->value();
+    std::vector<timestamp_annotation> timestamp_group_list;
+    std::vector<timestamp_annotation> special_point_group_list;
 
-    db = nullptr;
-    ret = sqlite3_open(map_db_in.c_str(), &db);
-    if (ret != SQLITE_OK) {
-        spdlog::error("Failed to open SQL database");
-        return false;
+    if (map_db_path_in->is_set()){
+        if (!fs::exists(map_db_in)){
+            std::cerr << "Map DB path in does not exist: " << map_db_in << std::endl;
+            return EXIT_FAILURE;
+        }
+
+        db = nullptr;
+        ret = sqlite3_open(map_db_in.c_str(), &db);
+        if (ret != SQLITE_OK) {
+            spdlog::error("Failed to open SQL database");
+            return EXIT_FAILURE;
+        }
+
+        load_timestamp_groups(db, timestamp_group_list);
+        load_special_point_timestamps(db, special_point_group_list);
+
+        sqlite3_close(db);
     }
-
-    std::vector<timestamp_annotation> timestamp_group_list = load_timestamp_groups(db);
-    std::vector<timestamp_annotation> special_point_group_list = load_special_point_timestamps(db);
-
-    sqlite3_close(db);
+    auto map_path_out = fs::path(map_db_path_out->value());
+    if (!fs::exists(map_path_out.remove_filename().string())){
+        std::cerr << "Map DB out doesn't exist: " << map_path_out.remove_filename().string() << std::endl;
+        return EXIT_FAILURE; 
+    }
 
     std::string video_file_path;
 
@@ -540,15 +560,27 @@ int main(int argc, char* argv[]) {
 
     for (const auto& video_file : stella_vslam::util::split_string(videos->value(), ',')) {
         if (video_dir->is_set()) {
+
              video_file_path = fs::path(video_dir->value()).string() + "/" + video_file;
         }
         else {
             video_file_path = video_file;
         }
+
+        if (!fs::exists(video_file_path)){
+            std::cerr << "Video dir does not exist: " << video_file_path << std::endl;
+            return EXIT_FAILURE; 
+        }
+
         std::cout << "Processing video: " << video_file_path << std::endl;
 
         nlohmann::json json_obj;
         if (json_dir->is_set()){
+            if (!fs::exists(json_dir->value())){
+                std::cerr << "Json Dir does not exist: " << json_dir->value() << std::endl;
+                return EXIT_FAILURE;
+            }
+
             const auto vid_path = fs::path(video_file_path);
             const auto video_name = vid_path.stem().string() + ".json";
 
