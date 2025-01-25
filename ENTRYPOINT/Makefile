@@ -2,7 +2,7 @@
 
 # Compiler and flags
 CXX = g++
-CXXFLAGS = -std=c++17 -O2 -lboost_program_options $(CXXFLAGS)
+CXXFLAGS := $(CXXFLAGS)
 
 # Directories
 SRC_DIR = .
@@ -17,7 +17,7 @@ all: $(OUT)
 # Compile the source file into the output binary
 $(OUT): $(SRC)
 	@mkdir -p $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) -o $(OUT) $(SRC)
+	$(CXX) $(CXXFLAGS) -o $(OUT) $(SRC) -O2 -lboost_program_options 
 
 install: $(OUT)
 	@echo "Installing runCampusVirtual to $(INSTALL_DIR)"
