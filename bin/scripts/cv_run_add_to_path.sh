@@ -1,5 +1,12 @@
 #!/bin/bash
 echo "ADDING TO PATH"
+
+if [ ! -f .env ]; then
+  echo ".env not found - You MUST rename .env.example to .env and customise it!"
+  echo "Aborting so you don't accidentally use the wrong config!"
+  exit 1
+fi
+
 source .env
 
 echo "Making the ENV variables accessible to scripts"
