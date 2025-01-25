@@ -1,5 +1,6 @@
 export const API_PREFIX = ""
 
+export const FLOOR_ORDERING_STRATEGY = "tga" // tga for <floor>.<room>  (or 'waikato' for <block>.<floor>.<room> stratgey)
 export const COORDS_TO_METRES = 40
 export const showMap = true;
 export const showList = true;
@@ -25,7 +26,7 @@ export const PROJECT_NAME = "CampusVirtual"
 export const OUTDOORS_LOCATION = "outdoors"
 export const WAIKATO_UNI_LEVELS_ORDER = ["B", "G", "0", "1", "2", "3", "4"];
 
-export const STARTING_LOCATION_GROUP = "G"
+export const STARTING_LOCATION_GROUP = ""
 
 export const HOTSPOT_COLOUR = '#E1251B'
 export const HOTSPOT_OUTLINE = '#FFFFFF'

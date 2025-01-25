@@ -148,7 +148,8 @@ app.get('/api/v1/image/:resolution/:ts', async function (req: { params: { ts: st
 
   const imgPath = path.join(KEYFRAME_IMG_DIR, ts.toFixed(5) + KEYFRAME_IMG_EXTENSION)
   if (!fs.existsSync(imgPath)) {
-    res.sendFile(path.join(KEYFRAME_IMG_DIR, "test.jpg"))
+    console.error("Cannot find image file:", imgPath)
+    res.status(404).end()
     return;
   }
 
