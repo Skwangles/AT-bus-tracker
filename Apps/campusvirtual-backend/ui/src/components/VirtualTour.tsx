@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Canvas as ThreeCanvas } from '@react-three/fiber'
-import { STARTING_LOCATION_GROUP, WAIKATO_UNI_LEVELS_ORDER } from '../consts'
+import { STARTING_LOCATION_GROUP } from '../consts'
 import { API_PREFIX, showMap, PROJECT_NAME } from '../consts'
 import axios from 'axios'
 import CameraRotationControls from './RotationController'
@@ -12,6 +12,7 @@ import { Map as FeatherMap } from 'react-feather'
 import Canvas, { NeighbourData } from './Canvas'
 import { DesktopLayout } from './DesktopLayout'
 import { MobileLayout } from './MobileLayout'
+import { getFloorUpOrDown } from './floorUpOrDownStrategies'
 export interface PointData {
   pose: number[]
   ts: string
@@ -171,44 +172,16 @@ const VirtualTour: React.FC = () => {
     }
   }, [currentId])
 
-  const getFloorUpOrDown = (floor: string, isUp = true) => {
-    // if (!floor.includes('.')) return false
-    const splitName = floor.split('.')
-    if (splitName.length == 0) {
-      return false
-    }
-
-    let idx = WAIKATO_UNI_LEVELS_ORDER.indexOf(splitName[0])
-    if (isUp) {
-      idx += 1
-      while (idx < WAIKATO_UNI_LEVELS_ORDER.length) {
-        if (allFloorNames.includes(WAIKATO_UNI_LEVELS_ORDER[idx])) {
-          return WAIKATO_UNI_LEVELS_ORDER[idx]
-        }
-        idx += 1
-      }
-    } else {
-      idx -= 1
-      while (idx >= 0) {
-        if (allFloorNames.includes(WAIKATO_UNI_LEVELS_ORDER[idx])) {
-          return WAIKATO_UNI_LEVELS_ORDER[idx]
-        }
-        idx -= 1
-      }
-    }
-    return false
-  }
-
   const [canGoUp, setCanGoUp] = useState(false)
   const [canGoDown, setCanGoDown] = useState(false)
 
   useEffect(() => {
-    setCanGoUp(!!getFloorUpOrDown(locationGroup, true))
-    setCanGoDown(!!getFloorUpOrDown(locationGroup, false))
+    setCanGoUp(!!getFloorUpOrDown(allFloorNames, locationGroup, true))
+    setCanGoDown(!!getFloorUpOrDown(allFloorNames, locationGroup, false))
   }, [locationGroup])
 
   const changeFloorUpOrDown = (floor: string, isUp: boolean) => {
-    const newFloor = getFloorUpOrDown(floor, isUp)
+    const newFloor = getFloorUpOrDown(allFloorNames, floor, isUp)
     if (!newFloor) {
       toast.warn(
         'Cannot change floor - No floor is ' + (isUp ? 'above' : 'below')
