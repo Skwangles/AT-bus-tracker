@@ -53,8 +53,7 @@ std::vector<video_timestamp> load_video_timestamps_sqlite3(sqlite3* db) {
     return results;
 }
 
-std::vector<timestamp_annotation> load_special_point_timestamps(sqlite3* db) {
-    std::vector<timestamp_annotation> results;
+std::vector<timestamp_annotation> load_special_point_timestamps(sqlite3* db, std::vector<timestamp_annotation>& results) {
     sqlite3_stmt* stmt;
 
     const char* sql = "SELECT name, timestamp, ms FROM special_point_timestamps";
@@ -75,8 +74,7 @@ std::vector<timestamp_annotation> load_special_point_timestamps(sqlite3* db) {
     return results;
 }
 
-std::vector<timestamp_annotation> load_timestamp_groups(sqlite3* db) {
-    std::vector<timestamp_annotation> results;
+std::vector<timestamp_annotation> load_timestamp_groups(sqlite3* db, std::vector<timestamp_annotation>& results) {
     sqlite3_stmt* stmt;
 
     const char* sql = "SELECT name, timestamp, ms FROM timestamp_groups";

@@ -103,8 +103,8 @@ void special_labels_to_sqlite(sqlite3* db, const std::string& map_db_path) {
         spdlog::error("Failed to open source SQL database");
         return;
     }
-
-    auto special_points = load_special_point_timestamps(source_db);
+    std::vector<timestamp_annotation> special_points;
+    load_special_point_timestamps(source_db, special_points);
 
     sqlite3_stmt* stmt = nullptr;
     const char* sql = "SELECT keyframe_id FROM nodes WHERE ABS(ts - ?) < 0.00001 LIMIT 1";
@@ -189,8 +189,8 @@ void timestamp_groups_to_sqlite(sqlite3* db, const std::string& map_db_path) {
         spdlog::error("Failed to open source SQL database");
         return;
     }
-
-    auto node_locations = load_timestamp_groups(source_db);
+    std::vector<timestamp_annotation> node_locations;
+    load_timestamp_groups(source_db, node_locations);
 
     sqlite3_stmt* stmt = nullptr;
     const char* sql = "SELECT keyframe_id FROM nodes WHERE ABS(ts - ?) < 0.00001 LIMIT 1";
