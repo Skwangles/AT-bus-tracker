@@ -53,11 +53,13 @@ endif()
 # ----- Build example executables -----
 
 set(EXECUTABLE_TARGETS "")
+set(INSTALL_DIR "/usr/local/bin")
 
-add_executable(cv_loop_closure src/loop_closure.cc)
-list(APPEND EXECUTABLE_TARGETS cv_loop_closure)
+# add_executable(cv_loop_closure src/loop_closure.cc)
+# list(APPEND EXECUTABLE_TARGETS cv_loop_closure)
 
 add_executable(cv_map src/map.cc)
+
 list(APPEND EXECUTABLE_TARGETS cv_map)
 
 add_executable(cv_slam_to_sqlite src/slam_to_sqlite.cc)
@@ -65,6 +67,7 @@ list(APPEND EXECUTABLE_TARGETS cv_slam_to_sqlite)
 
 add_executable(cv_view_map src/view.cc)
 list(APPEND EXECUTABLE_TARGETS cv_view_map)
+
 
 foreach(EXECUTABLE_TARGET IN LISTS EXECUTABLE_TARGETS)
     # Set output directory for executables
@@ -127,4 +130,7 @@ foreach(EXECUTABLE_TARGET IN LISTS EXECUTABLE_TARGETS)
                                $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/3rd/popl/include>
                                $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/3rd/filesystem/include>
                                $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/3rd/spdlog/include>)
+
 endforeach()
+
+install(TARGETS ${EXECUTABLE_TARGETS} DESTINATION ${INSTALL_DIR})
