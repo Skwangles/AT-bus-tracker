@@ -1,14 +1,17 @@
 ########## CAMPUS VIRTUAL SPECIFIC CODE ##########
-echo "DO NOT RUN WITH SUDO - MUST BE RUN IN parent CampusVirtual/"
-echo "Must update .env.vars with latest variables, and rename to .env"
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )" # https://saturncloud.io/blog/how-to-get-the-directory-where-a-bash-script-is-located/#:~:text=The%20first%20method%20to%20get,directory%20name%20from%20the%20path.
 
-source .env
+if [ -z "$CV_HOME_DIR" ]; then
+  source $SCRIPT_DIR/bin/scripts/cv_run_add_to_path.sh
+fi
+
 
 if [ $(id -u) -eq 0 ]; then
   echo "Do not run with sudo"
-  echo "if you still want to run as the root user, comment out this IF in BUILD_CAMPUS_VIRTUAL.sh"
+  echo "if you still want to run as the root user, comment out this 'IF' in BUILD_CAMPUS_VIRTUAL.sh"
   exit
 fi
+
 
 
 # Install custom socket_viewer which acts like Google Street View - forked from https://github.com/stella-cv/socket_viewer.git
@@ -25,6 +28,8 @@ pwd
 sudo ldconfig # update lookup library paths again - IMPORTANT if 'libxx.so' not found, note: libxx.so.7 <- 7 is the version number of the package
 
 # IF G2O gives a QT error - sudo apt install -y qtcreator qtbase5-dev qt5-qmake cmake
+export CXXFLAGS='-std=c++17'
+
 
 echo "Building VSLAM CampusVirtual interface"
 mkdir -p "$CV_HOME_DIR"/Apps/SLAM/CampusVirtualInterface/build

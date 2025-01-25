@@ -10,7 +10,11 @@ if [ ! -z "$CV_LIBS_CONFIGURED" ]; then
     exit
 fi
 
-source .env
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )" # https://saturncloud.io/blog/how-to-get-the-directory-where-a-bash-script-is-located/#:~:text=The%20first%20method%20to%20get,directory%20name%20from%20the%20path.
+
+if [ -z "$CV_HOME_DIR" ]; then
+  source $SCRIPT_DIR/bin/scripts/cv_run_add_to_path.sh
+fi
 
 LIBS_DIR="$CV_HOME_DIR"/libs
 NON_MODIFIABLE_LIBS_DIR="$CV_HOME_DIR"/libs/tmp
