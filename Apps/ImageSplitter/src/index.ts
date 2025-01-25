@@ -1,7 +1,7 @@
 import path from 'path'
 import dotenv from 'dotenv'
 import fs from 'fs'
-import { DFLT_BATCH_SIZE, DFLT_FACE_BLUR, DFLT_IMG_EXT, DFLT_INPUT_DIR, DFLT_OUTPUT_DIR, DFLT_SQLITE_DB_PATH, DFLT_TS_DP, TS_DP } from './consts';
+import { DFLT_BATCH_SIZE, DFLT_FACE_BLUR, DFLT_IMG_EXT, DFLT_INPUT_DIR, DFLT_OUTPUT_DIR, DFLT_SQLITE_DB_PATH, DFLT_TS_DP } from './consts';
 import { initDB, readDB } from './db';
 import yargs from 'yargs'
 import { hideBin } from 'yargs/helpers'
