@@ -11,24 +11,17 @@ check_command() {
   fi
 }
 
-# Check for .env file
-if [ ! -f .env ]; then
-  echo ".env not found - You MUST rename .env.example to .env and customise it!"
-  echo "Aborting so you don't accidentally use the wrong config!"
-  exit 1
-fi
 
-# Source the environment variables
-source .env
-check_command "source .env"
 
 # Make scripts executable
 sudo chmod +x ./bin/scripts/*.sh
 check_command "sudo chmod +x ./bin/scripts/*.sh"
 
-# Source additional scripts
-source ./bin/scripts/cv_run_add_to_path.sh
-check_command "source ./bin/scripts/cv_run_add_to_path.sh"
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )" # https://saturncloud.io/blog/how-to-get-the-directory-where-a-bash-script-is-located/#:~:text=The%20first%20method%20to%20get,directory%20name%20from%20the%20path.
+
+if [ -z "$CV_HOME_DIR" ]; then
+  source $SCRIPT_DIR/bin/scripts/cv_run_add_to_path.sh
+fi
 
 ./bin/scripts/cv_run_copy_env_file.sh
 check_command "./bin/scripts/cv_run_copy_env_file.sh"
