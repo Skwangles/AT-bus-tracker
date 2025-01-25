@@ -22,3 +22,5 @@ floorplans/
 LOCAL_RUN.sh
 
 Apps/SQLiteViewer/env/
+Apps/SharpnessCalculator/env/
+libs/
