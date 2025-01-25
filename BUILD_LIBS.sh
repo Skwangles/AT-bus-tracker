@@ -30,7 +30,7 @@ sudo apt upgrade -y --no-install-recommends
 # basic dependencies
 sudo apt install -y build-essential pkg-config cmake git wget curl unzip
 # g2o dependencies
-sudo apt install -y libatlas-base-dev libsuitesparse-dev
+sudo apt install -y libatlas-base-dev libsuitesparse-dev libdw-dev libdwarf-dev
 # OpenCV dependencies
 sudo apt install -y libgtk-3-dev ffmpeg libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libavresample-dev libtbb-dev
 # eigen dependencies
@@ -40,7 +40,7 @@ sudo apt install -y binutils-dev
 # other dependencies
 sudo apt install -y libyaml-cpp-dev libgflags-dev sqlite3 libsqlite3-dev
 
-sudo apt install libeigen3-dev libspdlog-dev libsuitesparse-dev qtdeclarative5-dev qt5-qmake libqglviewer-dev-qt5
+sudo apt install -y libeigen3-dev libspdlog-dev libsuitesparse-dev qtdeclarative5-dev qt5-qmake libqglviewer-dev-qt5
 
 # (if you plan on using IridescenceViewer)
 # Iridescence dependencies
@@ -54,12 +54,24 @@ sudo apt install -y autogen autoconf libtool
 sudo apt install -y nodejs
 sudo apt install -y npm
 
+
+
+
+
+
 sudo ldconfig # update lookup library paths - IMPORTANT if 'libxx.so' not found.
+
+echo ""
+echo "Compiling Supporting Programs"
+
+export CXXFLAGS="-std=c++17"
+echo "CXXFLAGS=" $CXXFLAGS
+
 
 # Install Custom FBoW used
 cd $NON_MODIFIABLE_LIBS_DIR
 if [ ! -d FBoW ] ; then
-git clone https://github.com/stella-cv/FBoW.git
+    git clone https://github.com/stella-cv/FBoW.git
 fi
 cd FBoW
 mkdir build -p && cd build
@@ -79,7 +91,7 @@ sudo apt install libopencv-dev
 # Install g2o
 cd $NON_MODIFIABLE_LIBS_DIR
 if [ ! -d g2o ] ; then
-git clone https://github.com/RainerKuemmerle/g2o.git
+    git clone https://github.com/RainerKuemmerle/g2o.git
 fi
 cd g2o
 git checkout 20230223_git
@@ -103,7 +115,7 @@ make -j4 && sudo make install
 # Install backward-cpp - 
 cd $NON_MODIFIABLE_LIBS_DIR
 if [ ! -d backward-cpp ] ; then
-git clone https://github.com/bombela/backward-cpp.git
+    git clone https://github.com/bombela/backward-cpp.git
 fi
 
 cd backward-cpp
@@ -120,7 +132,7 @@ make -j4 && sudo make install
 # Install Iridescence
 cd $NON_MODIFIABLE_LIBS_DIR
 if [ ! -d iridescence ] ; then
-git clone https://github.com/koide3/iridescence.git
+    git clone https://github.com/koide3/iridescence.git
 fi
 cd iridescence
 git checkout 085322e0c949f75b67d24d361784e85ad7f197ab
@@ -136,7 +148,7 @@ sudo apt install -y libprotobuf-dev protobuf-compiler
 
 cd $NON_MODIFIABLE_LIBS_DIR
 if [ ! -d socket.io-client-cpp ] ; then
-git clone https://github.com/shinsumicco/socket.io-client-cpp.git
+    git clone https://github.com/shinsumicco/socket.io-client-cpp.git
 fi
 cd socket.io-client-cpp
 git submodule init
@@ -152,10 +164,13 @@ sudo make install
 
 ############### BUILD STELLA VSLAM ###############
 
+echo "--"
+echo "Compiling CampusVirtual Libs"
+
 # Install stella_vslam core library
 cd $LIBS_DIR
 if [ ! -d stella_vslam ] ; then
-git clone --recursive https://github.com/Skwangles/stella_vslam.git
+    git clone --recursive https://github.com/Skwangles/stella_vslam.git
 fi
 cd stella_vslam
 git checkout campusvirtual
@@ -168,7 +183,7 @@ sudo make install
 # When building with support for IridescenceViewer - allows you to manually trigger loop closures
 cd $LIBS_DIR
 if [ ! -d iridescence_viewer ] ; then
-git clone --recursive https://github.com/Skwangles/iridescence_viewer.git
+    git clone --recursive https://github.com/Skwangles/iridescence_viewer.git
 fi
 cd iridescence_viewer
 git checkout campusvirtual
@@ -181,7 +196,7 @@ sudo make install
 # When building with support for SocketViewer
 cd $LIBS_DIR
 if [ ! -d campus_virtual_socket_publisher ] ; then
-git clone --recursive https://github.com/Skwangles/campus_virtual_socket_publisher.git # Custom socket_publisher which doesn't send current frame, only the map - forked from https://github.com/stella-cv/socket_publisher.git
+    git clone --recursive https://github.com/Skwangles/campus_virtual_socket_publisher.git # Custom socket_publisher which doesn't send current frame, only the map - forked from https://github.com/stella-cv/socket_publisher.git
 fi
 mkdir -p campus_virtual_socket_publisher/build
 cd campus_virtual_socket_publisher/build

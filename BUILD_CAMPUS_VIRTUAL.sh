@@ -28,7 +28,7 @@ pwd
 sudo ldconfig # update lookup library paths again - IMPORTANT if 'libxx.so' not found, note: libxx.so.7 <- 7 is the version number of the package
 
 # IF G2O gives a QT error - sudo apt install -y qtcreator qtbase5-dev qt5-qmake cmake
-export CXXFLAGS='-std=c++17'
+
 
 
 echo "Building VSLAM CampusVirtual interface"

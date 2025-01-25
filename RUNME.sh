@@ -30,8 +30,8 @@ check_command "./bin/scripts/cv_run_copy_env_file.sh"
 cd $CV_HOME_DIR || { echo "Failed to change directory to $CV_HOME_DIR"; exit 1; }
 
 # Optionally build dependencies
-# ./BUILD_LIBS.sh # Uncomment if needed
-# check_command "./BUILD_LIBS.sh"
+./BUILD_LIBS.sh # Uncomment if needed
+check_command "./BUILD_LIBS.sh"
 
 echo "Building CampusVirtual Files"
 ./BUILD_CAMPUS_VIRTUAL.sh

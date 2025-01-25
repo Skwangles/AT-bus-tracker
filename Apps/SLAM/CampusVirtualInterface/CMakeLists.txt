@@ -120,7 +120,6 @@ foreach(EXECUTABLE_TARGET IN LISTS EXECUTABLE_TARGETS)
     target_link_libraries(${EXECUTABLE_TARGET}
                           PRIVATE
                           stella_vslam::stella_vslam
-                          pqxx
                           opencv_imgcodecs
                           opencv_videoio)
 
