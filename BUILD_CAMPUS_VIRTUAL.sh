@@ -13,6 +13,14 @@ if [ $(id -u) -eq 0 ]; then
 fi
 
 
+if [ -z "$CXXFLAGS" ] ; then
+    export CXXFLAGS="-std=c++17"
+    echo "Set CXXFLAGS=$CXXFLAGS"
+else
+    # Needs to be appended
+    export CXXFLAGS="-std=c++17 $CXXFLAGS"
+    echo "Appended -std=c++17 to CXXFLAGS"
+fi
 
 # Install custom socket_viewer which acts like Google Street View - forked from https://github.com/stella-cv/socket_viewer.git
 # cd PgSocketViewer && sudo npm install && cd ..
