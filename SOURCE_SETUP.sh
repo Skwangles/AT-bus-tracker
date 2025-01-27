@@ -18,24 +18,27 @@ if [ ! -z "$CV_HOME_DIR" ]; then
   echo "Already added to path, but updating in case changed"
 fi
 
-if [ ! -f .env ]; then
-  echo ".env not found - You MUST rename .env.example to .env and customise it!"
-  echo "Aborting so you don't accidentally use the wrong config!"
-  read -p "Press enter to continue"
-  exit 1
-fi
+
 
 export CV_HOME_DIR=$SCRIPT_DIR
 echo "CV_HOME_DIR=$CV_HOME_DIR"
 export CV_OS=linux
 echo "CV_OS=$CV_OS"
 
-export CV_ENV_PATH=$SCRIPT_DIR/.env
+
 echo "CV_ENV_PATH=$CV_ENV_PATH"
 if [ -n "$1" ]; then
-  CV_ENV_PATH=$(pwd)/$1
+  export CV_ENV_PATH=$1
+else
+  export CV_ENV_PATH=$SCRIPT_DIR/.env
 fi
 echo "Sourcing from $CV_ENV_PATH"
+if [ ! -f $CV_ENV_PATH ]; then
+  echo ".env not found - You MUST rename .env.example to .env and customise it!"
+  echo "Aborting so you don't accidentally use the wrong config!"
+  read -p "Press enter to continue"
+  exit 1
+fi
 
 source $CV_ENV_PATH
 
