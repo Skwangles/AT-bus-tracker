@@ -5,6 +5,26 @@
 Clone `git clone --recursive https://github.com/Skwangles/CampusVirtual.git`
 Super important that you do it _recursive_, as we have submodules that need cloned for this project to build
 
+## Background Info
+
+This project takes in Equirectangular videos (in our case stitched from Insta360 INSV files),
+these Equirectangular videos are then paired with JSON files describing at what time in the video was special points of interest, and when the video moved into different buildings and floors (e.g. floor 1 0-20secs, floor 2 21-50sec, etc. ).
+
+A VSLAM library is then used to track the path of the video and build an XYZ graph, where each node is associated to an image extracted from the video.
+
+We then convert the VSLAM database's Sqlite3 "Maps" to our own custom 'Campus Virtual' DB files
+(also Sqlite3, but a nodes/edges structure).
+
+From here we can do various things, like edit the converted/exported db file with a viewer,
+apply a graph pruning process to clean up graph so points aren't so bunched together.
+
+Or we can even merge different (zones) DBs into a single DB representing larger areas comprised of 'zones'.
+
+Once we are satisfied with the map we can then serve it to users.
+One step is to use a tool to extract only the used images, as there are a lot of Equirectangular images so we want to minimise the storage used to serve it.
+We then serve it using a React backend that has an extra `<url>/authoring` page to align the points to 2D floorplan/map images, but this isn't required for the interface to work.
+Finally, the users can click and move around jumping from red dot to red dot, where each dot represents an image and is positioned relative to one another's real world space relationship.
+
 ## Required Libs
 
 - Docker - [https://www.docker.com/get-started/](https://www.docker.com/get-started/) - Used for Postgres Database (or not if you just use SQLite3)
@@ -21,22 +41,20 @@ Super important that you do it _recursive_, as we have submodules that need clon
 
 ## To use
 
-- Run `BUILD_LIBS.sh` to install Stella VSLAM, OpenCV and all the required libs
-- Run `BUILD_CAMPUS_VIRTUAL.sh` to setup the Campus Virtual Interfaces for Stella VSLAM
-- (If using Postgres) Run `docker-compose -f Config/docker-compose.yaml up` to configure the DB
-- Convert your `.insv` and `.insp` files and associated JSON files (they are just copied across, so you can do that manually) with the FileProcessing tool to mp4s and images (use `run.sh`)
-- Modify `RUNME.sh` to run the controller on the videos you want, or just manually run the `g++ ./runCampusVirtual.cc -o runCampusVirtual -lboost_program_options` to build and then use as desired.
-  - Note: In RUNME, running runCampusVirtual with --convertToSQLite or --convertToPg will export the SLAM map to CampusVirtual's working format
-- Run SharpnessCalculator to produce a JSON file to preprocess image sharpness for the GraphPruner (otherwise GraphPruner will calculate them at runtime in an expensive process)
-- On each map file, run the Apps/GraphPruner with `npm run start -- --img_dir=/path/to/dir/ ...args`, before running the authoring interface and campusvirtual-backend parts (`npm run start -- --h` to view args)
-- (TO BE IMPLEMENTED) To merge two SQLite databases together, these will first try to auto align based on 2+ overlapping 'merge points' identified during mapping.
-  Note: (TO BE IMPLEMENTED) If there is only 1 merge point you will have to manually rotate and align points using iridesence because there aren't enough points to automate it.
-- To view the raw full graph and open the Apps/PgSocketViewer in a separate terminal and run `node app.js`
-- To use the (optional - you can skip if you don't want a minimap, or to do any refinement) Authoring interface, in campusvirtual-backend consts.ts and set ENABLE_AUTHORING_PAGE to 'true' in campusvirtual-backend/src/consts.ts.
-- Extract only the used panoramic images to a different directory, use the ImageSplitter project with `npm run start -- --input_dir=/path/in/ --output_dir=/path/out/`
-- To view the polished interface, open Apps/campusvirtual-backend (edit the src/consts.ts file) and run `npm run start` and visit `localhost:3001` (and `localhost:3001/authoring` for the author page)
+- Run `source SOURCE_SETUP.sh`
+- Copy .env.exampe to .env and update with your config
+- Run RUNME.sh (It should run `BUILD_LIBS` and `BUILD_CAMPUSVIRTUAL.sh` for you)
+  - Note: Make sure the submodules from .gitmodules have been downloaded, otherwise you may have to do this yourself
 
-e.g. `./runCampusVirtual <view SLAM headless/without a viewer (true|false)> ./ <video1.mp4,video2.mp4,video3.mp4> --out <test.db> --video_dir <absolute path to dir of Video/ e.g. /campusvirtua/Video> --map_dir <abs path of Map/> --json_dir <absolute path to JSON/ e.g. /campusvirtual/JSON/> --picture-dir <abs path to save 360 keyframe images to>`
+If the dots seem too far apart in the served version (campusvirtual-backend), you may need to adjust the coords_to_metres constant in the campusvirtual-backend/ui/src/consts.ts, so the points being scaled doesn't cause an issue.
+
+The RUNME calls running scripts, for direct use, are `bin/scripts/cv_run_X.sh`.
+Most of these should have cli args you can pass in to bypass the usage of .env (other than general vars like CV_HOME_DIR, CV_DB_DIR, etc.)
+
+### Examples
+
+The /examples directory should show you how you can modify the RUNME.sh to do more complex actions like processing videos
+in multiple mapping steps (i.e. progressively mapping)
 
 ## Optional Further Steps
 
@@ -81,8 +99,7 @@ TODO: Implement a manual alignment method
 ### campusvirutal-backend and ui/ and authoring/
 
 - React frontend using THREE.js to visualise the graph, pathfind, and navigate the info present in the PostgreSQL DB
-  On first run, it loads all points from refined_nodes, refined_edges, and refined_node_locations into a db for map editing by the authoring page.
-  so you MUST RUN THE GRAPH PRUNER FIRST!
+  On first run, it loads all points from refined_nodes, refined_edges, and refined_node_locations into a db for map editing by the authoring page. (you can also define the TABLE_PREFIX as empty to just use the unrefined/raw database)
 
 Note: The `type` field of the floorplan_points is 0-49 = Normal points (e.g. bathroom, drinking fountain, etc.), 50+ = Border nodes (e.g. doors, stairs, etc.) - The large number set is to give future extensibility to types
 
@@ -91,6 +108,11 @@ Note: The `type` field of the floorplan_points is 0-49 = Normal points (e.g. bat
 Used to preprocess the laplacian sharpness of the images.
 Outputs a JSON file that the GraphPruner uses to speed up.
 `python3 sharpness.py /abs/img/dir/ /abs/output/file.json`
+
+## ImageSplitter
+
+A tool to read the node's table on a Sqlite3 database and find what images (named after each nodes' timestamp to 5dp) are used, and copy them to a defined area.
+`npm run start -- --input_dir="INPUT_DIR" --output_dir="OUTPUT_DIR"`
 
 ## graph-pruner
 
