@@ -1,12 +1,16 @@
 #include <iostream>
 #include <string>
 #include <boost/program_options.hpp>
+#include <boost/filesystem.hpp>
 
-std::string path_to_stella = "Apps/SLAM/CampusVirtualInterface/build/";
-std::string path_to_fbow = "Apps/SLAM/FBoW/orb_vocab.fbow";
-std::string path_to_config = "Config/";
+
 
 namespace po = boost::program_options;
+namespace fs = boost::filesystem;
+
+fs::path path_to_stella = fs::path("Apps/SLAM/CampusVirtualInterface/build/");
+fs::path path_to_fbow = fs::path("Apps/SLAM/FBoW/orb_vocab.fbow");
+fs::path path_to_config = fs::path("Config/");
 
 int main(int argc, char** argv) {
     po::options_description desc("Allowed options");
@@ -85,44 +89,44 @@ int main(int argc, char** argv) {
         bool use_viewer = vm["use_viewer"].as<bool>();
 
         std::string ts_start = vm.count("ts") ? vm["ts"].as<std::string>() : "";
-        std::string project_dir = vm["project_dir"].as<std::string>();
-        std::string map_in = vm.count("in") ? vm["in"].as<std::string>() : "";
-        std::string map_out = vm.count("out") ? vm["out"].as<std::string>() : "";
-        std::string media_dir = vm.count("video_dir") ? vm["video_dir"].as<std::string>() : "";
-        std::string map_dir = vm["map_dir"].as<std::string>();
+        fs::path project_dir = fs::path(vm["project_dir"].as<std::string>());
+        fs::path map_in = vm.count("in") ? vm["in"].as<std::string>() : "";
+        fs::path map_out = vm.count("out") ? vm["out"].as<std::string>() : "";
+        fs::path media_dir = vm.count("video_dir") ? vm["video_dir"].as<std::string>() : "";
+        fs::path map_dir = fs::path(vm["map_dir"].as<std::string>());
         std::string videos = vm.count("videos") ? vm["videos"].as<std::string>() : "";
-        std::string json_dir = vm.count("json_dir") ? vm["json_dir"].as<std::string>() : "";
-        std::string picture_dir = vm["picture_dir"].as<std::string>();
-        std::string config_file = vm["config_file"].as<std::string>();
-        std::string export_path = vm.count("export_path") ? vm["export_path"].as<std::string>() : "";
+        fs::path json_dir = vm.count("json_dir") ? vm["json_dir"].as<std::string>() : "";
+        fs::path picture_dir = fs::path(vm["picture_dir"].as<std::string>());
+        fs::path config_file = vm["config_file"].as<std::string>();
+        fs::path export_path = vm.count("export_path") ? vm["export_path"].as<std::string>() : "";
 
         std::string command;
         if (convert_to_sqlite3) {
             std::cout << "Convert to SQLite" << std::endl;
-            command = "cv_slam_to_sqlite -c '" + project_dir + path_to_config + config_file + "'" +
-                              " -v '" + project_dir + path_to_fbow + "'" +
-                              " -i '" + map_dir + "/" + map_in + "'" +
-                              " -o '" + export_path + "'";
+            command = "cv_slam_to_sqlite -c '" + (project_dir / path_to_config / config_file).string() + "'" +
+                              " -v '" + (project_dir / path_to_fbow).string() + "'" +
+                              " -i '" + (map_dir / map_in).string() + "'" +
+                              " -o '" + (export_path).string() + "'";
         }
         else if (view_statically){
             std::cout << "Viewing" << std::endl;
-            command = "cv_view_map -c '" + project_dir + path_to_config + config_file + "'" +
-                        " -v '" + project_dir + path_to_fbow + "'" +
-                        (map_in.empty() ? "" : " -i '" + map_dir + "/" + map_in + "'") +
-                        " -o '" +  map_dir + "/" + map_out + "'";
+            command = "cv_view_map -c '" + (project_dir / path_to_config / config_file).string() + "'" +
+                        " -v '" + (project_dir / path_to_fbow).string() + "'" +
+                        (map_in.empty() ? "" : " -i '" + (map_dir / map_in).string() + "'") +
+                        " -o '" +  (map_dir / map_out).string() + "'";
         }
         else {
             std::cout << "Mapping" << std::endl;
-            command = "cv_map -c '" + project_dir + path_to_config + config_file + "'" +
-                                        " -v '" + project_dir + path_to_fbow + "'" +
+            command = "cv_map -c '" + (project_dir / path_to_config / config_file).string() + "'" +
+                                        " -v '" + ( project_dir / path_to_fbow).string() + "'" +
                                         (ts_start.size() > 0 ? " -t '" + ts_start + "'" : "" ) +
-                                        (map_in.empty() ? "" : " --map-db-in '" + map_dir + "/" + map_in + "'") +
-                                        " --map-db-out '" +  map_dir + "/" + map_out + "'" +
+                                        (map_in.empty() ? "" : " --map-db-in '" + (map_dir / map_in).string() + "'") +
+                                        " --map-db-out '" +  (map_dir / map_out).string() + "'" +
                                         " --videos '" + videos + "'" +
                                         " --no-sleep " + // Operate faster than real time
-                                        " --video-dir '" +  media_dir + "/" + "'" +
-                                        " --json-dir '" + json_dir + "/" + "'" // Only required for 'pairing JSON with frames' step
-                                        " --picture-dir '" + picture_dir + "/" + "'" +
+                                        " --video-dir '" +  (media_dir).string() + "/" + "'" +
+                                        " --json-dir '" + (json_dir).string() + "/" + "'" // Only required for 'pairing JSON with frames' step
+                                        " --picture-dir '" + (picture_dir).string() + "/" + "'" +
                                         (use_temporal_mapping ? " --temporal-mapping" : "") +
                                         (use_viewer ? " --viewer none" : " --viewer iridescence_viewer");
         }

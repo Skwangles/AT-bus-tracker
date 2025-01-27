@@ -17,7 +17,7 @@ all: $(OUT)
 # Compile the source file into the output binary
 $(OUT): $(SRC)
 	@mkdir -p $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) -o $(OUT) $(SRC) -O2 -lboost_program_options 
+	$(CXX) $(CXXFLAGS) -o $(OUT) $(SRC) -O2 -lboost_system -lboost_program_options -lboost_filesystem
 
 install: $(OUT)
 	@echo "Installing runCampusVirtual to $(INSTALL_DIR)"
