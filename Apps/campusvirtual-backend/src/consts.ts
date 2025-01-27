@@ -5,7 +5,7 @@ dotenv.config()
 export const BORDERING_FLOOR_POINT_DEFAULT_TYPE = 50;
 export const FLOOR_POINT_DEFAULT_TYPE = 0;
 
-
+export const PORT = Number(process.env.CV_SERVER_PORT ?? 3005);
 export const KEYFRAME_IMG_DIR = process.env.CV_KEYFRAME_IMG_DIR ?? "/media/skwangles/KINGSTON/TGA - Out/pictures/";
 export const SEND_TEST_IMAGE: boolean = process.env.CV_SERVER_SEND_TEST_IMAGE === 'true';
 export const COORDS_TO_METRES: number = Number(process.env.CV_COORDS_TO_METRES) ?? 10;

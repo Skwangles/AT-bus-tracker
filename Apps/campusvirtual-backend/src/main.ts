@@ -3,7 +3,7 @@ import cors from 'cors'
 import express from 'express'
 import fs from 'fs'
 import initData from './initData'
-import { FLOORPLAN_IMG_DIR, KEYFRAME_IMG_DIR, KEYFRAME_IMG_EXTENSION, TABLE_PREFIX, SEND_TEST_IMAGE, SKIP_IF_MAP_ALREADY_CONFIGED, USE_TABLE_PREFIX } from './consts'
+import { FLOORPLAN_IMG_DIR, KEYFRAME_IMG_DIR, KEYFRAME_IMG_EXTENSION, TABLE_PREFIX, SEND_TEST_IMAGE, SKIP_IF_MAP_ALREADY_CONFIGED, USE_TABLE_PREFIX, PORT } from './consts'
 import { searchNeighbour } from './neighbourSearch'
 import { readDB } from './db'
 import floorplanAPI from './authoring'
@@ -254,8 +254,7 @@ app.get('/api/v1/image/:id', async function (req: { params: { id: number } }, re
 
 app.use(floorplanAPI)
 
-const port = 3001
-app.listen(port, () => {
+app.listen(PORT, () => {
   initData(Boolean(SKIP_IF_MAP_ALREADY_CONFIGED))
-  console.log(`Server running on port ${port}`)
+  console.log(`Server running on port ${PORT}`)
 })
