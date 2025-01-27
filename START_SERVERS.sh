@@ -7,7 +7,7 @@ SESH="campusvirtual_session"
 # if [$? != 0]; then
   tmux new-session -d -s $SESH -n "viewer"
 
-  tmux send-keys -t $SESH:viewer "cd $(CV_HOME_DIR)/Apps/campusvirtual-backend" C-m
+  tmux send-keys -t $SESH:viewer "cd $CV_HOME_DIR/Apps/campusvirtual-backend" C-m
   tmux send-keys -t $SESH:viewer "npm run build" C-m
   tmux send-keys -t $SESH:viewer "npm run start" C-m
 
