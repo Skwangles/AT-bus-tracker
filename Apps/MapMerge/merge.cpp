@@ -283,7 +283,7 @@ private:
     void copy_nodes(sqlite3* dst_db, sqlite3* src_db, int32_t id_offset, Eigen::Affine3d global_transform_wc){
         int ret;
         sqlite3_stmt* insert_node_stmt;
-        const char* insert_node_query = "INSERT INTO nodes (ts, keyframe_id, pose, x_trans, y_trans, z_trans, label) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        const char* insert_node_query = "INSERT INTO nodes (ts, keyframe_id, pose, x_trans, y_trans, z_trans) VALUES (?, ?, ?, ?, ?, ?, ?)";
         ret = sqlite3_prepare_v2(dst_db, insert_node_query, -1, &insert_node_stmt, nullptr);
         if (ret != SQLITE_OK) {
             spdlog::error("Failed to prepare node insert statement: {}", sqlite3_errmsg(dst_db));
@@ -296,7 +296,7 @@ private:
 
         // Transfer second database nodes with transformation
         sqlite3_stmt* second_select_stmt;
-        ret = sqlite3_prepare_v2(src_db, "SELECT ts, keyframe_id, pose, x_trans, y_trans, z_trans, label FROM nodes", -1, &second_select_stmt, nullptr);
+        ret = sqlite3_prepare_v2(src_db, "SELECT ts, keyframe_id, pose, x_trans, y_trans, z_trans FROM nodes", -1, &second_select_stmt, nullptr);
         if (ret != SQLITE_OK) {
             spdlog::error("Failed to prepare second database node select: {}", sqlite3_errmsg(src_db));
             return;
@@ -308,7 +308,8 @@ private:
             const void* blob = sqlite3_column_blob(second_select_stmt, 2);
             int blob_size = sqlite3_column_bytes(second_select_stmt, 2);
             memcpy(original_pose, blob, 16 * sizeof(double));
-            
+
+            // Apply global transformation to pose 
             Eigen::Matrix4d pose_cw = Eigen::Map<Eigen::Matrix4d>(original_pose, 4, 4);
             Eigen::Affine3d affine_pose_wc;
             affine_pose_wc.matrix() = pose_cw.inverse();
@@ -336,8 +337,8 @@ private:
             sqlite3_bind_double(insert_node_stmt, 4, transformed_trans.x());  // x_trans
             sqlite3_bind_double(insert_node_stmt, 5, transformed_trans.y());  // y_trans
             sqlite3_bind_double(insert_node_stmt, 6, transformed_trans.z());  // z_trans
-            sqlite3_bind_text(insert_node_stmt, 7, 
-                reinterpret_cast<const char*>(sqlite3_column_text(second_select_stmt, 6)), -1, SQLITE_STATIC);  // label
+            // sqlite3_bind_text(insert_node_stmt, 7, 
+                // reinterpret_cast<const char*>(sqlite3_column_text(second_select_stmt, 6)), -1, SQLITE_STATIC);  // label
 
             sqlite3_step(insert_node_stmt);
             sqlite3_reset(insert_node_stmt);
@@ -570,9 +571,9 @@ int main(int argc, char** argv) {
             return 1;
         }
 
-        std::string first_map_file = vm["first"].as<std::string>();
-        std::string second_map_file = vm["second"].as<std::string>();
-        std::string out_map_file = vm["out"].as<std::string>();
+        fs::path first_map_file (vm["first"].as<std::string>());
+        fs::path second_map_file (vm["second"].as<std::string>());
+        fs::path out_map_file (vm["out"].as<std::string>());
         bool overwrite = vm["overwrite"].as<bool>();
 
         // Check file existence and handle overwrite
@@ -603,9 +604,9 @@ int main(int argc, char** argv) {
         boost::filesystem::copy_file(first_map_file, out_map_file, boost::filesystem::copy_options::overwrite_existing);
 
 
-        MapMerger merger(first_map_file, second_map_file);
+        MapMerger merger(first_map_file.string(), second_map_file.string());
 
-        merger.merge(out_map_file, zone1_name, zone2_name);
+        merger.merge(out_map_file.string(), zone1_name, zone2_name);
 
     } catch (const po::error& e) {
         std::cerr << "Error: " << e.what() << std::endl;
