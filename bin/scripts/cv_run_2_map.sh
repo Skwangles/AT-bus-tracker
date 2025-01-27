@@ -13,6 +13,7 @@ function error_exit {
 [[ -z "$CV_JSON_DIR" ]] && error_exit "CV_JSON_DIR is not set"
 [[ -z "$CV_KEYFRAME_IMG_DIR" ]] && error_exit "CV_KEYFRAME_IMG_DIR is not set"
 [[ -z "$CV_VSLAM_MAP_HEADLESS" ]] && error_exit "CV_VSLAM_MAP_HEADLESS is not set"
+[[ -z "$CV_VSLAM_EPOCH_START" ]] && error_exit "CV_VSLAM_MAP_HEADLESS is not set"
 [[ -z "$CV_VIDEO_DIR" ]] && error_exit "CV_VIDEO_DIR is not set"
 
 # Check if the required inputs are provided either as arguments or environment variables
@@ -28,5 +29,7 @@ echo "(Optional) Input Map - (Extend previously made map):" $3
 
 IN_MAP_OPTION=""
 [[ -n "$3" ]] && IN_MAP_OPTION="--in $3"
+EPOCH_OPTION=""
+[[ -n "$CV_VSLAM_EPOCH_START" ]] && EPOCH_OPTION="--ts $CV_VSLAM_EPOCH_START"
 
-runCampusVirtual $CV_VSLAM_MAP_HEADLESS $CV_HOME_DIR --videos $VIDEOS --out $MAP $IN_MAP_OPTION --video_dir $CV_VIDEO_DIR --map_dir $CV_VSLAM_MAP_DIR --json_dir $CV_JSON_DIR --picture_dir $CV_KEYFRAME_IMG_DIR
+runCampusVirtual $CV_VSLAM_MAP_HEADLESS $CV_HOME_DIR --videos $VIDEOS --out $MAP $IN_MAP_OPTION --video_dir $CV_VIDEO_DIR --map_dir $CV_VSLAM_MAP_DIR --json_dir $CV_JSON_DIR --picture_dir $CV_KEYFRAME_IMG_DIR $EPOCH_OPTION

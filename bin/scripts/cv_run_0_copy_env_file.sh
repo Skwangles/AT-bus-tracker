@@ -27,6 +27,6 @@ fi
 
 
 
-cp $CV_ENV_PATH Apps/campusvirtual-backend/ || error_exit "Failed to copy .env to Apps/campusvirtual-backend/"
-cp $CV_ENV_PATH Apps/GraphPruner/ || error_exit "Failed to copy .env to Apps/GraphPruner/"
-cp $CV_ENV_PATH Apps/ImageSplitter/ || error_exit "Failed to copy .env to Apps/ImageSplitter/"
+cp $CV_ENV_PATH Apps/campusvirtual-backend/.env || error_exit "Failed to copy .env to Apps/campusvirtual-backend/"
+cp $CV_ENV_PATH Apps/GraphPruner/.env || error_exit "Failed to copy .env to Apps/GraphPruner/"
+cp $CV_ENV_PATH Apps/ImageSplitter/.env || error_exit "Failed to copy .env to Apps/ImageSplitter/"
