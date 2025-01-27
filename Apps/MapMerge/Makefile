@@ -2,12 +2,12 @@
 
 # Compiler and flags
 CXX = g++
-CXXFLAGS = -std=c++17 -O2 -lboost_program_options $(CXXFLAGS)
+CXXFLAGS := $(CXXFLAGS)
 
 # Directories
 SRC_DIR = .
 BUILD_DIR = ../../bin/linux
-SRC = $(SRC_DIR)/merge.cc
+SRC = $(SRC_DIR)/merge.cpp
 OUT = $(BUILD_DIR)/cv_merge_maps
 INSTALL_DIR = /usr/local/bin
 
@@ -17,7 +17,7 @@ all: $(OUT)
 # Compile the source file into the output binary
 $(OUT): $(SRC)
 	@mkdir -p $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) -o $(OUT) $(SRC)
+	$(CXX) $(CXXFLAGS) -o $(OUT) $(SRC) -O2 -lboost_system -lboost_program_options -lboost_filesystem -I /usr/include/eigen3 -lsqlite3 -lfmt
 
 install: $(OUT)
 	@echo "Installing runCampusVirtual to $(INSTALL_DIR)"

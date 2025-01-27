@@ -553,7 +553,7 @@ int main(int argc, char** argv) {
         ("second,s,2", po::value<std::string>()->required(), "Second map to merge")
         ("out,o", po::value<std::string>()->required(), "Output map name")
         ("manual,m", po::value<bool>()->default_value(false), "Merge using Iridesence Viewer to align and rotate")
-        ("overwrite", po::value<bool>()->default_value(false), "If Out file already exists, overwrite it");
+        ("overwrite", po::bool_switch(), "If Out file already exists, overwrite it");
 
     po::positional_options_description pos_desc;
     pos_desc.add("first", 1);
