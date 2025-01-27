@@ -16,7 +16,9 @@ def load_nodes(db_path):
     """Load nodes from the SQLite database."""
     connection = sqlite3.connect(db_path)
     cursor = connection.cursor()
-    cursor.execute("SELECT keyframe_id, x_trans, y_trans, z_trans FROM "+ table_name_prefix+"nodes")
+    sql_str = "SELECT keyframe_id, x_trans, y_trans, z_trans FROM "+ table_name_prefix+"nodes"
+    print("Executing:", sql_str)
+    cursor.execute(sql_str)
     nodes = np.array(cursor.fetchall())
     connection.close()
     return nodes
@@ -259,7 +261,7 @@ if __name__ == "__main__":
     db_path = sys.argv[1]
     
     if len(sys.argv) == 3:
-        if (sys.argv[2] != "None"):
+        if (sys.argv[2].lower() != "None".lower() and sys.argv[2] != ""):
             table_name_prefix = sys.argv[2]
         else: 
             table_name_prefix = ""

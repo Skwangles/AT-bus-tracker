@@ -1,5 +1,7 @@
 #!/bin/bash
 
+echo "Usage: $0 <custom env file path>"
+
 # Exit on error
 set -e
 
@@ -13,10 +15,20 @@ check_command() {
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )" # https://saturncloud.io/blog/how-to-get-the-directory-where-a-bash-script-is-located/#:~:text=The%20first%20method%20to%20get,directory%20name%20from%20the%20path.
 
-source $SCRIPT_DIR/SOURCE_SETUP.sh
+if [ -z "$1" ]; then
+  source $SCRIPT_DIR/SOURCE_SETUP.sh
+else
+  echo "Sourcing from custom env file: $1"
+  source $SCRIPT_DIR/SOURCE_SETUP.sh $1
+  if [ $? -ne 0 ]; then
+    echo "Failed to source custom env file: $1"
+    exit 1
+  fi
+fi
+
 
 if [ -z "$CV_HOME_DIR" ]; then
-  echo "Failed to add environment variables to path - please look at cv_run_add_to_path.sh"
+  echo "Failed to add environment variables to path - please check the variable is being exported in the env file and that SOURCE_SETUP.sh has been run"
   exit 1
 fi
 
@@ -29,7 +41,7 @@ cd $CV_HOME_DIR || { echo "Failed to change directory to $CV_HOME_DIR"; exit 1; 
 check_command "./bin/scripts/cv_run_copy_env_file.sh"
 
 # Optionally build dependencies
-./BUILD_LIBS.sh
+# ./BUILD_LIBS.sh
 check_command "./BUILD_LIBS.sh"
 
 echo "Building CampusVirtual Files"
