@@ -1,0 +1,7 @@
+# how to run
+
+CD into this example directory, and run `RUNME-X.sh` and it should use the .env in your current directory
+
+# How To Use This Example
+
+Update the .envs with your directories, the RUNME-X.sh should use the correct env when necessary

@@ -1,0 +1,10 @@
+# how to run
+
+CD into this example directory, and run `../../RUNME.sh` and it should use the .env in your current directory
+
+# How To Use This Example
+
+Configure both .envs with your media directories
+
+1. Rename .env.video1 to .env and RUNME that, then rename it back so you can do the next.
+2. Rename .env.video2 to .env and RUNME that - this ENV file has the merging configured
