@@ -12,7 +12,7 @@ import { Map as FeatherMap } from 'react-feather'
 import Canvas, { NeighbourData } from './Canvas'
 import { DesktopLayout } from './DesktopLayout'
 import { MobileLayout } from './MobileLayout'
-import { getFloorUpOrDown } from './floorUpOrDownStrategies'
+import { getFloorUpOrDown } from '../utils/floorUpOrDownStrategies'
 export interface PointData {
   pose: number[]
   ts: string
