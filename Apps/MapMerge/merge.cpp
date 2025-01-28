@@ -166,6 +166,7 @@ private:
         Eigen::Affine3d transformation = Eigen::Affine3d::Identity();
         transformation.linear() = rotation;
         transformation.translation() = translation;
+        transformation.scale(1.0);
 
         std::cout << "Computed Global Transformation: Rot: \n" << rotation << " \n Trans: \n" << translation << std::endl;
         return transformation;
@@ -283,7 +284,7 @@ private:
     void copy_nodes(sqlite3* dst_db, sqlite3* src_db, int32_t id_offset, Eigen::Affine3d global_transform_wc){
         int ret;
         sqlite3_stmt* insert_node_stmt;
-        const char* insert_node_query = "INSERT INTO nodes (ts, keyframe_id, pose, x_trans, y_trans, z_trans) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        const char* insert_node_query = "INSERT INTO nodes (ts, keyframe_id, pose, x_trans, y_trans, z_trans) VALUES (?, ?, ?, ?, ?, ?)";
         ret = sqlite3_prepare_v2(dst_db, insert_node_query, -1, &insert_node_stmt, nullptr);
         if (ret != SQLITE_OK) {
             spdlog::error("Failed to prepare node insert statement: {}", sqlite3_errmsg(dst_db));
