@@ -1,4 +1,4 @@
-import { COORDS_TO_METRES } from "./consts"
+import { COORDS_TO_METRES } from "../consts"
 import * as THREE from 'three'
 
 export function inv(pose: number[][]) {
