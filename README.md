@@ -2,9 +2,9 @@
 
 ## Installing
 
-Clone `git clone --recurse-submodules https://github.com/Skwangles/CampusVirtual.git`
-Super important that you do it _recursive_, as we have submodules that need cloned for this project to build
-`--recurse-submodules`
+Clone `git clone --recursive https://github.com/Skwangles/CampusVirtual.git`
+Super important that you do it _recursive_, as we have submodules that need cloned for this project to build.
+Many of these submodules are private, so you may unfortunately need to manually clone them yourself
 
 ## Background Info
 
@@ -77,6 +77,10 @@ It is slow, and intensive, however, will likely help
 - Feeds in JSON files the same name as the video input, which has the timecodes of what location the video was in at what time.
 - Saves keyframes to an output directory (these are read in for the web interface, and can be a very large directory, so choose carefully)
 
+#### Using the JSON files
+
+Using the JSON files created by thge
+
 ### RunCampusVirtual - C++ Interface
 
 - User friendly interface to use Stella
@@ -89,7 +93,7 @@ Note: The `type` field in the edges (or refined_edges) tables are 0 = normal edg
 
 ### MapMerger
 
-In the case of trying to merge two maps together, you must have atleast two 'special points' marked with '$$' at the start, marking a merge point.
+In the case of trying to merge two maps together, you must have atleast two 'special points' marked with `$$` at the start, marking a merge point.
 At least these 2 merge points are needed to find what rotation and translation best aligns the points.
 Uses Procrustes Analysis to calculate the optimal rotation (only does so in
 XZ plane, because the points should already be horizontally aligned).
