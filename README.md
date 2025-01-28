@@ -2,8 +2,9 @@
 
 ## Installing
 
-Clone `git clone --recursive https://github.com/Skwangles/CampusVirtual.git`
+Clone `git clone --recurse-submodules https://github.com/Skwangles/CampusVirtual.git`
 Super important that you do it _recursive_, as we have submodules that need cloned for this project to build
+`--recurse-submodules`
 
 ## Background Info
 
