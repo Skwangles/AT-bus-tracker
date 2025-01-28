@@ -5,6 +5,17 @@ function error_exit {
     exit 1
 }
 
+# Exit on error
+set -e
+
+# Function to check command success
+check_command() {
+  if [ $? -ne 0 ]; then
+    echo "Error occurred during: $1"
+    exit 1
+  fi
+}
+
 echo "PRECALCULATING SHARPNESS"
 
 # Check if the required inputs are provided as arguments or environment variables
@@ -28,4 +39,6 @@ pip3 install -r requirements.txt || error_exit "Failed to install required Pytho
 
 echo "Running Sharpness Calculator"
 python3 sharpness.py "$CV_KEYFRAME_IMG_DIR" "$CV_PRECALCULATE_IMAGE_SHARPNESS_JSON_PATH" || error_exit "Failed to run Sharpness Calculator"
+check_command "Running Sharpness Calculator"
+
 cd "$ORIGINAL_DIR" || error_exit "Failed to change back to original directory"

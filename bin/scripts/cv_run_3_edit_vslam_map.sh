@@ -7,6 +7,17 @@ function error_exit {
     exit 1
 }
 
+# Exit on error
+set -e
+
+# Function to check command success
+check_command() {
+  if [ $? -ne 0 ]; then
+    echo "Error occurred during: $1"
+    exit 1
+  fi
+}
+
 [[ -z "$CV_HOME_DIR" ]] && error_exit "CV_HOME_DIR is not set"
 [[ -z "$CV_VSLAM_MAP_DIR" ]] && error_exit "CV_VSLAM_MAP_DIR is not set"
 
@@ -20,3 +31,4 @@ echo "Map In:" $MAP_IN
 echo "Map Out:" $MAP_OUT
 
 runCampusVirtual false $CV_HOME_DIR --in $MAP_IN --out $MAP_OUT --map_dir $CV_VSLAM_MAP_DIR --view_static
+check_command "Editing VSLAM map"

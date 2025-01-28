@@ -6,6 +6,17 @@ function error_exit {
     exit 1
 }
 
+# Exit on error
+set -e
+
+# Function to check command success
+check_command() {
+  if [ $? -ne 0 ]; then
+    echo "Error occurred during: $1"
+    exit 1
+  fi
+}
+
 ORIGINAL_DIR=$(pwd)
 
 # Check if CV_HOME_DIR is set

@@ -7,6 +7,17 @@ function error_exit {
     exit 1
 }
 
+# Exit on error
+set -e
+
+# Function to check command success
+check_command() {
+  if [ $? -ne 0 ]; then
+    echo "Error occurred during: $1"
+    exit 1
+  fi
+}
+
 # Check if the required environment variables are set
 [[ -z "$CV_HOME_DIR" ]] && error_exit "CV_HOME_DIR is not set"
 [[ -z "$CV_VSLAM_MAP_DIR" ]] && error_exit "CV_VSLAM_MAP_DIR is not set"
@@ -33,3 +44,4 @@ EPOCH_OPTION=""
 [[ -n "$CV_VSLAM_EPOCH_START" ]] && EPOCH_OPTION="--ts $CV_VSLAM_EPOCH_START"
 
 runCampusVirtual $CV_VSLAM_MAP_HEADLESS $CV_HOME_DIR --videos $VIDEOS --out $MAP $IN_MAP_OPTION --video_dir $CV_VIDEO_DIR --map_dir $CV_VSLAM_MAP_DIR --json_dir $CV_JSON_DIR --picture_dir $CV_KEYFRAME_IMG_DIR $EPOCH_OPTION
+check_command "Mapping videos with VSLAM"

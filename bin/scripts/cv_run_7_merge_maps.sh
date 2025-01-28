@@ -3,6 +3,17 @@ function error_exit {
   exit 1
 }
 
+# Exit on error
+set -e
+
+# Function to check command success
+check_command() {
+  if [ $? -ne 0 ]; then
+    echo "Error occurred during: $1"
+    exit 1
+  fi
+}
+
 echo "MERGING MAPS"
 
 # Check if the required environment variables are set
@@ -31,3 +42,4 @@ cv_merge_maps $IN_1 $IN_2 $OUT \
   $([ "$CV_MERGE_OVERWRITE_EXISTING_OUTPUT" == "true" ] && echo "--overwrite") \
   $([ -n "$ZONE1" ] && echo "--zone1 $ZONE1") \
   --zone2 $ZONE2
+check_command "Merging maps"

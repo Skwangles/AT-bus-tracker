@@ -6,6 +6,17 @@ function error_exit {
     exit 1
 }
 
+# Exit on error
+set -e
+
+# Function to check command success
+check_command() {
+  if [ $? -ne 0 ]; then
+    echo "Error occurred during: $1"
+    exit 1
+  fi
+}
+
 [[ -z "$CV_HOME_DIR" ]] && error_exit "CV_HOME_DIR is not set"
 [[ -z "$1" && ( -z "$CV_DB_DIR" || -z "$CV_EDIT_DB_NAME" ) ]] && error_exit "Database path is not provided"
 [[ -z "$2" && -z "$CV_EDIT_DB_TABLE_PREFIX" ]] && error_exit "Table prefix is not provided - If you want an 'empty' Table prefix use 'None' for this script"
@@ -27,4 +38,5 @@ echo "Installing necessary libraries for SQLiteViewer"
 pip install -r ./requirements.txt
 
 python3 ./view.py "$DB_PATH" "$TABLE_PREFIX"
+check_command "Editing DB"
 cd "$ORIGINAL_DIR" || error_exit "Failed to change back to original directory"
