@@ -81,7 +81,7 @@ const config: Config = {
   otdr_y_dist_thresh: OTDR_Y_DIST,
   preproc_sharpness_json: PREPROC_SHARPNESS_JSON
 }
-console.info("Args:", config)
+console.info("Args:", config, "SQLITE DB:", SQLITE_DB);
 
 /**
  * Make sure all nodes that are right next to each other in space (i.e. two parallel lines) are connected
