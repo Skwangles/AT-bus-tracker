@@ -416,6 +416,19 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
+    bool vocab_file_exists = fs::exists(vocab_file_path->value());
+    bool config_file_exists = fs::exists(config_file_path->value());
+    bool map_dir_exists = fs::exists(map_dir->value());
+
+    if (!vocab_file_exists || !config_file_exists || ( map_dir->value().length() > 0 && !map_dir_exists) ) {
+        std::cerr << "One of the provided directories doesn't exist: Vocab:" << vocab_file_exists << " Config:" << config_file_exists << " Map Directory:" << map_dir_exists << std::endl;
+        std::cerr << "Vocab:" << vocab_file_path->value() << std::endl;
+        std::cerr << "Config:" << config_file_path->value() << std::endl;
+        std::cerr << "Map DB Dir" << map_dir->value() << std::endl;
+        return EXIT_FAILURE;
+    }
+
+
     // setup logger
     spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] %^[%L] %v%$");
     spdlog::set_level(spdlog::level::from_str(log_level->value()));
@@ -430,8 +443,13 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-    std::string map_db_in = map_dir->value() + map_db_path_in->value();
-    std::string map_db_out = map_dir->value() + output_db_path->value();
+    std::string map_db_in = (fs::path(map_dir->value()) / fs::path(map_db_path_in->value())).string();
+    std::string map_db_out = (fs::path(map_dir->value()) / fs::path(output_db_path->value())).string();
+
+    if (!fs::exists(map_db_in)) {
+        std::cerr << "map_db_in does not exist:" << map_db_in << std::endl;
+        return EXIT_FAILURE;
+    }
 
     // build a slam system
     auto slam = std::make_shared<stella_vslam::system>(cfg, vocab_file_path->value());
