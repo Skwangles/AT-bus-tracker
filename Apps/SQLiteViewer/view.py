@@ -12,15 +12,31 @@ EDGE_TYPE_COVISIBILITY = -1
 table_name_prefix = "refined_"
 db_path = ""
 
+class Node:
+    def __init__(self, keyframe_id, position, pose_cw: np.ndarray):
+        self.keyframe_id = keyframe_id
+        self.position = (float(position[0]), float(position[1]), float(position[2]),)
+        self.pose = np.frombuffer(pose_cw, dtype=np.double).reshape(4, 4)
+    
+    def __str__(self):
+        return f"Node {self.keyframe_id} at {self.position} with pose {self.pose}"
+    
+    def get_arrow(self):
+        rot_mat = self.pose[:3, :3]
+        yaw = np.arctan2(rot_mat[0, 0], rot_mat[0, 2])
+        direction_vector = np.array([np.cos(yaw), 0, np.sin(yaw)])
+        return pv.Cone(center=tuple(self.position), direction=direction_vector.tolist(), height=0.1, radius=0.1, resolution=50)
+
 def load_nodes(db_path):
     """Load nodes from the SQLite database."""
     connection = sqlite3.connect(db_path)
     cursor = connection.cursor()
-    sql_str = "SELECT keyframe_id, x_trans, y_trans, z_trans FROM "+ table_name_prefix+"nodes"
+    sql_str = "SELECT keyframe_id, x_trans, y_trans, z_trans, pose FROM "+ table_name_prefix+"nodes"
     print("Executing:", sql_str)
     cursor.execute(sql_str)
-    nodes = np.array(cursor.fetchall())
+    nodes = list(map(lambda x: Node(x[0], [x[1], x[2], x[3]], x[4]), np.array(cursor.fetchall())))
     connection.close()
+    
     return nodes
 
 def load_edges(db_path, all=False):
@@ -215,21 +231,24 @@ def render(nodes_list, edges=None):
     
     print("Creating a lookup for the keyframe id")
     for i, node in tqdm(enumerate(nodes_list)):
-        mapped[node[0]] = i
-        idx_to_id[i] = node[0]
-    
-    print("Converting nodes to a list...")
-    nodes = list(map(lambda node: node[1:], nodes_list))
+        mapped[node.keyframe_id] = i
+        idx_to_id[i] = node.keyframe_id
     
     for i, node in tqdm(enumerate(nodes)):
-        pos_map[str(node)] = i
+        pos_map[str(node.position)] = i
         
     
     # Add nodes to the plot
     print("Adding nodes to the plot...")
-    points = pv.PolyData(nodes)
-    print("Points:", points)
-    plotter.add_mesh(points, color="blue", point_size=5.0, render_points_as_spheres=True, pickable=True)
+    # Create a PolyData object with the points rendered as arrows
+    
+    # points = pv.PolyData(list(map(lambda x: x.position, nodes.position)))
+    for node in tqdm(nodes):
+        plotter.add_mesh(node.get_arrow(), color="green", pickable=True)
+        # plotter.add_point_labels(node.position, [str(node.keyframe_id)], font_size=10, point_size=10, color="black")
+        
+    # print("Points:", points)
+    # plotter.add_mesh(points, color="blue", point_size=5.0, render_points_as_spheres=True, pickable=True)
     plotter.add_axes(True)
     plotter.add_axes_at_origin(labels_off=True)
 
