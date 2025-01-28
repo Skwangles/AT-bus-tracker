@@ -5,6 +5,17 @@ if [ -z "$CV_HOME_DIR" ]; then
   source $SCRIPT_DIR/SOURCE_SETUP.sh
 fi
 
+# Exit on error
+set -e
+
+# Function to check command success
+check_command() {
+  if [ $? -ne 0 ]; then
+    echo "Error occurred during: $1"
+    exit 1
+  fi
+}
+
 
 if [ $(id -u) -eq 0 ]; then
     echo "Do not run with SUDO, otherwise you won't be able to compile necessary libraries as accessible to the user"
@@ -48,15 +59,24 @@ echo "Building VSLAM CampusVirtual interface"
 mkdir -p "$CV_HOME_DIR"/Apps/SLAM/CampusVirtualInterface/build
 cd "$CV_HOME_DIR"/Apps/SLAM/CampusVirtualInterface/build 
 cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_STACK_TRACE_LOGGER=ON ..
-make -j4 && sudo make install
+make -j4
+check_command "Building VSLAM CampusVirtual interface"
+sudo make install
 
 echo "Building MapMerger"
 cd "$CV_HOME_DIR"/Apps/MapMerge
-make && sudo make install
+make
+check_command "Building MapMerger"
+sudo make install
 
 echo "Building CLI interfaces"
 cd "$CV_HOME_DIR"/ENTRYPOINT
-make && sudo make install
+make
+check_command "Building CLI interfaces"
+sudo make install
+
 
 cd "$CV_HOME_DIR"/Apps/CampusVirtual-FileProcessing
-make && sudo make install
+make
+check_command "Building CampusVirtual-FileProcessing"
+sudo make install

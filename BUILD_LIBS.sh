@@ -9,6 +9,17 @@ if [ $(id -u) -eq 0 ]; then
     esac
 fi
 
+# Exit on error
+set -e
+
+# Function to check command success
+check_command() {
+  if [ $? -ne 0 ]; then
+    echo "Error occurred during: $1"
+    exit 1
+  fi
+}
+
 if [ -n "$CV_LIBS_CONFIGURED" ]; then 
     echo "Libs already built, skipping."
     exit
@@ -164,6 +175,7 @@ cmake \
     -DBUILD_UNIT_TESTS=OFF \
     ..
 make -j4
+check_command "Building Socket.IO Client"
 sudo make install
 
 ############### BUILD STELLA VSLAM ###############
@@ -181,6 +193,7 @@ git checkout campusvirtual
 mkdir build -p && cd build
 cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
 make -j4
+check_command "Building Stella VSLAM"
 sudo make install
 # MAYBE TRY PATCH THE STELLA WITH MY MODIFICATIONS
 
@@ -195,7 +208,9 @@ mkdir -p build
 cd build
 cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_STANDARD_REQUIRED=ON ..
 make -j
+check_command "Building Iridescence Viewer"
 sudo make install
+
 
 # When building with support for SocketViewer
 cd $LIBS_DIR
@@ -206,7 +221,9 @@ mkdir -p campus_virtual_socket_publisher/build
 cd campus_virtual_socket_publisher/build
 cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
 make -j
+check_command "Building CampusVirtual Socket Publisher"
 sudo make install
+
 
 sudo ldconfig
 
