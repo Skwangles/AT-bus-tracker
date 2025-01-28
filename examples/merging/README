@@ -5,3 +5,5 @@ CD into this example directory, and run `RUNME-X.sh` and it should use the .env 
 # How To Use This Example
 
 Update the .envs with your directories, the RUNME-X.sh should use the correct env when necessary
+After each video is processed it should show you the db in the pyvista SQLiteViewer
+Once it merges the two you should see both together, then it should start a server with the new merged database so you can explore
