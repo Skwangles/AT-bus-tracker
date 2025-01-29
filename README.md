@@ -105,6 +105,11 @@ TODO: Implement a manual alignment method
 
 - React frontend using THREE.js to visualise the graph, pathfind, and navigate the info present in the PostgreSQL DB
   On first run, it loads all points from refined_nodes, refined_edges, and refined_node_locations into a db for map editing by the authoring page. (you can also define the TABLE_PREFIX as empty to just use the unrefined/raw database)
+- Note: The Authoring page needs to be enabled in the .env file by enabling 'ENABLE_AUTHORING_PAGE` in the .env file, this is because it has GET/POST/UPDATE/DELETE routes for creating new points, updating existing points, and deleting points, that shouldn't be used in production.
+  I haven't bothered with any authentication because we can just disable it when it goes public.
+
+Once you have built a map, it pays to visit the `ui/src/const.ts` to adjust the dotsize and manual y offset of the dots to be visually appealing - there is an API_PREFIX field if you wanted the front-end to be served on a different domain to the backend.
+(e.g. `API_PREFIX="localhost:3001"` when the frontend is being developed with `npm run dev` on `localhost:5173`)
 
 Note: The `type` field of the floorplan_points is 0-49 = Normal points (e.g. bathroom, drinking fountain, etc.), 50+ = Border nodes (e.g. doors, stairs, etc.) - The large number set is to give future extensibility to types
 
