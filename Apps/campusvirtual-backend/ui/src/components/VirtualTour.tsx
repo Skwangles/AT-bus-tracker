@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Canvas as ThreeCanvas } from '@react-three/fiber'
-import { STARTING_LOCATION_GROUP } from '../consts'
+import { Label, STARTING_LOCATION_GROUP } from '../consts'
 import { API_PREFIX, showMap, PROJECT_NAME } from '../consts'
 import axios from 'axios'
 import CameraRotationControls from './Camera/RotationController'
@@ -48,7 +48,9 @@ const VirtualTour: React.FC = () => {
   >([])
   const [locationGroup, setLocationGroup] = useState<string>('')
   const [highlightedPath, setHighlightedPath] = useState<number[]>([])
-  const [allFloorNames, setAllFloorNames] = useState<string[]>([])
+  const [allSearchableLocations, setAllSearchableLocations] = useState<Label[]>(
+    []
+  )
 
   const [isInstructionsOpen, setInstructionsOpen] = useState(false)
   const [closeDrawer, setCloseDrawer] = useState(false)
@@ -87,12 +89,10 @@ const VirtualTour: React.FC = () => {
 
   useEffect(() => {
     // RUN ON FIRST LOAD
-    axios
-      .get<{ location: string }[]>(API_PREFIX + '/api/v1/floors')
-      .then((result) => {
-        console.log('Floors', result.data)
-        setAllFloorNames(result.data.map((val) => String(val.location)))
-      })
+    axios.get<Label[]>(API_PREFIX + '/api/v1/floors').then((result) => {
+      console.log('Floors', result.data)
+      setAllSearchableLocations(result.data)
+    })
 
     if (
       Number(currentId) === -1 ||
@@ -176,12 +176,28 @@ const VirtualTour: React.FC = () => {
   const [canGoDown, setCanGoDown] = useState(false)
 
   useEffect(() => {
-    setCanGoUp(!!getFloorUpOrDown(allFloorNames, locationGroup, true))
-    setCanGoDown(!!getFloorUpOrDown(allFloorNames, locationGroup, false))
+    setCanGoUp(
+      !!getFloorUpOrDown(
+        allSearchableLocations.map((v) => v.query),
+        locationGroup,
+        true
+      )
+    )
+    setCanGoDown(
+      !!getFloorUpOrDown(
+        allSearchableLocations.map((v) => v.query),
+        locationGroup,
+        false
+      )
+    )
   }, [locationGroup])
 
   const changeFloorUpOrDown = (floor: string, isUp: boolean) => {
-    const newFloor = getFloorUpOrDown(allFloorNames, floor, isUp)
+    const newFloor = getFloorUpOrDown(
+      allSearchableLocations.map((v) => v.query),
+      floor,
+      isUp
+    )
     if (!newFloor) {
       toast.warn(
         'Cannot change floor - No floor is ' + (isUp ? 'above' : 'below')
@@ -189,7 +205,7 @@ const VirtualTour: React.FC = () => {
       return
     }
 
-    if (allFloorNames.includes(newFloor)) {
+    if (allSearchableLocations.map((v) => v.query).includes(newFloor)) {
       console.log('Setting location to', newFloor)
       changeFloor(newFloor)
     }
@@ -218,7 +234,7 @@ const VirtualTour: React.FC = () => {
         isMobile={isMobile}
         currentPoint={currentPoint}
         setCurrentPoint={setCurrentPoint}
-        allFloorNames={allFloorNames}
+        allFloorNames={allSearchableLocations}
         changeFloor={changeFloor}
         changeFloorUpOrDown={changeFloorUpOrDown}
         canGoDown={canGoDown}
@@ -232,7 +248,7 @@ const VirtualTour: React.FC = () => {
         isMobile={isMobile}
         currentPoint={currentPoint}
         setCurrentPoint={setCurrentPoint}
-        allFloorNames={allFloorNames}
+        allFloorNames={allSearchableLocations}
         changeFloor={changeFloor}
         changeFloorUpOrDown={changeFloorUpOrDown}
         canGoDown={canGoDown}
@@ -256,15 +272,13 @@ const VirtualTour: React.FC = () => {
         />
       )}
 
-      {allFloorNames.length > 0 && (
-        <div className="fixed top-0 left-0 right-0 z-[999]">
-          <SearchBar
-            data={allFloorNames}
-            highlightCallback={calculateHighlightedPath}
-            jumpToCallback={changeFloor}
-          />
-        </div>
-      )}
+      <div className="fixed top-0 left-0 right-0 z-[999]">
+        <SearchBar
+          searchableLabels={allSearchableLocations}
+          highlightCallback={calculateHighlightedPath}
+          jumpToCallback={changeFloor}
+        />
+      </div>
 
       <div className="w-screen h-screen overflow-hidden fixed top-0 left-0">
         <ThreeCanvas

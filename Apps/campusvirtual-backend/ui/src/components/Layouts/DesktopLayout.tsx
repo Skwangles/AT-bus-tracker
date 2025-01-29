@@ -1,12 +1,13 @@
 import { MapPin } from 'react-feather'
 import Instructions from '../Misc/Instructions'
 import LocationChangeControls from '../Navigation/LocationChangeControls'
+import { Label } from '../../consts'
 
 interface DesktopLayout {
   isMobile: boolean
   currentPoint: any
   setCurrentPoint: any
-  allFloorNames: string[]
+  allFloorNames: Label[]
   changeFloor: any
   changeFloorUpOrDown: any
   canGoDown: boolean
@@ -50,7 +51,7 @@ export const DesktopLayout: React.FC<DesktopLayout> = ({
               canGoDown={canGoDown}
               changeFloorUpOrDown={changeFloorUpOrDown}
               locationGroup={locationGroup}
-              allFloorNames={allFloorNames}
+              allFloorNames={allFloorNames.map((v) => v.query)}
               changeFloor={changeFloor}
             />
           </div>

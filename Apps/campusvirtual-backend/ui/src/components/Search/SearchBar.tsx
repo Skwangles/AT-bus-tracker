@@ -10,26 +10,23 @@ import '../../css/SearchBar.css'
 import { X } from 'react-feather'
 import DropDownContainer from './DropDownContainer'
 import SearchBarButtons from './SearchBarButtons'
+import { Label } from '../../consts'
 // Define the type for the props
 interface SearchBarProps {
-  data: string[]
+  searchableLabels: Label[]
   jumpToCallback: (selected: string) => void
   highlightCallback: (selected: string) => void
 }
 
-const IncludesValue = (data: string[], value: string) => {
-  return data.find((val) => val.toLowerCase() == value.toLowerCase())
-}
-
 const SearchBar: React.FC<SearchBarProps> = ({
-  data,
+  searchableLabels,
   jumpToCallback,
   highlightCallback,
 }) => {
   const [query, setQuery] = useState<string>('')
-  const [suggestions, setSuggestions] = useState<string[]>([])
+  const [suggestions, setSuggestions] = useState<Label[]>([])
   const [isFocused, setIsFocused] = useState<boolean>(false)
-  const [recentSearches, setRecentSearches] = useState<string[]>(() => {
+  const [recentSearches, setRecentSearches] = useState<Label[]>(() => {
     const saved = localStorage.getItem('recentSearches')
     return saved ? JSON.parse(saved) : []
   })
@@ -53,7 +50,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
     }
   }, [])
 
-  const addToRecent = (location: string) => {
+  const addToRecent = (location: Label) => {
     const updated = [
       location,
       ...recentSearches.filter((item) => item !== location),
@@ -66,35 +63,61 @@ const SearchBar: React.FC<SearchBarProps> = ({
     const value = event.target.value
     setQuery(value)
     if (value) {
-      const filteredSuggestions = data.filter((item) =>
-        item.toLowerCase().includes(value.toLowerCase())
+      console.log('Checking', value, 'against')
+      const filteredSuggestions = searchableLabels.filter((item) => {
+        const largeName =
+          (item.group ? item.group.toLowerCase() + ' - ' : '') +
+          item.label.toLowerCase()
+        console.log('Large name:', largeName, 'Value:', value)
+        const result =
+          largeName.includes(value.toLowerCase()) &&
+          value.length <= largeName.length
+        console.log('Result:', result)
+        return result
+      })
+      console.log('Filtered suggestions:', filteredSuggestions)
+      setSuggestions(
+        filteredSuggestions.sort((a, b) => a.label.localeCompare(b.label))
       )
-      setSuggestions(filteredSuggestions.sort())
     } else {
-      setSuggestions(data.sort())
+      setSuggestions(
+        searchableLabels.sort((a, b) => a.label.localeCompare(b.label))
+      )
     }
   }
 
-  const handleSuggestionClick = (suggestion: string) => {
-    setQuery(suggestion)
+  const handleSuggestionClick = (suggestion: Label) => {
+    setQuery(
+      (suggestion.group ? suggestion.group + ' - ' : '') + suggestion.label
+    )
     inputRef.current?.focus()
     setIsFocused(false)
   }
 
-  const handleAction = (location: string, action: 'highlight' | 'jump') => {
-    addToRecent(location)
-    if (action === 'highlight') {
-      highlightCallback(location)
-    } else {
-      jumpToCallback(location)
+  const handleAction = (label: string, action: 'highlight' | 'jump') => {
+    const labelObj = searchableLabels.find(
+      (v: Label) => (v.group ? v.group + ' - ' : '') + v.label === label
+    )
+    if (!labelObj || !labelObj.query || !labelObj.label) {
+      console.error('Label not found:', label)
+      return
     }
-    setQuery(location)
+
+    addToRecent(labelObj)
+    if (action === 'highlight') {
+      highlightCallback(labelObj.query)
+    } else {
+      jumpToCallback(labelObj.query)
+    }
+    setQuery(labelObj.label)
     setIsFocused(false)
   }
 
   const clearSearch = () => {
     setQuery('')
-    setSuggestions(data.sort())
+    setSuggestions(
+      searchableLabels.sort((a, b) => a.label.localeCompare(b.label))
+    )
   }
 
   return (
@@ -110,7 +133,12 @@ const SearchBar: React.FC<SearchBarProps> = ({
             className="w-full px-3 py-2 text-sm border-2 border-gray-200 rounded-lg shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
             onFocus={() => {
               setIsFocused(true)
-              if (!query) setSuggestions(data.sort())
+              if (!query)
+                setSuggestions(
+                  searchableLabels.sort((a, b) =>
+                    a.label.localeCompare(b.label)
+                  )
+                )
             }}
             aria-label="Search for a location"
           />
@@ -128,8 +156,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
         <SearchBarButtons
           query={query}
           handleAction={handleAction}
-          data={data}
-          IncludesValue={IncludesValue}
+          labels={searchableLabels}
         />
       </div>
 

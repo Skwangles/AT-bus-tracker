@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { useRef, useState } from 'react'
 import {
-  COORDS_TO_METRES,
+  COORDS_TO_METRES_FOR_SPHERES,
   HOTSPOT_COLOUR,
   HOTSPOT_HIGHLIGHTED,
   HOTSPOT_OUTLINE,
@@ -40,11 +40,11 @@ const Hotspot: React.FC<HotspotProps> = ({
 }) => {
   // Increase size for mobile
   const sizeMultiplier = isMobile() ? 1.5 : 1
-  const sphereSize = (20 / COORDS_TO_METRES) * sizeMultiplier
+  const sphereSize = (20 / COORDS_TO_METRES_FOR_SPHERES) * sizeMultiplier
   const outlineSize = sphereSize * 1.09
-  const dropHotspotsBelowEyeLevelOffset = 8 / COORDS_TO_METRES
+  const dropHotspotsBelowEyeLevelOffset = 8 / COORDS_TO_METRES_FOR_SPHERES
 
-  position[1] -= COORDS_TO_METRES * dropHotspotsBelowEyeLevelOffset
+  position[1] -= COORDS_TO_METRES_FOR_SPHERES * dropHotspotsBelowEyeLevelOffset
 
   const endRef = useRef<any>(null)
   const outlineEndRef = useRef<any>(null)
