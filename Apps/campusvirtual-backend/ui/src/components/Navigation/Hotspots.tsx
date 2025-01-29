@@ -1,10 +1,13 @@
 import * as THREE from 'three'
 import { useRef, useState } from 'react'
 import {
+  COORDS_TO_METRES,
   COORDS_TO_METRES_FOR_SPHERES,
   HOTSPOT_COLOUR,
   HOTSPOT_HIGHLIGHTED,
   HOTSPOT_OUTLINE,
+  HOTSPOT_Y_ADJUSTMENT_DOWN_TO_FLOOR_LEVEL,
+  SPHERE_SIZE,
   USE_GLB_MARKER_OBJECT,
 } from '../../consts'
 import Model from './Model'
@@ -40,11 +43,10 @@ const Hotspot: React.FC<HotspotProps> = ({
 }) => {
   // Increase size for mobile
   const sizeMultiplier = isMobile() ? 1.5 : 1
-  const sphereSize = (20 / COORDS_TO_METRES_FOR_SPHERES) * sizeMultiplier
+  const sphereSize = SPHERE_SIZE * sizeMultiplier
   const outlineSize = sphereSize * 1.09
-  const dropHotspotsBelowEyeLevelOffset = 8 / COORDS_TO_METRES_FOR_SPHERES
 
-  position[1] -= COORDS_TO_METRES_FOR_SPHERES * dropHotspotsBelowEyeLevelOffset
+  position[1] -= HOTSPOT_Y_ADJUSTMENT_DOWN_TO_FLOOR_LEVEL
 
   const endRef = useRef<any>(null)
   const outlineEndRef = useRef<any>(null)
@@ -81,9 +83,7 @@ const Hotspot: React.FC<HotspotProps> = ({
         receiveShadow
       >
         {isEnd ? (
-          <boxGeometry
-            args={[sphereSize * 3, sphereSize * 3, sphereSize * 3]}
-          />
+          <boxGeometry args={[sphereSize, sphereSize, sphereSize]} />
         ) : (
           <sphereGeometry args={[sphereSize, 20, 20]} />
         )}

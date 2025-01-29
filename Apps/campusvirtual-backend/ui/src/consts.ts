@@ -1,8 +1,11 @@
 export const API_PREFIX = ""
 
 export const FLOOR_ORDERING_STRATEGY = "tga" // tga for <floor>.<room>  (or 'waikato' for <block>.<floor>.<room> stratgey)
-export const COORDS_TO_METRES = 1; // metres per coordinate
-export const COORDS_TO_METRES_FOR_SPHERES = 40; // metres per coordinate for labels
+export const COORDS_TO_METRES = 1; // metres per coordinate - the backend should apply their version automatically, but this is a manual adjustment
+export const SPHERE_SIZE = 0.15
+export const HOTSPOT_Y_ADJUSTMENT_DOWN_TO_FLOOR_LEVEL = 2
+
+
 export const showMap = true;
 export const showList = true;
 export const SHOW_NAV_SEARCH = true;
