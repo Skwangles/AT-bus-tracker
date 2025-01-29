@@ -7,10 +7,10 @@ export const FLOOR_POINT_DEFAULT_TYPE = 0;
 export const REASONABLE_MAX_STRING_SIZE = 50;
 export const RESERVED_START_OF_LABELS = ["!!anchor", "!!elevator", "!!toilet", "$$"]
 
-export const PORT = Number(process.env.CV_SERVER_PORT ?? 3005);
+export const PORT = isNaN(Number(process.env.CV_SERVER_PORT)) ? Number(3005) : Number(process.env.CV_SERVER_PORT);
 export const KEYFRAME_IMG_DIR = process.env.CV_KEYFRAME_IMG_DIR ?? "/media/skwangles/KINGSTON/TGA - Out/pictures/";
 export const SEND_TEST_IMAGE: boolean = process.env.CV_SERVER_SEND_TEST_IMAGE === 'true';
-export const COORDS_TO_METRES: number = Number(process.env.CV_COORDS_TO_METRES) ?? 10;
+export const COORDS_TO_METRES: number = isNaN(Number(process.env.CV_COORDS_TO_METRES)) ? 10 : Number(process.env.CV_COORDS_TO_METRES)
 export const FLOORPLAN_IMG_DIR = process.env.CV_SERVER_FLOORPLAN_IMG_DIR ?? "/home/skwangles/Documents/Honours/CampusVirtual/floorplans/";
 export const KEYFRAME_IMG_EXTENSION = process.env.CV_SERVER_KEYFRAME_IMG_EXTENSION ?? ".png";
 
