@@ -1,10 +1,10 @@
-import { readDB } from "./db";
+import { readDB } from "../db";
 
 import { MinQueue } from 'heapify';
 import Pool from "pg-pool";
 import { getNeighbours, getNodePosition } from "./utils";
 import { Client } from "pg";
-import { USE_TABLE_PREFIX, TABLE_PREFIX, EdgeType } from "./consts";
+import { USE_TABLE_PREFIX, TABLE_PREFIX, EdgeType } from "../consts";
 
 interface Node {
   keyframe_id: number;

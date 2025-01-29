@@ -1,6 +1,6 @@
 import { Request, Response } from 'express'
-import { COORDS_TO_METRES, EdgeType, NEIGHBOURS_INCLUDES_PROXIMITY, TABLE_PREFIX, USE_TABLE_PREFIX } from './consts';
-import { readDB } from './db';
+import { COORDS_TO_METRES, EdgeType, NEIGHBOURS_INCLUDES_PROXIMITY, TABLE_PREFIX, USE_TABLE_PREFIX } from '../consts';
+import { readDB } from '../db';
 import { BlobArrayToMatrix } from './utils';
 
 export async function searchNeighbour(mainPointId: number, distanceThreshold: number, yDistThresh: number, currentPoint: { x_trans: any; y_trans: any; z_trans: any; }) {

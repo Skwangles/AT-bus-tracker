@@ -1,5 +1,6 @@
 
-import { BORDERING_FLOOR_POINT_DEFAULT_TYPE, COORDS_TO_METRES, EdgeType, TABLE_PREFIX, USE_TABLE_PREFIX } from './consts'
+import { readDB, writeDB } from '../db';
+import { BORDERING_FLOOR_POINT_DEFAULT_TYPE, COORDS_TO_METRES, EdgeType, TABLE_PREFIX, USE_TABLE_PREFIX } from '../consts'
 import * as THREE from 'three'
 // Helper function to get neighbours
 export async function getNeighbours(keyframeId: number): Promise<any[]> {
@@ -135,17 +136,6 @@ export async function disconnectNodes(keyframe_id0: number, keyframe_id1: number
   return true;
 }
 
-
-import path from 'path'
-import { readDB, writeDB } from './db';
-
-export function stripDirectoryTraversal(user_input: string, root: string) {
-  var safe_input = path.normalize(user_input);
-  if (safe_input.indexOf(root) !== 0) {
-    return false;
-  }
-  return safe_input;
-}
 
 // Helper function to get node position
 export async function getNodePosition(keyframeId: number, use_trans = true): Promise<[number, number, number] | null> {

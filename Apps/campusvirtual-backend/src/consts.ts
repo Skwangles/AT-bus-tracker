@@ -4,6 +4,8 @@ dotenv.config()
 
 export const BORDERING_FLOOR_POINT_DEFAULT_TYPE = 50;
 export const FLOOR_POINT_DEFAULT_TYPE = 0;
+export const REASONABLE_MAX_STRING_SIZE = 50;
+export const RESERVED_START_OF_LABELS = ["!!anchor", "!!elevator", "!!toilet", "$$"]
 
 export const PORT = Number(process.env.CV_SERVER_PORT ?? 3005);
 export const KEYFRAME_IMG_DIR = process.env.CV_KEYFRAME_IMG_DIR ?? "/media/skwangles/KINGSTON/TGA - Out/pictures/";
