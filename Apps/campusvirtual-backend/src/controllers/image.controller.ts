@@ -116,6 +116,7 @@ export async function getLocationGroupImageByName(req: Request, res: Response) {
   // Check that the file exists
   if (fs.existsSync(pathString) && fs.statSync(pathString).isFile()) {
     res.sendFile(pathString)
+    return
   }
   else {
     res.sendStatus(404).send("Invalid Arguments");
@@ -147,7 +148,8 @@ export async function updateFloorplanImage(req: Request, res: Response) {
     const { name } = req.params;
     const file = req.file;
     if (!file) {
-      return res.status(400).send("No file uploaded.");
+      res.status(400).send("No file uploaded.");
+      return
     }
 
     // Save the image path to the database
