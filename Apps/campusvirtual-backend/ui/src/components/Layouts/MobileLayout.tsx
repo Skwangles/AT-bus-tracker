@@ -1,26 +1,37 @@
-import { MapPin, ChevronUp, Info } from "react-feather"
-import Instructions from "./Instructions"
-import LocationChangeControls from "./LocationChangeControls"
-import { useState, useEffect, useRef } from "react"
+import { MapPin, ChevronUp, Info } from 'react-feather'
+import Instructions from '../Misc/Instructions'
+import LocationChangeControls from '../Navigation/LocationChangeControls'
+import { useState, useEffect, useRef } from 'react'
 
 interface MobileLayout {
-    isMobile: boolean
-    currentPoint: any
-    setCurrentPoint: any
-    allFloorNames: string[]
-    changeFloor: any
-    changeFloorUpOrDown: any
-    canGoDown: boolean
-    canGoUp: boolean
-    locationGroup: string
-    isInstructionsOpen: boolean
-    setInstructionsOpen: any
+  isMobile: boolean
+  currentPoint: any
+  setCurrentPoint: any
+  allFloorNames: string[]
+  changeFloor: any
+  changeFloorUpOrDown: any
+  canGoDown: boolean
+  canGoUp: boolean
+  locationGroup: string
+  isInstructionsOpen: boolean
+  setInstructionsOpen: any
 }
 
-export const MobileLayout: React.FC<MobileLayout> = ({isMobile, currentPoint, setCurrentPoint, allFloorNames, changeFloor, changeFloorUpOrDown, canGoDown, canGoUp, locationGroup, isInstructionsOpen, setInstructionsOpen}) => {      
-
+export const MobileLayout: React.FC<MobileLayout> = ({
+  isMobile,
+  currentPoint,
+  setCurrentPoint,
+  allFloorNames,
+  changeFloor,
+  changeFloorUpOrDown,
+  canGoDown,
+  canGoUp,
+  locationGroup,
+  isInstructionsOpen,
+  setInstructionsOpen,
+}) => {
   const [showMobileMenu, setShowMobileMenu] = useState(false)
-  
+
   useEffect(() => {
     if (isMobile && !showMobileMenu) {
       console.log('Closing instructions')
@@ -38,7 +49,8 @@ export const MobileLayout: React.FC<MobileLayout> = ({isMobile, currentPoint, se
     }
   }, [showMobileMenu])
 
-return <>
+  return (
+    <>
       {isMobile && (
         <>
           {/* Location indicator with chevron */}
@@ -88,20 +100,19 @@ return <>
                   changeFloor={changeFloor}
                 />
               </div>
-
-              {/* Instructions */}
-              {isInstructionsOpen && (
-                <Instructions
-                  point={currentPoint}
-                  isOpen={isInstructionsOpen}
-                  setIsOpen={setInstructionsOpen}
-                  className="mobile-instructions"
-                  showToggle={false}
-                />
-              )}
             </div>
           </div>
 
+          {/* Instructions */}
+          {isInstructionsOpen && (
+            <Instructions
+              point={currentPoint}
+              isOpen={isInstructionsOpen}
+              setIsOpen={setInstructionsOpen}
+              className="mobile-instructions"
+              showToggle={true}
+            />
+          )}
           {/* Instructions button */}
           <button
             className="fixed bottom-4 right-4 z-[1001] bg-white/90 hover:bg-white rounded-full p-3 shadow-lg flex items-center justify-center"
@@ -111,5 +122,6 @@ return <>
           </button>
         </>
       )}
-</>
-};
+    </>
+  )
+}
