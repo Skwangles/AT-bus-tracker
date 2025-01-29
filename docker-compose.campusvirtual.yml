@@ -16,3 +16,4 @@ services:
       - CV_KEYFRAME_IMG_DIR=/app/served-img/
       - CV_SERVER_FLOORPLAN_IMG_DIR=/app/served-floorplans/
       - CV_DB_DIR=/app/served-map/
+      - CV_SERVER_PORT=3001
