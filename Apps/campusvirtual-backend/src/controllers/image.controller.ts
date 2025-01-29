@@ -112,14 +112,12 @@ export async function getLocationGroupImageByName(req: Request, res: Response) {
     res.status(404).send("Invalid Arguments")
     return
   }
-
-  // Check that the file exists
-  if (fs.existsSync(pathString) && fs.statSync(pathString).isFile()) {
+  else if (fs.existsSync(pathString) && fs.statSync(pathString).isFile()) {
     res.sendFile(pathString)
     return
   }
   else {
-    res.sendStatus(404).send("Invalid Arguments");
+    res.status(404).send("Invalid Arguments");
   }
 }
 
@@ -129,7 +127,7 @@ export async function getImageById(req: Request, res: Response) {
   // Using FROM nodes because its the superset
   const result = await readDB("SELECT ts FROM nodes WHERE keyframe_id = ? LIMIT 1", [id], true)
   if (!result) {
-    res.sendStatus(404).send("Invalid Arguments");
+    res.status(404).send("Invalid Arguments");
     return;
   }
 
