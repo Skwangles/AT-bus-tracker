@@ -6,8 +6,10 @@ import React, {
   useRef,
   useEffect,
 } from 'react'
-import '../css/SearchBar.css'
-import { ArrowUpRight, Eye, X } from 'react-feather'
+import '../../css/SearchBar.css'
+import { X } from 'react-feather'
+import DropDownContainer from './DropDownContainer'
+import SearchBarButtons from './SearchBarButtons'
 // Define the type for the props
 interface SearchBarProps {
   data: string[]
@@ -122,60 +124,23 @@ const SearchBar: React.FC<SearchBarProps> = ({
             </button>
           )}
         </div>
-        <div className="flex w-full gap-2 mt-2">
-          <button
-            onClick={() => handleAction(query, 'highlight')}
-            disabled={!IncludesValue(data, query)}
-            className="flex-1 inline-flex items-center justify-center gap-1 px-3 py-1.5 text-xs text-white bg-blue-500 rounded-md disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors"
-            aria-label="Highlight location"
-          >
-            <Eye size={14} aria-hidden="true" /> Guide
-          </button>
-          <button
-            onClick={() => handleAction(query, 'jump')}
-            disabled={!IncludesValue(data, query)}
-            className="flex-1 inline-flex items-center justify-center gap-1 px-3 py-1.5 text-xs text-white bg-blue-500 rounded-md disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors"
-            aria-label="Go to location"
-          >
-            <ArrowUpRight size={14} aria-hidden="true" /> Go To
-          </button>
-        </div>
+
+        <SearchBarButtons
+          query={query}
+          handleAction={handleAction}
+          data={data}
+          IncludesValue={IncludesValue}
+        />
       </div>
 
       {isFocused && (
-        <div className="dropdown-container" ref={dropdownRef}>
-          {!query && recentSearches.length > 0 && (
-            <div className="recent-searches">
-              <h3 className="px-4 py-2 m-0 text-sm font-semibold text-gray-600 uppercase bg-gray-50">
-                Recent Searches
-              </h3>
-              {recentSearches.map((recent, index) => (
-                <div key={`recent-${index}`} className="suggestion-item cursor-pointer hover:text-blue-500" onClick={() => handleSuggestionClick(recent)}>
-                    {recent}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {suggestions.length > 0 && (
-            <div className="suggestions">
-              {query && (
-                <h3 className="px-4 py-2 m-0 text-sm font-semibold text-gray-600 uppercase bg-gray-50">
-                  Suggestions
-                </h3>
-              )}
-              {suggestions.map((suggestion, index) => (
-                <div
-                  key={index}
-                  className="suggestion-item cursor-pointer hover:text-blue-500"
-                  onClick={() => handleSuggestionClick(suggestion)}
-                >
-                    {suggestion}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        <DropDownContainer
+          dropdownRef={dropdownRef}
+          recentSearches={recentSearches}
+          query={query}
+          suggestions={suggestions}
+          handleSuggestionClick={handleSuggestionClick}
+        />
       )}
     </div>
   )

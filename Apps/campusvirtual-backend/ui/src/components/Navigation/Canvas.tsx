@@ -2,11 +2,11 @@ import { useEffect, useState } from 'react'
 import * as THREE from 'three'
 import { useThree } from '@react-three/fiber'
 import axios from 'axios'
-import { API_PREFIX } from '../consts'
-import { getPositionOfNode, getYRotation } from '../utils/utils'
+import { API_PREFIX } from '../../consts'
+import { getPositionOfNode, getYRotation } from '../../utils/utils'
 import SphereWithHotspots from './SphereWithHotspots'
 import { HotspotObj } from './Hotspots'
-import { PointData } from './VirtualTour'
+import { PointData } from '../VirtualTour'
 
 export interface NeighbourData {
   pose: number[]

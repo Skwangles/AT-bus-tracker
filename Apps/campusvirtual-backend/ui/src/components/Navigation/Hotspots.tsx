@@ -6,7 +6,7 @@ import {
   HOTSPOT_HIGHLIGHTED,
   HOTSPOT_OUTLINE,
   USE_GLB_MARKER_OBJECT,
-} from '../consts'
+} from '../../consts'
 import Model from './Model'
 import { useFrame } from '@react-three/fiber'
 

@@ -1,5 +1,5 @@
 import { ArrowDown, ArrowUp, Sun } from 'react-feather'
-import { OUTDOORS_LOCATION } from '../consts'
+import { OUTDOORS_LOCATION } from '../../consts'
 
 export const LocationChangeControls = ({
   canGoUp,

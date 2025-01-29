@@ -3,15 +3,15 @@ import { Canvas as ThreeCanvas } from '@react-three/fiber'
 import { STARTING_LOCATION_GROUP } from '../consts'
 import { API_PREFIX, showMap, PROJECT_NAME } from '../consts'
 import axios from 'axios'
-import CameraRotationControls from './RotationController'
-import Map from './Map'
-import SearchBar from './SearchBar'
+import CameraRotationControls from './Camera/RotationController'
+import Map from './Misc/Map'
+import SearchBar from './Search/SearchBar'
 import { toast, ToastContainer, Bounce } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.min.css'
 import { Map as FeatherMap } from 'react-feather'
-import Canvas, { NeighbourData } from './Canvas'
-import { DesktopLayout } from './DesktopLayout'
-import { MobileLayout } from './MobileLayout'
+import Canvas, { NeighbourData } from './Navigation/Canvas'
+import { DesktopLayout } from './Layouts/DesktopLayout'
+import { MobileLayout } from './Layouts/MobileLayout'
 import { getFloorUpOrDown } from '../utils/floorUpOrDownStrategies'
 export interface PointData {
   pose: number[]
@@ -274,7 +274,7 @@ const VirtualTour: React.FC = () => {
             overflow: 'hidden',
             touchAction: 'none',
           }}
-          camera={{ position: [0, 0, 10], fov: isMobile ? 60 : 90 }}
+          camera={{ position: [0, 0, 10], fov: isMobile ? 100 : 110 }}
           shadows
         >
           <ambientLight intensity={0.6} />
