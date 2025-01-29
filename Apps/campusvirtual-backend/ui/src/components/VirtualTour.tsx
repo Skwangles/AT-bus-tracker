@@ -46,6 +46,7 @@ const VirtualTour: React.FC = () => {
   const [floorWideNeighbours, setFloorWideNeighbours] = useState<
     NeighbourData[]
   >([])
+  const [hasImage, setHasImage] = useState(false)
   const [locationGroup, setLocationGroup] = useState<string>('')
   const [highlightedPath, setHighlightedPath] = useState<number[]>([])
   const [allSearchableLocations, setAllSearchableLocations] = useState<Label[]>(
@@ -269,6 +270,8 @@ const VirtualTour: React.FC = () => {
           setCloseDrawer={setCloseDrawer}
           cameraRotation={camRotation}
           referenceNode={referenceNode}
+          hasImage={hasImage}
+          setHasImage={setHasImage}
         />
       )}
 
@@ -314,39 +317,34 @@ const VirtualTour: React.FC = () => {
 
       {isMobile && showMap && (
         <button
-          className="fixed top-4 left-4 z-[1001] bg-white/90 hover:bg-white rounded-full p-3 shadow-lg flex items-center justify-center"
+          className="fixed top-4 left-4 z-[1001] bg-white/90 enabled:hover:bg-white rounded-full p-3 shadow-lg flex items-center justify-center disabled:pointer-events-none"
+          disabled={!hasImage}
           onClick={() => setCloseDrawer(true)}
         >
-          <FeatherMap className="w-5 h-5" color="black" />
+          <FeatherMap
+            className="w-5 h-5"
+            color={hasImage ? 'black' : '#A9A9A9'}
+          />
         </button>
       )}
 
       {showMap && (
         <button
           className={`
-            fixed z-[1001] bg-white/90 hover:bg-white rounded-full p-3 shadow-lg 
-            flex items-center justify-center transition-all
+            fixed z-[1001] bg-white/90 enabled:hover:bg-white rounded-full p-3 shadow-lg 
+            flex items-center justify-center enabled:transition-all disabled:pointer-events-none
             ${isMobile ? 'top-4 left-4' : 'top-4 left-4'}
           `}
+          disabled={!hasImage}
           onClick={() => setCloseDrawer(!closeDrawer)}
           aria-label={closeDrawer ? 'Close map' : 'Open map'}
         >
-          <FeatherMap className="w-5 h-5" aria-hidden="true" color="black" />
+          <FeatherMap
+            className="w-5 h-5"
+            aria-hidden="true"
+            color={hasImage ? 'black' : '#A9A9A9'}
+          />
         </button>
-      )}
-
-      {showMap && (
-        <Map
-          floorName={locationGroup}
-          setID={setCurrentId}
-          currentId={currentId}
-          highlightedPath={highlightedPath}
-          isMobile={isMobile}
-          closeDrawer={closeDrawer}
-          setCloseDrawer={setCloseDrawer}
-          cameraRotation={camRotation}
-          referenceNode={referenceNode}
-        />
       )}
 
       <ToastContainer

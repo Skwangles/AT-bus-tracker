@@ -41,6 +41,8 @@ interface MapProps {
   setCloseDrawer: (value: boolean) => void
   cameraRotation: { yaw: number; pitch: number }
   referenceNode: { id: string; targetYaw: number } | null
+  hasImage: boolean
+  setHasImage: (value: boolean) => void
 }
 
 const Map: React.FC<MapProps> = ({
@@ -53,11 +55,12 @@ const Map: React.FC<MapProps> = ({
   setCloseDrawer,
   cameraRotation,
   referenceNode,
+  setHasImage,
+  hasImage,
 }) => {
   const [nodes, setNodes] = useState<Node[]>([])
   const [edges, setEdges] = useState<Edge[]>([])
   const [mapNode, setMapNode] = useState<Node | null>(null)
-  const [hasImage, setHasImage] = useState<boolean>(false)
   const [stageWidth, setStageWidth] = useState<number>(800)
   const [stageHeight, setStageHeight] = useState<number>(800)
 
@@ -79,6 +82,12 @@ const Map: React.FC<MapProps> = ({
   }, [currentId, nodes, floorName])
 
   useEffect(() => {
+    if (!floorName || floorName == '') {
+      setHasImage(false)
+      setNodes([])
+      setEdges([])
+    }
+
     const fetchFloorplanData = async () => {
       try {
         const response = await axios.get<{
@@ -99,6 +108,9 @@ const Map: React.FC<MapProps> = ({
           !response.data.has_image
         ) {
           console.error('No data returned from floorplan', floorName)
+          setHasImage(false)
+          setNodes([])
+          setEdges([])
           return
         }
         setHasImage(String(response.data.has_image) === 'true')
@@ -116,6 +128,9 @@ const Map: React.FC<MapProps> = ({
         )
       } catch (error) {
         console.error('Error fetching floorplan data:', error)
+        setHasImage(false)
+        setNodes([])
+        setEdges([])
       }
     }
 
