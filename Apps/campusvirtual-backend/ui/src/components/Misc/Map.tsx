@@ -9,15 +9,15 @@ import {
   MAP_LINE_HIGHLIGHT_COLOUR,
   MAP_LINE_WIDTH,
   MAX_MAP_HEIGHT_PERCENT,
-} from '../consts'
-import '../css/Map.css'
+} from '../../consts'
+import '../../css/Map.css'
 import axios from 'axios'
 import useImage from 'use-image'
 
 // Import the person image
-import personImgPng from '../assets/person.png'
-import highlightedDoorImgPng from '../assets/Door.png'
-import doorImageSvg from '../assets/Door.svg'
+import personImgPng from '../../assets/person.png'
+import highlightedDoorImgPng from '../../assets/Door.png'
+import doorImageSvg from '../../assets/Door.svg'
 
 interface Node {
   id: string
@@ -129,7 +129,7 @@ const Map: React.FC<MapProps> = ({
         MAX_MAP_HEIGHT_PERCENT * window.innerHeight,
         window.innerHeight
       )
-      const maxWidth = window.innerWidth
+      const maxWidth = window.innerWidth * 0.9
 
       let width = maxHeight * aspectRatio
       let height = maxHeight
@@ -137,7 +137,7 @@ const Map: React.FC<MapProps> = ({
       // If width exceeds maxWidth, scale both dimensions down
       if (width > maxWidth) {
         width = maxWidth
-        height = width / aspectRatio
+        height = maxWidth / aspectRatio
       }
 
       setStageWidth(width)
@@ -190,14 +190,6 @@ const Map: React.FC<MapProps> = ({
     const worldRotationOffset =
       (referenceNode.targetYaw - cameraRotation.yaw) % (2 * Math.PI)
 
-    // Adjust map angle by the world rotation difference
-    console.log(
-      'DIFF',
-      currentNode,
-      refNode,
-      mapAngleFromAxis,
-      worldRotationOffset
-    )
     return mapAngleFromAxis - worldRotationOffset
   }
 
@@ -213,7 +205,7 @@ const Map: React.FC<MapProps> = ({
       `}
     >
       <button
-        className="absolute top-4 right-4 bg-white/90 hover:bg-white rounded-full p-3 shadow-lg z-1001 flex items-center justify-center transition-all"
+        className="absolute top-4 right-4 bg-white/90 hover:bg-white rounded-full p-3 shadow-lg z-[1001] flex items-center justify-center transition-all"
         onClick={() => setCloseDrawer(false)}
         aria-label="Close map"
       >
