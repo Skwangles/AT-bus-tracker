@@ -112,7 +112,7 @@ const PointControls = ({
           onClick={async () => {
             const id2 = Number(connectId)
             console.log('Connecting to:', id2)
-            if (!id2 || isNaN(id2)) return
+            if (isNaN(id2)) return
 
             const result = await axios.post(
               `${API_PREFIX}/api/v1/point/${id}/connect/${id2}`
@@ -143,7 +143,7 @@ const PointControls = ({
           onClick={async () => {
             const id2 = Number(disconnectId)
             console.log('Disconnecting from:', id2)
-            if (!id2 || isNaN(id2)) return
+            if (isNaN(id2)) return
 
             const result = await axios.delete(
               `${API_PREFIX}/api/v1/point/${id}/connect/${id2}`

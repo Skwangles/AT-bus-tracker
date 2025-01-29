@@ -64,7 +64,7 @@ export default async function initDB(quitIfTablesExist = false) {
       }
 
       const success = await insertLocationIntoImages(location)
-      if (!success) throw new Error(`Rollback -Failed to insert location ${location} into images!`)
+      if (!success) throw new Error(`Rollback - Failed to insert location ${location} into images!`)
     }
 
     await writeDB("COMMIT;")
@@ -98,12 +98,12 @@ async function insertPointOnMap(location: string, keyframe_id: number, type: num
     console.error("Location is too long.")
     return false;
   }
-  if (!keyframe_id || isNaN(Number(keyframe_id))) {
-    console.error("Keyframe ID is invalid.")
+  if (isNaN(Number(keyframe_id))) {
+    console.error("Keyframe ID is invalid:" + keyframe_id)
     return false;
   }
-  if (!type || isNaN(Number(type))) {
-    console.error("Type is invalid.")
+  if (isNaN(Number(type))) {
+    console.error("Type is invalid:" + type)
     return false;
   }
 
@@ -118,7 +118,8 @@ async function insertPointOnMap(location: string, keyframe_id: number, type: num
 async function insertLocationIntoImages(location: string) {
   if (!location || location.length > REASONABLE_MAX_STRING_SIZE) throw new Error("Invalid Location")
 
-  return await writeDB(`INSERT OR IGNORE INTO floorplan_images (location) VALUES (?);`, [location])
+  await writeDB(`INSERT OR IGNORE INTO floorplan_images (location) VALUES (?);`, [location])
+  return true; // IGNORE is acceptable
 }
 
 /**

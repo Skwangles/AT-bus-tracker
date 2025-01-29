@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
-import { USE_TABLE_PREFIX, TABLE_PREFIX, REASONABLE_MAX_STRING_SIZE } from "../consts";
+import { USE_TABLE_PREFIX, TABLE_PREFIX, REASONABLE_MAX_STRING_SIZE, COORDS_TO_METRES } from "../consts";
 import { readDB } from "../db";
 import { searchNeighbour } from "../logic/neighbourSearch";
 import { aStarPathfinding } from "../logic/pathfinding";
-import { BlobArrayToMatrix } from "../logic/utils";
+import { BlobArrayToMatrix, convertToUICoordinateScale } from "../logic/utils";
 
 export async function pathfindFromPointId(req: Request, res: Response) {
   const point = Number(req.params.id)
@@ -59,7 +59,7 @@ export async function findNeigboursFromPointId(req: Request, res: Response) {
 
 export async function getPointInfoFromId(req: Request, res: Response) {
   const id = Number(req.params.id)
-  if (!id || isNaN(id)) {
+  if (isNaN(id)) {
     res.status(400).send("Non-number point ID passed").end()
     return
   }
@@ -68,7 +68,7 @@ export async function getPointInfoFromId(req: Request, res: Response) {
   console.log("Point Data: ", pointData)
   if (pointData && 'pose' in pointData) {
     console.log("Point: ", pointData);
-    res.json({ ...pointData, pose: BlobArrayToMatrix(pointData.pose) })
+    res.json(convertToUICoordinateScale({ ...pointData, pose: BlobArrayToMatrix(pointData.pose) }))
   }
   else {
     res.status(400).send("Point ID given does not exist!").end()

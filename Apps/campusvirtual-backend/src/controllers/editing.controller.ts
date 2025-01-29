@@ -72,7 +72,7 @@ export async function addLabelToMapPoint(req: Request, res: Response) {
 
 export async function deleteLabel(req: Request, res: Response) {
   const id = Number(req.params.id);
-  if (!id || isNaN(id)) {
+  if (isNaN(id)) {
     res.status(400).send("Invalid Arguments").end();
     return;
   }
@@ -91,7 +91,7 @@ export async function connectTwoPoints(req: Request, res: Response) {
   const id1 = Number(req.params.id1);
   const id2 = Number(req.params.id2);
 
-  if (!id1 || !id2 || isNaN(id1) || isNaN(id2)) {
+  if (isNaN(id1) || isNaN(id2)) {
     res.status(400).send("Invalid Arguments").end();
     return;
   }
