@@ -303,7 +303,7 @@ const VirtualTour: React.FC = () => {
           className="fixed top-4 left-4 z-[1001] bg-white/90 hover:bg-white rounded-full p-3 shadow-lg flex items-center justify-center"
           onClick={() => setCloseDrawer(true)}
         >
-          <FeatherMap className="w-5 h-5" />
+          <FeatherMap className="w-5 h-5" color="black" />
         </button>
       )}
 
@@ -317,7 +317,7 @@ const VirtualTour: React.FC = () => {
           onClick={() => setCloseDrawer(!closeDrawer)}
           aria-label={closeDrawer ? 'Close map' : 'Open map'}
         >
-          <FeatherMap className="w-5 h-5" aria-hidden="true" />
+          <FeatherMap className="w-5 h-5" aria-hidden="true" color="black" />
         </button>
       )}
 

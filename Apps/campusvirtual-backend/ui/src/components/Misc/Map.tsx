@@ -209,7 +209,7 @@ const Map: React.FC<MapProps> = ({
         onClick={() => setCloseDrawer(false)}
         aria-label="Close map"
       >
-        <X className="w-5 h-5" aria-hidden="true" />
+        <X className="w-5 h-5" aria-hidden="true" color="black" />
       </button>
 
       <div
