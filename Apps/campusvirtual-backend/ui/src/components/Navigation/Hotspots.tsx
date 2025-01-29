@@ -1,8 +1,6 @@
 import * as THREE from 'three'
 import { useRef, useState } from 'react'
 import {
-  COORDS_TO_METRES,
-  COORDS_TO_METRES_FOR_SPHERES,
   HOTSPOT_COLOUR,
   HOTSPOT_HIGHLIGHTED,
   HOTSPOT_OUTLINE,
