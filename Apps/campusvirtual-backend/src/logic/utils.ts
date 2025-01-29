@@ -195,3 +195,12 @@ export function calculatePositionFromMatrix(
     position_wc.z * COORDS_TO_METRES,
   ];
 }
+
+export function convertToUICoordinateScale(node: { x_trans: number, y_trans: number, z_trans: number }) {
+  // return node
+  if (!node || !node.x_trans || !node.y_trans || !node.z_trans) {
+    return node;
+  }
+  const newNode = { ...node, x_trans: Number(node.x_trans) * Number(COORDS_TO_METRES), y_trans: Number(node.y_trans) * Number(COORDS_TO_METRES), z_trans: Number(node.z_trans) * Number(COORDS_TO_METRES) };
+  return newNode
+}

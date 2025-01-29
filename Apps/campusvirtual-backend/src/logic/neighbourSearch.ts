@@ -1,7 +1,7 @@
 import { Request, Response } from 'express'
 import { COORDS_TO_METRES, EdgeType, NEIGHBOURS_INCLUDES_PROXIMITY, TABLE_PREFIX, USE_TABLE_PREFIX } from '../consts';
 import { readDB } from '../db';
-import { BlobArrayToMatrix } from './utils';
+import { BlobArrayToMatrix, convertToUICoordinateScale } from './utils';
 
 export async function searchNeighbour(mainPointId: number, distanceThreshold: number, yDistThresh: number, currentPoint: { x_trans: any; y_trans: any; z_trans: any; }) {
   // Used BFS to find all points down the graph within a range
@@ -94,5 +94,6 @@ export async function searchNeighbour(mainPointId: number, distanceThreshold: nu
     }
   }
 
-  return output
+  // Finally, scale the points to the front-end's coordinate scale
+  return output.map(neighbour => convertToUICoordinateScale(neighbour))
 }
