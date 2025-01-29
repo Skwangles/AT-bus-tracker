@@ -35,7 +35,6 @@ export async function getAllSearchableLabels(req: Request, res: Response) {
     }
 
     if (!RESERVED_START_OF_LABELS.some(reserved_string => labelString.startsWith(reserved_string))) {
-      console.log(labelString, "doesnt containt reserved string")
       return { query: label.label, group: label.location.trim(), label: labelString }
     }
 
