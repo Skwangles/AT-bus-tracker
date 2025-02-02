@@ -91,35 +91,7 @@ export async function getImageByTs(req: Request, res: Response): Promise<void> {
   }
 }
 
-export async function getLocationGroupImageByName(req: Request, res: Response) {
 
-  const name = String(req.params.name);
-  if (!name || name == "" || name.length > REASONABLE_MAX_STRING_SIZE) {
-    res.status(400).send("Invalid Arguments")
-    return
-  }
-
-  const result = await readDB("SELECT path FROM floorplan_images WHERE location = ? LIMIT 1;", [name], true)
-  if (!result) {
-    res.sendStatus(404);
-    return;
-  }
-
-  const pathString = path.join(FLOORPLAN_IMG_DIR, String(result.path));
-
-  // Check the path is valid and isn't a directory traversal attempt
-  if (!pathString && path.dirname(pathString) == FLOORPLAN_IMG_DIR && path.basename(pathString) != "") {
-    res.status(404).send("Invalid Arguments")
-    return
-  }
-  else if (fs.existsSync(pathString) && fs.statSync(pathString).isFile()) {
-    res.sendFile(pathString)
-    return
-  }
-  else {
-    res.status(404).send("Invalid Arguments");
-  }
-}
 
 export async function getImageById(req: Request, res: Response) {
   const id = Number(req.params.id);

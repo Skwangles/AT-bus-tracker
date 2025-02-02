@@ -1,6 +1,5 @@
 import { Router } from "express";
-import { getLocationGroupImageByName } from "../controllers/image.controller";
-import { getMapPoints, getAllLocationGroups } from "../controllers/map.controller";
+import { getMapPoints, getAllLocationGroups, getLocationGroupImageByName } from "../controllers/map.controller";
 
 const app = Router();
 

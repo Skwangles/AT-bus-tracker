@@ -1,4 +1,6 @@
-import { USE_TABLE_PREFIX, TABLE_PREFIX } from "../consts";
+import path from "node:path";
+import fs from 'fs'
+import { USE_TABLE_PREFIX, TABLE_PREFIX, FLOORPLAN_IMG_DIR, REASONABLE_MAX_STRING_SIZE } from "../consts";
 import { readDB } from "../db";
 import { Request, Response } from "express";
 
@@ -24,4 +26,39 @@ export async function getMapPoints(req: Request, res: Response) {
 export async function getAllLocationGroups(req: Request, res: Response) {
   const floorplanResults = await readDB("SELECT DISTINCT location FROM floorplan_images;")
   res.json(floorplanResults.map((val: { location: string }) => val.location));
+}
+
+export async function getLocationGroupImageByName(req: Request, res: Response) {
+
+  const name = String(req.params.name);
+  if (name == null || name == "" || name.length > REASONABLE_MAX_STRING_SIZE) {
+    console.error("[GetLocGroupImgByName] Invalid name passed:", name)
+    res.status(400).send("Invalid Arguments")
+    return
+  }
+
+  const result = await readDB("SELECT path FROM floorplan_images WHERE location = ? LIMIT 1;", [name], true)
+  if (!result) {
+    console.error("[GetLocGroupImgByName] Could not find path from location name:", name)
+    res.sendStatus(404).send("Invalid uments");
+    return;
+  }
+
+  const pathString = path.join(FLOORPLAN_IMG_DIR, String(result.path));
+
+  // Check the path is valid and isn't a directory traversal attempt
+  if (!pathString && path.dirname(pathString) == FLOORPLAN_IMG_DIR && path.basename(pathString) != "") {
+    console.error("[GetLocGroupImgByName] Invalid path string:", pathString, "for name:", name)
+    res.status(404).send("Invalid Arguments")
+    return
+  }
+  else if (fs.existsSync(pathString) && fs.statSync(pathString).isFile()) {
+
+    res.sendFile(pathString)
+    return
+  }
+  else {
+    console.error("[GetLocGroupImgByName] File does not exist:", pathString, "for name:", name)
+    res.status(404).send("Invalid Arguments");
+  }
 }
