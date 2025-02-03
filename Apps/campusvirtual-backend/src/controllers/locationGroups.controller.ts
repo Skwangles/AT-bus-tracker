@@ -2,6 +2,7 @@ import { USE_TABLE_PREFIX, TABLE_PREFIX, REASONABLE_MAX_STRING_SIZE, RESERVED_ST
 import { readDB } from "../db"
 import { Request, Response } from "express"
 import { convertToUICoordinateScale } from "../logic/utils"
+import logger from "../logger"
 
 interface Label {
   query: string, // query to search the database
@@ -47,7 +48,7 @@ export async function getAllSearchableLabels(req: Request, res: Response) {
       const splitElevator = strippedElevator.split(",")
 
       if (splitElevator.length == 0) {
-        console.log(`Error parsing special label ${label.label}`)
+        logger.error(`[getAllSearchableLabels] Error parsing special label ${label.label}`)
         return null
       }
 
@@ -78,9 +79,9 @@ export async function getAllSearchableLabels(req: Request, res: Response) {
 
 export async function getPointWithLocationGroupOrLabelName(req: Request, res: Response) {
   const name = String(req.params.floor).trim()
-  console.log("Calling with", name)
 
   if (!name || name == "" || name.length > REASONABLE_MAX_STRING_SIZE) {
+    logger.warn("[GetPointWithLocGroupOrLabelName] Invalid name:", name)
     res.status(400).send("Invalid Arguments").end()
     return
   }
@@ -89,7 +90,7 @@ export async function getPointWithLocationGroupOrLabelName(req: Request, res: Re
   const nodeWithSpecialLabel = await readDB(`SELECT n.keyframe_id, s.label FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}special_labels s ON s.keyframe_id = n.keyframe_id WHERE s.label = ? LIMIT 1`, [name], true)
 
   if (nodeWithSpecialLabel) {
-    console.log("Found a label", nodeWithSpecialLabel)
+    logger.debug("Found a label", nodeWithSpecialLabel)
     res.json(nodeWithSpecialLabel)
     return
   }
@@ -100,7 +101,7 @@ export async function getPointWithLocationGroupOrLabelName(req: Request, res: Re
     return
   }
   else {
-    console.log("Could not find")
+    logger.warn("[GetPointWithLocGroupOrLabelName] Could not find with floorname:", name)
     res.status(404).send("Could not find any nodes with that location").end();
     return
   }

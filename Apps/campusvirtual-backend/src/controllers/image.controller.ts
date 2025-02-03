@@ -1,10 +1,11 @@
 import { Request, Response } from "express";
 import path from "path";
 import sharp from "sharp";
-import { SEND_TEST_IMAGE, KEYFRAME_IMG_DIR, KEYFRAME_IMG_EXTENSION, REASONABLE_MAX_STRING_SIZE, FLOORPLAN_IMG_DIR } from "../consts";
+import { SEND_TEST_IMAGE, KEYFRAME_IMG_DIR, KEYFRAME_IMG_EXTENSION, REASONABLE_MAX_STRING_SIZE, FLOORPLAN_IMG_DIR, USE_TABLE_PREFIX, TABLE_PREFIX } from "../consts";
 import fs from "fs"
 import { readDB, writeDB } from "../db";
 import multer from "multer";
+import logger from "../logger";
 
 const RESOLUTION_LEVELS = {
   // Aspect ratio of Equirectangular images is 2:1
@@ -50,25 +51,28 @@ export const uploadFloorplanImageMiddleware = multer({ storage });
 export async function getImageByTs(req: Request, res: Response): Promise<void> {
   const ts = Number(req.params.ts);
   if (isNaN(ts)) {
-    res.status(400).send("Image id was not a valid image ID")
+    logger.warn("[getImageByTs] invalid ts (note, may be called via getImgbyId):", ts)
+    res.status(400).send("Invalid Arguments")
     return;
   }
 
   const resolution = req.params.resolution as ResolutionLevel;
   if (!(resolution in RESOLUTION_LEVELS)) {
-    res.status(400).send("Invalid resolution level. Must be one of: " + Object.keys(RESOLUTION_LEVELS).join(", "));
+    logger.warn("[getImageByTs] invalid res (note, may be called via getImgbyId):", res, "not in:", Object.keys(RESOLUTION_LEVELS).join(", "))
+    res.status(400).send("Invalid Arguments");
     return;
   }
 
   if (SEND_TEST_IMAGE) {
+    logger.debug("[getImageByTs] Sending test image enabled!")
     res.sendFile(path.join(KEYFRAME_IMG_DIR, "test.jpg"))
     return;
   }
 
   const imgPath = path.join(KEYFRAME_IMG_DIR, ts.toFixed(5) + KEYFRAME_IMG_EXTENSION)
   if (!fs.existsSync(imgPath)) {
-    console.error("Cannot find image file:", imgPath)
-    res.status(404).end()
+    logger.error("[getImageByTs] Cannot find image file:", imgPath)
+    res.status(404).send("Image does not exist").end()
     return;
   }
 
@@ -86,8 +90,8 @@ export async function getImageByTs(req: Request, res: Response): Promise<void> {
     res.set('Content-Type', 'image/png')
     image.pipe(res)
   } catch (error) {
-    console.error('Error processing image:', error)
-    res.status(500).send('Error processing image')
+    logger.error('[getImageByTs] Internal error - Error processing image:', error)
+    res.status(500).send('Could not process image, please try again later')
   }
 }
 
@@ -95,16 +99,22 @@ export async function getImageByTs(req: Request, res: Response): Promise<void> {
 
 export async function getImageById(req: Request, res: Response) {
   const id = Number(req.params.id);
+  if (isNaN(id)) {
+    logger.warn("[GetImageById] invalid ID argument", id)
+    res.status(400).send("Invalid Arguments")
+    return
+  }
 
-  // Using FROM nodes because its the superset
-  const result = await readDB("SELECT ts FROM nodes WHERE keyframe_id = ? LIMIT 1", [id], true)
+  const result = await readDB(`SELECT ts FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes WHERE keyframe_id = ? LIMIT 1`, [id], true)
   if (!result) {
+    logger.warn("[GetImageById] - Could not find node with id: ", id)
     res.status(404).send("Invalid Arguments");
     return;
   }
 
   const ts = Number(result.ts).toFixed(5);
   if (isNaN(Number(result.ts))) {
+    logger.warn("[GetImageById] Invalid Timestamp from TS:", ts, "from id:", id)
     res.status(400).send("Invalid Arguments")
     return;
   }
@@ -118,6 +128,7 @@ export async function updateFloorplanImage(req: Request, res: Response) {
     const { name } = req.params;
     const file = req.file;
     if (!file) {
+      logger.error("[updateFloorplanImage] no image provided for name:", name)
       res.status(400).send("No file uploaded.");
       return
     }
@@ -131,7 +142,7 @@ export async function updateFloorplanImage(req: Request, res: Response) {
 
     res.send("File uploaded and path updated successfully.");
   } catch (error) {
-    console.error("Error handling file upload:", error);
-    res.status(500).send("Internal server error.");
+    logger.error("[updateFloorplanImage] Error handling file upload:", error);
+    res.status(500).send("Could not upload image");
   }
 }

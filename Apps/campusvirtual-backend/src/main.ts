@@ -8,6 +8,7 @@ import pointsRoutes from './routes/points.routes'
 import imageRoutes from './routes/image.routes'
 import locationGroupRoutes from './routes/locationGroups.routes'
 import mapRoutes from './routes/map.routes'
+import logger from './logger'
 
 const app = express()
 
@@ -27,5 +28,5 @@ app.use(authoringRoutes)
 
 app.listen(PORT, () => {
   initData(Boolean(SKIP_IF_MAP_ALREADY_CONFIGED))
-  console.log(`Server running on port ${PORT}`)
+  logger.info(`Server running on port ${PORT}`)
 })

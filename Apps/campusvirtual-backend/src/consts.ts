@@ -1,10 +1,14 @@
 import fs from 'node:fs'
 import dotenv from 'dotenv'
+import logger from './logger';
 dotenv.config()
 
 export const BORDERING_FLOOR_POINT_DEFAULT_TYPE = 50;
 export const FLOOR_POINT_DEFAULT_TYPE = 0;
 export const REASONABLE_MAX_STRING_SIZE = 50;
+export const REASONABLE_MAX_Y_DIST_THRESHOLD = 10
+export const REASONABLE_MAX_XZ_DIST_THRESHOLD = 20
+
 export const RESERVED_START_OF_LABELS = ["!!anchor", "!!elevator", "!!toilet", "$$"]
 
 export const PORT = isNaN(Number(process.env.CV_SERVER_PORT)) ? Number(3005) : Number(process.env.CV_SERVER_PORT);
@@ -35,6 +39,6 @@ export const USE_TABLE_PREFIX: boolean = process.env.CV_SERVER_USE_TABLE_PREFIX 
 export const TABLE_PREFIX = process.env.CV_SERVER_TABLE_PREFIX ?? "refined_";
 export const SKIP_IF_MAP_ALREADY_CONFIGED: boolean = process.env.CV_SERVER_DONT_OVERWRITE_MAP_POINTS === 'true';
 
-console.debug("DB File:", SQLITE_DB_DIR)
-console.debug("DB files in dir:", fs.readdirSync(SQLITE_DB_DIR))
-console.debug("Number of images in image dir:", fs.readdirSync(KEYFRAME_IMG_DIR).length)
+logger.debug("DB File:", SQLITE_DB_DIR)
+logger.debug("DB files in dir:", fs.readdirSync(SQLITE_DB_DIR))
+logger.debug("Number of images in image dir:", fs.readdirSync(KEYFRAME_IMG_DIR).length)
