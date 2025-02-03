@@ -37,7 +37,7 @@ export const ENABLE_AUTHORING_PAGE: boolean = process.env.CV_SERVER_ENABLE_AUTHO
 
 export const USE_TABLE_PREFIX: boolean = process.env.CV_SERVER_USE_TABLE_PREFIX === 'true'; // false = unrefined, true = refined (e.g. use prefix to work out the DB filename to use/load)
 export const TABLE_PREFIX = process.env.CV_SERVER_TABLE_PREFIX ?? "refined_";
-export const SKIP_IF_MAP_ALREADY_CONFIGED: boolean = process.env.CV_SERVER_DONT_OVERWRITE_MAP_POINTS === 'true';
+export const SKIP_IF_MAP_ALREADY_CONFIGED: boolean = process.env.CV_SERVER_DONT_OVERWRITE_MAP_POINTS === 'true' ?? true;
 
 logger.debug("DB File:", SQLITE_DB_DIR)
 logger.debug("DB files in dir:", fs.readdirSync(SQLITE_DB_DIR))

@@ -3,9 +3,6 @@ import winston from "winston";
 
 const logger = winston.createLogger({
   transports: [
-    // Docker logs and normal developer view
-
-
     // Just errors
     new winston.transports.File({ filename: 'error.log', level: 'error' }),
 

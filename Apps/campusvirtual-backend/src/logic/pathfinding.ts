@@ -1,28 +1,10 @@
 import { readDB } from "../db";
 
 import { MinQueue } from 'heapify';
-import Pool from "pg-pool";
 import { getNeighbours, getNodePosition } from "./utils";
-import { Client } from "pg";
 import { USE_TABLE_PREFIX, TABLE_PREFIX, EdgeType } from "../consts";
+import logger from "../logger";
 
-interface Node {
-  keyframe_id: number;
-  x_trans: number | null;
-  y_trans: number | null;
-  z_trans: number | null;
-}
-
-interface Edge {
-  id: number;
-  keyframe_id0: number;
-  keyframe_id1: number;
-}
-
-interface GraphNode {
-  id: number;
-  neighbors: Map<number, number>; // Map<neighbor_id, distance>
-}
 
 // Function to calculate Euclidean distance between two nodes
 function calculateDistance(nodeA: [number, number, number], nodeB: [number, number, number]): number {
@@ -33,15 +15,6 @@ function calculateDistance(nodeA: [number, number, number], nodeB: [number, numb
 }
 
 
-async function fetchNode(nodeId: number): Promise<Node | null> {
-  const result = await readDB(`SELECT id, x_trans, y_trans, z_trans FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes WHERE id = $1`, [nodeId]);
-  return result.length > 0 ? result[0] as Node : null;
-}
-
-async function fetchEdges(nodeId: number): Promise<Edge[]> {
-  const result = await readDB(`SELECT keyframe_id0, keyframe_id1 FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}edges WHERE keyframe_id0 = $1 OR keyframe_id1 = $1 AND type >= ${EdgeType.Normal}`, [nodeId, nodeId]);
-  return result as Edge[];
-}
 
 /**
  * 
@@ -56,6 +29,7 @@ export async function aStarPathfinding(
   endId: number,
   firstWith: string | null = null // Allow shortcircuit if it finds a point earlier that meets criteria
 ): Promise<number[]> {
+  logger.verbose("[aStartPathfinding] Searching for path between:", startId, "and endId:", endId)
   const openSet = new MinQueue(500);
   const cameFrom = new Map<number, number>();
   const gScore = new Map<number, number>();
@@ -72,7 +46,8 @@ export async function aStarPathfinding(
       JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations n1 ON n.keyframe_id = n1.keyframe_id 
       WHERE n.keyframe_id = ?`, [currentId]))
     if (currentNodeData.length == 0) {
-      return []; // An error occured, fail quickly
+      logger.error("[aStarPathfinding] Could not fetch next Id's information:", currentId, "result:", currentNodeData)
+      return []; // An error occurred, fail quickly
     }
     const currentNode = currentNodeData[0]
 
@@ -84,6 +59,7 @@ export async function aStarPathfinding(
         path.push(node);
         node = cameFrom.get(node)!;
       }
+      logger.debug("[aStarPathfinding] Found path from starId:", startId, "to:", endId, "steps:", path.length)
       return path.reverse();
     }
 
@@ -115,7 +91,7 @@ export async function aStarPathfinding(
       }
     }
   }
-
+  logger.warn("[aStartPathfinding] Found no path from startId:", startId, "to:", endId)
   return []; // No path was found
 }
 

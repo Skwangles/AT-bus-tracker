@@ -1,8 +1,9 @@
 import { writeDB, readDB } from '../db'
 import { FLOOR_POINT_DEFAULT_TYPE, BORDERING_FLOOR_POINT_DEFAULT_TYPE, TABLE_PREFIX, USE_TABLE_PREFIX, REASONABLE_MAX_STRING_SIZE } from '../consts'
+import logger from '../logger';
 export default async function initDB(quitIfTablesExist = false) {
   try {
-    console.debug("Initalising data...")
+    logger.debug("[initMap] Initalising data...")
     await writeDB(`CREATE TABLE floorplan_images (
       location TEXT PRIMARY KEY,
       path TEXT DEFAULT ''
@@ -19,9 +20,9 @@ export default async function initDB(quitIfTablesExist = false) {
   }
   catch (e) {
 
-    console.info("Already built floorplan_images and floorplan_points!")
+    logger.info("[initMap] Already built floorplan_images and floorplan_points!")
     if (quitIfTablesExist) {
-      console.info("Skipping map data init!")
+      logger.info("[initMap] Skipping map data init!")
       return;
     }
   }
@@ -30,12 +31,12 @@ export default async function initDB(quitIfTablesExist = false) {
     // Do by location to avoid causing a possible crash/memory overload
     const locationsResult = await readDB(`SELECT DISTINCT location FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations;`)
     const locations = locationsResult.map((location: { location: string }) => location.location);
-    console.debug("Locations:", locations)
+    logger.debug("[initMap] Locations:", locations)
 
     for (const location of locations) {
       const nodes = await getFloorNodes(location)
       const borderNodes = await getBorderNodes(location);
-      console.info(`Location ${location} - Nodes: ${nodes.length}, Border Nodes: ${borderNodes.length}`)
+      logger.debug(`[initMap] Location ${location} - Nodes: ${nodes.length}, Border Nodes: ${borderNodes.length}`)
 
       const combined_nodes = [...nodes, ...borderNodes]
 
@@ -53,26 +54,36 @@ export default async function initDB(quitIfTablesExist = false) {
         const initX = clampToPostive((node.x_trans - minX) / (maxX - minX))
         const initY = clampToPostive((node.z_trans - minZ) / (maxZ - minZ))
         const success = insertPointOnMap(location, node.keyframe_id, FLOOR_POINT_DEFAULT_TYPE, initX, initY)
-        if (!success) throw new Error(`Rollback - Failed to insert point ${node.keyframe_id} into map!`)
+        if (!success) {
+          logger.error("[initMap] Rolling back - Failed to insert point")
+          throw new Error(`Rollback - Failed to insert point ${node.keyframe_id} into map!`)
+        }
       }
 
       for (const border_node of borderNodes) {
         const initX = clampToPostive((border_node.x_trans - minX) / (maxX - minX))
         const initY = clampToPostive((border_node.z_trans - minZ) / (maxZ - minZ))
         const success = insertPointOnMap(location, border_node.keyframe_id, BORDERING_FLOOR_POINT_DEFAULT_TYPE, initX, initY)
-        if (!success) throw new Error(`Rollback - Failed to insert border point ${border_node.keyframe_id} into map!`)
+        if (!success) {
+          logger.error("[initMap] Rolling back - Failed to insert border point")
+          throw new Error(`Rollback - Failed to insert border point ${border_node.keyframe_id} into map!`)
+        }
       }
 
       const success = await insertLocationIntoImages(location)
-      if (!success) throw new Error(`Rollback - Failed to insert location ${location} into images!`)
+
+      if (!success) {
+        logger.error("[initMap] Rolling back - Failed to insert location into images")
+        throw new Error(`Rollback - Failed to insert location ${location} into images!`)
+      }
     }
 
     await writeDB("COMMIT;")
-    console.debug("Sucessfully initalised the data!")
+    logger.debug("[initMap] Sucessfully initalised the data!")
   }
   catch (e) {
     await writeDB("ROLLBACK;");
-    console.error("Data initialisation failed: ", e)
+    logger.error("[initMap] Data initialisation failed: ", e)
   }
 }
 
@@ -87,23 +98,23 @@ export default async function initDB(quitIfTablesExist = false) {
  */
 async function insertPointOnMap(location: string, keyframe_id: number, type: number, x: number, y: number) {
   if (isNaN(Number(x)) || isNaN(Number(y))) {
-    console.error("Invalid coordinates provided for point insertion.")
+    logger.error("[initMap - insertPointOnMap] Invalid coordinates provided for point insertion - x:", x, "y:", y)
     return false;
   }
   if (x < 0 || y < 0 || x > 1 || y > 1) {
-    console.error("Coordinates are out of the map range.")
+    logger.error("[initMap - insertPointOnMap] Coordinates are out of the map range - x:", x, "y:", y)
     return false;
   }
   if (!location || location.length > REASONABLE_MAX_STRING_SIZE) {
-    console.error("Location is too long.")
+    logger.error("[initMap - insertPointOnMap] Location is too long.")
     return false;
   }
   if (isNaN(Number(keyframe_id))) {
-    console.error("Keyframe ID is invalid:" + keyframe_id)
+    logger.error("[initMap - insertPointOnMap] Keyframe ID is invalid:" + keyframe_id)
     return false;
   }
   if (isNaN(Number(type))) {
-    console.error("Type is invalid:" + type)
+    logger.error("[initMap - insertPointOnMap] Type is invalid:" + type)
     return false;
   }
 
@@ -116,7 +127,10 @@ async function insertPointOnMap(location: string, keyframe_id: number, type: num
  * @returns 
  */
 async function insertLocationIntoImages(location: string) {
-  if (!location || location.length > REASONABLE_MAX_STRING_SIZE) throw new Error("Invalid Location")
+  if (!location || location.length > REASONABLE_MAX_STRING_SIZE) {
+    logger.error("[getLocationIntoImages] Invalid location: ", location)
+    throw new Error("Invalid Location")
+  }
 
   await writeDB(`INSERT OR IGNORE INTO floorplan_images (location) VALUES (?);`, [location])
   return true; // IGNORE is acceptable
@@ -128,7 +142,10 @@ async function insertLocationIntoImages(location: string) {
  * @returns 
  */
 async function getFloorNodes(location: string): Promise<Array<{ keyframe_id: number, location: string, x_trans: number, z_trans: number }>> {
-  if (!location || location.length > REASONABLE_MAX_STRING_SIZE) throw new Error("Invalid Location")
+  if (!location || location.length > REASONABLE_MAX_STRING_SIZE) {
+    logger.error("[getFloorNodes] Invalid location: ", location)
+    throw new Error("Invalid Location")
+  }
 
   const nodesResult = await readDB(`SELECT n.keyframe_id, l.location, n.x_trans, n.z_trans FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l ON l.keyframe_id = n.keyframe_id WHERE l.location = ?;`, [location])
   return nodesResult
@@ -140,7 +157,11 @@ async function getFloorNodes(location: string): Promise<Array<{ keyframe_id: num
  * @returns 
  */
 async function getBorderNodes(location: string): Promise<Array<{ keyframe_id: number, location: string, x_trans: number, z_trans: number }>> {
-  if (!location || location.length > REASONABLE_MAX_STRING_SIZE) throw new Error("Invalid Location")
+  location = String(location).trim()
+  if (location == null || location.length > REASONABLE_MAX_STRING_SIZE) {
+    logger.error("[getBorderNodes] Invalid location: ", location)
+    throw new Error("Invalid Location")
+  }
 
   const borderNodesResult = await readDB(`SELECT keyframe_id1 as keyframe_id, l2.location, n.x_trans, n.z_trans FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}edges e 
                     JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l 

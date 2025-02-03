@@ -2,6 +2,7 @@
 import { readDB, writeDB } from '../db';
 import { BORDERING_FLOOR_POINT_DEFAULT_TYPE, COORDS_TO_METRES, EdgeType, TABLE_PREFIX, USE_TABLE_PREFIX } from '../consts'
 import * as THREE from 'three'
+import logger from '../logger';
 // Helper function to get neighbours
 export async function getNeighbours(keyframeId: number): Promise<any[]> {
   const result = await readDB(
@@ -49,7 +50,7 @@ export async function replaceNode(keyframeId: number) {
   const changes = await writeDB("DELETE FROM floorplan_points WHERE keyframe_id = ? AND NOT EXISTS (SELECT * FROM floorplan_points WHERE keyframe_id = ? AND type >= ?);", [keyframeId, keyframeId, BORDERING_FLOOR_POINT_DEFAULT_TYPE]);
   if (changes == 0) {
     await writeDB("ROLLBACK;")
-    console.error("Tried to delete a border node - this will cause problems in other floors")
+    logger.warn("Tried to delete a border node - this will cause problems in other floors")
     return false;
   }
   await writeDB(
@@ -80,7 +81,7 @@ export async function connectNodes(keyframe_id0: number, keyframe_id1: number) {
     await writeDB("COMMIT;")
   }
   catch (e) {
-    console.error("Failed to connect two points" + e)
+    logger.warn("[connectNodes] Failed to connect two points - 1:", keyframe_id0, "2:", keyframe_id1, "error:", e)
     await writeDB("ROLLBACK;")
     return false;
   }
@@ -107,7 +108,7 @@ export function DbArrayToMatrix(array: string | number[]): number[] | null {
       arr = JSON.parse(array.replace('{', '[').replace('}', ']'))
     }
     catch (e) {
-      console.error('Failed to parse DbArrayToMatrix:', e)
+      logger.error('[DbArrayToMatrix] Failed to parse DbArrayToMatrix - array:', array, "error:", e)
       return null
     }
   }
@@ -129,7 +130,7 @@ export async function disconnectNodes(keyframe_id0: number, keyframe_id1: number
     await writeDB("COMMIT;")
   }
   catch (e) {
-    console.error("Failed to connect two points" + e)
+    logger.error("[disconnectNodes] Failed to connect two points - 1:", keyframe_id0, "2: ", keyframe_id1, "Error:", e)
     await writeDB("ROLLBACK;")
     return false;
   }
@@ -144,6 +145,7 @@ export async function getNodePosition(keyframeId: number, use_trans = true): Pro
     [keyframeId], true
   ) as any;
   if (!result) {
+    logger.warn("[getNodePosition] could not get node data for id:", keyframeId, "when using translation:", use_trans)
     return null;
   }
 
@@ -154,7 +156,7 @@ export async function getNodePosition(keyframeId: number, use_trans = true): Pro
       result.z_trans * COORDS_TO_METRES,
     ];
     if (!ret) {
-      console.error("Return result was Null of getNodePosition - using trans");
+      logger.error("[getNodePosition] Return result was Null of getNodePosition - using trans");
       return null;
     }
     return ret;
@@ -162,7 +164,7 @@ export async function getNodePosition(keyframeId: number, use_trans = true): Pro
 
   const ret = calculatePositionFromMatrix(BlobArrayToMatrix(result.pose) ?? []);
   if (!ret) {
-    console.error("Return result was Null of getNodePosition - using pose");
+    logger.error("[getNodePosition] Return result was Null of getNodePosition - using pose");
     return null;
   }
   return ret;
