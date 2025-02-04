@@ -25,9 +25,11 @@ ORIGINAL_DIR=$(pwd)
 # Check if the required inputs are empty
 [[ -z "$1" && -z "$CV_KEYFRAME_IMG_DIR" ]] && error_exit "Input directory is not provided as an argument or environment variable"
 [[ -z "$2" && -z "$CV_EXTRACT_USED_IMAGES_DIR" ]] && error_exit "Output directory is not provided as an argument or environment variable"
+[[ -z "$3" && ( -z "$CV_EXTRACT_IN_DB_NAME" || -z "$CV_DB_DIR" } ]] && error_exit "Input DB is not provided as an argument or environment variable"
 
 INPUT_DIR=${1:-$CV_KEYFRAME_IMG_DIR}
 OUTPUT_DIR=${2:-$CV_EXTRACT_USED_IMAGES_DIR}
+INPUT_DB=${3:-$($CV_DB_DIR/$CV_EXTRACT_IN_DB_NAME)}
 echo "Arg 1 - Input dir: $INPUT_DIR"
 echo "Arg 2 - Output dir: $OUTPUT_DIR"
 
@@ -43,5 +45,5 @@ fi
 cd "$CV_HOME_DIR/Apps/ImageSplitter" || error_exit "Failed to change directory to $CV_HOME_DIR/Apps/ImageSplitter"
 npm install || error_exit "npm install failed"
 npm run build || error_exit "npm run build failed"
-npm run start -- --input_dir="$INPUT_DIR" --output_dir="$OUTPUT_DIR" || error_exit "npm run start failed"
+npm run start -- --input_dir="$INPUT_DIR" --output_dir="$OUTPUT_DIR" --db="$INPUT_DB" || error_exit "npm run start failed"
 cd "$ORIGINAL_DIR" || error_exit "Failed to change back to original directory"
