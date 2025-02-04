@@ -11,10 +11,11 @@ const app = Router();
 if (ENABLE_AUTHORING_PAGE) {
   app.use(bodyParser.urlencoded({ extended: false, limit: "50mb" }));
   app.use(bodyParser.json({ limit: "50mb" }));
-  app.use(express.static(path.join(__dirname, "../authoring/dist")));
+  app.use(express.static(path.join(__dirname, "../../authoring/dist")));
 
   app.get("/authoring", function (req, res) {
-    res.sendFile(path.join(__dirname, "../authoring/dist", "index.html"));
+    console.log(__dirname)
+    res.sendFile(path.join(__dirname, "../../authoring/dist", "index.html"));
   });
 
   app.post("/api/v1/floorplans/:name/image", uploadFloorplanImageMiddleware.single("file"), updateFloorplanImage)
