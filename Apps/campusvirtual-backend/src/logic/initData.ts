@@ -20,7 +20,7 @@ export default async function initDB(quitIfTablesExist = false) {
   }
   catch (e) {
 
-    logger.info("[initMap] Already built floorplan_images and floorplan_points!")
+    logger.info(`[initMap] Already built floorplan_images and floorplan_points - Exception: ${e}`)
     if (quitIfTablesExist) {
       logger.info("[initMap] Skipping map data init!")
       return;
@@ -31,7 +31,7 @@ export default async function initDB(quitIfTablesExist = false) {
     // Do by location to avoid causing a possible crash/memory overload
     const locationsResult = await readDB(`SELECT DISTINCT location FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations;`)
     const locations = locationsResult.map((location: { location: string }) => location.location);
-    logger.debug("[initMap] Locations:", locations)
+    logger.debug(`[initMap] Locations: ${locations}`)
 
     for (const location of locations) {
       const nodes = await getFloorNodes(location)
@@ -83,7 +83,7 @@ export default async function initDB(quitIfTablesExist = false) {
   }
   catch (e) {
     await writeDB("ROLLBACK;");
-    logger.error("[initMap] Data initialisation failed: ", e)
+    logger.error(`[initMap] Data initialisation failed: ${e}`)
   }
 }
 
@@ -98,11 +98,11 @@ export default async function initDB(quitIfTablesExist = false) {
  */
 async function insertPointOnMap(location: string, keyframe_id: number, type: number, x: number, y: number) {
   if (isNaN(Number(x)) || isNaN(Number(y))) {
-    logger.error("[initMap - insertPointOnMap] Invalid coordinates provided for point insertion - x:", x, "y:", y)
+    logger.error(`[initMap - insertPointOnMap] Invalid coordinates provided for point insertion - x:${x} y:${y}`)
     return false;
   }
   if (x < 0 || y < 0 || x > 1 || y > 1) {
-    logger.error("[initMap - insertPointOnMap] Coordinates are out of the map range - x:", x, "y:", y)
+    logger.error(`[initMap - insertPointOnMap] Coordinates are out of the map range - x: ${x} y: ${y}`)
     return false;
   }
   if (!location || location.length > REASONABLE_MAX_STRING_SIZE) {
@@ -110,11 +110,11 @@ async function insertPointOnMap(location: string, keyframe_id: number, type: num
     return false;
   }
   if (isNaN(Number(keyframe_id))) {
-    logger.error("[initMap - insertPointOnMap] Keyframe ID is invalid:" + keyframe_id)
+    logger.error(`[initMap - insertPointOnMap] Keyframe ID is invalid: ${keyframe_id}`)
     return false;
   }
   if (isNaN(Number(type))) {
-    logger.error("[initMap - insertPointOnMap] Type is invalid:" + type)
+    logger.error(`[initMap - insertPointOnMap] Type is invalid: ${type}`)
     return false;
   }
 
@@ -128,7 +128,7 @@ async function insertPointOnMap(location: string, keyframe_id: number, type: num
  */
 async function insertLocationIntoImages(location: string) {
   if (!location || location.length > REASONABLE_MAX_STRING_SIZE) {
-    logger.error("[getLocationIntoImages] Invalid location: ", location)
+    logger.error(`[getLocationIntoImages] Invalid location: ${location}`)
     throw new Error("Invalid Location")
   }
 
@@ -143,7 +143,7 @@ async function insertLocationIntoImages(location: string) {
  */
 async function getFloorNodes(location: string): Promise<Array<{ keyframe_id: number, location: string, x_trans: number, z_trans: number }>> {
   if (!location || location.length > REASONABLE_MAX_STRING_SIZE) {
-    logger.error("[getFloorNodes] Invalid location: ", location)
+    logger.error(`[getFloorNodes] Invalid location: ${location}`)
     throw new Error("Invalid Location")
   }
 
@@ -159,7 +159,7 @@ async function getFloorNodes(location: string): Promise<Array<{ keyframe_id: num
 async function getBorderNodes(location: string): Promise<Array<{ keyframe_id: number, location: string, x_trans: number, z_trans: number }>> {
   location = String(location).trim()
   if (location == null || location.length > REASONABLE_MAX_STRING_SIZE) {
-    logger.error("[getBorderNodes] Invalid location: ", location)
+    logger.error(`[getBorderNodes] Invalid location: ${location}`)
     throw new Error("Invalid Location")
   }
 
