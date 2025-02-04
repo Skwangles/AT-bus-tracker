@@ -24,7 +24,7 @@ if (args.h) {
   process.exit(0)
 }
 
-const sqlite_db_path = args.db ?? (process.env.CV_DB_NAME && process.env.CV_DB_DIR ? path.join(process.env.CV_DB_DIR, process.env.CV_DB_NAME) : DFLT_SQLITE_DB_PATH)
+const sqlite_db_path = args.db ?? (process.env.CV_EXTRACT_IN_DB_NAME && process.env.CV_DB_DIR ? path.join(process.env.CV_DB_DIR, process.env.CV_EXTRACT_IN_DB_NAME) : DFLT_SQLITE_DB_PATH)
 const input_pic_dir = args.input_dir ?? process.env.CV_KEYFRAME_IMG_DIR ?? DFLT_INPUT_DIR
 const output_pic_dir = args.output_dir ?? process.env.CV_EXTRACT_USED_IMAGES_DIR ?? DFLT_OUTPUT_DIR
 const img_ext = args.img_ext ?? process.env.CV_KEYFRAME_IMG_EXTENSION ?? DFLT_IMG_EXT
