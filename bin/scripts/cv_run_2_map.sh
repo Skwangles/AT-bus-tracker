@@ -24,7 +24,7 @@ check_command() {
 [[ -z "$CV_JSON_DIR" ]] && error_exit "CV_JSON_DIR is not set"
 [[ -z "$CV_KEYFRAME_IMG_DIR" ]] && error_exit "CV_KEYFRAME_IMG_DIR is not set"
 [[ -z "$CV_VSLAM_MAP_HEADLESS" ]] && error_exit "CV_VSLAM_MAP_HEADLESS is not set"
-[[ -z "$CV_VSLAM_EPOCH_START" ]] && error_exit "CV_VSLAM_MAP_HEADLESS is not set"
+[[ -z "$CV_VSLAM_EPOCH_START" ]] && error_exit "CV_VSLAM_EPOCH_START is not set"
 [[ -z "$CV_VIDEO_DIR" ]] && error_exit "CV_VIDEO_DIR is not set"
 
 # Check if the required inputs are provided either as arguments or environment variables
