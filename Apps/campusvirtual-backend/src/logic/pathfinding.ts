@@ -29,7 +29,7 @@ export async function aStarPathfinding(
   endId: number,
   firstWith: string | null = null // Allow shortcircuit if it finds a point earlier that meets criteria
 ): Promise<number[]> {
-  logger.verbose("[aStartPathfinding] Searching for path between:", startId, "and endId:", endId)
+  logger.verbose(`[aStartPathfinding] Searching for path between: ${startId} and endId: ${endId}`)
   const openSet = new MinQueue(500);
   const cameFrom = new Map<number, number>();
   const gScore = new Map<number, number>();
@@ -46,7 +46,7 @@ export async function aStarPathfinding(
       JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations n1 ON n.keyframe_id = n1.keyframe_id 
       WHERE n.keyframe_id = ?`, [currentId]))
     if (currentNodeData.length == 0) {
-      logger.error("[aStarPathfinding] Could not fetch next Id's information:", currentId, "result:", currentNodeData)
+      logger.error(`[aStarPathfinding] Could not fetch next Id's information: ${currentId} result:  ${currentNodeData}`)
       return []; // An error occurred, fail quickly
     }
     const currentNode = currentNodeData[0]
@@ -59,7 +59,7 @@ export async function aStarPathfinding(
         path.push(node);
         node = cameFrom.get(node)!;
       }
-      logger.debug("[aStarPathfinding] Found path from starId:", startId, "to:", endId, "steps:", path.length)
+      logger.debug(`[aStarPathfinding] Found path from starId: ${startId} to: ${endId} steps: ${path.length}`)
       return path.reverse();
     }
 
@@ -91,7 +91,7 @@ export async function aStarPathfinding(
       }
     }
   }
-  logger.warn("[aStartPathfinding] Found no path from startId:", startId, "to:", endId)
+  logger.warn(`[aStartPathfinding] Found no path from startId: ${startId} to: ${endId}`)
   return []; // No path was found
 }
 

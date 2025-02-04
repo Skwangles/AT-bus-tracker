@@ -81,7 +81,7 @@ export async function connectNodes(keyframe_id0: number, keyframe_id1: number) {
     await writeDB("COMMIT;")
   }
   catch (e) {
-    logger.warn("[connectNodes] Failed to connect two points - 1:", keyframe_id0, "2:", keyframe_id1, "error:", e)
+    logger.warn(`[connectNodes] Failed to connect two points - 1: ${keyframe_id0} 2: ${keyframe_id1} error: ${e}`)
     await writeDB("ROLLBACK;")
     return false;
   }
@@ -108,7 +108,7 @@ export function DbArrayToMatrix(array: string | number[]): number[] | null {
       arr = JSON.parse(array.replace('{', '[').replace('}', ']'))
     }
     catch (e) {
-      logger.error('[DbArrayToMatrix] Failed to parse DbArrayToMatrix - array:', array, "error:", e)
+      logger.error(`[DbArrayToMatrix] Failed to parse DbArrayToMatrix - array: ${array} error: ${e}`)
       return null
     }
   }
@@ -130,7 +130,7 @@ export async function disconnectNodes(keyframe_id0: number, keyframe_id1: number
     await writeDB("COMMIT;")
   }
   catch (e) {
-    logger.error("[disconnectNodes] Failed to connect two points - 1:", keyframe_id0, "2: ", keyframe_id1, "Error:", e)
+    logger.error(`[disconnectNodes] Failed to connect two points - 1: ${keyframe_id0} 2: ${keyframe_id1} Error:${e}`)
     await writeDB("ROLLBACK;")
     return false;
   }
@@ -145,7 +145,7 @@ export async function getNodePosition(keyframeId: number, use_trans = true): Pro
     [keyframeId], true
   ) as any;
   if (!result) {
-    logger.warn("[getNodePosition] could not get node data for id:", keyframeId, "when using translation:", use_trans)
+    logger.warn(`[getNodePosition] could not get node data for id: ${keyframeId} when using translation: ${use_trans}`)
     return null;
   }
 

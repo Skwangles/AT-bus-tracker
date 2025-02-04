@@ -51,27 +51,27 @@ export const uploadFloorplanImageMiddleware = multer({ storage });
 export async function getImageByTs(req: Request, res: Response): Promise<void> {
   const ts = Number(req.params.ts);
   if (isNaN(ts)) {
-    logger.warn("[getImageByTs] invalid ts (note, may be called via getImgbyId):", ts)
+    logger.warn(`[getImageByTs] invalid ts (note, may be called via getImgbyId):${ts}`)
     res.status(400).send("Invalid Arguments")
     return;
   }
 
   const resolution = req.params.resolution as ResolutionLevel;
   if (!(resolution in RESOLUTION_LEVELS)) {
-    logger.warn("[getImageByTs] invalid res (note, may be called via getImgbyId):", res, "not in:", Object.keys(RESOLUTION_LEVELS).join(", "))
+    logger.warn(`[getImageByTs] invalid res (note, may be called via getImgbyId): ${res}not in: ${Object.keys(RESOLUTION_LEVELS).join(", ")}`)
     res.status(400).send("Invalid Arguments");
     return;
   }
 
   if (SEND_TEST_IMAGE) {
-    logger.debug("[getImageByTs] Sending test image enabled!")
+    logger.debug(`[getImageByTs] Sending test image enabled!`)
     res.sendFile(path.join(KEYFRAME_IMG_DIR, "test.jpg"))
     return;
   }
 
   const imgPath = path.join(KEYFRAME_IMG_DIR, ts.toFixed(5) + KEYFRAME_IMG_EXTENSION)
   if (!fs.existsSync(imgPath)) {
-    logger.error("[getImageByTs] Cannot find image file:", imgPath)
+    logger.error(`[getImageByTs] Cannot find image file: ${imgPath}`)
     res.status(404).send("Image does not exist").end()
     return;
   }
@@ -90,7 +90,7 @@ export async function getImageByTs(req: Request, res: Response): Promise<void> {
     res.set('Content-Type', 'image/png')
     image.pipe(res)
   } catch (error) {
-    logger.error('[getImageByTs] Internal error - Error processing image:', error)
+    logger.error(`[getImageByTs] Internal error - Error processing image: ${error}`)
     res.status(500).send('Could not process image, please try again later')
   }
 }
@@ -100,21 +100,21 @@ export async function getImageByTs(req: Request, res: Response): Promise<void> {
 export async function getImageById(req: Request, res: Response) {
   const id = Number(req.params.id);
   if (isNaN(id)) {
-    logger.warn("[GetImageById] invalid ID argument", id)
+    logger.warn(`[GetImageById] invalid ID argument: ${id}`)
     res.status(400).send("Invalid Arguments")
     return
   }
 
   const result = await readDB(`SELECT ts FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes WHERE keyframe_id = ? LIMIT 1`, [id], true)
   if (!result) {
-    logger.warn("[GetImageById] - Could not find node with id: ", id)
+    logger.warn(`[GetImageById] - Could not find node with id: ${id}`)
     res.status(404).send("Invalid Arguments");
     return;
   }
 
   const ts = Number(result.ts).toFixed(5);
   if (isNaN(Number(result.ts))) {
-    logger.warn("[GetImageById] Invalid Timestamp from TS:", ts, "from id:", id)
+    logger.warn(`[GetImageById] Invalid Timestamp from TS: ${ts} from id: ${id}`)
     res.status(400).send("Invalid Arguments")
     return;
   }
@@ -128,7 +128,7 @@ export async function updateFloorplanImage(req: Request, res: Response) {
     const { name } = req.params;
     const file = req.file;
     if (!file) {
-      logger.error("[updateFloorplanImage] no image provided for name:", name)
+      logger.error(`[updateFloorplanImage] no image provided for name: ${name}`)
       res.status(400).send("No file uploaded.");
       return
     }
@@ -142,7 +142,7 @@ export async function updateFloorplanImage(req: Request, res: Response) {
 
     res.send("File uploaded and path updated successfully.");
   } catch (error) {
-    logger.error("[updateFloorplanImage] Error handling file upload:", error);
+    logger.error(`[updateFloorplanImage] Error handling file upload: ${error}`);
     res.status(500).send("Could not upload image");
   }
 }

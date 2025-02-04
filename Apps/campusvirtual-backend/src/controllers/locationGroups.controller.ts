@@ -81,7 +81,7 @@ export async function getPointWithLocationGroupOrLabelName(req: Request, res: Re
   const name = String(req.params.floor).trim()
 
   if (!name || name == "" || name.length > REASONABLE_MAX_STRING_SIZE) {
-    logger.warn("[GetPointWithLocGroupOrLabelName] Invalid name:", name)
+    logger.warn(`[GetPointWithLocGroupOrLabelName] Invalid name: ${name}`)
     res.status(400).send("Invalid Arguments").end()
     return
   }
@@ -90,7 +90,7 @@ export async function getPointWithLocationGroupOrLabelName(req: Request, res: Re
   const nodeWithSpecialLabel = await readDB(`SELECT n.keyframe_id, s.label FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}special_labels s ON s.keyframe_id = n.keyframe_id WHERE s.label = ? LIMIT 1`, [name], true)
 
   if (nodeWithSpecialLabel) {
-    logger.debug("Found a label", nodeWithSpecialLabel)
+    logger.debug(`[getPointWithLocationGroupOrLabelName] Found a label: ${nodeWithSpecialLabel}`)
     res.json(nodeWithSpecialLabel)
     return
   }
@@ -101,7 +101,7 @@ export async function getPointWithLocationGroupOrLabelName(req: Request, res: Re
     return
   }
   else {
-    logger.warn("[GetPointWithLocGroupOrLabelName] Could not find with floorname:", name)
+    logger.warn(`[GetPointWithLocGroupOrLabelName] Could not find with floorname: ${name}`)
     res.status(404).send("Could not find any nodes with that location").end();
     return
   }

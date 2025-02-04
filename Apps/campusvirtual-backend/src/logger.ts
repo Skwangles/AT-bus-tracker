@@ -11,9 +11,13 @@ const logger = winston.createLogger({
   ]
 })
 
+logger.exceptions.handle(
+  new winston.transports.File({ filename: 'exceptions.log' })
+)
+
 if (process.env.NODE_ENV !== 'production') {
   logger.add(
-    new winston.transports.Console({ format: winston.format.combine(winston.format.colorize(), winston.format.simple()) }),
+    new winston.transports.Console({ format: winston.format.combine(winston.format.colorize(), winston.format.simple()), level: "debug" }),
   )
 }
 

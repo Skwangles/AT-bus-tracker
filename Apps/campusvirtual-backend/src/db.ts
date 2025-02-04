@@ -10,16 +10,16 @@ function initDB() {
   const db_file = path.join(SQLITE_DB_DIR, SQLITE_DB_NAME)
   sqliteDb = betterSqlite3(db_file, { readonly: true })
   writableSqliteDb = betterSqlite3(db_file, { readonly: false })
-  logger.info("Configured databases:", db_file)
+  logger.info("Configured databases: " + db_file)
 }
 
 export async function writeDB(query: string, params: any[] = []): Promise<number> {
-  logger.verbose("[writeDB] SQL:", query, "params:", params)
+  logger.verbose(`[writeDB] SQL: ${query} params: ${params}`)
   return (await writableSqliteDb.prepare(query).run(params)).changes ?? 0
 }
 
 export async function readDB(query: string, params: (string | number)[] = [], isSingle: boolean = false): Promise<any | any[]> {
-  logger.verbose("[readDB] SQL:", query, "params:", params, "isSingle:", isSingle)
+  logger.verbose(`[readDB] SQL: ${query} params: ${params} isSingle:${isSingle}`)
   const preparedQuery = sqliteDb.prepare(query)
   return isSingle ? await preparedQuery.get(params) as any : await preparedQuery.all(params) as any[]
 }

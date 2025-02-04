@@ -39,6 +39,5 @@ export const USE_TABLE_PREFIX: boolean = process.env.CV_SERVER_USE_TABLE_PREFIX 
 export const TABLE_PREFIX = process.env.CV_SERVER_TABLE_PREFIX ?? "refined_";
 export const SKIP_IF_MAP_ALREADY_CONFIGED: boolean = process.env.CV_SERVER_DONT_OVERWRITE_MAP_POINTS === 'true';
 
-logger.debug("DB File:", SQLITE_DB_DIR)
-logger.debug("DB files in dir:", fs.readdirSync(SQLITE_DB_DIR))
-logger.debug("Number of images in image dir:", fs.readdirSync(KEYFRAME_IMG_DIR).length)
+logger.debug("DB File:" + SQLITE_DB_DIR)
+logger.debug("DB files in dir:" + fs.readdirSync(SQLITE_DB_DIR).join(", "))

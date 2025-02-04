@@ -5,7 +5,7 @@ import { BlobArrayToMatrix, convertToUICoordinateScale } from './utils';
 import logger from '../logger';
 
 export async function searchNeighbour(mainPointId: number, distanceThreshold: number, yDistThresh: number, currentPoint: { x_trans: any; y_trans: any; z_trans: any; }) {
-  logger.verbose("[searchNeighbour] starting search for", mainPointId, "with distance", distanceThreshold, "with yDist", yDistThresh, "from currentPoint:", currentPoint)
+  logger.verbose(`[searchNeighbour] starting search for ${mainPointId} with distance ${distanceThreshold} with yDist ${yDistThresh} from currentPoint: ${currentPoint}`)
   // Used BFS to find all points down the graph within a range
   const minDepth = 2; // case for when point distances are too large to give decent # of options
   const maxDepth = 5;
@@ -16,7 +16,7 @@ export async function searchNeighbour(mainPointId: number, distanceThreshold: nu
   };
 
   const { x_trans: x1, y_trans: y1, z_trans: z1 } = currentPoint;
-  logger.verbose("[searchNeighbour] Current Point: ", mainPointId, currentPoint)
+  logger.verbose(`[searchNeighbour] Current Point: ${mainPointId} CurrentPoint: ${currentPoint}`)
 
   // Initialize a queue for BFS and a set to keep track of visited nodes
   const queue: { keyframe_id: number, depth: number }[] = [{ keyframe_id: mainPointId, depth: 0 }];
@@ -28,7 +28,7 @@ export async function searchNeighbour(mainPointId: number, distanceThreshold: nu
 
 
   if (usePhysicalProximity) {
-    logger.verbose('[searchVerbose] Using physical proximity')
+    logger.verbose(`[searchVerbose] Using physical proximity`)
     const resultData = await readDB(`WITH target_point AS (
     SELECT 
         x_trans, 
@@ -48,7 +48,7 @@ export async function searchNeighbour(mainPointId: number, distanceThreshold: nu
          ABS(rn.y_trans - target_point.y_trans) <= ? 
     )
     WHERE rn.keyframe_id != ?;`, [mainPointId, Math.pow(distanceThreshold / COORDS_TO_METRES, 2), yDistThresh / (COORDS_TO_METRES * 2), mainPointId])
-    logger.verbose("[searchNeigbour] Phsyical proximity: ", resultData)
+    logger.verbose(`[searchNeigbour] Phsyical proximity: ${resultData}`)
     for (const row of resultData) {
       const id: number = Number(row["keyframe_id"])
       const node = await readDB(`SELECT keyframe_id, x_trans, y_trans, z_trans, ts, pose FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes WHERE keyframe_id = ?`, [id], true)

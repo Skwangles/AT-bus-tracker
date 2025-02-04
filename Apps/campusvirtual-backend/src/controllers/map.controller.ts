@@ -8,7 +8,7 @@ import logger from "../logger";
 export async function getMapPoints(req: Request, res: Response) {
   const name = String(req.params.name).trim();
   if (name == null || name == "") {
-    logger.warn("[GetMapPoints] Invalid name: ", name)
+    logger.warn(`[GetMapPoints] Invalid name: ${name}`)
     res.status(400).send("Invalid Arguments")
     return
   }
@@ -21,7 +21,7 @@ export async function getMapPoints(req: Request, res: Response) {
   if (pointResult.length && pointResult.length > 0 && image.length && image.length > 0) {
     res.json({ nodes: pointResult, has_image: image[0].path != '', image: image[0].path, edges: edges })
   } else {
-    logger.warn("[GetMapPoints] Floorplan not found with name: ", name)
+    logger.warn(`[GetMapPoints] Floorplan not found with name: ${name}`)
     res.status(404).send('Floorplan not found');
   }
 }
@@ -35,14 +35,14 @@ export async function getLocationGroupImageByName(req: Request, res: Response) {
 
   const name = String(req.params.name);
   if (name == null || name == "" || name.length > REASONABLE_MAX_STRING_SIZE) {
-    logger.error("[GetLocGroupImgByName] Invalid name passed:", name)
+    logger.error(`[GetLocGroupImgByName] Invalid name passed: ${name}`)
     res.status(400).send("Invalid Arguments")
     return
   }
 
   const result = await readDB("SELECT path FROM floorplan_images WHERE location = ? LIMIT 1;", [name], true)
   if (!result) {
-    logger.warn("[GetLocGroupImgByName] Could not find path from location name:", name)
+    logger.warn(`[GetLocGroupImgByName] Could not find path from location name: ${name}`)
     res.sendStatus(404).send("Invalid uments");
     return;
   }
@@ -51,7 +51,7 @@ export async function getLocationGroupImageByName(req: Request, res: Response) {
 
   // Check the path is valid and isn't a directory traversal attempt
   if (!pathString && path.dirname(pathString) == FLOORPLAN_IMG_DIR && path.basename(pathString) != "") {
-    logger.warn("[GetLocGroupImgByName] Invalid path string:", pathString, "for name:", name)
+    logger.warn(`[GetLocGroupImgByName] Invalid path string: ${pathString} for name: ${name}`)
     res.status(404).send("Invalid Arguments")
     return
   }
@@ -61,7 +61,7 @@ export async function getLocationGroupImageByName(req: Request, res: Response) {
     return
   }
   else {
-    logger.warn("[GetLocGroupImgByName] File does not exist:", pathString, "for name:", name)
+    logger.warn(`[GetLocGroupImgByName] File does not exist: ${pathString} for name: ${name}`)
     res.status(404).send("Invalid Arguments");
   }
 }

@@ -10,7 +10,7 @@ export async function pathfindFromPointId(req: Request, res: Response) {
   const point = Number(req.params.id)
   const locationCode = String(req.params.location)
   if (isNaN(point) || !locationCode || locationCode == "" || locationCode.length > REASONABLE_MAX_STRING_SIZE) {
-    logger.warn("[PathfindFromPointId] had invalid arguments:", point, locationCode)
+    logger.warn(`[PathfindFromPointId] had invalid arguments:${point} location: ${locationCode}`)
     res.status(400).send("Invalid Arguments").end()
     return
   }
@@ -22,7 +22,7 @@ export async function pathfindFromPointId(req: Request, res: Response) {
     isLabel = false
     const firstPointWithLocation = (await readDB(`SELECT n.keyframe_id FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations nl ON n.keyframe_id = nl.keyframe_id WHERE nl.location = ? LIMIT 1;`, [locationCode], true));
     if (firstPointWithLocation.length === 0) {
-      logger.warn("[PathfindFromPointId] Failed to find endpoint for a location, for start:", point, "and end location:", locationCode)
+      logger.warn(`[PathfindFromPointId] Failed to find endpoint for a location, for start: ${point} and end location: ${locationCode}`)
       res.status(400).send("End location could not be found");
       return
     }
@@ -33,7 +33,7 @@ export async function pathfindFromPointId(req: Request, res: Response) {
     res.json({ path: await aStarPathfinding(point, locationResults.keyframe_id, isLabel ? null : locationCode) ?? [] })
   }
   else {
-    logger.warn("[PathfindFromPointId] A* failed to find endpoint:", locationResults.keyframe_id, "for start:", point, "and end location:", locationCode)
+    logger.warn(`[PathfindFromPointId] A* failed to find endpoint: ${locationResults.keyframe_id} for start: ${point} and end location: ${locationCode}`)
     res.status(400).send("End location could not be found");
   }
 }
@@ -44,7 +44,7 @@ export async function findNeigboursFromPointId(req: Request, res: Response) {
   const distanceThreshold = Number(req.params.distance_thresh_m);
   const yDistThresh = Number(req.params.y_dist_thresh_m);
   if (isNaN(Number(mainPointId)) || isNaN(Number(distanceThreshold)) || isNaN(Number(yDistThresh)) || yDistThresh > REASONABLE_MAX_Y_DIST_THRESHOLD || distanceThreshold > REASONABLE_MAX_XZ_DIST_THRESHOLD) {
-    logger.warn("[findNeighbourFromPointId] Invalid params - point:", mainPointId, "with dist threshold:", distanceThreshold, "and y threshold:", yDistThresh)
+    logger.warn(`[findNeighbourFromPointId] Invalid params - point: ${mainPointId} with dist threshold: ${distanceThreshold} and y threshold: ${yDistThresh}`)
     res.status(400).send("Invalid params").end();
     return;
   }
@@ -55,7 +55,7 @@ export async function findNeigboursFromPointId(req: Request, res: Response) {
     [mainPointId], true
   );
   if (!currentPoint) {
-    logger.warn("[findNeighbourFromPointId] Point id doesn't exist:", mainPointId, "with dist threshold:", distanceThreshold, "and y threshold:", yDistThresh)
+    logger.warn(`[findNeighbourFromPointId] Point id doesn't exist: ${mainPointId} with dist threshold: ${distanceThreshold} and y threshold: ${yDistThresh}`)
     res.status(400).send("Point ID given does not exist!").end()
     return
   }
@@ -66,7 +66,7 @@ export async function findNeigboursFromPointId(req: Request, res: Response) {
 export async function getPointInfoFromId(req: Request, res: Response) {
   const id = Number(req.params.id)
   if (isNaN(id)) {
-    logger.warn("[getPointInfoFromId] invalid ID:", id)
+    logger.warn(`[getPointInfoFromId] invalid ID:${id}`)
     res.status(400).send("Non-number point ID passed").end()
     return
   }
@@ -76,7 +76,7 @@ export async function getPointInfoFromId(req: Request, res: Response) {
     res.json(convertToUICoordinateScale({ ...pointData, pose: BlobArrayToMatrix(pointData.pose) }))
   }
   else {
-    logger.warn("[getPointInfoFromId] id doesn't exist, or pose not in pointData:", id, "data:", pointData)
+    logger.warn(`[getPointInfoFromId] id doesn't exist, or pose not in pointData: ${id} data: ${pointData}`)
     res.status(400).send("Point ID given does not exist!").end()
   }
 }
