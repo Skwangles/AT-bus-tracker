@@ -38,7 +38,7 @@ check_command "sudo chmod +x $CV_HOME_DIR/bin/scripts/*.sh"
 cd $CV_HOME_DIR || { echo "Failed to change directory to $CV_HOME_DIR"; exit 1; }
 
 ./bin/scripts/cv_run_0_copy_env_file.sh
-check_command "./bin/scripts/cv_run_copy_env_file.sh"
+check_command "./bin/scripts/cv_run_0_copy_env_file.sh"
 
 # Optionally build dependencies
 # ./BUILD_LIBS.sh
@@ -50,52 +50,57 @@ check_command "./BUILD_CAMPUS_VIRTUAL.sh"
 
 if [ "$CV_STITCH_INSV_FILES" == true ]; then
   ./bin/scripts/cv_run_1_process_files.sh
-  check_command "./bin/scripts/cv_run_process_files.sh"
+  check_command "./bin/scripts/cv_run_1_process_files.sh"
 fi
 
 if [ "$CV_VSLAM_MAP_VIDEOS" == true ]; then
   ./bin/scripts/cv_run_2_map.sh
-  check_command "./bin/scripts/cv_run_map.sh"
+  check_command "./bin/scripts/cv_run_2_map.sh"
 fi
 
 if [ "$CV_EDIT_VSLAM_MAP" == true ]; then
   ./bin/scripts/cv_run_3_edit_vslam_map.sh
-  check_command "./bin/scripts/cv_run_view_vslam_map.sh"
+  check_command "./bin/scripts/cv_run_3_view_vslam_map.sh"
 fi
 
 if [ "$CV_EXPORT_DB" == true ]; then
   ./bin/scripts/cv_run_4_export_sqlite.sh
-  check_command "./bin/scripts/cv_run_export_sqlite.sh"
+  check_command "./bin/scripts/cv_run_4_export_sqlite.sh"
 fi
 
 if [ "$CV_PRECALCULATE_IMAGE_SHARPNESS" == true ]; then
   ./bin/scripts/cv_run_5_sharpness_calculate.sh
-  check_command "./bin/scripts/cv_run_sharpness_calculate.sh"
+  check_command "./bin/scripts/cv_run_5_sharpness_calculate.sh"
 fi
 
 if [ "$CV_GRAPH_PRUNE" == true ]; then
   ./bin/scripts/cv_run_6_prune_graph.sh
-  check_command "./bin/scripts/cv_run_prune_graph.sh"
+  check_command "./bin/scripts/cv_run_6_prune_graph.sh"
 fi
 
 if [ "$CV_MERGE_MAPS" == true ]; then
   ./bin/scripts/cv_run_7_merge_maps.sh
-  check_command "./bin/scripts/cv_run_merge_maps.sh"
+  check_command "./bin/scripts/cv_run_7_merge_maps.sh"
 fi
 
 if [ "$CV_EDIT_DB_VISUALLY" == true ]; then
   ./bin/scripts/cv_run_8_edit_db.sh
-  check_command "./bin/scripts/cv_run_view_db.sh"
+  check_command "./bin/scripts/cv_run_8_view_db.sh"
 fi
 
 if [ "$CV_EXTRACT_USED_IMAGES" == true ]; then
   ./bin/scripts/cv_run_9_extract_images.sh
-  check_command "./bin/scripts/cv_run_extract_images.sh"
+  check_command "./bin/scripts/cv_run_9_extract_images.sh"
+fi
+
+if [ "$CV_START_AUTHORING" == true ]; then
+  ./bin/scripts/cv_run_10_start_authoring.sh
+  check_command "./bin/scripts/cv_run_10_start_authoring.sh"
 fi
 
 if [ "$CV_START_SERVER" == true ]; then
-  ./bin/scripts/cv_run_10_start_frontend.sh
-  check_command "./bin/scripts/cv_run_start_frontend.sh"
+  ./bin/scripts/cv_run_11_start_frontend.sh
+  check_command "./bin/scripts/cv_run_11_start_frontend.sh"
 fi
 
 echo "Script completed successfully."
