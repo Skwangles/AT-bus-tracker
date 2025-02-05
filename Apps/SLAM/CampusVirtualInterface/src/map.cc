@@ -264,6 +264,7 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
                         );
                         
                         
+                        spdlog::debug("Keyframe - Progress: {}% - ms: {}", ((ms_since_start/1000) / (frame_count/fps)) * 100, ms_since_start); 
                         if (json_obj != NULL){
                             
                             std::string group = find_group_from_json(json_obj, ms_since_start);
@@ -275,7 +276,8 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
                                 special_point_group_list.emplace_back(annotation, timestamp, ms_since_start);
                             }
                             
-                            spdlog::debug("Keyframe - Progress: {}% - ms: {} - Location: {}", ((ms_since_start/1000) / (frame_count/fps)) * 100, ms_since_start, group); 
+                            
+                            spdlog::debug("Keyframe Location: {}", group); 
                         }
                         else{
                             timestamp_group_list.emplace_back(DEFAULT_UNKNOWN_GROUP, timestamp, ms_since_start);
