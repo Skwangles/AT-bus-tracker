@@ -83,13 +83,21 @@ const VirtualTour: React.FC = () => {
         console.log('Setting ID to ', result)
         setCurrentId(Number(result).toString())
       })
-      .catch((reason) =>
+      .catch((reason) => {
         console.error('Floor could not be found: ' + reason.toString())
-      )
+
+        // In the case the 'DEFAULT FLOOR' is not found, we will fetch the first point
+        if (Number(currentId) === -1) {
+          axios.get<number>(API_PREFIX + '/api/v1/point').then((value) => {
+            console.log('Setting ID to ', value.data)
+            setCurrentId(value.data.toString())
+          })
+        }
+      })
   }
 
+  // RUN ON FIRST LOAD
   useEffect(() => {
-    // RUN ON FIRST LOAD
     axios.get<Label[]>(API_PREFIX + '/api/v1/floors').then((result) => {
       console.log('Floors', result.data)
       setAllSearchableLocations(result.data)

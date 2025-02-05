@@ -6,6 +6,17 @@ import { aStarPathfinding } from "../logic/pathfinding";
 import { BlobArrayToMatrix, convertToUICoordinateScale } from "../logic/utils";
 import logger from "../logger";
 
+export async function getFirstPointId(req: Request, res: Response) {
+  const firstPoint = await readDB(`SELECT keyframe_id FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes WHERE keyframe_id >= 0 LIMIT 1;`, [], true);
+  if (firstPoint && 'keyframe_id' in firstPoint) {
+    res.json(firstPoint.keyframe_id)
+  }
+  else {
+    logger.warn(`[getFirstPointId] Failed to get first point`)
+    res.status(500).send("Failed to get first point - No points exist, or internal server error").end()
+  }
+}
+
 export async function pathfindFromPointId(req: Request, res: Response) {
   const point = Number(req.params.id)
   const locationCode = String(req.params.location)
