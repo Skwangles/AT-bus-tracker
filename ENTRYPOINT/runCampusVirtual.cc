@@ -127,6 +127,7 @@ int main(int argc, char** argv) {
                                         " --video-dir '" +  (media_dir).string() + "/" + "'" +
                                         " --json-dir '" + (json_dir).string() + "/" + "'" // Only required for 'pairing JSON with frames' step
                                         " --picture-dir '" + (picture_dir).string() + "/" + "'" +
+                                        " --log-level debug" +
                                         (use_temporal_mapping ? " --temporal-mapping" : "") +
                                         (use_viewer ? " --viewer none" : " --viewer iridescence_viewer");
         }
