@@ -90,7 +90,7 @@ console.info("Args:", config, "SQLITE DB:", SQLITE_DB);
  * @returns 
  */
 async function connectCloseTogetherPoints(
-  horiztonal_dist = INNER_RING / CONVERSION_CRD2MTR,
+  horiztonal_dist = OUTER_RING / CONVERSION_CRD2MTR,
   vert_dist = Y_DIST / CONVERSION_CRD2MTR
 ) {
   let currentKeyframeId;
