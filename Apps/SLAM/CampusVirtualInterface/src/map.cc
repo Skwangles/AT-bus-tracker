@@ -255,7 +255,6 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
 
                         img_write_thread_pool.enqueue([ms_since_start, timestamp, by_copy_frame = frame.clone(), filepath, params, &imwrite_failed, &mtx_imwrite_failed]() {
                             // Do writing in background
-                            std::cout << "Writing MS:" << ms_since_start << " for timestamp: " << timestamp << std::endl;
                             bool result = cv::imwrite(filepath, by_copy_frame, params);
                             if (!result){
                                 std::lock_guard<std::mutex> lock(mtx_imwrite_failed);
@@ -264,7 +263,7 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
                             }
                         );
                         
-                        std::cout << "Frame - Progress: " <<  ((ms_since_start/1000) / (frame_count/fps)) * 100 << "% - ms: " << ms_since_start << std::endl;
+                        
                         if (json_obj != NULL){
                             
                             std::string group = find_group_from_json(json_obj, ms_since_start);
@@ -276,12 +275,11 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
                                 special_point_group_list.emplace_back(annotation, timestamp, ms_since_start);
                             }
                             
-                            
-                            std::cout << "Keyframe made - Location: " << group << std::endl;
+                            spdlog::debug("Keyframe - Progress: {}% - ms: {} - Location: {}", ((ms_since_start/1000) / (frame_count/fps)) * 100, ms_since_start, group); 
                         }
                         else{
                             timestamp_group_list.emplace_back(DEFAULT_UNKNOWN_GROUP, timestamp, ms_since_start);
-                            std::cout << "JSON Obj was null! - Using default:" << DEFAULT_UNKNOWN_GROUP << std::endl;
+                            spdlog::error("JSON Obj was null! - Using default:" + DEFAULT_UNKNOWN_GROUP);
                         }
                         
                     }
@@ -374,8 +372,8 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
 
     std::sort(track_times.begin(), track_times.end());
     const auto total_track_time = std::accumulate(track_times.begin(), track_times.end(), 0.0);
-    std::cout << "median tracking time: " << track_times.at(track_times.size() / 2) << "[s]" << std::endl;
-    std::cout << "mean tracking time: " << total_track_time / track_times.size() << "[s]" << std::endl;
+    spdlog::info("Tracking time: min={}s, max={}s, median={}s, mean={}s",
+                 track_times.front(), track_times.back(), track_times.at(track_times.size() / 2), total_track_time / track_times.size());
 
     if (!map_db_path.empty()) {
         if (!slam->save_map_database(map_db_path)) {
@@ -385,11 +383,11 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
 
     if (!img_write_thread_pool.is_tasks_done()) {
         while (!img_write_thread_pool.is_tasks_done()) {
-            std::cout << "Waiting on " << img_write_thread_pool.get_num_tasks_left() << " images to be written" << std::endl;
+            spdlog::info("Waiting on {} images to be written", img_write_thread_pool.get_num_tasks_left());
             std::this_thread::sleep_for(chrono::milliseconds(1000));
         }
     }
-    std::cout << "All images are written: " << img_write_thread_pool.get_num_tasks_left() << " images left " << std::endl;
+    spdlog::info("All images are written: {} images left", img_write_thread_pool.get_num_tasks_left());
 
     return timestamp;
 }
@@ -572,7 +570,7 @@ int main(int argc, char* argv[]) {
             return EXIT_FAILURE; 
         }
 
-        std::cout << "Processing video: " << video_file_path << std::endl;
+        spdlog::info("Processing video: {}", video_file_path);
 
         nlohmann::json json_obj;
         if (json_dir->is_set()){
@@ -587,14 +585,10 @@ int main(int argc, char* argv[]) {
             json_obj = filename_to_json_obj(video_name, json_dir->value());
 
             if (json_obj != NULL){
-                std::cout << "--- JSON Object Contents ---" << std::endl;
-                std::cout << json_obj["video"] << std::endl;
-                std::cout << json_obj["data"] << std::endl;
-                std::cout << json_obj["special"] << std::endl;
-                std::cout << "--- JSON Object End ---" << std::endl;
+                spdlog::debug("JSON Object Contents: {}", json_obj.dump(4));
             }
             else{
-                std::cout << "Failed to open JSON file " << video_name << std::endl;
+                spdlog::error("Failed to open JSON file {}", video_name);
             }
         }
 
@@ -659,10 +653,11 @@ int main(int argc, char* argv[]) {
         else {
             throw std::runtime_error("Invalid setup type: " + slam->get_camera()->get_setup_type_string());
         }
-        std::cout << "Finish Timestamp" << finish_timestamp << std::endl;
+        spdlog::info("Finish Timestamp: {}", finish_timestamp);
         
         timestamp = finish_timestamp + 1;
-        std::cout << "Map database is saved to " << map_db_path_out->value() << std::endl;
+        spdlog::info("Next video will start at timestamp: {}", timestamp);
+        spdlog::info("Map database is saved to {}", map_db_path_out->value());
 
         map_db_in = map_db_path_out->value(); // Running in a loop, must build on previous video maps
     }
