@@ -120,6 +120,7 @@ export async function getImageById(req: Request, res: Response) {
   }
 
   req.params.ts = ts;
+  req.params.resolution = 'ultra'
   await getImageByTs(req, res)
 }
 
