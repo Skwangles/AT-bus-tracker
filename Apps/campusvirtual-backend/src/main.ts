@@ -1,9 +1,7 @@
 import path from 'path'
 import cors from 'cors'
 import express from 'express'
-import initData from './logic/initData'
-import { SKIP_IF_MAP_ALREADY_CONFIGED, PORT } from './consts'
-import authoringRoutes from './routes/authoring.routes'
+import { PORT } from './consts'
 import pointsRoutes from './routes/points.routes'
 import imageRoutes from './routes/image.routes'
 import locationGroupRoutes from './routes/locationGroups.routes'
@@ -24,9 +22,7 @@ app.use(pointsRoutes)
 app.use(imageRoutes)
 app.use(locationGroupRoutes)
 app.use(mapRoutes)
-app.use(authoringRoutes)
 
 app.listen(PORT, () => {
-  initData(SKIP_IF_MAP_ALREADY_CONFIGED)
   logger.info(`Server running on port ${PORT}`)
 })

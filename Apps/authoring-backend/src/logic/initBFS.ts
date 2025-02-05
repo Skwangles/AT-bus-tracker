@@ -12,8 +12,7 @@ export async function getGroupsFromPoints(border_nodes: [{ keyframe_id: number, 
       lookup[num] = [node]
     }
   }
-  logger.verbose("Lookup Dictionary:")
-  logger.verbose(JSON.stringify(lookup))
+  logger.verbose(`Lookup Dictionary Size: ${Object.keys(lookup).length}`)
   let global_set = new Set<number>()
   const groups = []
   let response = findGroup(lookup, global_set)

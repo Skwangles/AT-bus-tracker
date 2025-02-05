@@ -1,5 +1,5 @@
 import betterSqlite3 from 'better-sqlite3'
-import { ENABLE_AUTHORING_PAGE, SQLITE_DB_DIR, SQLITE_DB_NAME } from './consts';
+import { SQLITE_DB_DIR, SQLITE_DB_NAME } from './consts';
 import path from 'path';
 import logger from './logger';
 
@@ -13,10 +13,10 @@ function initDB() {
   logger.info("Configured databases: " + db_file)
 }
 
-export async function writeDB(query: string, params: any[] = []): Promise<number> {
-  logger.verbose(`[writeDB] SQL: ${query} params: ${params}`)
-  return (await writableSqliteDb.prepare(query).run(params)).changes ?? 0
-}
+// export async function writeDB(query: string, params: any[] = []): Promise<number> {
+//   logger.verbose(`[writeDB] SQL: ${query} params: ${params}`)
+//   return (await writableSqliteDb.prepare(query).run(params)).changes ?? 0
+// }
 
 export async function readDB(query: string, params: (string | number)[] = [], isSingle: boolean = false): Promise<any | any[]> {
   logger.verbose(`[readDB] SQL: ${query} params: ${params} isSingle:${isSingle}`)

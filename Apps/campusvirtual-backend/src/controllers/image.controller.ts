@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
 import path from "path";
 import sharp from "sharp";
-import { SEND_TEST_IMAGE, KEYFRAME_IMG_DIR, KEYFRAME_IMG_EXTENSION, REASONABLE_MAX_STRING_SIZE, FLOORPLAN_IMG_DIR, USE_TABLE_PREFIX, TABLE_PREFIX } from "../consts";
+import { SEND_TEST_IMAGE, KEYFRAME_IMG_DIR, KEYFRAME_IMG_EXTENSION, USE_TABLE_PREFIX, TABLE_PREFIX } from "../consts";
 import fs from "fs"
-import { readDB, writeDB } from "../db";
+import { readDB, } from "../db";
 import multer from "multer";
 import logger from "../logger";
 
@@ -21,31 +21,6 @@ type ResolutionLevel = keyof typeof RESOLUTION_LEVELS;
 
 
 
-// Configure Multer for file upload handling
-const storage = multer.diskStorage({
-  destination: (
-    req: any,
-    file: any,
-    cb: (arg0: null, arg1: string) => void
-  ) => {
-    // Ensure the uploads directory exists
-    const uploadDir = FLOORPLAN_IMG_DIR;
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir);
-    }
-    cb(null, uploadDir);
-  },
-  filename: (
-    req: any,
-    file: { originalname: any },
-    cb: (arg0: null, arg1: any) => void
-  ) => {
-    // Use the original filename
-    cb(null, file.originalname);
-  },
-});
-
-export const uploadFloorplanImageMiddleware = multer({ storage });
 
 
 export async function getImageByTs(req: Request, res: Response): Promise<void> {
@@ -122,28 +97,4 @@ export async function getImageById(req: Request, res: Response) {
   req.params.ts = ts;
   req.params.resolution = 'ultra'
   await getImageByTs(req, res)
-}
-
-export async function updateFloorplanImage(req: Request, res: Response) {
-  try {
-    const { name } = req.params;
-    const file = req.file;
-    if (!file) {
-      logger.error(`[updateFloorplanImage] no image provided for name: ${name}`)
-      res.status(400).send("No file uploaded.");
-      return
-    }
-
-    // Save the image path to the database
-    const filePath = file.filename;
-    await writeDB(
-      "UPDATE floorplan_images SET path = ? WHERE location = ?",
-      [filePath, name]
-    );
-
-    res.send("File uploaded and path updated successfully.");
-  } catch (error) {
-    logger.error(`[updateFloorplanImage] Error handling file upload: ${error}`);
-    res.status(500).send("Could not upload image");
-  }
 }

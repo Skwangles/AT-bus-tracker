@@ -1,7 +1,8 @@
 import { Request, Response } from "express";
-import { readDB, writeDB } from "../db";
+import logger from "../logger";
 import { REASONABLE_MAX_STRING_SIZE, USE_TABLE_PREFIX, TABLE_PREFIX } from "../consts";
-import { connectNodes, disconnectNodes, replaceNode } from "../logic/utils";
+import { writeDB, readDB } from "../db";
+import { replaceNode, connectNodes, disconnectNodes } from "../logic/utils";
 
 
 export async function updateMultipleMapPoints(req: Request, res: Response) {
@@ -138,4 +139,28 @@ export async function disconnectTwoPoints(req: Request, res: Response) {
         ? "Points connected"
         : "Error occurred - The points may already be disconnected, or are border points!"
     );
+}
+
+export async function updateFloorplanImage(req: Request, res: Response) {
+  try {
+    const { name } = req.params;
+    const file = req.file;
+    if (!file) {
+      logger.error(`[updateFloorplanImage] no image provided for name: ${name}`)
+      res.status(400).send("No file uploaded.");
+      return
+    }
+
+    // Save the image path to the database
+    const filePath = file.filename;
+    await writeDB(
+      "UPDATE floorplan_images SET path = ? WHERE location = ?",
+      [filePath, name]
+    );
+
+    res.send("File uploaded and path updated successfully.");
+  } catch (error) {
+    logger.error(`[updateFloorplanImage] Error handling file upload: ${error}`);
+    res.status(500).send("Could not upload image");
+  }
 }

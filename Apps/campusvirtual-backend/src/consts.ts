@@ -32,9 +32,6 @@ export const NEIGHBOURS_INCLUDES_PROXIMITY: boolean = process.env.NEIGHBOURS_INC
 export const SQLITE_DB_NAME = process.env.CV_SERVER_DB_NAME ?? "tga-building.db"
 export const SQLITE_DB_DIR = process.env.CV_DB_DIR ?? "/home/davidb/research/code-managed/CampusVirtual-TGA-MEDIA/TGA - Out/MAPS/"
 
-
-export const ENABLE_AUTHORING_PAGE: boolean = process.env.CV_SERVER_ENABLE_AUTHORING_PAGE === 'true'; // Sqlite is set to readonly when this is false
-
 export const USE_TABLE_PREFIX: boolean = process.env.CV_SERVER_USE_TABLE_PREFIX === 'true'; // false = unrefined, true = refined (e.g. use prefix to work out the DB filename to use/load)
 export const TABLE_PREFIX = process.env.CV_SERVER_TABLE_PREFIX ?? "refined_";
 export const SKIP_IF_MAP_ALREADY_CONFIGED: boolean = process.env.CV_SERVER_DONT_OVERWRITE_MAP_POINTS === 'true';

@@ -1,6 +1,6 @@
 
-import { readDB, writeDB } from '../db';
-import { BORDERING_FLOOR_POINT_DEFAULT_TYPE, COORDS_TO_METRES, EdgeType, TABLE_PREFIX, USE_TABLE_PREFIX } from '../consts'
+import { readDB } from '../db';
+import { COORDS_TO_METRES, EdgeType, TABLE_PREFIX, USE_TABLE_PREFIX } from '../consts'
 import * as THREE from 'three'
 import logger from '../logger';
 // Helper function to get neighbours
@@ -18,75 +18,7 @@ export async function getNeighbours(keyframeId: number): Promise<any[]> {
 
 
 
-// Helper function to delete a node and its edges
-export async function replaceNode(keyframeId: number) {
 
-  const direct_neighbours = (
-    await readDB(
-      `SELECT keyframe_id1 as keyframe_id FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}edges WHERE keyframe_id0 = ? AND (type >= ${EdgeType.Normal})`,
-      [keyframeId]
-    )
-  );
-
-  await writeDB("BEGIN;");
-
-  for (const neighbour_id in direct_neighbours) {
-    const neighbour = direct_neighbours[neighbour_id];
-
-    for (const new_neighbour of direct_neighbours.slice(neighbour_id)) {
-      if (new_neighbour.keyframe_id == neighbour.keyframe_id) continue;
-      await writeDB(
-        `INSERT INTO ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}edges (keyframe_id0, keyframe_id1, type) VALUES (?, ?, 1) ON CONFLICT (keyframe_id0, keyframe_id1) DO UPDATE SET type = ${EdgeType.EdgeContraction};`,
-        [neighbour.keyframe_id, new_neighbour.keyframe_id]
-      );
-      await writeDB(
-        `INSERT INTO ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}edges (keyframe_id1, keyframe_id0, type) VALUES (?, ? 1) ON CONFLICT (keyframe_id0, keyframe_id1) DO UPDATE SET type = ${EdgeType.EdgeContraction};`,
-        [neighbour.keyframe_id, new_neighbour.keyframe_id]
-      );
-    }
-  }
-
-  // TODO: Gracefully handle deleteing border nodes
-  const changes = await writeDB("DELETE FROM floorplan_points WHERE keyframe_id = ? AND NOT EXISTS (SELECT * FROM floorplan_points WHERE keyframe_id = ? AND type >= ?);", [keyframeId, keyframeId, BORDERING_FLOOR_POINT_DEFAULT_TYPE]);
-  if (changes == 0) {
-    await writeDB("ROLLBACK;")
-    logger.warn("Tried to delete a border node - this will cause problems in other floors")
-    return false;
-  }
-  await writeDB(
-    `DELETE FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}edges WHERE keyframe_id0 = ? OR keyframe_id1 = ?;`,
-    [keyframeId, keyframeId]
-  );
-  await writeDB(`DELETE FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations WHERE keyframe_id = ?`, [
-    keyframeId,
-  ]);
-  await writeDB(`DELETE FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes WHERE keyframe_id = ?;`, [
-    keyframeId,
-  ]);
-
-
-
-  await writeDB("COMMIT;")
-  return true;
-}
-
-export async function connectNodes(keyframe_id0: number, keyframe_id1: number) {
-  try {
-    await writeDB("BEGIN;")
-    await writeDB(`INSERT INTO ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}edges (keyframe_id0, keyframe_id1, type) VALUES (?, ?, 2) ON CONFLICT (keyframe_id0, keyframe_id1) DO NOTHING;`,
-      [keyframe_id0, keyframe_id1]);
-    await writeDB(`INSERT INTO ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}edges(keyframe_id0, keyframe_id1, type) VALUES(?, ?, 2) ON CONFLICT(keyframe_id0, keyframe_id1) DO NOTHING;`,
-      [keyframe_id1, keyframe_id0]
-    );
-    await writeDB("COMMIT;")
-  }
-  catch (e) {
-    logger.warn(`[connectNodes] Failed to connect two points - 1: ${keyframe_id0} 2: ${keyframe_id1} error: ${e}`)
-    await writeDB("ROLLBACK;")
-    return false;
-  }
-  return true;
-}
 
 export function BlobArrayToMatrix(array: Buffer): number[] {
 
@@ -120,21 +52,6 @@ export function DbArrayToMatrix(array: string | number[]): number[] | null {
     return arr.map(Number)
   }
   return null
-}
-
-export async function disconnectNodes(keyframe_id0: number, keyframe_id1: number) {
-  try {
-    await writeDB("BEGIN;")
-    await writeDB(`DELETE FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}edges WHERE (keyframe_id0 = ? AND keyframe_id1 = ?) OR (keyframe_id0 = ? AND keyframe_id1 = ?);`,
-      [keyframe_id0, keyframe_id1, keyframe_id1, keyframe_id0]);
-    await writeDB("COMMIT;")
-  }
-  catch (e) {
-    logger.error(`[disconnectNodes] Failed to connect two points - 1: ${keyframe_id0} 2: ${keyframe_id1} Error:${e}`)
-    await writeDB("ROLLBACK;")
-    return false;
-  }
-  return true;
 }
 
 

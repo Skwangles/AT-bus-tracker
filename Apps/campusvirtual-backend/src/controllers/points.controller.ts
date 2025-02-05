@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { USE_TABLE_PREFIX, TABLE_PREFIX, REASONABLE_MAX_STRING_SIZE, COORDS_TO_METRES, REASONABLE_MAX_Y_DIST_THRESHOLD, REASONABLE_MAX_XZ_DIST_THRESHOLD } from "../consts";
+import { USE_TABLE_PREFIX, TABLE_PREFIX, REASONABLE_MAX_STRING_SIZE, REASONABLE_MAX_Y_DIST_THRESHOLD, REASONABLE_MAX_XZ_DIST_THRESHOLD } from "../consts";
 import { readDB } from "../db";
 import { searchNeighbour } from "../logic/neighbourSearch";
 import { aStarPathfinding } from "../logic/pathfinding";
