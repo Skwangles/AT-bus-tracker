@@ -123,10 +123,26 @@ const VirtualTour: React.FC = () => {
     locationGroup /* DO NOT INCLUDE 'params' otherwise any yaw/pitch change will trigger it */,
   ])
 
+  const rotation_debounce = (callback, wait) => {
+    let timeoutId: number | null = null
+    return (...args) => {
+      if (timeoutId != null) window.clearTimeout(timeoutId)
+      timeoutId = window.setTimeout(() => {
+        callback(...args)
+      }, wait)
+    }
+  }
+  const [debounceExpiry, setDebounceExpiry] = useState(Date.now())
+  const DEBOUNCE_LENGTH_MS = 500
   useEffect(() => {
     params.set('yaw', Number(camRotation['yaw']).toFixed(4))
     params.set('pitch', Number(camRotation['pitch']).toFixed(4))
-    history.replaceState({}, '', '?' + params.toString())
+    const now = Date.now()
+    if (now > debounceExpiry) {
+      // Firefox & safari see security issue if this is called too fast
+      setDebounceExpiry(now + DEBOUNCE_LENGTH_MS)
+      history.replaceState({}, '', '?' + params.toString())
+    }
   }, [camRotation])
 
   useEffect(() => {
