@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { API_PREFIX } from './consts'
+import { API_PREFIX } from '../consts'
 
 const FileUpload = ({
   currentFloor,

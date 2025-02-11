@@ -3,8 +3,8 @@ import axios from 'axios'
 import { Stage, Layer, Image as KonvaImage, Circle, Line } from 'react-konva'
 import FileUpload from './FileUpload'
 import PointControls from './PointControls'
-import { API_PREFIX } from './consts'
-import { findPathWithDijkstra } from './pathfinding'
+import { API_PREFIX } from '../consts'
+import { findPathWithDijkstra } from '../logic/pathfinding'
 
 interface Node {
   id: string

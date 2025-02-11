@@ -5,7 +5,7 @@
 
 //@ts-expect-error - React is just used for types
 import React, { useState } from 'react'
-import { API_PREFIX } from './consts'
+import { API_PREFIX } from '../consts'
 import axios from 'axios'
 
 const PointControls = ({

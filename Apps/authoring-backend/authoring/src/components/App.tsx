@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import FloorplanList from './FloorplanList'
 import FloorplanEditor from './FloorplanEditor'
-import { API_PREFIX } from './consts'
+import { API_PREFIX } from '../consts'
 
 const App: React.FC = () => {
   const [floorplans, setFloorplans] = useState<string[]>([])
