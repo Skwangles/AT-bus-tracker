@@ -2,10 +2,19 @@ import path from "node:path";
 import fs from 'fs'
 import { USE_TABLE_PREFIX, TABLE_PREFIX, FLOORPLAN_IMG_DIR, REASONABLE_MAX_STRING_SIZE } from "../consts";
 import { readDB } from "../db";
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import logger from "../logger";
 
+export function mapFeaturesEnabled(req: Request, res: Response, next: NextFunction) {
+  if (!process.env.IS_FLOORPLANS_EXISTS || process.env.IS_FLOORPLANS_EXISTS == 'false') {
+    res.sendStatus(403);
+    return;
+  }
+  next()
+}
+
 export async function getMapPoints(req: Request, res: Response) {
+
   const name = String(req.params.name).trim();
   if (name == null || name == "") {
     logger.warn(`[GetMapPoints] Invalid name: ${name}`)
