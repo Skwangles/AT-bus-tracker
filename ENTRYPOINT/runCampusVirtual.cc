@@ -42,6 +42,10 @@ int main(int argc, char** argv) {
 
     po::variables_map vm;
     try {
+        std::cout << "ARGS" << std::endl;
+        for(int i=0;i<argc;i++) printf("(%i)%s ", i, argv[i]);
+        std::cout << std::endl;
+
         po::store(po::command_line_parser(argc, argv).options(desc).positional(pos_desc).run(), vm);
         po::notify(vm);
 
@@ -128,6 +132,7 @@ int main(int argc, char** argv) {
                                         " --json-dir '" + (json_dir).string() + "/" + "'" // Only required for 'pairing JSON with frames' step
                                         " --picture-dir '" + (picture_dir).string() + "/" + "'" +
                                         " --log-level debug" +
+                                        " --frame-skip 3" +
                                         (use_temporal_mapping ? " --temporal-mapping" : "") +
                                         (use_viewer ? " --viewer none" : " --viewer iridescence_viewer");
         }
@@ -135,10 +140,17 @@ int main(int argc, char** argv) {
         std::cout << "Command: " << command << std::endl;
         int32_t ret_val = system(command.c_str());
         return ret_val;
-
+    } catch (po::too_many_positional_options_error &e) {
+    // A positional argument like `opt2=option_value_2` was given
+    std::cerr << e.what() << std::endl;
+    exit(1);
+    } catch (po::error_with_option_name &e) {
+    // Another usage error occurred
+    std::cerr << e.what() << std::endl;
+    exit(1);
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
-        return 1;
+        exit(1);
     }
 
     return 0;
