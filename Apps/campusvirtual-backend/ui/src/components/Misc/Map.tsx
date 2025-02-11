@@ -1,5 +1,10 @@
 import React, { useEffect, useState } from 'react'
-import { Stage, Line, Layer, Image as KonvaImage, Arrow } from 'react-konva'
+import {
+  Stage,
+  Line,
+  Layer,
+  Image as KonvaImage /*, Arrow */,
+} from 'react-konva'
 import { X } from 'react-feather'
 import {
   API_PREFIX,
@@ -101,6 +106,7 @@ const Map: React.FC<MapProps> = ({
             type: number
           }>
         }>(`${API_PREFIX}/api/v1/floorplans/${floorName}`)
+
         if (
           !response.data ||
           !response.data.nodes ||
@@ -183,30 +189,30 @@ const Map: React.FC<MapProps> = ({
     setID(closestNodeId)
   }
 
-  const calculateArrowRotation = () => {
-    if (!referenceNode || !nodes.length) return cameraRotation.yaw
+  // const calculateArrowRotation = () => {
+  //   if (!referenceNode || !nodes.length) return cameraRotation.yaw
 
-    // Find current and reference nodes
-    const currentNode = nodes.find(
-      (node) => Number(node.id) === Number(currentId)
-    )
-    const refNode = nodes.find(
-      (node) => Number(node.id) === Number(referenceNode.id)
-    )
+  //   // Find current and reference nodes
+  //   const currentNode = nodes.find(
+  //     (node) => Number(node.id) === Number(currentId)
+  //   )
+  //   const refNode = nodes.find(
+  //     (node) => Number(node.id) === Number(referenceNode.id)
+  //   )
 
-    if (!currentNode || !refNode) return cameraRotation.yaw
+  //   if (!currentNode || !refNode) return cameraRotation.yaw
 
-    // Calculate angle on map
-    const dx = refNode.x - currentNode.x
-    const dy = refNode.y - currentNode.y
-    const mapAngleFromAxis = Math.atan2(dx * stageWidth, dy * stageWidth)
+  //   // Calculate angle on map
+  //   const dx = refNode.x - currentNode.x
+  //   const dy = refNode.y - currentNode.y
+  //   const mapAngleFromAxis = Math.atan2(dx * stageWidth, dy * stageWidth)
 
-    // Calculate world space difference between current camera yaw and target yaw
-    const worldRotationOffset =
-      (referenceNode.targetYaw - cameraRotation.yaw) % (2 * Math.PI)
+  //   // Calculate world space difference between current camera yaw and target yaw
+  //   const worldRotationOffset =
+  //     (referenceNode.targetYaw - cameraRotation.yaw) % (2 * Math.PI)
 
-    return mapAngleFromAxis - worldRotationOffset
-  }
+  //   return mapAngleFromAxis - worldRotationOffset
+  // }
 
   return (
     <div
@@ -306,15 +312,7 @@ const Map: React.FC<MapProps> = ({
                       />
                     )
                   })}
-                {mapNode && personImage && (
-                  <KonvaImage
-                    image={personImage}
-                    x={getNodeCoords(mapNode.id, mapNode).x - 10}
-                    y={getNodeCoords(mapNode.id, mapNode).y - 20}
-                    width={20}
-                    height={40}
-                  />
-                )}
+
                 {nodes.length > 0 &&
                   nodes
                     .filter(
@@ -342,7 +340,17 @@ const Map: React.FC<MapProps> = ({
                         onTouchStart={(e) => setID(node.id)}
                       />
                     ))}
-                {mapNode && cameraRotation && (
+                {/* The Person Image should be at the top level */}
+                {mapNode && personImage && (
+                  <KonvaImage
+                    image={personImage}
+                    x={getNodeCoords(mapNode.id, mapNode).x - 10}
+                    y={getNodeCoords(mapNode.id, mapNode).y - 20}
+                    width={20}
+                    height={40}
+                  />
+                )}
+                {/* {mapNode && cameraRotation && (
                   <Arrow
                     points={[
                       getNodeCoords(mapNode.id, mapNode).x,
@@ -358,7 +366,7 @@ const Map: React.FC<MapProps> = ({
                     stroke="red"
                     strokeWidth={4}
                   />
-                )}
+                )} */}
               </Layer>
             </Stage>
           </div>
