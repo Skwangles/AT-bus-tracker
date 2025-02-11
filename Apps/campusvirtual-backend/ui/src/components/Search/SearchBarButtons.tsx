@@ -2,7 +2,6 @@ import { Eye, ArrowUpRight } from 'react-feather'
 import { Label } from '../../consts'
 
 const includesValue = (data: Label[], value: string) => {
-  console.log('Checking if contains', value, data)
   return data.find((val) => {
     const result =
       (val.group ? val.group.toLowerCase() + ' - ' : '') +
