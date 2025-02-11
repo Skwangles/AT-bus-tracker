@@ -93,7 +93,9 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
     bool loop_id = 0;
 
     std::mutex mtx_pause;
+    std::mutex mtx_loop_detect_pause;
     bool is_paused = false;
+    bool is_loop_detect_paused = false;
 
     std::mutex mtx_terminate;
     bool terminate_is_requested = false;
@@ -104,13 +106,9 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
             stella_vslam::util::yaml_optional_ref(cfg->yaml_node_, "IridescenceViewer"),
             slam->get_frame_publisher(),
             slam->get_map_publisher());
-        // iridescnce_viewer->add_input_int("Loop ID", [&loop_id](int id){
-        //     std::lock_guard<std::mutex> lock(mtx_loop);
-        //     loop_id = id;
-        // })
-        iridescence_viewer->add_checkbox("Pause", [&is_paused, &mtx_pause, &slam](bool check) {
-            std::lock_guard<std::mutex> lock(mtx_pause);
-            if (is_paused != check)
+        iridescence_viewer->add_checkbox("Pause Loop Detection", [&is_loop_detect_paused, &mtx_loop_detect_pause, &slam](bool check) {
+            std::lock_guard<std::mutex> lock(mtx_loop_detect_pause);
+            if (is_loop_detect_paused != check)
             {
                 if (check){
                     slam->disable_loop_detector();
@@ -120,7 +118,7 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
                 }
 
             }
-            is_paused = check;
+            is_loop_detect_paused = check;
         });
         iridescence_viewer->add_button("Step", [&step_count, &mtx_step] {
             std::lock_guard<std::mutex> lock(mtx_step);
@@ -129,7 +127,6 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
         iridescence_viewer->add_button("Reset", [&is_paused, &mtx_pause, &slam] {
             slam->request_reset();
         });
-        // iridesence_viewer->add_button("Force Loop Connect", []{})
 
         iridescence_viewer->add_button("Save and exit", [&is_paused, &mtx_pause, &terminate_is_requested, &mtx_terminate, &slam, &iridescence_viewer] {
             std::lock_guard<std::mutex> lock1(mtx_pause);
@@ -176,10 +173,10 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
 #ifdef HAVE_IRIDESCENCE_VIEWER
             while (true) {
                 {
-                    // std::lock_guard<std::mutex> lock(mtx_pause);
-                    // if (!is_paused) {
+                    std::lock_guard<std::mutex> lock(mtx_pause);
+                    if (!is_paused) {
                         break;
-                    // }
+                    }
                 }
                 {
                     std::lock_guard<std::mutex> lock(mtx_step);
