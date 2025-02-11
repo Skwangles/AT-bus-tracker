@@ -123,15 +123,6 @@ const VirtualTour: React.FC = () => {
     locationGroup /* DO NOT INCLUDE 'params' otherwise any yaw/pitch change will trigger it */,
   ])
 
-  const rotation_debounce = (callback, wait) => {
-    let timeoutId: number | null = null
-    return (...args) => {
-      if (timeoutId != null) window.clearTimeout(timeoutId)
-      timeoutId = window.setTimeout(() => {
-        callback(...args)
-      }, wait)
-    }
-  }
   const [debounceExpiry, setDebounceExpiry] = useState(Date.now())
   const DEBOUNCE_LENGTH_MS = 500
   useEffect(() => {

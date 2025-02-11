@@ -4,7 +4,6 @@ import sharp from "sharp";
 import { SEND_TEST_IMAGE, KEYFRAME_IMG_DIR, KEYFRAME_IMG_EXTENSION, USE_TABLE_PREFIX, TABLE_PREFIX } from "../consts";
 import fs from "fs"
 import { readDB, } from "../db";
-import multer from "multer";
 import logger from "../logger";
 
 const RESOLUTION_LEVELS = {
