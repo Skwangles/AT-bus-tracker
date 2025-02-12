@@ -7,6 +7,7 @@ export interface Node {
   x: number;
   y: number;
   type: number;
+  labelCount?: number;
 }
 
 export interface Edge {

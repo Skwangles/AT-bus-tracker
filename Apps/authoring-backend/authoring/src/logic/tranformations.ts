@@ -1,5 +1,5 @@
 import { padCordAwayFromEdge } from "./utils"
-import { type Node } from "../components/FloorplanEditor"
+import { type Node } from "../consts"
 
 export const flipPointsVertically = (nodes: Node[], selectedPoints: any, updateMap: (nodes: Node[]) => void, onlySelected = false) => {
   const newNodes = nodes.map((node) => {
