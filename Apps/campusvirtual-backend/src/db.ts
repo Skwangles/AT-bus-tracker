@@ -13,9 +13,10 @@ async function initDB() {
   logger.info("Configured databases: " + db_file)
 
 
-  const fp_images = await readDB(`SELECT COUNT(name) as count FROM sqlite_master WHERE type='table' AND name='${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_images';`)
-  const fp_points = await readDB(`SELECT COUNT(name) as count FROM sqlite_master WHERE type='table' AND name='${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_points';`)
+  const fp_images = await readDB(`SELECT COUNT(name) as count FROM sqlite_master WHERE type='table' AND name='floorplan_images';`, [], true)
+  const fp_points = await readDB(`SELECT COUNT(name) as count FROM sqlite_master WHERE type='table' AND name='floorplan_points';`, [], true)
   process.env.IS_FLOORPLANS_EXISTS = fp_images.count === 1 && fp_points.count === 1 ? 'true' : 'false'
+  logger.info("Enabled Floorplan/Maps Feature: " + process.env.IS_FLOORPLANS_EXISTS)
 }
 
 // export async function writeDB(query: string, params: any[] = []): Promise<number> {
