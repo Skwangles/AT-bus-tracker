@@ -7,7 +7,6 @@ const includesValue = (data: Label[], value: string) => {
       (val.group ? val.group.toLowerCase() + ' - ' : '') +
         val.label?.toLowerCase() ==
         value.toLowerCase() || val.label?.toLowerCase() === value.toLowerCase()
-    console.log(result)
 
     return result
   })

@@ -68,11 +68,9 @@ const SearchBar: React.FC<SearchBarProps> = ({
         const largeName =
           (item.group ? item.group.toLowerCase() + ' - ' : '') +
           item.label.toLowerCase()
-        console.log('Large name:', largeName, 'Value:', value)
         const result =
           largeName.includes(value.toLowerCase()) &&
           value.length <= largeName.length
-        console.log('Result:', result)
         return result
       })
       console.log('Filtered suggestions:', filteredSuggestions)
