@@ -42,6 +42,8 @@ const Hotspot: React.FC<HotspotProps> = ({
   // Increase size for mobile
   const sizeMultiplier = isMobile() ? 1.5 : 1
   const sphereSize = SPHERE_SIZE * sizeMultiplier
+  const endMarkerSize = sphereSize * 3
+  const endMarkerOutlineSize = endMarkerSize * 1.09
   const outlineSize = sphereSize * 1.09
 
   position[1] -= HOTSPOT_Y_ADJUSTMENT_DOWN_TO_FLOOR_LEVEL
@@ -81,7 +83,7 @@ const Hotspot: React.FC<HotspotProps> = ({
         receiveShadow
       >
         {isEnd ? (
-          <boxGeometry args={[sphereSize, sphereSize, sphereSize]} />
+          <boxGeometry args={[endMarkerSize, endMarkerSize, endMarkerSize]} />
         ) : (
           <sphereGeometry args={[sphereSize, 20, 20]} />
         )}
@@ -105,7 +107,11 @@ const Hotspot: React.FC<HotspotProps> = ({
       >
         {isEnd ? (
           <boxGeometry
-            args={[outlineSize * 3, outlineSize * 3, outlineSize * 3]}
+            args={[
+              endMarkerOutlineSize,
+              endMarkerOutlineSize,
+              endMarkerOutlineSize,
+            ]}
           />
         ) : (
           <sphereGeometry args={[outlineSize, 20, 20]} />
