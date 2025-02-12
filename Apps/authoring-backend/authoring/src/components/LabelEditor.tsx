@@ -70,8 +70,8 @@ const LabelComponent: React.FC<LabelComponentProps> = ({ id }) => {
     if (editedLabelText.trim() && editingLabel) {
       try {
         await axios.put(`${API_PREFIX}/api/v1/labels/${id}`, {
-          oldLabel: editingLabel,
-          newLabel: editedLabelText,
+          old_label: editingLabel,
+          new_label: editedLabelText,
         })
         setLabels((prevLabels) =>
           prevLabels.map((label) =>
