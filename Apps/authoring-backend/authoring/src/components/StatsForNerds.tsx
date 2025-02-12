@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React from 'react'
 import '../css/StatsForNerds.css'
 // Type definitions
 interface StatsForNerdsProps {
@@ -11,23 +11,16 @@ const StatsForNerds: React.FC<StatsForNerdsProps> = ({
   console.debug('Point:', point)
   if (!point) return <></>
 
-  const [isOpen, setIsOpen] = useState(true)
   return (
     <div className="stats-container">
-      <button className="stat-drawer-toggle" onClick={() => setIsOpen(!isOpen)}>
-        {isOpen ? 'Hide Stats' : 'Stats'}
-      </button>
-
-      {isOpen && (
-        <div className="stats">
-          <ul>
-            <li>Point ID: {point.id}</li>
-            <li>X: {point.x * 100}%</li>
-            <li>Y: {point.y * 100}%</li>
-            <li>Type: {point.type}</li>
-          </ul>
-        </div>
-      )}
+      <div className="stats">
+        <ul>
+          <li>Point ID: {point.id}</li>
+          <li>X: {point.x * 100}%</li>
+          <li>Y: {point.y * 100}%</li>
+          <li>Type: {point.type}</li>
+        </ul>
+      </div>
     </div>
   )
 }

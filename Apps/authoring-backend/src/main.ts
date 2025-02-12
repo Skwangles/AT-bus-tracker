@@ -5,6 +5,7 @@ import { PORT, SKIP_IF_MAP_ALREADY_CONFIGED } from './consts'
 import authoringRoutes from './routes/authoring.routes'
 import imageRoutes from './routes/image.routes'
 import mapRoutes from './routes/map.routes'
+import labelRoutes from './routes/labels.routes'
 
 import logger from './logger'
 import bodyParser from 'body-parser'
@@ -26,6 +27,7 @@ app.get('/', function (req, res) {
 app.use(mapRoutes)
 app.use(imageRoutes)
 app.use(authoringRoutes)
+app.use(labelRoutes)
 
 app.listen(PORT, () => {
   initData(SKIP_IF_MAP_ALREADY_CONFIGED)

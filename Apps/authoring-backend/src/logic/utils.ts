@@ -40,7 +40,7 @@ export async function replaceNode(keyframeId: number) {
         [neighbour.keyframe_id, new_neighbour.keyframe_id]
       );
       await writeDB(
-        `INSERT INTO ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}edges (keyframe_id1, keyframe_id0, type) VALUES (?, ? 1) ON CONFLICT (keyframe_id0, keyframe_id1) DO UPDATE SET type = ${EdgeType.EdgeContraction};`,
+        `INSERT INTO ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}edges (keyframe_id1, keyframe_id0, type) VALUES (?, ?, 1) ON CONFLICT (keyframe_id0, keyframe_id1) DO UPDATE SET type = ${EdgeType.EdgeContraction};`,
         [neighbour.keyframe_id, new_neighbour.keyframe_id]
       );
     }

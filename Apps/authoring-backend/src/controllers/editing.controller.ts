@@ -54,8 +54,6 @@ export async function addLabelToMapPoint(req: Request, res: Response) {
     res.status(400).send("Invalid Arguments").end();
     return;
   }
-
-  label = label.replace("<", "\<").replace(">", "\>"); // THIS AREA MAY BE VULNERABLE TO XSS - Only if the attacker gets ahold of the authoring panel, please disable it in consts once you are done authoring
   const changes = await writeDB(
     `INSERT OR IGNORE INTO ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""
     }special_labels (keyframe_id, label) VALUES (?, ?) WHERE 
@@ -67,6 +65,24 @@ export async function addLabelToMapPoint(req: Request, res: Response) {
     .send(
       changes > 0
         ? "Point labelled"
+        : "Error occurred - The point may be a border point, which cannot be deleted"
+    );
+}
+
+export async function deleteLabelFromMapOnly(req: Request, res: Response) {
+
+  const id = Number(req.params.id);
+  const loc = req.params.location
+  if (isNaN(id) || !loc) {
+    res.status(400).send("Invalid Arguments").end();
+    return;
+  }
+  const result = await writeDB(`DELETE FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_points WHERE location = ? AND keyframe_id = ?`, [loc, id])
+  res
+    .status(result > 0 ? 200 : 409)
+    .send(
+      result
+        ? "Point deleted from map"
         : "Error occurred - The point may be a border point, which cannot be deleted"
     );
 }

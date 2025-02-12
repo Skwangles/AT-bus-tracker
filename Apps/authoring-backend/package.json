@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "build": "npm install && tsc",
+    "build": "cd authoring && npm run build && cd .. && npm install && tsc",
     "start": "npm run build && node dist/main.js"
   },
   "author": "",

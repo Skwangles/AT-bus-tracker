@@ -5,21 +5,22 @@ import FileUpload from './FileUpload'
 import PointControls from './PointControls'
 import { API_PREFIX } from '../consts'
 import { findPathWithDijkstra } from '../logic/pathfinding'
+import { padCordAwayFromEdge, clamp } from '../logic/utils'
+import Buttons from './Buttons'
 
-interface Node {
+export interface Node {
   id: string
   x: number
   y: number
   type: number
-  label: string
 }
 
-interface Edge {
+export interface Edge {
   id0: string
   id1: string
 }
 
-interface FloorplanEditorProps {
+export interface FloorplanEditorProps {
   floorplan: string
 }
 
@@ -106,21 +107,21 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
     console.log(dragStartPos)
     if (!dragStartPos) return
 
-    const { x: x, y: y } = e.target.position()
-    const dx = x - dragStartPos.x
-    const dy = y - dragStartPos.y
+    const { x: x, y: y }: { x: number; y: number } = e.target.position()
+    const dx = Number(x - dragStartPos.x)
+    const dy = Number(y - dragStartPos.y)
 
-    const width = e.target.getStage().width()
-    const height = e.target.getStage().height()
+    const width: number = e.target.getStage().width()
+    const height: number = e.target.getStage().height()
 
     setNodes((prevNodes) =>
       prevNodes.map((node) => {
         if (selectedPoints.has(node.id) && node.id != e.target.name()) {
           const newX = clamp(node.x + dx / width, 0, 1)
           const newY = clamp(node.y + dy / height, 0, 1)
-          return { ...node, x: newX, y: newY }
+          return { ...node, x: Number(newX), y: Number(newY) }
         } else if (node.id == e.target.name()) {
-          return { ...node, x: x / width, y: y / height }
+          return { ...node, x: Number(x / width), y: Number(y / height) }
         }
         return node
       })
@@ -173,55 +174,6 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
     setLastSelectedPoint(foundNode || null)
   }
 
-  const moveX = (scale: number) => {
-    const newNodes = nodes.map((node) => {
-      node.x = node.x + scale
-      return node
-    })
-    setNodes(newNodes)
-    updateAllPoints(newNodes)
-  }
-
-  const moveY = (scale: number) => {
-    const newNodes = nodes.map((node) => {
-      node.y = node.y + scale
-      return node
-    })
-    setNodes(newNodes)
-    updateAllPoints(newNodes)
-  }
-  const rescaleX = (scale: number, originX: number = 0.5) => {
-    const newNodes = nodes.map((node) => {
-      node.x = (node.x - originX) * scale + originX
-      return node
-    })
-    setNodes(newNodes)
-    updateAllPoints(newNodes)
-  }
-
-  const rescaleY = (scale: number, originY: number = 0.5) => {
-    const newNodes = nodes.map((node) => {
-      node.y = (node.y - originY) * scale + originY
-      return node
-    })
-    setNodes(newNodes)
-    updateAllPoints(newNodes)
-  }
-
-  const rescalePoints = (
-    scale: number,
-    originX: number = 0.5,
-    originY: number = 0.5
-  ) => {
-    const newNodes = nodes.map((node) => {
-      node.x = (node.x - originX) * scale + originX
-      node.y = (node.y - originY) * scale + originY
-      return node
-    })
-    setNodes(newNodes)
-    updateAllPoints(newNodes)
-  }
-
   const handleMouseUp = (e: any) => {
     const x = e.target.x() / e.target.getStage().width()
     const y = e.target.y() / e.target.getStage().height()
@@ -249,15 +201,6 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
     console.log('Updated!')
   }
 
-  const padCordAwayFromEdge = (val: number) => {
-    const padding = 0.01
-    return clamp(val, 0 + padding, 1 - padding)
-  }
-
-  const clamp = (value: number, min: number, max: number) => {
-    return Math.max(min, Math.min(max, value))
-  }
-
   const getNodeCoords = (id: string) => {
     const node = nodes.find((node) => node.id === id)
     if (!node) throw Error("Couldn't find node: " + id)
@@ -267,63 +210,7 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
     }
   }
 
-  const flipPointsVertically = (onlySelected = false) => {
-    const newNodes = nodes.map((node) => {
-      if (onlySelected && !selectedPoints.has(node.id)) return node
-      node.y = padCordAwayFromEdge(1 - node.y)
-      return node
-    })
-
-    setNodes(newNodes)
-    updateAllPoints(newNodes)
-    forceUpdate()
-  }
-
-  const flipPointsHorizontally = (onlySelected = false) => {
-    const newNodes = nodes.map((node) => {
-      if (onlySelected && !selectedPoints.has(node.id)) return node
-      node.x = padCordAwayFromEdge(1 - node.x)
-      return node
-    })
-
-    setNodes(newNodes)
-    updateAllPoints(newNodes)
-    forceUpdate()
-  }
-  const rotatePoints = (onlySelected = false) => {
-    const newNodes = nodes.map((node) => {
-      if (onlySelected && !selectedPoints.has(node.id)) return node
-      const x = node.x
-      const y = node.y
-      node.x = padCordAwayFromEdge(y)
-      node.y = padCordAwayFromEdge(1 - x)
-      return node
-    })
-    setNodes(newNodes)
-    updateAllPoints(newNodes)
-    forceUpdate()
-  }
-
-  const rotatePointsByAngle = (
-    angle: number,
-    oX: number,
-    oY: number,
-    onlySelected = false
-  ) => {
-    const newNodes = nodes.map((node) => {
-      if (onlySelected && !selectedPoints.has(node.id)) return node
-
-      const radians = angle * (Math.PI / 180) // Convert angle to radians
-      const cosTheta = Math.cos(radians)
-      const sinTheta = Math.sin(radians)
-
-      const x = node.x - oX
-      const y = node.y - oY
-
-      node.x = padCordAwayFromEdge(x * cosTheta - y * sinTheta + oX)
-      node.y = padCordAwayFromEdge(x * sinTheta + y * cosTheta + oY)
-      return node
-    })
+  const updateMap = (newNodes: Node[]) => {
     setNodes(newNodes)
     updateAllPoints(newNodes)
     forceUpdate()
@@ -333,76 +220,11 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
     <>
       <div>
         <FileUpload currentFloor={floorplan} isImageSelected={hasImage} />
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <div>
-            <button onClick={() => rotatePoints()}>
-              Rotate All Points 90 Degrees
-            </button>
-            <button
-              className="bg-blue-600"
-              onClick={() => rotatePointsByAngle(5, 0.5, 0.5)}
-            >
-              Rotate All CW 10 Degrees
-            </button>
-            <button
-              className="bg-blue-600"
-              onClick={() => rotatePointsByAngle(-5, 0.5, 0.5)}
-            >
-              Rotate All CCW 10 Degrees
-            </button>
-
-            <button
-              className="bg-orange-600"
-              onClick={() => flipPointsHorizontally()}
-            >
-              Flip All Points Horizontally
-            </button>
-            <button
-              className="bg-orange-600"
-              onClick={() => flipPointsVertically()}
-            >
-              Flip All Points Vertically
-            </button>
-
-            <button className="bg-green-600" onClick={() => rescalePoints(1.1)}>
-              Scale Up
-            </button>
-            <button className="bg-red-600" onClick={() => rescalePoints(0.9)}>
-              Scale Down
-            </button>
-
-            <button className="bg-green-600" onClick={() => rescaleX(1.1)}>
-              Scale X UP
-            </button>
-            <button className="bg-red-600" onClick={() => rescaleX(0.9)}>
-              Scale X Down
-            </button>
-
-            <button className="bg-green-600" onClick={() => rescaleY(1.1)}>
-              Scale Y UP
-            </button>
-            <button className="bg-red-600" onClick={() => rescaleY(0.9)}>
-              Scale Y Down
-            </button>
-
-            <button onClick={() => moveX(-0.01)}>Move Left</button>
-            <button onClick={() => moveX(0.01)}>Move Right</button>
-
-            <button onClick={() => moveY(-0.01)}>Move Up</button>
-            <button onClick={() => moveY(0.01)}>Move Down</button>
-          </div>
-          <div>
-            <button onClick={() => rotatePoints(true)}>
-              Rotate Selected (Green) Points 90 Degrees
-            </button>
-            <button onClick={() => flipPointsVertically(true)}>
-              Flip Selected Points Vertically
-            </button>
-            <button onClick={() => flipPointsHorizontally(true)}>
-              Flip Selected Points Horizontally
-            </button>
-          </div>
-        </div>
+        <Buttons
+          nodes={nodes}
+          selectedPoints={selectedPoints}
+          updateMap={updateMap}
+        />
         <div
           style={{
             border: 'solid 1px',

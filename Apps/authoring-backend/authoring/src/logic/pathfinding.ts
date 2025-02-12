@@ -1,15 +1,5 @@
 import { MinQueue } from 'heapify'
-interface Node {
-  id: string;
-  x: number;
-  y: number;
-  type: number;
-}
-
-interface Edge {
-  id0: string;
-  id1: string;
-}
+import { Node, Edge } from '../consts'
 
 
 const getDistance = (point: Node, point2: Node, scaler: number = 1) => {

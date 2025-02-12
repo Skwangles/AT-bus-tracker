@@ -1,6 +1,6 @@
 import express, { Router } from "express";
 import fs from "fs";
-import { addLabelToMapPoint, connectTwoPoints, deleteLabel, disconnectTwoPoints, updateFloorplanImage, updateMapPoint, updateMultipleMapPoints } from "../controllers/editing.controller";
+import { addLabelToMapPoint, connectTwoPoints, deleteLabel, deleteLabelFromMapOnly, disconnectTwoPoints, updateFloorplanImage, updateMapPoint, updateMultipleMapPoints } from "../controllers/editing.controller";
 import multer from "multer";
 import { FLOORPLAN_IMG_DIR } from "../consts";
 const app = Router();
@@ -42,6 +42,8 @@ app.post("/api/v1/floorplans/:name/update", updateMapPoint);
 app.post("/api/v1/point/:id/label", addLabelToMapPoint)
 
 app.delete("/api/v1/point/:id/delete", deleteLabel)
+
+app.delete("/api/v1/point/:id/visually-delete", deleteLabelFromMapOnly)
 
 app.post("/api/v1/point/:id1/connect/:id2", connectTwoPoints);
 
