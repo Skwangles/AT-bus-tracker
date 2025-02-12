@@ -3,22 +3,10 @@ import axios from 'axios'
 import { Stage, Layer, Image as KonvaImage, Circle, Line } from 'react-konva'
 import FileUpload from './FileUpload'
 import PointControls from './PointControls'
-import { API_PREFIX } from '../consts'
+import { API_PREFIX, Edge, Node } from '../consts'
 import { findPathWithDijkstra } from '../logic/pathfinding'
 import { padCordAwayFromEdge, clamp } from '../logic/utils'
 import Buttons from './Buttons'
-
-export interface Node {
-  id: string
-  x: number
-  y: number
-  type: number
-}
-
-export interface Edge {
-  id0: string
-  id1: string
-}
 
 export interface FloorplanEditorProps {
   floorplan: string
@@ -54,7 +42,7 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
           y: number
           keyframe_id: number
           type: number
-          label: string
+          labelCount: number
         }>
       }>(`${API_PREFIX}/api/v1/floorplans/${floorplan}`)
       if (
@@ -274,6 +262,8 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
                           fill={
                             selectedPoints.has(node.id)
                               ? 'green'
+                              : node.labelCount && node.labelCount > 0
+                              ? 'yellow'
                               : node.type < 50
                               ? 'red'
                               : 'blue'

@@ -14,7 +14,7 @@ export async function getMapPoints(req: Request, res: Response) {
   }
 
   // Includes keyframes bordering the floor (add 'AND type < 50' to exclude)
-  const pointResult = await readDB(`SELECT f.keyframe_id, x, y, type FROM floorplan_points f JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n ON n.keyframe_id = f.keyframe_id WHERE location = ?`, [name]);
+  const pointResult = await readDB(`SELECT f.keyframe_id, x, y, type, COUNT(sl.keyframe_id) as labelCount FROM floorplan_points f JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n ON n.keyframe_id = f.keyframe_id LEFT JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}special_labels sl ON sl.keyframe_id = n.keyframe_id WHERE location = ? GROUP BY n.keyframe_id`, [name]);
   const image = await readDB("SELECT path FROM floorplan_images WHERE location = ? LIMIT 1;", [name])
 
   const edges = await readDB(`SELECT  e.keyframe_id0, e.keyframe_id1 FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}edges e JOIN floorplan_points f ON e.keyframe_id0 = f.keyframe_id JOIN floorplan_points f2 ON e.keyframe_id1 = f2.keyframe_id WHERE f.location = ? AND f2.location = ?`, [name, name])
