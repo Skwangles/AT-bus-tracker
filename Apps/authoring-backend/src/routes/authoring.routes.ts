@@ -43,7 +43,7 @@ app.post("/api/v1/point/:id/label", addLabelToMapPoint)
 
 app.delete("/api/v1/point/:id/delete", deleteLabel)
 
-app.delete("/api/v1/point/:id/visually-delete", deleteLabelFromMapOnly)
+app.delete("/api/v1/point/:id/visually-delete/:loc", deleteLabelFromMapOnly)
 
 app.post("/api/v1/point/:id1/connect/:id2", connectTwoPoints);
 

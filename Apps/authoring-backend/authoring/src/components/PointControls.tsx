@@ -12,6 +12,7 @@ import LabelComponent from './LabelEditor'
 const PointControls = ({
   id,
   point,
+  location,
   reloadPoints,
 }: {
   id: string | undefined
@@ -21,6 +22,7 @@ const PointControls = ({
     y: number
     type: number
   } | null
+  location: string
   reloadPoints: any
 }) => {
   const [connectId, setConnectId] = useState<string>('')
@@ -78,6 +80,20 @@ const PointControls = ({
     }
   }
 
+  const hidePoint = async () => {
+    const result = await axios.delete(
+      `${API_PREFIX}/api/v1/point/${id}/visually-delete/${location}`
+    )
+    if (result.status == 200) {
+      window.alert('Sucessfully removed!')
+      reloadPoints()
+    } else if (result.status == 409) {
+      window.alert(`Could not delete point! [${result.statusText.toString()}]`)
+    } else {
+      window.alert(`Unknown error: ${result.statusText}`)
+    }
+  }
+
   console.log('Point Info', point)
 
   return (
@@ -109,6 +125,10 @@ const PointControls = ({
 
       <button style={{ margin: '5px' }} onClick={deletePoint}>
         Delete Point
+      </button>
+
+      <button style={{ margin: '5px' }} onClick={hidePoint}>
+        Hide Point
       </button>
 
       <div>

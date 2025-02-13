@@ -290,6 +290,7 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
         <PointControls
           id={lastSelectedPoint?.id}
           point={lastSelectedPoint}
+          location={floorplan}
           reloadPoints={() => {
             console.log('Reloading points')
             fetchFloorplanData()
