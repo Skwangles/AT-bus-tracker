@@ -10,7 +10,7 @@ export async function updateMultipleMapPoints(req: Request, res: Response) {
   const { points } = req.body;
   for (const point of points) {
     await writeDB(
-      "UPDATE floorplan_points SET x = ?, y = ? WHERE keyframe_id = ? AND location = ?;",
+      `UPDATE ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_points SET x = ?, y = ? WHERE keyframe_id = ? AND location = ?;`,
       [point.x, point.y, point.id, name]
     )
       .then((changes: number) => {
@@ -32,7 +32,7 @@ export async function updateMapPoint(req: Request, res: Response) {
   const { id, x, y } = req.body;
 
   await writeDB(
-    "UPDATE floorplan_points SET x = ?, y = ? WHERE keyframe_id = ? AND location = ?;",
+    `UPDATE ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_points SET x = ?, y = ? WHERE keyframe_id = ? AND location = ?;`,
     [x, y, id, name]
   )
     .then((changes: number) => {
@@ -72,7 +72,7 @@ export async function addLabelToMapPoint(req: Request, res: Response) {
 export async function deleteLabelFromMapOnly(req: Request, res: Response) {
 
   const id = Number(req.params.id);
-  const loc = req.params.location
+  const loc = String(req.params.loc)
   if (isNaN(id) || !loc) {
     res.status(400).send("Invalid Arguments").end();
     return;
@@ -114,7 +114,7 @@ export async function connectTwoPoints(req: Request, res: Response) {
   }
 
   const is_on_same_level = await readDB(
-    "SELECT kf1.keyframe_id, kf2.keyframe_id, kf1.location FROM floorplan_points kf1 JOIN floorplan_points kf2 ON kf1.location = kf2.location AND kf1.keyframe_id <> kf2.keyframe_id AND kf1.keyframe_id = ? AND kf2.keyframe_id = ? LIMIT 1;",
+    `SELECT kf1.keyframe_id, kf2.keyframe_id, kf1.location FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_points kf1 JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_points kf2 ON kf1.location = kf2.location AND kf1.keyframe_id <> kf2.keyframe_id AND kf1.keyframe_id = ? AND kf2.keyframe_id = ? LIMIT 1;`,
     [id1, id2]
   );
   if (is_on_same_level.length == 0) {
@@ -170,7 +170,7 @@ export async function updateFloorplanImage(req: Request, res: Response) {
     // Save the image path to the database
     const filePath = file.filename;
     await writeDB(
-      "UPDATE floorplan_images SET path = ? WHERE location = ?",
+      `UPDATE ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_images SET path = ? WHERE location = ?`,
       [filePath, name]
     );
 
