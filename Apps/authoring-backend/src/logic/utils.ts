@@ -47,7 +47,7 @@ export async function replaceNode(keyframeId: number) {
   }
 
   // TODO: Gracefully handle deleteing border nodes
-  const changes = await writeDB("DELETE FROM floorplan_points WHERE keyframe_id = ? AND NOT EXISTS (SELECT * FROM floorplan_points WHERE keyframe_id = ? AND type >= ?);", [keyframeId, keyframeId, BORDERING_FLOOR_POINT_DEFAULT_TYPE]);
+  const changes = await writeDB(`DELETE FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_points WHERE keyframe_id = ? AND NOT EXISTS (SELECT * FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_points WHERE keyframe_id = ? AND type >= ?);`, [keyframeId, keyframeId, BORDERING_FLOOR_POINT_DEFAULT_TYPE]);
   if (changes == 0) {
     await writeDB("ROLLBACK;")
     logger.warn("Tried to delete a border node - this will cause problems in other floors")

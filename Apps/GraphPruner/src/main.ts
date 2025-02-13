@@ -173,8 +173,8 @@ async function createAWorkingCopy() {
   await writeDB(`DROP TABLE IF EXISTS ${config.table_prefix}edges;`);
   await writeDB(`DROP TABLE IF EXISTS ${config.table_prefix}node_locations;`);
   await writeDB(`DROP TABLE IF EXISTS ${config.table_prefix}special_labels;`);
-  await writeDB(`DROP TABLE IF EXISTS floorplan_points;`);
-  await writeDB(`DROP TABLE IF EXISTS floorplan_images;`);
+  await writeDB(`DROP TABLE IF EXISTS ${config.table_prefix}floorplan_points;`);
+  await writeDB(`DROP TABLE IF EXISTS ${config.table_prefix}floorplan_images;`);
   await writeDB(`DROP TABLE IF EXISTS ${config.table_prefix}nodes;`);
 
   progBar.increment(1, { msg: "Dropping tables" });
@@ -197,7 +197,7 @@ async function createAWorkingCopy() {
             keyframe_id INTEGER NOT NULL,
             label TEXT,
             zone TEXT DEFAULT NULL,
-            FOREIGN KEY (keyframe_id) REFERENCES nodes(keyframe_id),
+            FOREIGN KEY (keyframe_id) REFERENCES ${config.table_prefix}nodes(keyframe_id),
             PRIMARY KEY (label, keyframe_id)
         );`);
   progBar.increment(1, { msg: "Created working special_labels table" });
@@ -208,8 +208,8 @@ async function createAWorkingCopy() {
             keyframe_id1 INTEGER NOT NULL,
             type INTEGER DEFAULT 2,
             zone TEXT DEFAULT NULL,
-            FOREIGN KEY (keyframe_id0) REFERENCES nodes(keyframe_id),
-            FOREIGN KEY (keyframe_id1) REFERENCES nodes(keyframe_id),
+            FOREIGN KEY (keyframe_id0) REFERENCES ${config.table_prefix}nodes(keyframe_id),
+            FOREIGN KEY (keyframe_id1) REFERENCES ${config.table_prefix}nodes(keyframe_id),
             UNIQUE(keyframe_id0, keyframe_id1),
             PRIMARY KEY (keyframe_id0, keyframe_id1)
         );`);
@@ -220,7 +220,7 @@ async function createAWorkingCopy() {
             keyframe_id INTEGER PRIMARY KEY NOT NULL,
             location TEXT,
             zone TEXT DEFAULT NULL,
-            FOREIGN KEY (keyframe_id) REFERENCES nodes(keyframe_id)
+            FOREIGN KEY (keyframe_id) REFERENCES ${config.table_prefix}nodes(keyframe_id)
         );
     `);
 

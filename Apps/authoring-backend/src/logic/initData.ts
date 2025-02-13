@@ -5,12 +5,12 @@ import { getGroupsFromPoints } from './initBFS';
 export default async function initDB(quitIfTablesExist = false) {
   try {
     logger.debug("[initMap] Initalising data...")
-    await writeDB(`CREATE TABLE floorplan_images (
+    await writeDB(`CREATE TABLE ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_images (
       location TEXT PRIMARY KEY,
       path TEXT DEFAULT ''
       );`);
 
-    await writeDB(`CREATE TABLE floorplan_points (
+    await writeDB(`CREATE TABLE ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_points (
       location TEXT NOT NULL,
       x DOUBLE PRECISION DEFAULT 0 NOT NULL,
       y DOUBLE PRECISION DEFAULT 0 NOT NULL,
@@ -21,7 +21,7 @@ export default async function initDB(quitIfTablesExist = false) {
   }
   catch (e) {
 
-    logger.info(`[initMap] Already built floorplan_images and floorplan_points - Exception: ${e}`)
+    logger.info(`[initMap] Already built ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_images and${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_points - Exception: ${e}`)
     if (quitIfTablesExist) {
       logger.info("[initMap] Skipping map data init!")
       return;
@@ -121,7 +121,7 @@ async function insertPointOnMap(location: string, keyframe_id: number, type: num
     return false;
   }
 
-  return (await writeDB(`INSERT OR IGNORE INTO floorplan_points (location, keyframe_id, type, x, y) VALUES (?, ?, ?, ?, ?);`, [location, keyframe_id, type, x, y])) > 0;
+  return (await writeDB(`INSERT OR IGNORE INTO ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_points (location, keyframe_id, type, x, y) VALUES (?, ?, ?, ?, ?);`, [location, keyframe_id, type, x, y])) > 0;
 }
 
 /**
@@ -135,7 +135,7 @@ async function insertLocationIntoImages(location: string) {
     throw new Error("Invalid Location")
   }
 
-  await writeDB(`INSERT OR IGNORE INTO floorplan_images (location) VALUES (?);`, [location])
+  await writeDB(`INSERT OR IGNORE INTO ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_images (location) VALUES (?);`, [location])
   return true; // IGNORE is acceptable
 }
 
