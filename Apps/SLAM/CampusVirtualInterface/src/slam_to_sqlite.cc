@@ -66,7 +66,7 @@ void create_tables_if_not_exist(sqlite3* db) {
             keyframe_id INTEGER NOT NULL,
             label TEXT,
             zone TEXT DEFAULT NULL,
-            FOREIGN KEY (keyframe_id) REFERENCES nodes(keyframe_id),
+            FOREIGN KEY (keyframe_id) REFERENCES nodes(keyframe_id) ON DELETE CASCADE,
             PRIMARY KEY (label, keyframe_id)
         );
 
@@ -75,8 +75,8 @@ void create_tables_if_not_exist(sqlite3* db) {
             keyframe_id1 INTEGER NOT NULL,
             type INTEGER DEFAULT 2,
             zone TEXT DEFAULT NULL,
-            FOREIGN KEY (keyframe_id0) REFERENCES nodes(keyframe_id),
-            FOREIGN KEY (keyframe_id1) REFERENCES nodes(keyframe_id),
+            FOREIGN KEY (keyframe_id0) REFERENCES nodes(keyframe_id) ON DELETE CASCADE,
+            FOREIGN KEY (keyframe_id1) REFERENCES nodes(keyframe_id) ON DELETE CASCADE,
             UNIQUE(keyframe_id0, keyframe_id1),
             PRIMARY KEY (keyframe_id0, keyframe_id1)
         );
@@ -85,7 +85,7 @@ void create_tables_if_not_exist(sqlite3* db) {
             keyframe_id INTEGER PRIMARY KEY NOT NULL,
             location TEXT,
             zone TEXT DEFAULT NULL,
-            FOREIGN KEY (keyframe_id) REFERENCES nodes(keyframe_id)
+            FOREIGN KEY (keyframe_id) REFERENCES nodes(keyframe_id) ON DELETE CASCADE
         );
     )";
 
