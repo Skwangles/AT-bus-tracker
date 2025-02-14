@@ -98,6 +98,11 @@ if [ "$CV_START_AUTHORING" == true ]; then
   check_command "./bin/scripts/cv_run_10_start_authoring.sh"
 fi
 
+if [ "$CV_STRIP_RESTRICTED_NODES" == true ]; then
+  ./bin/scripts/cv_run_12_strip_restricted_locations.sh
+  check_command "cv_run_12_strip_restricted_locations.sh"
+fi
+
 if [ "$CV_START_SERVER" == true ]; then
   ./bin/scripts/cv_run_11_start_frontend.sh
   check_command "./bin/scripts/cv_run_11_start_frontend.sh"
