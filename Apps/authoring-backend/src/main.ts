@@ -1,7 +1,7 @@
 import path from 'path'
 import cors from 'cors'
 import express from 'express'
-import { PORT, SKIP_IF_MAP_ALREADY_CONFIGED } from './consts'
+import { PORT } from './consts'
 import authoringRoutes from './routes/authoring.routes'
 import imageRoutes from './routes/image.routes'
 import mapRoutes from './routes/map.routes'
@@ -9,7 +9,6 @@ import labelRoutes from './routes/labels.routes'
 
 import logger from './logger'
 import bodyParser from 'body-parser'
-import initData from './logic/initData'
 
 const app = express()
 
@@ -30,6 +29,5 @@ app.use(authoringRoutes)
 app.use(labelRoutes)
 
 app.listen(PORT, () => {
-  initData(SKIP_IF_MAP_ALREADY_CONFIGED)
   logger.info(`Server running on port ${PORT}`)
 })

@@ -1,7 +1,7 @@
-import { writeDB, readDB } from '../db'
-import { FLOOR_POINT_DEFAULT_TYPE, BORDERING_FLOOR_POINT_DEFAULT_TYPE, TABLE_PREFIX, USE_TABLE_PREFIX, REASONABLE_MAX_STRING_SIZE } from '../consts'
-import logger from '../logger';
-import { getGroupsFromPoints } from './initBFS';
+import { USE_TABLE_PREFIX, TABLE_PREFIX, FLOOR_POINT_DEFAULT_TYPE, BORDERING_FLOOR_POINT_DEFAULT_TYPE, REASONABLE_MAX_STRING_SIZE } from "./consts";
+import { writeDB, readDB } from "./db";
+import logger from "./logger";
+
 export default async function initDB(quitIfTablesExist = false) {
   try {
     logger.debug("[initMap] Initalising data...")
