@@ -8,7 +8,9 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Filter an SQLite3 database based on provided arguments")
     parser.add_argument('input_db', help="Path to the input SQLite3 database file")
     parser.add_argument('output_db', help="Path to the output SQLite3 database file")
-    parser.add_argument('--remove', type=str, help="List of locations to remove, e.g. '[\"floor1\", \"floor2\"]'")
+    parser.add_argument('--del_non_prefix', help="Delete all tables that are non-prefixed e.g. nodes, node_locations, edges, etc. and keep refined_nodes, etc.", action='store_true')
+    parser.add_argument('--prefix', help="Table prefix to add to tables")
+    parser.add_argument('--remove_areas', type=str, help="List of locations to remove, e.g. '[\"floor1\", \"floor2\"]'")
     parser.add_argument('--keep_id', type=str, help="List of IDs to keep, e.g. '[15, 16, 17]'")
     parser.add_argument('--keep_labels', type=str, help="List of labels to keep, e.g. '[\"reserved\"]'")
     return parser.parse_args()
@@ -35,29 +37,31 @@ def get_keep_labels(keep_labels_str):
         return json.loads(keep_labels_str)
     return []
 
-def delete_filtered_nodes(db_cursor, remove_list, keep_id_list, keep_labels):
+def delete_filtered_nodes(prefix, db_cursor, remove_list, keep_id_list, keep_labels, del_non_prefix):
     """Delete nodes from refined_nodes based on provided filters."""
     remove_str = ', '.join(f"'{location}'" for location in remove_list)
     keep_id_str = ', '.join(map(str, keep_id_list))
     keep_label_str = ', '.join(f"'{label}'" for label in keep_labels)
 
     query = f"""
-    DELETE FROM refined_nodes
+    DELETE FROM {prefix}nodes
     WHERE EXISTS (
         SELECT 1
-        FROM refined_node_locations
-        WHERE refined_nodes.keyframe_id = refined_node_locations.keyframe_id
-          AND refined_node_locations.location IN ({remove_str})
+        FROM {prefix}node_locations
+        WHERE {prefix}nodes.keyframe_id = {prefix}node_locations.keyframe_id
+          AND {prefix}node_locations.location IN ({remove_str})
     )
-    AND refined_nodes.keyframe_id NOT IN ({keep_id_str})
-    AND EXISTS (
+    AND {prefix}nodes.keyframe_id NOT IN ({keep_id_str})
+    AND NOT EXISTS (
         SELECT 1
-        FROM refined_special_labels
-        WHERE refined_nodes.keyframe_id = refined_special_labels.keyframe_id
-          AND refined_special_labels.label IN ({keep_label_str})
+        FROM {prefix}special_labels
+        WHERE {prefix}nodes.keyframe_id = {prefix}special_labels.keyframe_id
+          AND {prefix}special_labels.label IN ({keep_label_str})
     );
     """
+    print("Running query:", query)
     db_cursor.execute(query)
+    print("Deleteing: ", db_cursor.rowcount)
 
 def main():
     args = parse_args()
@@ -70,12 +74,15 @@ def main():
     cursor = conn.cursor()
 
     # Parse arguments for filtering
-    remove_list = get_remove_list(args.remove)
+    remove_list = get_remove_list(args.remove_areas)
     keep_id_list = get_keep_id_list(args.keep_id)
     keep_labels = get_keep_labels(args.keep_labels)
+    del_non_prefix = args.del_non_prefix or False
+    prefix = args.prefix or ""
+    
 
     # Perform the deletion operation
-    delete_filtered_nodes(cursor, remove_list, keep_id_list, keep_labels)
+    delete_filtered_nodes(prefix, cursor, remove_list, keep_id_list, keep_labels, del_non_prefix)
 
     # Commit changes and close the connection
     conn.commit()
