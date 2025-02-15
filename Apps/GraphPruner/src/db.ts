@@ -19,7 +19,7 @@ export async function writeDB(
   query: string,
   params: any[] = []
 ): Promise<number> {
-  console.debug("[Write]", query, params)
+  // console.debug("[Write]", query, params)
   return (await writableSqliteDb.prepare(query).run(params)).changes ?? 0;
 }
 
@@ -28,11 +28,16 @@ export async function readDB(
   params: (string | number)[] = [],
   isSingle: boolean = false
 ): Promise<any | any[]> {
-  console.debug("[Write] query:", query, "params:", params, "isSingle:", isSingle)
+  // console.debug("[Write] query:", query, "params:", params, "isSingle:", isSingle)
   if (isSingle) {
     return sqliteDb.prepare(query).get(params);
   }
   return sqliteDb.prepare(query).all(params);
+}
+
+export function closeDb() {
+  writableSqliteDb.close()
+  sqliteDb.close()
 }
 
 export { readDB as dbQuery };

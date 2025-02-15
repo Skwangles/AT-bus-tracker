@@ -35,3 +35,8 @@ export async function readDB(
   return sqliteDb.prepare(query).all(params);
 }
 
+export function closeDb() {
+  writableSqliteDb.close()
+  sqliteDb.close()
+}
+

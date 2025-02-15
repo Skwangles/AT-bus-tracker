@@ -1,4 +1,4 @@
-import { initDB, readDB, writeDB } from "./db";
+import { closeDb, initDB, readDB, writeDB } from "./db";
 import path from 'node:path'
 import cliProgress from "cli-progress";
 import fs from 'node:fs'
@@ -264,4 +264,4 @@ async function prune() {
 }
 
 initDB(SQLITE_DB)
-prune().catch(console.error);
+prune().then(closeDb).catch(console.error);

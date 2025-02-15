@@ -2,7 +2,7 @@ import path from 'path'
 import dotenv from 'dotenv'
 import fs from 'fs'
 import { DFLT_BATCH_SIZE, DFLT_FACE_BLUR, DFLT_IMG_EXT, DFLT_INPUT_DIR, DFLT_OUTPUT_DIR, DFLT_SQLITE_DB_PATH, DFLT_TABLE_PREFIX, DFLT_TS_DP } from './consts';
-import { initDB, readDB } from './db';
+import { closeDb, initDB, readDB } from './db';
 import yargs from 'yargs'
 import { hideBin } from 'yargs/helpers'
 dotenv.config()
@@ -57,4 +57,4 @@ async function start() {
 
 
 initDB(sqlite_db_path)
-start().catch(console.error);
+start().then(closeDb).catch(console.error);
