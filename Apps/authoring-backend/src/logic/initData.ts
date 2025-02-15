@@ -14,7 +14,7 @@ export default async function initDB(quitIfTablesExist = false) {
       location TEXT NOT NULL,
       x DOUBLE PRECISION DEFAULT 0 NOT NULL,
       y DOUBLE PRECISION DEFAULT 0 NOT NULL,
-      keyframe_id INTEGER REFERENCES ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes (keyframe_id),
+      keyframe_id INTEGER REFERENCES ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes (keyframe_id) ON DELETE CASCADE,
       type INTEGER DEFAULT 0 NOT NULL,
       PRIMARY KEY (keyframe_id, location)
     );`);
@@ -166,22 +166,22 @@ async function getBorderNodes(location: string): Promise<Array<{ keyframe_id: nu
     throw new Error("Invalid Location")
   }
 
-  const borderNodesResult = await readDB(`
-    WITH border_nodes AS (
-    SELECT keyframe_id1 as keyframe_id, l2.location, n.x_trans, n.z_trans FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}edges e 
-                    JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l 
-                    ON e.keyframe_id0 = l.keyframe_id 
-                    JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l2 ON e.keyframe_id1 = l2.keyframe_id
-                    JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n ON n.keyframe_id = e.keyframe_id1
-                    WHERE l.location = ? AND l2.location <> ?
-        )
-				
-      SELECT DISTINCT n.keyframe_id as keyframe_id, bn2.keyframe_id as id2, n.location, n.x_trans, n.z_trans
-      FROM border_nodes n 
-      JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}edges e ON n.keyframe_id = e.keyframe_id0 
-      JOIN border_nodes bn2 ON e.keyframe_id1 = bn2.keyframe_id
-      WHERE bn2.location == n.location AND bn2.keyframe_id IS NOT NULL AND n.keyframe_id < bn2.keyframe_id ;
-    `, [location, location])
+  // const borderNodesResult = await readDB(`
+  //   WITH border_nodes AS (
+  //   SELECT keyframe_id1 as keyframe_id, l2.location, n.x_trans, n.z_trans FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}edges e 
+  //                   JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l 
+  //                   ON e.keyframe_id0 = l.keyframe_id 
+  //                   JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l2 ON e.keyframe_id1 = l2.keyframe_id
+  //                   JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n ON n.keyframe_id = e.keyframe_id1
+  //                   WHERE l.location = ? AND l2.location <> ?
+  //       )
+
+  //     SELECT DISTINCT n.keyframe_id as keyframe_id, bn2.keyframe_id as id2, n.location, n.x_trans, n.z_trans
+  //     FROM border_nodes n 
+  //     JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}edges e ON n.keyframe_id = e.keyframe_id0 
+  //     JOIN border_nodes bn2 ON e.keyframe_id1 = bn2.keyframe_id
+  //     WHERE bn2.location == n.location AND bn2.keyframe_id IS NOT NULL AND n.keyframe_id < bn2.keyframe_id ;
+  //   `, [location, location])
 
   return await readDB(`SELECT keyframe_id1 as keyframe_id, l2.location, n.x_trans, n.z_trans FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}edges e 
                     JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l 
