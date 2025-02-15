@@ -28,6 +28,7 @@ ORIGINAL_DIR=$(pwd)
 [[ -z "$3" && -z "$CV_STRIP_REMOVE" ]] && error_exit "Remove list (locations) is not provided as an argument or environment variable"
 [[ -z "$4" && -z "$CV_STRIP_KEEP_ID" ]] && error_exit "Keep ID list is not provided as an argument or environment variable"
 [[ -z "$5" && -z "$CV_STRIP_KEEP_LABELS" ]] && error_exit "Keep labels list is not provided as an argument or environment variable"
+[[ -z "$6" && -z "$CV_STRIP_TABLE_PREFIX" ]] && error_exit "Table prefix provided as an argument or environment variable"
 
 # Assign arguments or environment variables
 INPUT_DB=${1:-$CV_DB_DIR/$CV_STRIP_INPUT_DB}
@@ -35,12 +36,14 @@ OUTPUT_DB=${2:-$CV_DB_DIR/$CV_STRIP_OUTPUT_DB}
 REMOVE_LIST=${3:-$CV_STRIP_REMOVE}
 KEEP_ID_LIST=${4:-$CV_STRIP_KEEP_ID}
 KEEP_LABELS=${5:-$CV_STRIP_KEEP_LABELS}
+TABLE_PREFIX=${6:-$CV_STRIP_TABLE_PREFIX}
 
 echo "Arg 1 - Input DB: $INPUT_DB"
 echo "Arg 2 - Output DB: $OUTPUT_DB"
 echo "Arg 3 - Remove list (locations): $REMOVE_LIST"
 echo "Arg 4 - Keep ID list: $KEEP_ID_LIST"
 echo "Arg 5 - Keep labels list: $KEEP_LABELS"
+echo "Arg 6 - Table Prefix: $TABLE_PREFIX"
 
 # Check if the input database exists
 [[ ! -f "$INPUT_DB" ]] && error_exit "Input database $INPUT_DB does not exist"
@@ -54,5 +57,5 @@ fi
 
 # Run the Python script
 cd "$CV_HOME_DIR/Apps/strip_restricted" || error_exit "Failed to change directory to $CV_HOME_DIR/Apps/strip_restricted"
-python3 strip_restricted_nodes.py "$INPUT_DB" "$OUTPUT_DB" --remove="$REMOVE_LIST" --keep_id="$KEEP_ID_LIST" --keep_labels="$KEEP_LABELS" || error_exit "Python script failed"
+python3 strip_restricted_nodes.py "$INPUT_DB" "$OUTPUT_DB" --prefix="$TABLE_PREFIX" --remove_areas="$REMOVE_LIST" --keep_id="$KEEP_ID_LIST" --keep_labels="$KEEP_LABELS" || error_exit "Python script failed"
 cd "$ORIGINAL_DIR" || error_exit "Failed to change back to the original directory"
