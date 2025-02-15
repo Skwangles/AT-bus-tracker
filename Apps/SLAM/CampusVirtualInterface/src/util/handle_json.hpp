@@ -19,6 +19,8 @@ nlohmann::json filename_to_json_obj(std::string json_filename, std::string json_
     return json_obj;
 }
 
+
+
 /**
  * @brief Get all special points from the data capture .jsons that occurred before the current frame's timestamp (minus those before the offset)
  * The offset should be used as a way to ensure no special point is assigned to multiple keyframes
@@ -45,8 +47,7 @@ int32_t get_special_points(nlohmann::json &obj, double &ms, int32_t offset, std:
     for (int new_offset = offset; new_offset < timecode_array.size(); new_offset++){
         auto timecode = timecode_array[new_offset];
 
-        std::string time_str = timecode["t"].dump();
-        time_str.erase(std::remove(time_str.begin(), time_str.end(), '\"'), time_str.end());
+        std::string time_str = timecode["t"];
         
         double time_ms = std::stod(time_str)/1000;
         if (time_ms > seconds){
@@ -54,8 +55,7 @@ int32_t get_special_points(nlohmann::json &obj, double &ms, int32_t offset, std:
             return new_offset;
         }
 
-        group = timecode["g"].dump();
-        group.erase(std::remove(group.begin(), group.end(), '\"'), group.end());
+        group = timecode["g"];
 
         points.push_back(group);
         
@@ -63,6 +63,34 @@ int32_t get_special_points(nlohmann::json &obj, double &ms, int32_t offset, std:
 
     // All Special points have been consumed
     return timecode_array.size();
+}
+
+
+
+std::pair<int, double> get_loop_detector_status_from_json(nlohmann::json &obj, double &ms){
+    if (ms < 0){
+        return std::pair(0, 0);
+    }
+
+    double seconds = ms/1000;
+
+    if (!obj.contains("disable_loop")) return std::pair(-1, -1);
+
+    nlohmann::json timecode_array = obj["disable_loop"];
+    int status;
+    for (auto timecode : timecode_array){
+
+        std::string time_str = timecode["t"];
+    
+        double time_sec = std::stod(time_str)/1000;
+        if (time_sec > seconds){
+            return std::pair(status, time_sec); // Return current status, and next time the status changes
+        }
+        std::string disable_status = timecode["disable"];
+        status = disable_status.compare("true") == 0;
+    }
+
+    return std::pair(status, __DBL_MAX__);
 }
 
 std::string find_group_from_json(nlohmann::json &obj, double &ms){
@@ -76,15 +104,13 @@ std::string find_group_from_json(nlohmann::json &obj, double &ms){
     std::string group;
     for (auto timecode : timecode_array){
 
-        std::string time_str = timecode["t"].dump();
-        time_str.erase(std::remove(time_str.begin(), time_str.end(), '\"'), time_str.end());
+        std::string time_str = timecode["t"];
         
         double time_ms = std::stod(time_str)/1000;
         if (time_ms > seconds){
             return group; // return the previous group's
         }
-        group = timecode["g"].dump();
-        group.erase(std::remove(group.begin(), group.end(), '\"'), group.end());
+        group = timecode["g"];
     }
 
     return group;

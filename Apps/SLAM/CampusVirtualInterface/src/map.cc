@@ -55,7 +55,6 @@ static int db_callback(std::vector<video_timestamp> *data, int argc, char **argv
 const std::string DEFAULT_UNKNOWN_GROUP = "Unknown";
 
 
-
 int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
                   const std::shared_ptr<stella_vslam::config>& cfg,
                   const std::string& video_file_path,
@@ -84,18 +83,21 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
     std::mutex mtx_imwrite_failed;
     bool imwrite_failed = false;
 
+
+    bool manual_loop_detect_pause = false;
+
+
     // create a viewer object
     // and pass the frame_publisher and the map_publishe
+    std::mutex mtx_pause;
+    std::mutex mtx_loop_detect_pause;
+    bool is_paused = false;
+    bool is_loop_detect_paused = false;
 #ifdef HAVE_IRIDESCENCE_VIEWER
     std::shared_ptr<iridescence_viewer::viewer> iridescence_viewer;
 
     std::mutex mtx_loop;
     bool loop_id = 0;
-
-    std::mutex mtx_pause;
-    std::mutex mtx_loop_detect_pause;
-    bool is_paused = false;
-    bool is_loop_detect_paused = false;
 
     std::mutex mtx_terminate;
     bool terminate_is_requested = false;
@@ -118,6 +120,7 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
                 }
 
             }
+
             is_loop_detect_paused = check;
         });
         iridescence_viewer->add_button("Step", [&step_count, &mtx_step] {
@@ -144,6 +147,9 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
     }
 #endif
 
+    
+
+    // 1. Get first frame
     auto video = cv::VideoCapture(video_file_path, cv::CAP_FFMPEG);
     if (!video.isOpened()) {
         std::cerr << "Unable to open the video: " << video_file_path << std::endl;
@@ -156,8 +162,12 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
     unsigned int num_frame = 0;
     double timestamp = start_timestamp;
 
-    int32_t last_assigned_special_point_idx = 0; 
+    int32_t last_assigned_special_point_idx = 0;
+    
     std::vector<std::string> special_points;    
+    
+    int32_t last_loop_detection_disable_idx = 0; 
+    double next_loop_disable_check = -1;
 
     ThreadPool img_write_thread_pool(IMWRITE_THREAD_POOL_SIZE);
     
@@ -168,8 +178,11 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
         cv::Mat frame;
         cv::Mat downsized_frame;
         
+        // 2. Start by saving every frame until we are told keyframes are being made
         bool finished_initialising_tracking = false;
         while (is_not_end) {
+
+            // 3. Pause to complete any other tasks before continuing
 #ifdef HAVE_IRIDESCENCE_VIEWER
             while (true) {
                 {
@@ -203,26 +216,43 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
                 }
             }
 
-            
+            // 4. Get next frame and metadata about it 
             is_not_end = video.read(frame);
 
             double ms_since_start = video.get(cv::CAP_PROP_POS_MSEC);
             double frame_count = video.get(cv::CAP_PROP_FRAME_COUNT);
             double fps = video.get(cv::CAP_PROP_FPS);
 
+            double sec_since_start = ms_since_start/1000;
+            
             if (ms_since_start > 0)
             {
-                timestamp = start_timestamp + (ms_since_start/1000);
+                timestamp = start_timestamp + sec_since_start;
             }
             
+            // 5. Disable/enable loop detector from JSON timecodes 
+            // Some points during filming may need the loop detection disabled to prevent false overlaps
+            if (manual_loop_detect_pause != -1 &&  sec_since_start > next_loop_disable_check) {
+                auto next_check = get_loop_detector_status_from_json(json_obj, ms_since_start);
+                manual_loop_detect_pause = next_check.first;
+                next_loop_disable_check = next_check.second;
+            }
+            
+            // Disable loop detect based on timecode, but don't enable if the 'pause loop detector checkbox' is still ticked
+            if (slam->loop_detector_is_enabled() ==  manual_loop_detect_pause) {
+                if (manual_loop_detect_pause){
+                    slam->disable_loop_detector();
+                }
+                else if (!is_loop_detect_paused) {
+                    slam->enable_loop_detector();
+                }
+            }
             
 
             const auto tp_1 = std::chrono::steady_clock::now();
 
-            
-
             if (!frame.empty() && (num_frame % frame_skip == 0)) {
-
+                // 6. Feed to SLAM the frame rescaled to a more performant resolution, while keeping high quality for image export
                 cv::resize(frame, downsized_frame, cv::Size(slam_img_width, slam_img_height));
 		        bool is_keyframe = slam->feed_monocular_frame_bool(downsized_frame, timestamp, mask);
                 
@@ -242,13 +272,12 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
                         finished_initialising_tracking = true;
                     }
 
+                    // 7. Save keyframe image and determine its location and any special point information (e.g. this point represents an elevator)
                     if (is_keyframe || !finished_initialising_tracking){
                         
                         std::vector<int> params; 
                         params.push_back(cv::IMWRITE_JPEG_QUALITY); 
                         params.push_back(100); // 0-100 - 100 = highest quality
-                        // params.push_back(cv::IMWRITE_JPEG_PROGRESSIVE); // Progressive JPGs used for reduced loading times for frontend
-                        // params.push_back(1); // 1 = true, 0 = false 
 
                         img_write_thread_pool.enqueue([ms_since_start, timestamp, by_copy_frame = frame.clone(), filepath, params, &imwrite_failed, &mtx_imwrite_failed]() {
                             // Do writing in background
@@ -292,7 +321,7 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
                 track_times.push_back(track_time);
             }
 
-            // wait until the timestamp of the next frame
+            // 8. Wait until the timestamp of the next frame - if waiting for realtime
             if (!no_sleep) {
                 const auto wait_time = 1.0 / slam->get_camera()->fps_ - track_time;
                 if (0.0 < wait_time) {
@@ -302,7 +331,7 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
             
             ++num_frame;
 
-
+            // 9. Check exit conditions
 #ifdef HAVE_IRIDESCENCE_VIEWER
             // check if the termination of slam system is requested or not
             {

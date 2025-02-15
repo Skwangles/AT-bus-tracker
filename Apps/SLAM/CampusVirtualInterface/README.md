@@ -1,5 +1,12 @@
 # Modified Campus Virtual Interface
 
+Reads in a JSON file
+{
+data: [{"g": "string...", "t": seconds}, ...],
+special: [{"g": "string...", "t": seconds}, ...],
+OPTIONAL: disable_loop: [{"disable": "true"/"false", "t": seconds}, ...]
+}
+
 ## License
 
 This module was originally included in xdspacelab/openvslam. Therefore, the license follows the original license of xdspacelab/openvslam (BSD 2-Clause).
