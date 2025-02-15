@@ -7,6 +7,7 @@ import { getPositionOfNode, getYRotation } from '../../utils/utils'
 import SphereWithHotspots from './SphereWithHotspots'
 import { HotspotObj } from './Hotspots'
 import { PointData } from '../VirtualTour'
+import { toast } from 'react-toastify'
 
 export interface NeighbourData {
   pose: number[]
@@ -90,7 +91,6 @@ const Canvas: React.FC<any> = ({
         `${API_PREFIX}/api/v1/point/${pointId}`
       )
       const pointData = pointResponse.data
-      console.info('Point Data', pointData)
 
       const neighboursResponse = await axios.get<NeighbourData[]>(
         `${API_PREFIX}/api/v1/point/${pointId}/neighbours/8/2`
@@ -131,7 +131,7 @@ const Canvas: React.FC<any> = ({
       const newRotation = getYRotation(pointData.pose)
       setRotation([0, newRotation, 0])
     } catch (error) {
-      console.error('Error fetching point data:', error)
+      toast.error('Could not find point')
     }
   }
 

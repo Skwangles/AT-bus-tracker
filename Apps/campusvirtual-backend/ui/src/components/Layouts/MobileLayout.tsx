@@ -35,7 +35,6 @@ export const MobileLayout: React.FC<MobileLayout> = ({
 
   useEffect(() => {
     if (isMobile && !showMobileMenu) {
-      console.log('Closing instructions')
       setInstructionsOpen(false)
     }
   }, [isMobile, showMobileMenu])

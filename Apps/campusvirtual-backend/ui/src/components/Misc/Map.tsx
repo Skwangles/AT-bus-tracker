@@ -94,6 +94,8 @@ const Map: React.FC<MapProps> = ({
     }
 
     const fetchFloorplanData = async () => {
+      if (!floorName || floorName == '') return
+
       try {
         const response = await axios.get<{
           has_image: boolean
@@ -113,7 +115,6 @@ const Map: React.FC<MapProps> = ({
           !response.data.edges ||
           !response.data.has_image
         ) {
-          console.error('No data returned from floorplan', floorName)
           setHasImage(false)
           setNodes([])
           setEdges([])
@@ -133,7 +134,6 @@ const Map: React.FC<MapProps> = ({
           }))
         )
       } catch (error) {
-        console.error('Error fetching floorplan data:', error)
         setHasImage(false)
         setNodes([])
         setEdges([])

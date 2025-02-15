@@ -29,9 +29,6 @@ export default function DropDownContainer({
   handleSuggestionClick: (suggestion: Label) => void
 }) {
   const [displaySuggestions, setDisplaySuggestions] = useState({})
-  console.log('Recent Searches:', recentSearches)
-  console.log('Query:', query)
-  console.log('Suggestions:', suggestions)
 
   useEffect(() => {
     // Group the labels by their group and sort them alphabetically within each group

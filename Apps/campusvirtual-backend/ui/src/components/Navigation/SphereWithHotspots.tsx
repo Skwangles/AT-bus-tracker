@@ -4,6 +4,7 @@ import { API_PREFIX, HIDE_POINTS_DURING_HIGHLIGHT } from '../../consts'
 import Hotspot, { HotspotObj } from './Hotspots'
 import { useSpring } from '@react-spring/three'
 import { Html } from '@react-three/drei'
+import { toast } from 'react-toastify'
 
 interface SphereWithHotspotsProps {
   position: THREE.Vector3
@@ -62,7 +63,7 @@ const SphereWithHotspots: React.FC<SphereWithHotspotsProps> = ({
         return texture
       }
     } catch (err) {
-      console.log(`${resolution} load error:`, err)
+      toast.error('Could not load point image')
     }
     return null
   }

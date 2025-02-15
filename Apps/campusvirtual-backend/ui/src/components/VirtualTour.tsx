@@ -70,26 +70,21 @@ const VirtualTour: React.FC = () => {
   })
 
   const changeFloor = (requestedFloor: string) => {
-    console.log('Fetching', requestedFloor)
-
     axios
       .get<{ keyframe_id: number }>(
         API_PREFIX + '/api/v1/floor/' + requestedFloor + '/point'
       )
       .then((value) => {
-        console.log(value.data)
         const result = value.data.keyframe_id
         if (isNaN(Number(result))) return
-        console.log('Setting ID to ', result)
         setCurrentId(Number(result).toString())
       })
       .catch((reason) => {
-        console.error('Floor could not be found: ' + reason.toString())
+        toast.warn(requestedFloor + ' is not a reachable location.')
 
         // In the case the 'DEFAULT FLOOR' is not found, we will fetch the first point
         if (Number(currentId) === -1) {
           axios.get<number>(API_PREFIX + '/api/v1/point').then((value) => {
-            console.log('Setting ID to ', value.data)
             setCurrentId(value.data.toString())
           })
         }
@@ -99,7 +94,6 @@ const VirtualTour: React.FC = () => {
   // RUN ON FIRST LOAD
   useEffect(() => {
     axios.get<Label[]>(API_PREFIX + '/api/v1/floors').then((result) => {
-      console.log('Floors', result.data)
       setAllSearchableLocations(result.data)
     })
 
@@ -137,7 +131,6 @@ const VirtualTour: React.FC = () => {
   }, [camRotation])
 
   useEffect(() => {
-    console.log('Location:', currentPoint.location)
     setLocationGroup(currentPoint.location)
   }, [currentPoint])
 
@@ -160,9 +153,8 @@ const VirtualTour: React.FC = () => {
       const response = await axios.get(
         `${API_PREFIX}/api/v1/point/${currentId}/path/${selectedLocation}`
       )
-      console.log('API Response:', response.data)
       if (!response.data || !response.data.path) {
-        toast.error('Something went wrong calculating a path!')
+        toast.error('Could not calculate a path, please try again later')
       } else {
         setHighlightedPath(response.data?.path)
         toast.success(
@@ -170,8 +162,7 @@ const VirtualTour: React.FC = () => {
         )
       }
     } catch (error) {
-      console.error('API Error:', error)
-      toast.error('Something went wrong fetching the path, try again later!')
+      toast.error('Could not calculate a path, please try again later')
     }
   }
 
@@ -222,7 +213,6 @@ const VirtualTour: React.FC = () => {
     }
 
     if (allSearchableLocations.map((v) => v.query).includes(newFloor)) {
-      console.log('Setting location to', newFloor)
       changeFloor(newFloor)
     }
   }

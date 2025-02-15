@@ -11,6 +11,7 @@ import { X } from 'react-feather'
 import DropDownContainer from './DropDownContainer'
 import SearchBarButtons from './SearchBarButtons'
 import { Label } from '../../consts'
+import { toast } from 'react-toastify'
 // Define the type for the props
 interface SearchBarProps {
   searchableLabels: Label[]
@@ -63,7 +64,6 @@ const SearchBar: React.FC<SearchBarProps> = ({
     const value = event.target.value
     setQuery(value)
     if (value) {
-      console.log('Checking', value, 'against')
       const filteredSuggestions = searchableLabels.filter((item) => {
         const largeName =
           (item.group ? item.group.toLowerCase() + ' - ' : '') +
@@ -73,7 +73,6 @@ const SearchBar: React.FC<SearchBarProps> = ({
           value.length <= largeName.length
         return result
       })
-      console.log('Filtered suggestions:', filteredSuggestions)
       setSuggestions(
         filteredSuggestions.sort((a, b) => a.label.localeCompare(b.label))
       )
@@ -97,7 +96,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
       (v: Label) => (v.group ? v.group + ' - ' : '') + v.label === label
     )
     if (!labelObj || !labelObj.query || !labelObj.label) {
-      console.error('Label not found:', label)
+      toast.error('Label is invalid: ' + label)
       return
     }
 
