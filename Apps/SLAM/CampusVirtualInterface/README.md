@@ -1,11 +1,14 @@
 # Modified Campus Virtual Interface
 
 Reads in a JSON file
+
+```
 {
 data: [{"g": "string...", "t": seconds}, ...],
 special: [{"g": "string...", "t": seconds}, ...],
-OPTIONAL: disable_loop: [{"disable": "true"/"false", "t": seconds}, ...]
+!!!OPTIONAL!!!: disable_loop: [{"disable": true/false, "t": <seconds>}, ...]
 }
+```
 
 ## License
 
