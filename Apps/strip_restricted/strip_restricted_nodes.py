@@ -61,7 +61,26 @@ def delete_filtered_nodes(prefix, db_cursor, remove_list, keep_id_list, keep_lab
     """
     print("Running query:", query)
     db_cursor.execute(query)
-    print("Deleteing: ", db_cursor.rowcount)
+    print("Deleting: ", db_cursor.rowcount)
+    if del_non_prefix and prefix is not "": 
+        print("Deleting all tables not matching the table prefix")
+        query = f"""
+        DROP TABLE IF EXISTS nodes;
+        DROP TABLE IF EXISTS edges;
+        DROP TABLE IF EXISTS node_locations;
+        DROP TABLE IF EXISTS special_labels;
+        DROP TABLE IF EXISTS floorplan_points;
+        DROP TABLE IF EXISTS floorplan_images;
+        """
+        
+        print("Removing tables: nodes, edges, node_locations, special_labels, floorplan_points, floorplan_images")
+        response = input("Are you sure? (Y/n):")
+        while (response.lower() != '' and response.lower() != 'y' and response.lower() != 'n'):
+            print("Invalid input, choose y or n")
+            response = input("Are you sure? (Y/n):")
+        if (response.lower != 'n'):
+            db_cursor.execute(query)
+            
 
 def main():
     args = parse_args()
