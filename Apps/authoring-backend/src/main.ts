@@ -6,7 +6,7 @@ import authoringRoutes from './routes/authoring.routes'
 import imageRoutes from './routes/image.routes'
 import mapRoutes from './routes/map.routes'
 import labelRoutes from './routes/labels.routes'
-
+import readline from 'readline'
 import logger from './logger'
 import bodyParser from 'body-parser'
 
@@ -28,6 +28,20 @@ app.use(imageRoutes)
 app.use(authoringRoutes)
 app.use(labelRoutes)
 
+let exitReader = null;
+if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
+  exitReader = readline.createInterface({ input: process.stdin, output: process.stdout })
+
+}
+
 app.listen(PORT, () => {
+
   logger.info(`Server running on port ${PORT}`)
+  if (exitReader) {
+    exitReader.question("Press enter to exit", value => {
+      logger.info("User exit called. Exiting gracefully")
+      exitReader.close()
+      process.exit(0)
+    })
+  }
 })
