@@ -93,6 +93,12 @@ if [ "$CV_EXTRACT_USED_IMAGES" == true ]; then
   check_command "./bin/scripts/cv_run_9_extract_images.sh"
 fi
 
+if [ "$CV_INIT_DATA" == true ]; then
+  ./bin/scripts/cv_run_10_init_data.sh
+  check_command "./bin/scripts/cv_run_10_init_data.sh"
+fi
+
+
 if [ "$CV_START_AUTHORING" == true ]; then
   ./bin/scripts/cv_run_10_start_authoring.sh
   check_command "./bin/scripts/cv_run_10_start_authoring.sh"
