@@ -47,10 +47,10 @@ int32_t get_special_points(nlohmann::json &obj, double &ms, int32_t offset, std:
     for (int new_offset = offset; new_offset < timecode_array.size(); new_offset++){
         auto timecode = timecode_array[new_offset];
 
-        std::string time_str = timecode["t"];
+        double time_ms = timecode["t"];
         
-        double time_ms = std::stod(time_str)/1000;
-        if (time_ms > seconds){
+        double time_sec = time_ms/1000;
+        if (time_sec > seconds){
             // Current timecode occurs after, so it becomes the new offset 'start'
             return new_offset;
         }
@@ -80,14 +80,13 @@ std::pair<int, double> get_loop_detector_status_from_json(nlohmann::json &obj, d
     int status;
     for (auto timecode : timecode_array){
 
-        std::string time_str = timecode["t"];
+        double time_ms = timecode["t"];
     
-        double time_sec = std::stod(time_str)/1000;
+        double time_sec = time_ms/1000;
         if (time_sec > seconds){
             return std::pair(status, time_sec); // Return current status, and next time the status changes
         }
-        std::string disable_status = timecode["disable"];
-        status = disable_status.compare("true") == 0;
+        status = (int)timecode["disable"];
     }
 
     return std::pair(status, __DBL_MAX__);
@@ -104,10 +103,10 @@ std::string find_group_from_json(nlohmann::json &obj, double &ms){
     std::string group;
     for (auto timecode : timecode_array){
 
-        std::string time_str = timecode["t"];
+        double time_ms = timecode["t"];
         
-        double time_ms = std::stod(time_str)/1000;
-        if (time_ms > seconds){
+        double time_sec = time_ms/1000;
+        if (time_sec > seconds){
             return group; // return the previous group's
         }
         group = timecode["g"];
