@@ -7,22 +7,49 @@ import imageRoutes from './routes/image.routes'
 import locationGroupRoutes from './routes/locationGroups.routes'
 import mapRoutes from './routes/map.routes'
 import logger from './logger'
+import cluster from 'cluster'
+import os from 'os'
 
-const app = express()
+const numCPUs = os.cpus().length // Get the number of CPU cores
 
-app.use(cors({ origin: '*' }))
-app.use(express.static(path.join(__dirname, '../ui/dist')))
+// If this is the master process, fork workers
+if (cluster.isPrimary) {
+  logger.info(`Primary process is running. Forking ${numCPUs} workers...`)
 
-// render browser
-app.get('/', function (req, res) {
-  res.sendFile(path.join(__dirname, '../ui/dist', 'index.html'))
-})
+  // Fork worker processes for each CPU core
+  for (let i = 0; i < numCPUs; i++) {
+    cluster.fork() // This creates a worker for each CPU core
+  }
 
-app.use(pointsRoutes)
-app.use(imageRoutes)
-app.use(locationGroupRoutes)
-app.use(mapRoutes)
+  // When a worker dies, log the event
+  cluster.on('online', (worker) => {
+    logger.info(`Worker ${worker.process.pid} is online`)
+  })
 
-app.listen(PORT, () => {
-  logger.info(`Server running on port ${PORT}`)
-})
+  // When a worker dies, log the event
+  cluster.on('exit', (worker, code, signal) => {
+    logger.info(`Worker ${worker.process.pid} died with code ${code} and signal ${signal}`)
+  })
+} else {
+  // Worker process (each worker will run the Express server)
+  const app = express()
+
+  app.use(cors({ origin: '*' }))
+  app.use(express.static(path.join(__dirname, '../ui/dist')))
+
+  // Render browser
+  app.get('/', function (req, res) {
+    res.sendFile(path.join(__dirname, '../ui/dist', 'index.html'))
+  })
+
+  // Register routes
+  app.use(pointsRoutes)
+  app.use(imageRoutes)
+  app.use(locationGroupRoutes)
+  app.use(mapRoutes)
+
+  // Start the Express server on a worker
+  app.listen(PORT, () => {
+    logger.info(`Worker process ${process.pid} running on port ${PORT}`)
+  })
+}
