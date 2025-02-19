@@ -3,13 +3,11 @@ import { SQLITE_DB_DIR, SQLITE_DB_NAME, TABLE_PREFIX, USE_TABLE_PREFIX } from '.
 import path from 'path';
 import logger from './logger';
 
-let writableSqliteDb: betterSqlite3.Database;
 let sqliteDb: betterSqlite3.Database;
 
 async function initDB() {
   const db_file = path.join(SQLITE_DB_DIR, SQLITE_DB_NAME)
   sqliteDb = betterSqlite3(db_file, { readonly: true })
-  writableSqliteDb = betterSqlite3(db_file, { readonly: false })
   logger.info("Configured databases: " + db_file)
 
 
