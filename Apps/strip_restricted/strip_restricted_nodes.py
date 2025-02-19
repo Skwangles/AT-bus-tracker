@@ -78,8 +78,8 @@ def delete_filtered_nodes(prefix, db_cursor, remove_list, keep_id_list, keep_lab
         while (response.lower() != '' and response.lower() != 'y' and response.lower() != 'n'):
             print("Invalid input, choose y or n")
             response = input("Are you sure? (Y/n):")
-        if (response.lower != 'n'):
-            db_cursor.execute(query)
+        if (response.lower() == 'y'):
+            db_cursor.execute(query, multi=True)
             
 
 def main():
