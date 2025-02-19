@@ -42,6 +42,7 @@ def delete_filtered_nodes(prefix, db_cursor, remove_list, keep_id_list, keep_lab
     remove_str = ', '.join(f"'{location}'" for location in remove_list)
     keep_id_str = ', '.join(map(str, keep_id_list))
     keep_label_str = ', '.join(f"'{label}'" for label in keep_labels)
+    print("Deleteing with params: Prefix:", prefix, "Remove List:", remove_list, "Keep Id List:", keep_id_list, "Keep Labels:", keep_labels, "Del Non Prefix", del_non_prefix)
 
     query = f"""
     DELETE FROM {prefix}nodes
@@ -64,22 +65,18 @@ def delete_filtered_nodes(prefix, db_cursor, remove_list, keep_id_list, keep_lab
     print("Deleting: ", db_cursor.rowcount)
     if del_non_prefix and prefix is not "": 
         print("Deleting all tables not matching the table prefix")
-        query = f"""
-        DROP TABLE IF EXISTS nodes;
-        DROP TABLE IF EXISTS edges;
-        DROP TABLE IF EXISTS node_locations;
-        DROP TABLE IF EXISTS special_labels;
-        DROP TABLE IF EXISTS floorplan_points;
-        DROP TABLE IF EXISTS floorplan_images;
-        """
-        
         print("Removing tables: nodes, edges, node_locations, special_labels, floorplan_points, floorplan_images")
         response = input("Are you sure? (Y/n):")
         while (response.lower() != '' and response.lower() != 'y' and response.lower() != 'n'):
             print("Invalid input, choose y or n")
             response = input("Are you sure? (Y/n):")
         if (response.lower() == 'y'):
-            db_cursor.execute(query, multi=True)
+            db_cursor.execute("DROP TABLE IF EXISTS nodes;")
+            db_cursor.execute("DROP TABLE IF EXISTS edges;")
+            db_cursor.execute("DROP TABLE IF EXISTS node_locations;")
+            db_cursor.execute("DROP TABLE IF EXISTS special_labels;")
+            db_cursor.execute("DROP TABLE IF EXISTS floorplan_points;")
+            db_cursor.execute("DROP TABLE IF EXISTS floorplan_images;")
             
 
 def main():
