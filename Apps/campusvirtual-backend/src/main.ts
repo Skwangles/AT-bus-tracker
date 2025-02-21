@@ -35,7 +35,7 @@ import logger from './logger'
 // } else {
 // Worker process (each worker will run the Express server)
 const app = express()
-logger.info("Setting up express on ${PORT}")
+logger.info(`Setting up express on ${PORT}`)
 
 app.use(cors({ origin: '*' }))
 app.use(express.static(path.join(__dirname, '../ui/dist')))
