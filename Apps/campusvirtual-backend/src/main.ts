@@ -7,52 +7,52 @@ import imageRoutes from './routes/image.routes'
 import locationGroupRoutes from './routes/locationGroups.routes'
 import mapRoutes from './routes/map.routes'
 import logger from './logger'
-// import cluster from 'cluster'
-// import os from 'os'
+import cluster from 'cluster'
+import os from 'os'
 
-// const numCPUs = os.cpus().length // Get the number of CPU cores
+const numCPUs = os.cpus().length // Get the number of CPU cores
 
 
 
-// // If this is the master process, fork workers
-// if (cluster.isPrimary) {
-//   logger.info(`Primary process is running. Forking ${numCPUs} workers...`)
+// If this is the master process, fork workers
+if (cluster.isPrimary) {
+  logger.info(`Primary process is running. Forking ${numCPUs} workers...`)
 
-//   // Fork worker processes for each CPU core
-//   for (let i = 0; i < numCPUs; i++) {
-//     cluster.fork() // This creates a worker for each CPU core
-//   }
+  // Fork worker processes for each CPU core
+  for (let i = 0; i < numCPUs; i++) {
+    cluster.fork() // This creates a worker for each CPU core
+  }
 
-//   // When a worker dies, log the event
-//   cluster.on('online', (worker) => {
-//     logger.info(`Worker ${worker.process.pid} is online`)
-//   })
+  // When a worker dies, log the event
+  cluster.on('online', (worker) => {
+    logger.info(`Worker ${worker.process.pid} is online`)
+  })
 
-//   // When a worker dies, log the event
-//   cluster.on('exit', (worker, code, signal) => {
-//     logger.info(`Worker ${worker.process.pid} died with code ${code} and signal ${signal}`)
-//   })
-// } else {
-// Worker process (each worker will run the Express server)
-const app = express()
-logger.info(`Setting up express on ${PORT}`)
+  // When a worker dies, log the event
+  cluster.on('exit', (worker, code, signal) => {
+    logger.info(`Worker ${worker.process.pid} died with code ${code} and signal ${signal}`)
+  })
+} else {
+  // Worker process (each worker will run the Express server)
+  const app = express()
+  logger.info(`Setting up express on ${PORT}`)
 
-app.use(cors({ origin: '*' }))
-app.use(express.static(path.join(__dirname, '../ui/dist')))
+  app.use(cors({ origin: '*' }))
+  app.use(express.static(path.join(__dirname, '../ui/dist')))
 
-// Render browser
-app.get('/', function (req, res) {
-  res.sendFile(path.join(__dirname, '../ui/dist', 'index.html'))
-})
+  // Render browser
+  app.get('/', function (req, res) {
+    res.sendFile(path.join(__dirname, '../ui/dist', 'index.html'))
+  })
 
-// Register routes
-app.use(pointsRoutes)
-app.use(imageRoutes)
-app.use(locationGroupRoutes)
-app.use(mapRoutes)
+  // Register routes
+  app.use(pointsRoutes)
+  app.use(imageRoutes)
+  app.use(locationGroupRoutes)
+  app.use(mapRoutes)
 
-// Start the Express server on a worker
-app.listen(PORT, () => {
-  logger.info(`Worker process ${process.pid} running on port ${PORT}`)
-})
-// }
+  // Start the Express server on a worker
+  app.listen(PORT, () => {
+    logger.info(`Worker process ${process.pid} running on port ${PORT}`)
+  })
+}
