@@ -28,9 +28,9 @@ export const PROJECT_NAME = "CampusVirtual"
 
 
 export const OUTDOORS_LOCATION = "outdoors"
-export const WAIKATO_UNI_LEVELS_ORDER = ["B", "G", "0", "1", "2", "3", "4"];
+export const WAIKATO_UNI_LEVELS_ORDER = ["Level B", "Level G", "Level 0", "Level 1", "Level 2", "Level 3", "Level 4"];
 
-export const STARTING_LOCATION_GROUP = "1"
+export const STARTING_LOCATION_GROUP = "Level 1"
 
 export const HOTSPOT_COLOUR = '#E1251B'
 export const HOTSPOT_OUTLINE = '#FFFFFF'
