@@ -101,7 +101,7 @@ fi
 
 if [ "$CV_START_AUTHORING" == true ]; then
   ./bin/scripts/cv_run_11_start_authoring.sh
-  check_command "./bin/scripts/cv_run_10_start_authoring.sh"
+  check_command "./bin/scripts/cv_run_11_start_authoring.sh"
 fi
 
 if [ "$CV_STRIP_RESTRICTED_NODES" == true ]; then
