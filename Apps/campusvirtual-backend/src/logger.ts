@@ -6,7 +6,7 @@ const logger = winston.createLogger({
     new winston.transports.File({ filename: 'error.log', level: 'error' }),
 
     // All logs
-    new winston.transports.File({ filename: 'combined.log', level: "verbose", })
+    new winston.transports.File({ filename: 'combined.log', level: "debug", })
   ]
 })
 
