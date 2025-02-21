@@ -6,7 +6,7 @@ const logger = winston.createLogger({
     new winston.transports.File({ filename: 'error.log', level: 'error' }),
 
     // All logs
-    new winston.transports.File({ filename: 'combined.log' })
+    new winston.transports.File({ filename: 'combined.log', level: "verbose", })
   ]
 })
 
@@ -16,7 +16,7 @@ logger.exceptions.handle(
 
 if (process.env.NODE_ENV !== 'production') {
   logger.add(
-    new winston.transports.Console({ format: winston.format.combine(winston.format.colorize(), winston.format.simple()), level: "info" }),
+    new winston.transports.Console({ format: winston.format.combine(winston.format.colorize(), winston.format.simple()), level: "debug" }),
   )
 }
 
