@@ -282,6 +282,7 @@ const VirtualTour: React.FC = () => {
 
       <div className="fixed top-0 left-0 right-0 z-[999]">
         <SearchBar
+          currentPoint={currentPoint}
           searchableLabels={allSearchableLocations}
           highlightCallback={calculateHighlightedPath}
           jumpToCallback={changeFloor}
@@ -300,7 +301,6 @@ const VirtualTour: React.FC = () => {
           shadows
         >
           <ambientLight intensity={0.6} />
-          <axesHelper />
           <directionalLight castShadow />
           <CameraRotationControls
             initCameraRotation={camRotation}

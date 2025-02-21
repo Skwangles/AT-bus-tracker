@@ -1,4 +1,4 @@
-import { Eye, ArrowUpRight } from 'react-feather'
+import { Eye, ArrowUpRight, MapPin } from 'react-feather'
 import { Label } from '../../consts'
 
 const includesValue = (data: Label[], value: string) => {
@@ -12,9 +12,24 @@ const includesValue = (data: Label[], value: string) => {
   })
 }
 
-export default function SearchBarButtons({ handleAction, query, labels }) {
+export default function SearchBarButtons({
+  currentPoint,
+  handleAction,
+  query,
+  labels,
+}) {
   return (
     <div className="flex w-full gap-2 mt-2">
+      <div
+        className={`bg-[#10101090] backdrop-blur-sm cursor-default text-white px-4 py-2 shadow-lg flex items-center gap-2 ${'rounded-xl'}`}
+        style={{
+          bottom: '1rem', // Adjust to align with drawer
+          transition: 'all 0.3s ease-in-out',
+        }}
+      >
+        <MapPin className="w-5 h-5 text-blue-400" />
+        <span>{currentPoint.location}</span>
+      </div>
       <button
         onClick={() => handleAction(query, 'highlight')}
         disabled={!includesValue(labels, query)}

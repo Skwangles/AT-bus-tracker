@@ -1,4 +1,3 @@
-import { MapPin } from 'react-feather'
 import Instructions from '../Misc/Instructions'
 import LocationChangeControls from '../Navigation/LocationChangeControls'
 import { Label } from '../../consts'
@@ -34,17 +33,6 @@ export const DesktopLayout: React.FC<DesktopLayout> = ({
     <>
       {!isMobile && (
         <>
-          <div className="fixed left-0 bottom-0 z-[999] m-4">
-            <div className="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl bg-black/90 text-white backdrop-blur-sm shadow-lg transition-all">
-              <MapPin className="w-6 h-6 text-blue-400" aria-hidden="true" />
-              <span className="truncate">
-                You are in:{' '}
-                <span className="text-blue-400">{currentPoint.location}</span>
-              </span>
-            </div>
-          </div>
-
-          {/* Position LocationChangeControls in the bottom right */}
           <div className="fixed right-0 bottom-0 z-50 m-4">
             <LocationChangeControls
               canGoUp={canGoUp}

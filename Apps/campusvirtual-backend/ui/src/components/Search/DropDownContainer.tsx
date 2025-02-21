@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Label } from '../../consts'
+import { ChevronDown, ChevronUp } from 'react-feather'
 
 function sortWithGbeforeNumbers(a, b): number {
   const aLabel = String(a).toLowerCase().trim()
@@ -28,7 +29,12 @@ export default function DropDownContainer({
   suggestions: Label[]
   handleSuggestionClick: (suggestion: Label) => void
 }) {
+  const [expandedFloor, setExpandedFloor] = useState(null)
   const [displaySuggestions, setDisplaySuggestions] = useState({})
+
+  const toggleFloor = (floorLabel) => {
+    setExpandedFloor(expandedFloor === floorLabel ? null : floorLabel)
+  }
 
   useEffect(() => {
     // Group the labels by their group and sort them alphabetically within each group
@@ -79,6 +85,7 @@ export default function DropDownContainer({
           <h3 className="px-4 py-2 m-0 text-sm font-semibold text-gray-600 uppercase bg-gray-50">
             Suggestions
           </h3>
+
           {Object.keys(displaySuggestions)
             .sort(sortWithGbeforeNumbers)
             .map((suggestion, index) => {
@@ -88,33 +95,44 @@ export default function DropDownContainer({
 
               return (
                 <>
-                  {parentLabel && ( // Floors
+                  {parentLabel && (
+                    // This part is for the floors (Parent Labels)
                     <div
                       key={index}
                       className="suggestion-item cursor-pointer hover:text-blue-500"
-                      onClick={() => handleSuggestionClick(parentLabel)}
+                      onClick={() => toggleFloor(parentLabel.label)}
                     >
-                      <b>{parentLabel?.label}</b>
+                      <div className="flex items-center">
+                        <b>{parentLabel?.label}</b>
+                        {expandedFloor === parentLabel.label ? (
+                          <ChevronUp className="ml-2 h-5 w-5 text-gray-500" />
+                        ) : (
+                          <ChevronDown className="ml-2 h-5 w-5 text-gray-500" />
+                        )}
+                      </div>
                     </div>
                   )}
-                  {!parentLabel && ( // Elevator or Toilet
+
+                  {expandedFloor === parentLabel?.label &&
+                    // This part shows the rooms (Child Labels) when the floor is expanded
+                    displaySuggestions[suggestion].map((label) =>
+                      label.query === parentLabel?.query ? null : (
+                        <div
+                          key={label.query}
+                          className="suggestion-item cursor-pointer hover:text-blue-500"
+                          onClick={() => handleSuggestionClick(label)}
+                        >
+                          {parentLabel && '• '}
+                          {label.label}
+                        </div>
+                      )
+                    )}
+
+                  {!parentLabel && (
+                    // This part is for items like "Elevator" or "Toilet"
                     <div key={index} className="suggestion-item">
                       <b>{displaySuggestions[suggestion][0]?.group}</b>
                     </div>
-                  )}
-                  {displaySuggestions[suggestion].map((label) =>
-                    label.query == parentLabel?.query ? (
-                      <></>
-                    ) : (
-                      <div
-                        key={index}
-                        className="suggestion-item cursor-pointer hover:text-blue-500"
-                        onClick={() => handleSuggestionClick(label)}
-                      >
-                        {parentLabel && '• '}
-                        {label.label}
-                      </div>
-                    )
                   )}
                 </>
               )

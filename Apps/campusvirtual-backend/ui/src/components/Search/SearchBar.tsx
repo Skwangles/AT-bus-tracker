@@ -14,12 +14,14 @@ import { Label } from '../../consts'
 import { toast } from 'react-toastify'
 // Define the type for the props
 interface SearchBarProps {
+  currentPoint: { location: string }
   searchableLabels: Label[]
   jumpToCallback: (selected: string) => void
   highlightCallback: (selected: string) => void
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({
+  currentPoint,
   searchableLabels,
   jumpToCallback,
   highlightCallback,
@@ -151,6 +153,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
         </div>
 
         <SearchBarButtons
+          currentPoint={currentPoint}
           query={query}
           handleAction={handleAction}
           labels={searchableLabels}
