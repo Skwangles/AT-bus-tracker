@@ -126,9 +126,10 @@ export default function DropDownContainer({
 
                   {expandedFloor === parentLabel?.label &&
                     // This part shows the rooms (Child Labels) when the floor is expanded
-                    displaySuggestions[suggestion].map((label) =>
-                      label.query === parentLabel?.query &&
-                      label.type !== LabelType.Elevator ? null : (
+                    displaySuggestions[suggestion].map((label, idx) =>
+                      (label.query === parentLabel?.query &&
+                        label.type !== LabelType.Elevator) ||
+                      (label.type == LabelType.Elevator && idx == 0) ? null : (
                         <div
                           key={label.query}
                           className="suggestion-item cursor-pointer hover:text-blue-500"
