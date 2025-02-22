@@ -85,12 +85,14 @@ const SearchBar: React.FC<SearchBarProps> = ({
     }
   }
 
-  const handleSuggestionClick = (suggestion: Label) => {
+  const handleSuggestionClick = (suggestion: Label, hide = true) => {
     setQuery(
       (suggestion.group ? suggestion.group + ' - ' : '') + suggestion.label
     )
-    inputRef.current?.focus()
-    setIsFocused(false)
+    if (hide) {
+      inputRef.current?.focus()
+      setIsFocused(false)
+    }
   }
 
   const handleAction = (label: string, action: 'highlight' | 'jump') => {

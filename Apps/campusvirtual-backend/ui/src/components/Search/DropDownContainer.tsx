@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Label } from '../../consts'
+import { Label, LabelType } from '../../consts'
 import { ChevronDown, ChevronUp } from 'react-feather'
 
 function sortWithGbeforeNumbers(a, b): number {
@@ -27,38 +27,42 @@ export default function DropDownContainer({
   recentSearches: Label[]
   query: string
   suggestions: Label[]
-  handleSuggestionClick: (suggestion: Label) => void
+  handleSuggestionClick: (suggestion: Label, hide?: boolean) => void
 }) {
   const [expandedFloor, setExpandedFloor] = useState(null)
   const [displaySuggestions, setDisplaySuggestions] = useState({})
 
   const toggleFloor = (floorLabel) => {
-    setExpandedFloor(expandedFloor === floorLabel ? null : floorLabel)
+    handleSuggestionClick(floorLabel, false)
+    setExpandedFloor(
+      expandedFloor === floorLabel?.label ? null : floorLabel?.label
+    )
   }
 
   useEffect(() => {
-    // Group the labels by their group and sort them alphabetically within each group
-    const groupedLabels = suggestions.reduce((acc, label) => {
-      const group = label.group
-        ? label.group.trim().toLowerCase()
-        : label.label.trim().toLowerCase()
-      if (!acc[group]) {
-        acc[group] = []
+    // 1. Populate top level group names
+    const dict = {}
+    for (const val of suggestions) {
+      if (val.type == LabelType.Group) {
+        dict[val.label.trim().toLowerCase()] = [val]
+      } else if (val.type == LabelType.Elevator) {
+        dict[val.group!.trim().toLowerCase() ?? 'elevator'] = [val]
       }
-      acc[group].push(label)
-      return acc
-    }, {})
-    // Sort the labels within each group alphabetically
-    const sortedGroupedLabels = Object.keys(groupedLabels).reduce(
-      (acc, key) => {
-        acc[key] = groupedLabels[key].sort((a, b) =>
-          a.label.localeCompare(b.label)
-        )
-        return acc
-      },
-      {}
-    )
-    setDisplaySuggestions(sortedGroupedLabels || {})
+    }
+
+    const groupedLabels = { ...dict }
+    for (const label of suggestions) {
+      if (label.type == LabelType.Group) {
+        continue
+      }
+
+      const group = label.group!.trim().toLowerCase()
+      if (groupedLabels[group]) {
+        groupedLabels[group].push(label)
+      }
+    }
+
+    setDisplaySuggestions(groupedLabels ?? {})
   }, [suggestions])
 
   return (
@@ -89,10 +93,8 @@ export default function DropDownContainer({
           {Object.keys(displaySuggestions)
             .sort(sortWithGbeforeNumbers)
             .map((suggestion, index) => {
-              const parentLabel = displaySuggestions[suggestion].find(
-                (label) => String(label.label).toLowerCase() === suggestion
-              )
-
+              const parentLabel = displaySuggestions[suggestion][0]
+              const hasMultiple = displaySuggestions[suggestion].length > 1
               return (
                 <>
                   {parentLabel && (
@@ -100,14 +102,23 @@ export default function DropDownContainer({
                     <div
                       key={index}
                       className="suggestion-item cursor-pointer hover:text-blue-500"
-                      onClick={() => toggleFloor(parentLabel.label)}
+                      onClick={() => toggleFloor(parentLabel)}
                     >
                       <div className="flex items-center">
-                        <b>{parentLabel?.label}</b>
-                        {expandedFloor === parentLabel.label ? (
-                          <ChevronUp className="ml-2 h-5 w-5 text-gray-500" />
+                        <b>
+                          {parentLabel.type == LabelType.Elevator // Elevators don't have a top level floor label (e.g. outdoors, Level 1, etc.), so get the first label's 'group' name
+                            ? parentLabel.group
+                            : parentLabel?.label}
+                        </b>
+
+                        {hasMultiple ? (
+                          expandedFloor === parentLabel.label ? (
+                            <ChevronUp className="ml-2 h-5 w-5 text-gray-500" />
+                          ) : (
+                            <ChevronDown className="ml-2 h-5 w-5 text-gray-500" />
+                          )
                         ) : (
-                          <ChevronDown className="ml-2 h-5 w-5 text-gray-500" />
+                          <></>
                         )}
                       </div>
                     </div>
@@ -116,7 +127,8 @@ export default function DropDownContainer({
                   {expandedFloor === parentLabel?.label &&
                     // This part shows the rooms (Child Labels) when the floor is expanded
                     displaySuggestions[suggestion].map((label) =>
-                      label.query === parentLabel?.query ? null : (
+                      label.query === parentLabel?.query &&
+                      label.type !== LabelType.Elevator ? null : (
                         <div
                           key={label.query}
                           className="suggestion-item cursor-pointer hover:text-blue-500"
@@ -127,13 +139,6 @@ export default function DropDownContainer({
                         </div>
                       )
                     )}
-
-                  {!parentLabel && (
-                    // This part is for items like "Elevator" or "Toilet"
-                    <div key={index} className="suggestion-item">
-                      <b>{displaySuggestions[suggestion][0]?.group}</b>
-                    </div>
-                  )}
                 </>
               )
             })}

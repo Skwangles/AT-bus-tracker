@@ -41,5 +41,19 @@ export interface Label {
   query: string, // query to search the database
   label: string, // the actual label to be used
   group?: string // the shared location with potentially other labels with the same location
+  type: number // 0 = Normal, 1 = Toilet, 2 = Elevator
 }
 
+export enum LabelType {
+  Normal = 0,
+  Toilet,
+  Elevator,
+  Group
+}
+
+export enum ReservedTypeIndex {
+  Anchor = 0,
+  Elevator,
+  Toilet,
+  MergePoint
+}

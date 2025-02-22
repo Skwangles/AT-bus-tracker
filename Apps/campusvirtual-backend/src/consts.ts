@@ -38,4 +38,3 @@ export const SKIP_IF_MAP_ALREADY_CONFIGED: boolean = process.env.CV_SERVER_DONT_
 
 logger.debug("DB File:" + SQLITE_DB_DIR)
 logger.debug("DB files in dir:" + fs.readdirSync(SQLITE_DB_DIR).join(", "))
-logger.debug("Process Variables:" + JSON.stringify(process.env))

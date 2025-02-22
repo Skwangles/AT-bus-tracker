@@ -8,6 +8,21 @@ interface Label {
   query: string, // query to search the database
   label: string, // the actual label to be used
   group?: string // the shared location with potentially other labels with the same location
+  type?: number
+}
+
+enum LabelType {
+  Normal = 0,
+  Toilet,
+  Elevator,
+  GroupName
+}
+
+enum ReservedTypeIndex {
+  Anchor = 0,
+  Elevator,
+  Toilet,
+  MergePoint
 }
 
 export async function getAllSearchableLabels(req: Request, res: Response) {
@@ -20,13 +35,14 @@ export async function getAllSearchableLabels(req: Request, res: Response) {
     return {
       query: location.location,
       label: location.location,
-      group: null
+      group: null,
+      type: LabelType.GroupName
     }
   })
 
   const labels = await readDB(`SELECT label, l.location FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}special_labels s 
     JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l ON l.keyframe_id = s.keyframe_id
-    WHERE s.label is not NULL AND s.label <> '' AND s.label <> '!!anchor';`)
+    WHERE s.label is not NULL AND s.label <> '' AND s.label <> '${ReservedTypeIndex[ReservedTypeIndex.Anchor]}'`)
 
   // Parse special labels types
   const parsed_labels = labels.map((label: any) => {
@@ -35,13 +51,20 @@ export async function getAllSearchableLabels(req: Request, res: Response) {
       return null
     }
 
-    if (!RESERVED_START_OF_LABELS.some(reserved_string => labelString.startsWith(reserved_string))) {
-      return { query: label.label, group: label.location.trim(), label: labelString }
+    // Short circuit on normal points - i.e. Room 1.7, Balcony, etc.
+    if (!RESERVED_START_OF_LABELS.some(reserved_string => labelString.toLowerCase().startsWith(reserved_string.toLowerCase()))) {
+      return {
+        query: label.label,
+        group: label.location.trim(),
+        label: labelString,
+        type: LabelType.Normal
+      }
     }
 
-    if (labelString.startsWith("!!elevator")) {
+    // Parse each special label type - !!elevator, !!toilet, etc.
+    if (labelString.toLowerCase().startsWith(RESERVED_START_OF_LABELS[ReservedTypeIndex.Elevator])) {
       //e.g. '!!elevator, elevator shaft 1, floor 1 entry' <- may or may not have a comma after the toilet code
-      let strippedElevator = String(labelString).replace("!!elevator", "").trim()
+      let strippedElevator = String(labelString).replace(RESERVED_START_OF_LABELS[ReservedTypeIndex.Elevator], "").trim()
       if (strippedElevator.startsWith(",")) {
         strippedElevator.replace(",", " ")
       }
@@ -54,12 +77,13 @@ export async function getAllSearchableLabels(req: Request, res: Response) {
 
       return {
         query: label.label,
-        group: splitElevator[1].trim(), // e.g. 'Elevator Shaft 1'
-        label: splitElevator[2]?.trim() ?? label.location // e.g. 'Floor 1 Entry'
+        group: splitElevator[1].trim(), // the Elevator group name will be its own location e.g. 'Elevator Shaft 1'
+        label: splitElevator[2]?.trim() ?? label.location, // e.g. 'Floor 1 Entry'
+        type: LabelType.Elevator
       }
-    } else if (labelString.startsWith("!!toilet")) {
+    } else if (labelString.toLowerCase().startsWith(RESERVED_START_OF_LABELS[ReservedTypeIndex.Toilet])) {
       // e.g. '!!toilet, description of toilet' <- may or may not have a comma after the toilet code
-      let toiletDescriptor = String(labelString).replace("!!toilet", "").trim()
+      let toiletDescriptor = String(labelString).replace(RESERVED_START_OF_LABELS[ReservedTypeIndex.Toilet], "").trim()
       if (toiletDescriptor.startsWith(",")) {
         toiletDescriptor = toiletDescriptor.replace(",", "").trim()
       }
@@ -67,7 +91,8 @@ export async function getAllSearchableLabels(req: Request, res: Response) {
       return {
         query: label.label,
         group: label.location.trim(),
-        label: toiletDescriptor
+        label: toiletDescriptor,
+        type: LabelType.Toilet
       }
     } else {
       return null
