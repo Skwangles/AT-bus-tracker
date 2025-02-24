@@ -33,7 +33,9 @@ export default function DropDownContainer({
   const [displaySuggestions, setDisplaySuggestions] = useState({})
 
   const toggleFloor = (floorLabel) => {
-    handleSuggestionClick(floorLabel, false)
+    if (query === '') {
+      handleSuggestionClick(floorLabel, false)
+    }
     setExpandedFloor(
       expandedFloor === floorLabel?.label ? null : floorLabel?.label
     )
@@ -59,6 +61,17 @@ export default function DropDownContainer({
       const group = label.group!.trim().toLowerCase()
       if (groupedLabels[group]) {
         groupedLabels[group].push(label)
+      } else {
+        groupedLabels[group] = [
+          {
+            // If doesn't exist, keep the high level
+            query: label.group,
+            label: label.group,
+            group: null,
+            type: LabelType.Group,
+          },
+          label,
+        ]
       }
     }
 
