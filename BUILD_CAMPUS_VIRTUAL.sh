@@ -53,6 +53,12 @@ sudo ldconfig # update lookup library paths again - IMPORTANT if 'libxx.so' not 
 
 # IF G2O gives a QT error - sudo apt install -y qtcreator qtbase5-dev qt5-qmake cmake
 
+echo "Building Face Blurring"
+cd "$CV_HOME_DIR/Apps/blur360-images"
+mkdir -p build && cd build
+cmake ..
+make
+sudo make install
 
 
 echo "Building VSLAM CampusVirtual interface"
