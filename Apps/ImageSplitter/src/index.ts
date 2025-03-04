@@ -46,7 +46,7 @@ async function processImages() {
 
     await Promise.all(batch.map(async (row) => {
       const inputImagePath = path.join(input_pic_dir, Number(row.ts).toFixed(ts_dp) + img_ext);
-      const outputImagePath = path.join(output_pic_dir, Number(row.ts).toFixed(ts_dp) + '_blurred' + img_ext);
+      const outputImagePath = path.join(output_pic_dir, Number(row.ts).toFixed(ts_dp) + img_ext);
       console.log("Parsing ", inputImagePath)
 
       if (fs.existsSync(inputImagePath)) {
