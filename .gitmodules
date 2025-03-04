@@ -7,3 +7,6 @@
 [submodule "Apps/PgViewer"]
 	path = Apps/PgViewer
 	url = https://github.com/Skwangles/CampusVirtual-SocketViewer.git
+[submodule "Apps/blur360-images"]
+	path = Apps/blur360-images
+	url = https://github.com/Skwangles/blur360.git
