@@ -35,7 +35,6 @@ const Hotspot: React.FC<HotspotProps> = ({
   position,
   onClick,
   rotation,
-  image_identifier,
   isHighlighted,
   isEnd,
 }) => {

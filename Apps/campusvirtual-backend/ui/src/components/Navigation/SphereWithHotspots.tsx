@@ -2,7 +2,6 @@ import * as THREE from 'three'
 import { useEffect, useState, useRef } from 'react'
 import { API_PREFIX, HIDE_POINTS_DURING_HIGHLIGHT } from '../../consts'
 import Hotspot, { HotspotObj } from './Hotspots'
-import { useSpring } from '@react-spring/three'
 import { Html } from '@react-three/drei'
 import { toast } from 'react-toastify'
 
@@ -43,12 +42,6 @@ const SphereWithHotspots: React.FC<SphereWithHotspotsProps> = ({
   const [transitionProgress, setTransitionProgress] = useState(0)
   const currentTextureUrlRef = useRef(textureUrl)
   const loadingQueue = useRef<NodeJS.Timeout[]>([])
-
-  // Animation for texture transition
-  useSpring({
-    opacity: transitionProgress,
-    config: { duration: 500 },
-  })
 
   const loadTextureAtResolution = async (resolution: string) => {
     if (currentTextureUrlRef.current !== textureUrl) return null

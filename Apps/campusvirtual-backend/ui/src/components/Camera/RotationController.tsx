@@ -1,6 +1,5 @@
 import { useThree } from '@react-three/fiber'
-import { clear } from 'console'
-import { useRef, useEffect, useState } from 'react'
+import { useRef, useEffect } from 'react'
 import { Euler } from 'three'
 
 const CameraRotationControls = ({ initCameraRotation, setCameraRotation }) => {

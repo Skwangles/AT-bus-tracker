@@ -1,4 +1,3 @@
-// src/SearchBar.tsx
 import React, {
   useState,
   ChangeEvent,
