@@ -7,7 +7,6 @@ import { Label } from '../../consts'
 interface MobileLayout {
   isMobile: boolean
   currentPoint: any
-  setCurrentPoint: any
   allFloorNames: Label[]
   changeFloor: any
   changeFloorUpOrDown: any
@@ -21,7 +20,6 @@ interface MobileLayout {
 export const MobileLayout: React.FC<MobileLayout> = ({
   isMobile,
   currentPoint,
-  setCurrentPoint,
   allFloorNames,
   changeFloor,
   changeFloorUpOrDown,

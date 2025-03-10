@@ -5,7 +5,6 @@ import { Label } from '../../consts'
 interface DesktopLayout {
   isMobile: boolean
   currentPoint: any
-  setCurrentPoint: any
   allFloorNames: Label[]
   changeFloor: any
   changeFloorUpOrDown: any
@@ -19,7 +18,6 @@ interface DesktopLayout {
 export const DesktopLayout: React.FC<DesktopLayout> = ({
   isMobile,
   currentPoint,
-  setCurrentPoint,
   allFloorNames,
   changeFloor,
   changeFloorUpOrDown,
