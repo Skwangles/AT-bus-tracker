@@ -239,7 +239,6 @@ const VirtualTour: React.FC = () => {
       <MobileLayout
         isMobile={isMobile}
         currentPoint={currentPoint}
-        setCurrentPoint={setCurrentPoint}
         allFloorNames={allSearchableLocations}
         changeFloor={changeFloor}
         changeFloorUpOrDown={changeFloorUpOrDown}
@@ -253,7 +252,6 @@ const VirtualTour: React.FC = () => {
       <DesktopLayout
         isMobile={isMobile}
         currentPoint={currentPoint}
-        setCurrentPoint={setCurrentPoint}
         allFloorNames={allSearchableLocations}
         changeFloor={changeFloor}
         changeFloorUpOrDown={changeFloorUpOrDown}
