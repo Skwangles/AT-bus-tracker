@@ -30,6 +30,7 @@ export default function DropDownContainer({
   suggestions,
   handleSuggestionClick,
 }: {
+  setIsFocused: (isFocused: boolean) => void
   dropdownRef: React.RefObject<HTMLDivElement>
   recentSearches: Label[]
   query: string

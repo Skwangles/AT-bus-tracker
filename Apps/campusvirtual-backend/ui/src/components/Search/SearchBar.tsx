@@ -164,6 +164,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
 
       {isFocused && (
         <DropDownContainer
+          setIsFocused={setIsFocused}
           dropdownRef={dropdownRef}
           recentSearches={recentSearches}
           query={query}
