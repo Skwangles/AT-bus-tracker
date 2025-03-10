@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Label, LabelType } from '../../consts'
-import { ChevronDown, ChevronUp } from 'react-feather'
+import { ChevronDown, ChevronLeft } from 'react-feather'
 
 function sortWithGbeforeNumbers(a, b): number {
   const aLabel = String(a).toLowerCase().trim()
@@ -16,7 +16,14 @@ function sortWithGbeforeNumbers(a, b): number {
   }
 }
 
+const keyboardToClick = (event, callback) => {
+  if (event.key === 'Enter' || event.key === ' ') {
+    callback()
+  }
+}
+
 export default function DropDownContainer({
+  setIsFocused,
   dropdownRef,
   recentSearches,
   query,
@@ -79,9 +86,18 @@ export default function DropDownContainer({
   }, [suggestions])
 
   return (
-    <div className="dropdown-container" ref={dropdownRef}>
+    <div
+      tabIndex={0}
+      className="dropdown-container"
+      ref={dropdownRef}
+      onKeyUp={(event) => {
+        if (event.key == 'Escape') {
+          setIsFocused(false)
+        }
+      }}
+    >
       {!query && recentSearches.length > 0 && (
-        <div className="recent-searches mb-2">
+        <div className="recent-searches mb-2" tabIndex={0}>
           <h3 className="px-4 py-2 m-0 text-sm font-semibold text-gray-600 uppercase bg-gray-50">
             Recent Searches
           </h3>
@@ -98,8 +114,11 @@ export default function DropDownContainer({
       )}
 
       {Object.keys(displaySuggestions).length > 0 && (
-        <div className="suggestions">
-          <h3 className="px-4 py-2 m-0 text-sm font-semibold text-gray-600 uppercase bg-gray-50">
+        <div key={'suggestions-header'} className="suggestions" tabIndex={0}>
+          <h3
+            key={'h3 suggestions'}
+            className="px-4 py-2 m-0 text-sm font-semibold text-gray-600 uppercase bg-gray-50"
+          >
             Suggestions
           </h3>
 
@@ -113,9 +132,14 @@ export default function DropDownContainer({
                   {parentLabel && (
                     // This part is for the floors (Parent Labels)
                     <div
-                      key={index}
+                      role="button"
+                      tabIndex={0}
+                      key={index + 'parent'}
                       className="suggestion-item cursor-pointer hover:text-blue-500"
                       onClick={() => toggleFloor(parentLabel)}
+                      onKeyDown={(event) =>
+                        keyboardToClick(event, () => toggleFloor(parentLabel))
+                      }
                     >
                       <div className="flex items-center">
                         <b>
@@ -126,9 +150,9 @@ export default function DropDownContainer({
 
                         {hasMultiple ? (
                           expandedFloor === parentLabel.label ? (
-                            <ChevronUp className="ml-2 h-5 w-5 text-gray-500" />
-                          ) : (
                             <ChevronDown className="ml-2 h-5 w-5 text-gray-500" />
+                          ) : (
+                            <ChevronLeft className="ml-2 h-5 w-5 text-gray-500" />
                           )
                         ) : (
                           <></>
@@ -144,9 +168,16 @@ export default function DropDownContainer({
                         label.type !== LabelType.Elevator) ||
                       (label.type == LabelType.Elevator && idx == 0) ? null : (
                         <div
-                          key={label.query}
+                          role="button"
+                          tabIndex={0}
+                          key={'expanded' + label.query + idx}
                           className="suggestion-item cursor-pointer hover:text-blue-500"
                           onClick={() => handleSuggestionClick(label)}
+                          onKeyDown={(event) =>
+                            keyboardToClick(event, () =>
+                              handleSuggestionClick(label)
+                            )
+                          }
                         >
                           {parentLabel && '• '}
                           {label.label}
