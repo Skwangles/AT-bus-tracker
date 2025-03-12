@@ -1,6 +1,5 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import * as cv from '@u4/opencv4nodejs';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 
@@ -15,12 +14,9 @@ const execAsync = promisify(exec);
  */
 async function blurFacesInEquirectangular(inputPath: string, outputPath: string): Promise<void> {
   try {
-    console.log("Reading image");
-    // Verify the input image can be read
-    const image = cv.imread(inputPath);
-    if (!image) {
-      throw new Error(`Failed to load image from ${inputPath}`);
-    }
+    if (!fs.existsSync(inputPath)) {
+throw new Error("Image doesn't exist:" + inputPath);
+}
 
     console.log("Checking output dir");
     // Create output directory if it doesn't exist
