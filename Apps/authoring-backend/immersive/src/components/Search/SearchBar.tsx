@@ -67,8 +67,8 @@ const SearchBar: React.FC<SearchBarProps> = ({
     if (value) {
       const filteredSuggestions = searchableLabels.filter((item) => {
         const largeName =
-          (item.group ? item.group.toLowerCase() + ' - ' : '') +
-          item.label.toLowerCase()
+          (item.group ? item.group.toLowerCase().trim() + ' - ' : '') +
+          item.label.toLowerCase().trim()
         const result =
           largeName.includes(value.toLowerCase()) &&
           value.length <= largeName.length
@@ -86,7 +86,8 @@ const SearchBar: React.FC<SearchBarProps> = ({
 
   const handleSuggestionClick = (suggestion: Label, hide = true) => {
     setQuery(
-      (suggestion.group ? suggestion.group + ' - ' : '') + suggestion.label
+      (suggestion.group ? suggestion.group.trim() + ' - ' : '') +
+        suggestion.label.trim()
     )
     if (hide) {
       inputRef.current?.focus()
@@ -95,11 +96,25 @@ const SearchBar: React.FC<SearchBarProps> = ({
   }
 
   const handleAction = (label: string, action: 'highlight' | 'jump') => {
-    const labelObj = searchableLabels.find(
-      (v: Label) => (v.group ? v.group + ' - ' : '') + v.label === label
+    let labelObj = searchableLabels.find(
+      (v: Label) =>
+        ((v.group ? v.group + ' - ' : '') + v.label).toLowerCase().trim() ===
+        label.toLowerCase().trim()
     )
+    if (!labelObj) {
+      labelObj = searchableLabels.find(
+        (v: Label) =>
+          v.label.toLowerCase().trim() === label.toLowerCase().trim()
+      )
+    }
     if (!labelObj || !labelObj.query || !labelObj.label) {
       toast.error('Label is invalid: ' + label)
+      console.error(
+        'Label is invalid: ' +
+          label +
+          ' Could not find labelObj:' +
+          JSON.stringify(labelObj)
+      )
       return
     }
 

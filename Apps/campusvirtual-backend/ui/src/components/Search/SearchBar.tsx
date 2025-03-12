@@ -86,7 +86,8 @@ const SearchBar: React.FC<SearchBarProps> = ({
 
   const handleSuggestionClick = (suggestion: Label, hide = true) => {
     setQuery(
-      (suggestion.group ? suggestion.group + ' - ' : '') + suggestion.label
+      (suggestion.group ? suggestion.group.trim() + ' - ' : '') +
+        suggestion.label.trim()
     )
     if (hide) {
       inputRef.current?.focus()
@@ -95,11 +96,25 @@ const SearchBar: React.FC<SearchBarProps> = ({
   }
 
   const handleAction = (label: string, action: 'highlight' | 'jump') => {
-    const labelObj = searchableLabels.find(
-      (v: Label) => (v.group ? v.group + ' - ' : '') + v.label === label
+    let labelObj = searchableLabels.find(
+      (v: Label) =>
+        ((v.group ? v.group + ' - ' : '') + v.label).toLowerCase() ===
+        label.toLowerCase()
     )
+    if (!labelObj) {
+      labelObj = searchableLabels.find(
+        (v: Label) => v.label.toLowerCase() === label.toLowerCase()
+      )
+    }
+
     if (!labelObj || !labelObj.query || !labelObj.label) {
       toast.error('Label is invalid: ' + label)
+      console.error(
+        'Label is invalid: ' +
+          label +
+          ' Could not find labelObj:' +
+          JSON.stringify(labelObj)
+      )
       return
     }
 
