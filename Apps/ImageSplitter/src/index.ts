@@ -27,6 +27,19 @@ if (args.h) {
   process.exit(0)
 }
 
+const sqlite_db_path = args.db ?? (process.env.CV_EXTRACT_IN_DB_NAME && process.env.CV_DB_DIR ? path.join(process.env.CV_DB_DIR, process.env.CV_EXTRACT_IN_DB_NAME) : DFLT_SQLITE_DB_PATH)
+const table_prefix = args.prefix ?? process.env.CV_EXTRACT_TABLE_PREFIX ?? DFLT_TABLE_PREFIX
+const input_pic_dir = args.input_dir ?? process.env.CV_KEYFRAME_IMG_DIR ?? DFLT_INPUT_DIR
+const output_pic_dir = args.output_dir ?? process.env.CV_EXTRACT_USED_IMAGES_DIR ?? DFLT_OUTPUT_DIR
+const img_ext = args.img_ext ?? process.env.CV_KEYFRAME_IMG_EXTENSION ?? DFLT_IMG_EXT
+const batch_size = Number(args.batch ?? process.env.CV_EXTRACT_BATCH_SIZE ?? DFLT_BATCH_SIZE)
+const ts_dp = Number(args.dp ?? process.env.CV_KEYFRAME_IMG_NAME_DP ?? DFLT_TS_DP)
+const blur = args.blur ?? process.env.CV_EXTRACT_FACE_BLUR ? process.env.CV_EXTRACT_FACE_BLUR == 'true' : DFLT_FACE_BLUR
+console.info("Using Args: DB:", sqlite_db_path, 'Input:', input_pic_dir, "Output:", output_pic_dir, "Img Extension:", img_ext, "Table Prefix:", table_prefix, "Batch size:", batch_size)
+
+const processHasCompletedFileFilePath = path.join(output_pic_dir, "complete.txt")
+
+
 async function copyFileIfExists(file: string | number, input_pic_dir: string, output_pic_dir: string, img_ext: string) {
   const filePath = path.join(input_pic_dir, Number(file).toFixed(ts_dp) + img_ext);
   const outputPath = path.join(output_pic_dir, Number(file).toFixed(ts_dp) + img_ext);
@@ -38,8 +51,12 @@ async function copyFileIfExists(file: string | number, input_pic_dir: string, ou
 
 
 async function processImages() {
-  console.log("Starting")
+  const time = new Date();
+  console.log("Starting on:", time.toLocaleTimeString())
   const rows: { ts: string | number }[] = await readDB(`SELECT ts FROM ${table_prefix}nodes`);
+
+
+
 
   for (let i = 0; i < rows.length; i += batch_size) {
     const batch = rows.slice(i, i + batch_size);
@@ -59,18 +76,14 @@ async function processImages() {
       }
     }));
   }
+  fs.writeFileSync(processHasCompletedFileFilePath, "Completed run started at:" + time.toLocaleTimeString() + " and ended at:" + new Date().toLocaleTimeString())
 }
 
 
-const sqlite_db_path = args.db ?? (process.env.CV_EXTRACT_IN_DB_NAME && process.env.CV_DB_DIR ? path.join(process.env.CV_DB_DIR, process.env.CV_EXTRACT_IN_DB_NAME) : DFLT_SQLITE_DB_PATH)
-const table_prefix = args.prefix ?? process.env.CV_EXTRACT_TABLE_PREFIX ?? DFLT_TABLE_PREFIX
-const input_pic_dir = args.input_dir ?? process.env.CV_KEYFRAME_IMG_DIR ?? DFLT_INPUT_DIR
-const output_pic_dir = args.output_dir ?? process.env.CV_EXTRACT_USED_IMAGES_DIR ?? DFLT_OUTPUT_DIR
-const img_ext = args.img_ext ?? process.env.CV_KEYFRAME_IMG_EXTENSION ?? DFLT_IMG_EXT
-const batch_size = Number(args.batch ?? process.env.CV_EXTRACT_BATCH_SIZE ?? DFLT_BATCH_SIZE)
-const ts_dp = Number(args.dp ?? process.env.CV_KEYFRAME_IMG_NAME_DP ?? DFLT_TS_DP)
-const blur = args.blur ?? process.env.CV_EXTRACT_FACE_BLUR ? process.env.CV_EXTRACT_FACE_BLUR == 'true' : DFLT_FACE_BLUR
-console.info("Using Args: DB:", sqlite_db_path, 'Input:', input_pic_dir, "Output:", output_pic_dir, "Img Extension:", img_ext, "Table Prefix:", table_prefix, "Batch size:", batch_size)
+// If the process is being rerun, we don't want the user confused whether this is a new run completed or the old one stuck around
+if (fs.existsSync(processHasCompletedFileFilePath)) {
+  fs.rmSync(processHasCompletedFileFilePath)
+}
 
 console.info("Init DB")
 initDB(sqlite_db_path)
