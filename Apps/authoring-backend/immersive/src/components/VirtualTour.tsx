@@ -48,6 +48,7 @@ const VirtualTour: React.FC = () => {
   >([])
   const [hasImage, setHasImage] = useState(false)
   const [locationGroup, setLocationGroup] = useState<string>('')
+  const [pathfindMode, setPathfindMode] = useState(false)
   const [highlightedPath, setHighlightedPath] = useState<number[]>([])
   const [allSearchableLocations, setAllSearchableLocations] = useState<Label[]>(
     []
@@ -55,6 +56,7 @@ const VirtualTour: React.FC = () => {
 
   const [isInstructionsOpen, setInstructionsOpen] = useState(false)
   const [closeDrawer, setCloseDrawer] = useState(false)
+  const [lastNavigatedToPoint, setLastNavigatedToPoint] = useState<string>('')
 
   const [camRotation, setCameraRotation] = useState<{
     yaw: number
@@ -72,7 +74,7 @@ const VirtualTour: React.FC = () => {
   const changeFloor = (requestedFloor: string) => {
     axios
       .get<{ keyframe_id: number }>(
-        API_PREFIX + '/api/v1/floor/' + requestedFloor + '/point'
+        `${API_PREFIX}/api/v1/floor/${requestedFloor}/point`
       )
       .then((value) => {
         const result = value.data.keyframe_id
@@ -84,7 +86,7 @@ const VirtualTour: React.FC = () => {
 
         // In the case the 'DEFAULT FLOOR' is not found, we will fetch the first point
         if (Number(currentId) === -1) {
-          axios.get<number>(API_PREFIX + '/api/v1/point').then((value) => {
+          axios.get<number>(`${API_PREFIX}/api/v1/point`).then((value) => {
             setCurrentId(value.data.toString())
           })
         }
@@ -93,7 +95,7 @@ const VirtualTour: React.FC = () => {
 
   // RUN ON FIRST LOAD
   useEffect(() => {
-    axios.get<Label[]>(API_PREFIX + '/api/v1/floors').then((result) => {
+    axios.get<Label[]>(`${API_PREFIX}/api/v1/floors`).then((result) => {
       setAllSearchableLocations(result.data)
     })
 
@@ -108,7 +110,7 @@ const VirtualTour: React.FC = () => {
 
   useEffect(() => {
     document.title = locationGroup
-      ? PROJECT_NAME + ' - ' + locationGroup
+      ? `${PROJECT_NAME} - ${locationGroup}`
       : PROJECT_NAME
     params.set('id', currentId)
     history.pushState({}, '', '?' + params.toString())
@@ -134,6 +136,10 @@ const VirtualTour: React.FC = () => {
     setLocationGroup(currentPoint.location)
   }, [currentPoint])
 
+  useEffect(() => {
+    setPathfindMode(highlightedPath.length > 0)
+  }, [highlightedPath])
+
   window.onpopstate = (e) => {
     params = new URLSearchParams(window.location.search)
     if (params.has('id')) {
@@ -149,6 +155,12 @@ const VirtualTour: React.FC = () => {
   }
 
   const calculateHighlightedPath = async (selectedLocation: string) => {
+    if (!selectedLocation || selectedLocation.length === 0) {
+      // Clear the path/show all points
+      setHighlightedPath([])
+      return
+    }
+
     try {
       const response = await axios.get(
         `${API_PREFIX}/api/v1/point/${currentId}/path/${selectedLocation}`
@@ -160,6 +172,7 @@ const VirtualTour: React.FC = () => {
         toast.success(
           `Path to Floor: ${selectedLocation} is now highlighted, follow the blue dots...`
         )
+        setLastNavigatedToPoint(selectedLocation)
       }
     } catch (error) {
       toast.error('Could not calculate a path, please try again later')
@@ -167,15 +180,16 @@ const VirtualTour: React.FC = () => {
   }
 
   useEffect(() => {
-    if (
-      highlightedPath.length > 0 &&
-      highlightedPath.includes(Number(currentId))
-    ) {
+    if (pathfindMode && highlightedPath.includes(Number(currentId))) {
+      // Remove points earlier on in the path than the current point
       setHighlightedPath(
         highlightedPath.indexOf(Number(currentId)) == highlightedPath.length - 1
           ? []
           : highlightedPath.slice(highlightedPath.indexOf(Number(currentId)))
       )
+    } else if (pathfindMode && !highlightedPath.includes(Number(currentId))) {
+      // Recalculate when the user strays from the path
+      calculateHighlightedPath(lastNavigatedToPoint)
     }
   }, [currentId])
 
@@ -229,11 +243,6 @@ const VirtualTour: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  const [referenceNode, setReferenceNode] = useState<{
-    id: string
-    targetYaw: number
-  } | null>(null)
-
   return (
     <>
       <div className="fixed bottom-0 left-0 right-0 z-[999] bg-red-500 text-white text-center p-1">
@@ -270,20 +279,20 @@ const VirtualTour: React.FC = () => {
           floorName={locationGroup}
           setID={setCurrentId}
           currentId={currentId}
-          highlightedPath={highlightedPath}
+          highlightedPoints={highlightedPath}
           isMobile={isMobile}
           closeDrawer={closeDrawer}
           setCloseDrawer={setCloseDrawer}
-          cameraRotation={camRotation}
-          referenceNode={referenceNode}
           hasImage={hasImage}
           setHasImage={setHasImage}
+          isPathfindingMode={pathfindMode}
         />
       )}
 
       <div className="fixed top-0 left-0 right-0 z-[999]">
         <SearchBar
           currentPoint={currentPoint}
+          isPathfindingMode={pathfindMode}
           searchableLabels={allSearchableLocations}
           highlightCallback={calculateHighlightedPath}
           jumpToCallback={changeFloor}
@@ -315,8 +324,8 @@ const VirtualTour: React.FC = () => {
             setNeighbours={setFloorWideNeighbours}
             neighbours={floorWideNeighbours}
             isRefined={true}
+            isPathfindingMode={pathfindMode}
             highlightedPath={highlightedPath}
-            setReferenceNode={setReferenceNode}
           />
         </ThreeCanvas>
       </div>

@@ -11,12 +11,14 @@ import DropDownContainer from './DropDownContainer'
 import SearchBarButtons from './SearchBarButtons'
 import { Label } from '../../consts'
 import { toast } from 'react-toastify'
+import { getLabelLongName } from '../../utils/labelUtils'
 // Define the type for the props
 interface SearchBarProps {
   currentPoint: { location: string }
   searchableLabels: Label[]
   jumpToCallback: (selected: string) => void
   highlightCallback: (selected: string) => void
+  isPathfindingMode?: boolean
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({
@@ -24,6 +26,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
   searchableLabels,
   jumpToCallback,
   highlightCallback,
+  isPathfindingMode,
 }) => {
   const [query, setQuery] = useState<string>('')
   const [suggestions, setSuggestions] = useState<Label[]>([])
@@ -66,9 +69,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
     setQuery(value)
     if (value) {
       const filteredSuggestions = searchableLabels.filter((item) => {
-        const largeName =
-          (item.group ? item.group.toLowerCase().trim() + ' - ' : '') +
-          item.label.toLowerCase().trim()
+        const largeName = getLabelLongName(item.group, item.label)
         const result =
           largeName.includes(value.toLowerCase()) &&
           value.length <= largeName.length
@@ -85,10 +86,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
   }
 
   const handleSuggestionClick = (suggestion: Label, hide = true) => {
-    setQuery(
-      (suggestion.group ? suggestion.group.trim() + ' - ' : '') +
-        suggestion.label.trim()
-    )
+    setQuery(getLabelLongName(suggestion.group, suggestion.label))
     if (hide) {
       inputRef.current?.focus()
       setIsFocused(false)
@@ -96,17 +94,23 @@ const SearchBar: React.FC<SearchBarProps> = ({
   }
 
   const handleAction = (label: string, action: 'highlight' | 'jump') => {
-    let labelObj = searchableLabels.find(
-      (v: Label) =>
-        ((v.group ? v.group + ' - ' : '') + v.label).toLowerCase().trim() ===
-        label.toLowerCase().trim()
+    if (isPathfindingMode && label === '' && action === 'highlight') {
+      // Clear path edge case
+      highlightCallback(label)
+      return
+    }
+
+    // Find the label object based on long name or short name
+    let labelObj = searchableLabels.find((v: Label) =>
+      getLabelLongName(v.group, v.label)
     )
     if (!labelObj) {
       labelObj = searchableLabels.find(
-        (v: Label) =>
-          v.label.toLowerCase().trim() === label.toLowerCase().trim()
+        (v: Label) => v.label.toLowerCase() === label.toLowerCase()
       )
     }
+
+    // Validate Label
     if (!labelObj || !labelObj.query || !labelObj.label) {
       toast.error('Label is invalid: ' + label)
       console.error(
@@ -118,6 +122,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
       return
     }
 
+    // Apply action to found label
     addToRecent(labelObj)
     if (action === 'highlight') {
       highlightCallback(labelObj.query)
@@ -171,6 +176,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
         <SearchBarButtons
           currentPoint={currentPoint}
           query={query}
+          isPathfindingMode={isPathfindingMode}
           handleAction={handleAction}
           labels={searchableLabels}
         />

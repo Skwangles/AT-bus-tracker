@@ -12,6 +12,7 @@ interface SphereWithHotspotsProps {
   onHotspotClick: (hotspot: HotspotObj) => void
   rotation: [number, number, number]
   highlightedOrbs: number[]
+  isPathfindingMode: boolean
 }
 
 // Define resolution levels
@@ -30,6 +31,7 @@ const SphereWithHotspots: React.FC<SphereWithHotspotsProps> = ({
   hotspots,
   onHotspotClick,
   rotation,
+  isPathfindingMode,
   highlightedOrbs,
 }) => {
   const [currentTexture, setCurrentTexture] = useState<THREE.Texture>(
@@ -137,7 +139,7 @@ const SphereWithHotspots: React.FC<SphereWithHotspotsProps> = ({
       {/* Hotspots */}
       {hotspots
         .filter((hotspot) =>
-          HIDE_POINTS_DURING_HIGHLIGHT && highlightedOrbs.length > 0
+          HIDE_POINTS_DURING_HIGHLIGHT && isPathfindingMode
             ? highlightedOrbs.includes(Number(hotspot.id))
             : true
         )
@@ -148,9 +150,10 @@ const SphereWithHotspots: React.FC<SphereWithHotspotsProps> = ({
             rotation={hotspot.rotation}
             image_identifier={Number(hotspot.ts).toFixed(5)}
             onClick={() => onHotspotClick(hotspot)}
+            isPathfinding={isPathfindingMode}
             isHighlighted={highlightedOrbs.includes(Number(hotspot.id))}
             isEnd={
-              highlightedOrbs.length > 0
+              isPathfindingMode
                 ? highlightedOrbs[highlightedOrbs.length - 1] ===
                   Number(hotspot.id)
                 : false

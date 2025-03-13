@@ -21,6 +21,7 @@ interface HotspotProps {
   onClick: () => void
   isHighlighted: boolean
   isEnd: boolean
+  isPathfinding: boolean
 }
 
 export interface HotspotObj {
@@ -36,6 +37,7 @@ const Hotspot: React.FC<HotspotProps> = ({
   onClick,
   rotation,
   isHighlighted,
+  isPathfinding,
   isEnd,
 }) => {
   // Increase size for mobile
@@ -70,7 +72,9 @@ const Hotspot: React.FC<HotspotProps> = ({
     return <Model position={position} onClick={onClick} />
   }
 
-  return (
+  return isPathfinding && !isHighlighted ? (
+    <></>
+  ) : (
     <>
       <mesh
         position={position}

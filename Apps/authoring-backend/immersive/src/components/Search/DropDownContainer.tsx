@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Label, LabelType } from '../../consts'
 import { ChevronDown, ChevronLeft } from 'react-feather'
+import { getLabelLongName } from '../../utils/labelUtils'
 
 function sortWithGbeforeNumbers(a, b): number {
   const aLabel = String(a).toLowerCase().trim()
@@ -108,7 +109,7 @@ export default function DropDownContainer({
               className="suggestion-item cursor-pointer hover:text-blue-500"
               onClick={() => handleSuggestionClick(recent)}
             >
-              {(recent.group ? recent.group + ' - ' : '') + recent.label}
+              {getLabelLongName(recent.group, recent.label)}
             </div>
           ))}
         </div>
