@@ -40,26 +40,24 @@ interface MapProps {
   floorName: string
   setID: any
   currentId: string
-  highlightedPath: number[]
+  highlightedPoints: number[]
   isMobile: boolean
   closeDrawer: boolean
   setCloseDrawer: (value: boolean) => void
-  cameraRotation: { yaw: number; pitch: number }
-  referenceNode: { id: string; targetYaw: number } | null
   hasImage: boolean
   setHasImage: (value: boolean) => void
+  isPathfindingMode: boolean
 }
 
 const Map: React.FC<MapProps> = ({
   floorName,
   setID,
   currentId,
-  highlightedPath: highlightedPoints,
+  highlightedPoints,
   isMobile,
   closeDrawer,
   setCloseDrawer,
-  cameraRotation,
-  referenceNode,
+  isPathfindingMode,
   setHasImage,
   hasImage,
 }) => {
@@ -189,31 +187,6 @@ const Map: React.FC<MapProps> = ({
     setID(closestNodeId)
   }
 
-  // const calculateArrowRotation = () => {
-  //   if (!referenceNode || !nodes.length) return cameraRotation.yaw
-
-  //   // Find current and reference nodes
-  //   const currentNode = nodes.find(
-  //     (node) => Number(node.id) === Number(currentId)
-  //   )
-  //   const refNode = nodes.find(
-  //     (node) => Number(node.id) === Number(referenceNode.id)
-  //   )
-
-  //   if (!currentNode || !refNode) return cameraRotation.yaw
-
-  //   // Calculate angle on map
-  //   const dx = refNode.x - currentNode.x
-  //   const dy = refNode.y - currentNode.y
-  //   const mapAngleFromAxis = Math.atan2(dx * stageWidth, dy * stageWidth)
-
-  //   // Calculate world space difference between current camera yaw and target yaw
-  //   const worldRotationOffset =
-  //     (referenceNode.targetYaw - cameraRotation.yaw) % (2 * Math.PI)
-
-  //   return mapAngleFromAxis - worldRotationOffset
-  // }
-
   return (
     <div
       className={`
@@ -277,8 +250,7 @@ const Map: React.FC<MapProps> = ({
                 )}
                 {edges
                   .filter((edge) =>
-                    HIDE_POINTS_ON_MAP_DURING_HIGHLIGHT &&
-                    highlightedPoints.length > 0
+                    HIDE_POINTS_ON_MAP_DURING_HIGHLIGHT && isPathfindingMode
                       ? highlightedPoints.includes(Number(edge.id0)) &&
                         highlightedPoints.includes(Number(edge.id1))
                       : true
@@ -319,7 +291,7 @@ const Map: React.FC<MapProps> = ({
                       (node) =>
                         node.type >= 50 &&
                         (HIDE_POINTS_ON_MAP_DURING_HIGHLIGHT
-                          ? highlightedPoints.length > 0
+                          ? isPathfindingMode
                             ? highlightedPoints.includes(Number(node.id))
                             : true
                           : true)
@@ -350,23 +322,6 @@ const Map: React.FC<MapProps> = ({
                     height={40}
                   />
                 )}
-                {/* {mapNode && cameraRotation && (
-                  <Arrow
-                    points={[
-                      getNodeCoords(mapNode.id, mapNode).x,
-                      getNodeCoords(mapNode.id, mapNode).y,
-                      getNodeCoords(mapNode.id, mapNode).x +
-                        Math.sin(calculateArrowRotation()) * 30,
-                      getNodeCoords(mapNode.id, mapNode).y +
-                        Math.cos(calculateArrowRotation()) * 30,
-                    ]}
-                    pointerLength={10}
-                    pointerWidth={10}
-                    fill="red"
-                    stroke="red"
-                    strokeWidth={4}
-                  />
-                )} */}
               </Layer>
             </Stage>
           </div>

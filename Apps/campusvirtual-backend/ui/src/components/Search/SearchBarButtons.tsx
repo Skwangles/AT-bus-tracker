@@ -1,12 +1,12 @@
-import { Eye, ArrowUpRight, MapPin } from 'react-feather'
+import { Eye, ArrowUpRight, MapPin, X } from 'react-feather'
 import { Label } from '../../consts'
+import { getLabelLongName } from '../../utils/labelUtils'
 
 const includesValue = (data: Label[], value: string) => {
   return data.find((val) => {
     const result =
-      (val.group ? val.group.toLowerCase() + ' - ' : '') +
-        val.label?.toLowerCase() ==
-        value.toLowerCase() || val.label?.toLowerCase() === value.toLowerCase()
+      getLabelLongName(val.group, val.label) == value.toLowerCase() ||
+      val.label?.toLowerCase() === value.toLowerCase()
 
     return result
   })
@@ -17,6 +17,7 @@ export default function SearchBarButtons({
   handleAction,
   query,
   labels,
+  isPathfindingMode,
 }) {
   return (
     <div className="flex w-full gap-2 mt-2">
@@ -31,12 +32,24 @@ export default function SearchBarButtons({
         <span>{currentPoint.location}</span>
       </div>
       <button
-        onClick={() => handleAction(query, 'highlight')}
+        onClick={() =>
+          isPathfindingMode
+            ? handleAction('', 'highlight') // Clear path
+            : handleAction(query, 'highlight')
+        }
         disabled={!includesValue(labels, query)}
-        className="flex-1 inline-flex items-center justify-center gap-1 px-3 py-1.5 text-xs text-white bg-blue-500 rounded-md disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors"
-        aria-label="Highlight location"
+        className={` ${
+          isPathfindingMode ? 'bg-red-500' : 'bg-blue-500'
+        } flex-1 inline-flex items-center justify-center gap-1 px-3 py-1.5 text-xs text-white  rounded-md disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors`}
+        aria-label="Highlight path to location"
       >
-        <Eye size={14} aria-hidden="true" /> Guide
+        {isPathfindingMode ? (
+          <X size={14} aria-hidden="true" />
+        ) : (
+          <Eye size={14} aria-hidden="true" />
+        )}
+
+        {isPathfindingMode ? 'Clear Path' : 'Guide'}
       </button>
       <button
         onClick={() => handleAction(query, 'jump')}

@@ -23,11 +23,8 @@ const Canvas: React.FC<any> = ({
   setCurrentId,
   currentPoint,
   setCurrentPoint,
-  neighbours,
-  setNeighbours,
-  isRefined,
+  isPathfindingMode,
   highlightedPath,
-  setReferenceNode,
 }) => {
   const [hotspots, setHotspots] = useState<HotspotObj[]>([])
   const [currentImage, setCurrentImage] = useState<string | null>(null)
@@ -37,53 +34,6 @@ const Canvas: React.FC<any> = ({
   const [rotation, setRotation] = useState<[number, number, number]>([0, 0, 0])
 
   const { camera } = useThree()
-
-  const calcAngleToTarget = (target: { x: number; z: number }) => {
-    const yaw = Math.atan2(
-      target.x - camera.position.x,
-      target.z - camera.position.z
-    )
-    const yawDownNegativeZAxis = Math.PI - yaw
-
-    // RotationController Euler uses Yaw in CCW
-    const yawCCW = -yawDownNegativeZAxis
-
-    return yawCCW % (2 * Math.PI)
-  }
-
-  const calculateReferenceNode = (
-    pointData: PointData,
-    neighboursData: NeighbourData[]
-  ) => {
-    if (
-      neighboursData.length === 1 &&
-      Number(neighboursData[0].keyframe_id) === Number(pointData.keyframe_id)
-    )
-      return 0 // Need 2 nodes to calculate an angle
-    if (neighboursData.length === 0 || neighboursData.length === 1) return null
-
-    // Get random/reference node that the Map.tsx floor will share - e.g. First or Last in array
-    let referenceNeighbour: NeighbourData
-    if (
-      Number(pointData.keyframe_id) === Number(neighboursData[0].keyframe_id)
-    ) {
-      referenceNeighbour = neighboursData[neighboursData.length - 1]
-    } else {
-      referenceNeighbour = neighboursData[0]
-    }
-
-    const neighbourPos = getPositionOfNode(referenceNeighbour)
-    const neighbourVec = new THREE.Vector3(
-      neighbourPos[0],
-      neighbourPos[1],
-      neighbourPos[2]
-    )
-
-    return {
-      id: referenceNeighbour.keyframe_id,
-      targetYaw: calcAngleToTarget(neighbourVec),
-    }
-  }
 
   const fetchPointData = async (pointId: string) => {
     try {
@@ -97,11 +47,6 @@ const Canvas: React.FC<any> = ({
       )
 
       const neighboursData = neighboursResponse.data
-
-      const referenceNode = calculateReferenceNode(pointData, neighboursData)
-      if (referenceNode) {
-        setReferenceNode(referenceNode)
-      }
 
       setCurrentPoint(pointData)
       setCurrentImage(Number(pointData.ts).toFixed(5))
@@ -137,7 +82,7 @@ const Canvas: React.FC<any> = ({
 
   useEffect(() => {
     fetchPointData(currentId)
-  }, [currentId])
+  }, [currentId, isPathfindingMode]) // pathfinding mode deletes non-path points, so need to refetch
 
   const handleHotspotClick = (hotspot: HotspotObj) => {
     setCurrentId(hotspot.id)
@@ -150,6 +95,7 @@ const Canvas: React.FC<any> = ({
       hotspots={hotspots}
       onHotspotClick={handleHotspotClick}
       rotation={rotation}
+      isPathfindingMode={isPathfindingMode}
       highlightedOrbs={highlightedPath}
     />
   ) : (
