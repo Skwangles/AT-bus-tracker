@@ -55,9 +55,6 @@ async function processImages() {
   console.log("Starting on:", time.toLocaleTimeString())
   const rows: { ts: string | number }[] = await readDB(`SELECT ts FROM ${table_prefix}nodes`);
 
-
-
-
   for (let i = 0; i < rows.length; i += batch_size) {
     const batch = rows.slice(i, i + batch_size);
 
