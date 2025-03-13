@@ -148,6 +148,7 @@ const SphereWithHotspots: React.FC<SphereWithHotspotsProps> = ({
             rotation={hotspot.rotation}
             image_identifier={Number(hotspot.ts).toFixed(5)}
             onClick={() => onHotspotClick(hotspot)}
+            isPathfinding={highlightedOrbs.length > 0}
             isHighlighted={highlightedOrbs.includes(Number(hotspot.id))}
             isEnd={
               highlightedOrbs.length > 0
