@@ -6,6 +6,9 @@ import { aStarPathfinding } from "../logic/pathfinding";
 import { BlobArrayToMatrix, convertToUICoordinateScale } from "../logic/utils";
 import logger from "../logger";
 
+const MAX_CACHE_SIZE = 5000;
+const local_cache = new Map<string, any>();
+
 export async function getFirstPointId(req: Request, res: Response) {
   const firstPoint = await readDB(`SELECT keyframe_id FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes WHERE keyframe_id >= 0 LIMIT 1;`, [], true);
   if (firstPoint && 'keyframe_id' in firstPoint) {
@@ -26,6 +29,11 @@ export async function pathfindFromPointId(req: Request, res: Response) {
     return
   }
 
+  if (local_cache.has(`${point}-${locationCode}`)) {
+    res.json({ path: local_cache.get(`${point}-${locationCode}`) })
+    return
+  }
+
   // Check label first, as these are manually annotated (and supposedly special) points
   let locationResults = await readDB(`SELECT s.keyframe_id FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}special_labels s WHERE s.label = ? LIMIT 1;`, [locationCode], true);
   let isLabel = true;
@@ -41,7 +49,16 @@ export async function pathfindFromPointId(req: Request, res: Response) {
   }
 
   if ('keyframe_id' in locationResults) {
-    res.json({ path: await aStarPathfinding(point, locationResults.keyframe_id, isLabel ? null : locationCode) ?? [] })
+    const path = await aStarPathfinding(point, locationResults.keyframe_id, isLabel ? null : locationCode) ?? []
+    local_cache.set(`${point}-${locationCode}`, path)
+    if (local_cache.size > MAX_CACHE_SIZE) {
+      try {
+        local_cache.delete(local_cache.keys().next().value!)
+      } catch (e) {
+        logger.error(`[PathfindFromPointId] Failed to make space in the local_cache: ${e}`)
+      }
+    }
+    res.json({ path })
   }
   else {
     logger.warn(`[PathfindFromPointId] A* failed to find endpoint: ${locationResults.keyframe_id} for start: ${point} and end location: ${locationCode}`)
