@@ -9,6 +9,7 @@ import mapRoutes from './routes/map.routes'
 import logger from './logger'
 import cluster from 'cluster'
 import os from 'os'
+import { rateLimit } from 'express-rate-limit'
 
 const numCPUs = os.cpus().length // Get the number of CPU cores
 
@@ -35,10 +36,23 @@ if (cluster.isPrimary) {
 } else {
   // Worker process (each worker will run the Express server)
   const app = express()
+
   logger.info(`Setting up express on ${PORT}`)
 
   app.use(cors({ origin: '*' }))
   app.use(express.static(path.join(__dirname, '../ui/dist')))
+
+
+  const limiter = rateLimit({
+    windowMs: 1 * 60 * 1000, // 1 minute - i.e. you can't visit that many buttons
+    limit: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes).
+    standardHeaders: 'draft-8', // draft-6: `RateLimit-*` headers; draft-7 & draft-8: combined `RateLimit` header
+    legacyHeaders: false, // Disable the `X-RateLimit-*` headers.
+    // store: ... , // Redis, Memcached, etc. See below.
+  })
+
+  // Apply the rate limiting middleware to all requests.
+  app.use(limiter)
 
   // Render browser
   app.get('/', function (req, res) {
