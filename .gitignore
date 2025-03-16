@@ -26,3 +26,11 @@ Apps/SharpnessCalculator/env/
 libs/
 
 *.log
+combined.log
+exceptions.log
+.env*
+!.env.tga
+cv_merge_maps
+*.tsbuildinfo
+Apps/authoring-backend/combined.log
+Apps/authoring-backend/exceptions.log
