@@ -96,13 +96,15 @@ const SearchBar: React.FC<SearchBarProps> = ({
   const handleAction = (label: string, action: 'highlight' | 'jump') => {
     if (isPathfindingMode && label === '' && action === 'highlight') {
       // Clear path edge case
-      highlightCallback(label)
+      highlightCallback('')
       return
     }
 
     // Find the label object based on long name or short name
     let labelObj = searchableLabels.find((v: Label) =>
       getLabelLongName(v.group, v.label)
+        .toLowerCase()
+        .includes(label.toLowerCase())
     )
     if (!labelObj) {
       labelObj = searchableLabels.find(
@@ -125,6 +127,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
     // Apply action to found label
     addToRecent(labelObj)
     if (action === 'highlight') {
+      console.log('Highlighting' + labelObj.query)
       highlightCallback(labelObj.query)
     } else {
       jumpToCallback(labelObj.query)
@@ -149,6 +152,11 @@ const SearchBar: React.FC<SearchBarProps> = ({
             type="text"
             value={query}
             onChange={handleChange}
+            onKeyUp={(e) => {
+              if (e.key === 'Enter') {
+                handleAction(query, 'jump')
+              }
+            }}
             placeholder="Search a location..."
             className="w-full px-3 py-2 text-sm border-2 border-gray-200 rounded-lg shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
             onFocus={() => {

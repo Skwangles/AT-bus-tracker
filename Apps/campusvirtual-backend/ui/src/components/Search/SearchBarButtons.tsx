@@ -5,8 +5,8 @@ import { getLabelLongName } from '../../utils/labelUtils'
 const includesValue = (data: Label[], value: string) => {
   return data.find((val) => {
     const result =
-      getLabelLongName(val.group, val.label) == value.toLowerCase() ||
-      val.label?.toLowerCase() === value.toLowerCase()
+      getLabelLongName(val.group, val.label).toLowerCase() ==
+        value.toLowerCase() || val.label?.toLowerCase() === value.toLowerCase()
 
     return result
   })
