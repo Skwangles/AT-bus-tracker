@@ -164,11 +164,10 @@ const Map: React.FC<MapProps> = ({
     }
   }, [image])
 
-  const getNodeCoords = (
-    id: string,
-    node = nodes.find((node) => Number(node.id) === Number(id))
-  ) => {
-    if (!node) throw Error("Couldn't find node: " + id)
+  const findNode = (id: string) => nodes.find((node) => node.id === id)
+
+  const getNodeCoords = (id: string, node = findNode(id)) => {
+    if (!node) return null
     return { x: node.x * stageWidth, y: node.y * stageHeight }
   }
 
@@ -256,8 +255,16 @@ const Map: React.FC<MapProps> = ({
                       : true
                   )
                   .map((edge, index) => {
-                    const { x: x1, y: y1 } = getNodeCoords(edge.id0)
-                    const { x: x2, y: y2 } = getNodeCoords(edge.id1)
+                    const node1 = findNode(edge.id0)
+                    const node2 = findNode(edge.id1)
+                    if (node1 === undefined || node2 === undefined) {
+                      // If nodes have been stripped, their edges may still exist.
+                      // Ignore these edges.
+                      return <></>
+                    }
+
+                    const { x: x1, y: y1 } = getNodeCoords(edge.id0, node1)
+                    const { x: x2, y: y2 } = getNodeCoords(edge.id1, node2)
                     if (HIDE_EDGES) {
                       return <></>
                     }
@@ -313,15 +320,17 @@ const Map: React.FC<MapProps> = ({
                       />
                     ))}
                 {/* The Person Image should be at the top level */}
-                {mapNode && personImage && (
-                  <KonvaImage
-                    image={personImage}
-                    x={getNodeCoords(mapNode.id, mapNode).x - 10}
-                    y={getNodeCoords(mapNode.id, mapNode).y - 20}
-                    width={20}
-                    height={40}
-                  />
-                )}
+                {mapNode &&
+                  getNodeCoords(mapNode.id, mapNode) &&
+                  personImage && (
+                    <KonvaImage
+                      image={personImage}
+                      x={getNodeCoords(mapNode.id, mapNode)!.x - 10}
+                      y={getNodeCoords(mapNode.id, mapNode)!.y - 20}
+                      width={20}
+                      height={40}
+                    />
+                  )}
               </Layer>
             </Stage>
           </div>
