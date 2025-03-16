@@ -164,17 +164,20 @@ const Map: React.FC<MapProps> = ({
     }
   }, [image])
 
-  const getNodeCoords = (
-    id: string,
-    node = nodes.find((node) => Number(node.id) === Number(id))
-  ) => {
+  const findNode = (id: string) => nodes.find((node) => node.id === id)
+
+  const getNodeCoords = (id: string, node = findNode(id)) => {
     if (!node) throw Error("Couldn't find node: " + id)
     return { x: node.x * stageWidth, y: node.y * stageHeight }
   }
 
   const handleLineClick = (e: any, edge: Edge) => {
-    const { x: x1, y: y1 } = getNodeCoords(edge.id0)
-    const { x: x2, y: y2 } = getNodeCoords(edge.id1)
+    const node1 = findNode(edge.id0)
+    const node2 = findNode(edge.id1)
+    if (!node1 === null || !node2 === null) return
+
+    const { x: x1, y: y1 } = getNodeCoords(edge.id0, node1)!
+    const { x: x2, y: y2 } = getNodeCoords(edge.id1, node2)!
     const clickX = e.evt.layerX
     const clickY = e.evt.layerY
 

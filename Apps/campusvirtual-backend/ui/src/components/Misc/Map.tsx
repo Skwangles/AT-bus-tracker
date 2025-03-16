@@ -172,8 +172,16 @@ const Map: React.FC<MapProps> = ({
   }
 
   const handleLineClick = (e: any, edge: Edge) => {
-    const { x: x1, y: y1 } = getNodeCoords(edge.id0)
-    const { x: x2, y: y2 } = getNodeCoords(edge.id1)
+    const node1 = findNode(edge.id0)
+    const node2 = findNode(edge.id1)
+    if (node1 === undefined || node2 === undefined) {
+      // If nodes have been stripped, their edges may still exist.
+      // Ignore these edges.
+      return
+    }
+
+    const { x: x1, y: y1 } = getNodeCoords(edge.id0, node1)!
+    const { x: x2, y: y2 } = getNodeCoords(edge.id1, node2)!
     const clickX = e.evt.layerX
     const clickY = e.evt.layerY
 
@@ -263,8 +271,8 @@ const Map: React.FC<MapProps> = ({
                       return <></>
                     }
 
-                    const { x: x1, y: y1 } = getNodeCoords(edge.id0, node1)
-                    const { x: x2, y: y2 } = getNodeCoords(edge.id1, node2)
+                    const { x: x1, y: y1 } = getNodeCoords(edge.id0, node1)!
+                    const { x: x2, y: y2 } = getNodeCoords(edge.id1, node2)!
                     if (HIDE_EDGES) {
                       return <></>
                     }
