@@ -75,9 +75,7 @@ const VirtualTour: React.FC = () => {
   const [camRotation, setCameraRotation] = useState<{
     yaw: number
     pitch: number
-  }>(() => {
-    return initFromParams(camRotation)
-  })
+  }>(() => initFromParams())
 
   const changeFloor = getChangeFloor(currentId, setCurrentId)
 
