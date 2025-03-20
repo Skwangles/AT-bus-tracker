@@ -13,6 +13,20 @@ import Canvas, { NeighbourData } from './Navigation/Canvas'
 import { DesktopLayout } from './Layouts/DesktopLayout'
 import { MobileLayout } from './Layouts/MobileLayout'
 import { getFloorUpOrDown } from '../utils/floorUpOrDownStrategies'
+import { buildCalcPath, moveForwardOnPath } from '../utils/pathfinding'
+import {
+  changeFloor,
+  getChangeFloor,
+  getChangeFloorUpOrDown,
+  updateMovementAbilities,
+} from '../utils/goUporGoDown'
+import {
+  initFromParams,
+  nullIdValue,
+  setOnPopstateEvent,
+  updateHistory,
+  updateParams,
+} from '../utils/updateUrl'
 export interface PointData {
   pose: number[]
   ts: string
@@ -56,42 +70,16 @@ const VirtualTour: React.FC = () => {
 
   const [isInstructionsOpen, setInstructionsOpen] = useState(false)
   const [closeDrawer, setCloseDrawer] = useState(false)
-  const [lastNavigatedToPoint, setLastNavigatedToPoint] = useState<string>('')
 
+  const [lastNavigatedToPoint, setLastNavigatedToPoint] = useState<string>('')
   const [camRotation, setCameraRotation] = useState<{
     yaw: number
     pitch: number
   }>(() => {
-    if (params.has('yaw') || params.has('pitch')) {
-      return {
-        yaw: Number(params.get('yaw') ?? camRotation['yaw'] ?? 0),
-        pitch: Number(params.get('pitch') ?? camRotation['pitch'] ?? 0),
-      }
-    }
-    return { yaw: 0, pitch: 0 }
+    return initFromParams(camRotation)
   })
 
-  const changeFloor = (requestedFloor: string) => {
-    axios
-      .get<{ keyframe_id: number }>(
-        `${API_PREFIX}/api/v1/floor/${requestedFloor}/point`
-      )
-      .then((value) => {
-        const result = value.data.keyframe_id
-        if (isNaN(Number(result))) return
-        setCurrentId(Number(result).toString())
-      })
-      .catch((reason) => {
-        toast.warn(requestedFloor + ' is not a reachable location.')
-
-        // In the case the 'DEFAULT FLOOR' is not found, we will fetch the first point
-        if (Number(currentId) === -1) {
-          axios.get<number>(`${API_PREFIX}/api/v1/point`).then((value) => {
-            setCurrentId(value.data.toString())
-          })
-        }
-      })
-  }
+  const changeFloor = getChangeFloor(currentId, setCurrentId)
 
   // RUN ON FIRST LOAD
   useEffect(() => {
@@ -99,37 +87,24 @@ const VirtualTour: React.FC = () => {
       setAllSearchableLocations(result.data)
     })
 
-    if (
-      Number(currentId) === -1 ||
-      !params.has('id') ||
-      Number(params.get('id')) === -1
-    ) {
+    setOnPopstateEvent(setCurrentId, setCameraRotation, camRotation)
+
+    if (nullIdValue(currentId)) {
       changeFloor(STARTING_LOCATION_GROUP)
     }
   }, [])
 
   useEffect(() => {
-    document.title = locationGroup
-      ? `${PROJECT_NAME} - ${locationGroup}`
-      : PROJECT_NAME
-    params.set('id', currentId)
-    history.pushState({}, '', '?' + params.toString())
+    updateHistory(locationGroup, PROJECT_NAME, currentId)
   }, [
     currentId,
     locationGroup /* DO NOT INCLUDE 'params' otherwise any yaw/pitch change will trigger it */,
   ])
 
   const [debounceExpiry, setDebounceExpiry] = useState(Date.now())
-  const DEBOUNCE_LENGTH_MS = 500
+
   useEffect(() => {
-    params.set('yaw', Number(camRotation['yaw']).toFixed(4))
-    params.set('pitch', Number(camRotation['pitch']).toFixed(4))
-    const now = Date.now()
-    if (now > debounceExpiry) {
-      // Firefox & safari see security issue if this is called too fast
-      setDebounceExpiry(now + DEBOUNCE_LENGTH_MS)
-      history.replaceState({}, '', '?' + params.toString())
-    }
+    updateParams(camRotation, setDebounceExpiry, debounceExpiry)
   }, [camRotation])
 
   useEffect(() => {
@@ -140,96 +115,38 @@ const VirtualTour: React.FC = () => {
     setPathfindMode(highlightedPath.length > 0)
   }, [highlightedPath])
 
-  window.onpopstate = (e) => {
-    params = new URLSearchParams(window.location.search)
-    if (params.has('id')) {
-      setCurrentId(params.get('id') ?? '0')
-    }
-
-    if (params.has('yaw') || params.has('pitch')) {
-      setCameraRotation({
-        yaw: Number(params.get('yaw') ?? camRotation['yaw'] ?? 0),
-        pitch: Number(params.get('pitch') ?? camRotation['pitch'] ?? 0),
-      })
-    }
-  }
-
-  const calculateHighlightedPath = async (selectedLocation: string) => {
-    if (!selectedLocation || selectedLocation.length === 0) {
-      // Clear the path/show all points
-      setHighlightedPath([])
-      return
-    }
-
-    try {
-      const response = await axios.get(
-        `${API_PREFIX}/api/v1/point/${currentId}/path/${selectedLocation}`
-      )
-      if (!response.data || !response.data.path) {
-        toast.error('Could not calculate a path, please try again later')
-      } else {
-        setHighlightedPath(response.data?.path)
-        toast.success(
-          `Path to Floor: ${selectedLocation} is now highlighted, follow the blue dots...`
-        )
-        setLastNavigatedToPoint(selectedLocation)
-      }
-    } catch (error) {
-      toast.error('Could not calculate a path, please try again later')
-    }
-  }
-
+  // Pathfinding movement
+  const changeFloorUpOrDown = getChangeFloorUpOrDown(
+    allSearchableLocations,
+    changeFloor
+  )
+  const calculateHighlightedPath = buildCalcPath(
+    currentId,
+    setHighlightedPath,
+    setLastNavigatedToPoint
+  )
   useEffect(() => {
-    if (pathfindMode && highlightedPath.includes(Number(currentId))) {
-      // Remove points earlier on in the path than the current point
-      setHighlightedPath(
-        highlightedPath.indexOf(Number(currentId)) == highlightedPath.length - 1
-          ? []
-          : highlightedPath.slice(highlightedPath.indexOf(Number(currentId)))
-      )
-    } else if (pathfindMode && !highlightedPath.includes(Number(currentId))) {
-      // Recalculate when the user strays from the path
-      calculateHighlightedPath(lastNavigatedToPoint)
-    }
+    moveForwardOnPath(
+      pathfindMode,
+      highlightedPath,
+      currentId,
+      setHighlightedPath,
+      lastNavigatedToPoint,
+      calculateHighlightedPath
+    )
   }, [currentId])
 
+  // Update the ability to go up or down with buttons
   const [canGoUp, setCanGoUp] = useState(false)
   const [canGoDown, setCanGoDown] = useState(false)
-
   useEffect(() => {
-    setCanGoUp(
-      !!getFloorUpOrDown(
-        allSearchableLocations.map((v) => v.query),
-        locationGroup,
-        true
-      )
-    )
-    setCanGoDown(
-      !!getFloorUpOrDown(
-        allSearchableLocations.map((v) => v.query),
-        locationGroup,
-        false
-      )
+    updateMovementAbilities(
+      setCanGoUp,
+      setCanGoDown,
+      allSearchableLocations,
+      locationGroup
     )
   }, [locationGroup])
-
-  const changeFloorUpOrDown = (floor: string, isUp: boolean) => {
-    const newFloor = getFloorUpOrDown(
-      allSearchableLocations.map((v) => v.query),
-      floor,
-      isUp
-    )
-    if (!newFloor) {
-      toast.warn(
-        'Cannot change floor - No floor is ' + (isUp ? 'above' : 'below')
-      )
-      return
-    }
-
-    if (allSearchableLocations.map((v) => v.query).includes(newFloor)) {
-      changeFloor(newFloor)
-    }
-  }
 
   // Add new state for screen size
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768)

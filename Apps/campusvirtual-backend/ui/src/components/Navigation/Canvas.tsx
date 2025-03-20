@@ -21,7 +21,6 @@ export interface NeighbourData {
 const Canvas: React.FC<any> = ({
   currentId,
   setCurrentId,
-  currentPoint,
   setCurrentPoint,
   isPathfindingMode,
   highlightedPath,
