@@ -1,7 +1,8 @@
 import * as THREE from 'three'
 import { useEffect, useState, useRef } from 'react'
 import { API_PREFIX, HIDE_POINTS_DURING_HIGHLIGHT } from '../../consts'
-import Hotspot, { HotspotObj } from './Hotspots'
+import { HotspotObj } from '../../types'
+import Hotspot from './Hotspots'
 import { Html } from '@react-three/drei'
 import { toast } from 'react-toastify'
 

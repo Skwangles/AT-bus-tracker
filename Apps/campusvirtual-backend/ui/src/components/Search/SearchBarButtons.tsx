@@ -1,6 +1,6 @@
 import { Eye, ArrowUpRight, MapPin, X } from 'react-feather'
-import { Label } from '../../consts'
 import { getLabelLongName } from '../../utils/labelUtils'
+import { Label } from '../../types'
 
 const includesValue = (data: Label[], value: string) => {
   return data.find((val) => {

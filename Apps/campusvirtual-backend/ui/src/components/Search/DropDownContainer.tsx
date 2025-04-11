@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Label, LabelType } from '../../consts'
+import { Label, LabelType } from '../../types'
 import { ChevronDown, ChevronLeft } from 'react-feather'
 import { getLabelLongName } from '../../utils/labelUtils'
 

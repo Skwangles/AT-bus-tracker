@@ -5,27 +5,28 @@ import axios from 'axios'
 import { API_PREFIX } from '../../consts'
 import { getPositionOfNode, getYRotation } from '../../utils/utils'
 import SphereWithHotspots from './SphereWithHotspots'
-import { HotspotObj } from './Hotspots'
-import { PointData } from '../VirtualTour'
+import { NeighbourData, type HotspotObj, type PointData } from '../../types'
 import { toast } from 'react-toastify'
 
-export interface NeighbourData {
-  pose: number[]
-  ts: string
-  keyframe_id: string
-  x_trans: number
-  y_trans: number
-  z_trans: number
+interface CanvasProps {
+  hotspots: HotspotObj[]
+  setHotspots: (hotspots: HotspotObj[]) => void
+  currentId: string
+  setCurrentId: (id: string) => void
+  setCurrentPoint: (point: PointData) => void
+  isPathfindingMode: boolean
+  highlightedPath: number[]
 }
 
-const Canvas: React.FC<any> = ({
+const Canvas: React.FC<CanvasProps> = ({
+  hotspots,
+  setHotspots,
   currentId,
   setCurrentId,
   setCurrentPoint,
   isPathfindingMode,
   highlightedPath,
 }) => {
-  const [hotspots, setHotspots] = useState<HotspotObj[]>([])
   const [currentImage, setCurrentImage] = useState<string | null>(null)
   const [currentPosition, setCurrentPosition] = useState<THREE.Vector3>(
     new THREE.Vector3()

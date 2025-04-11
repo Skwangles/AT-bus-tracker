@@ -2,7 +2,7 @@ import { MapPin, ChevronUp, Info } from 'react-feather'
 import Instructions from '../Misc/Instructions'
 import LocationChangeControls from '../Navigation/LocationChangeControls'
 import { useState, useEffect, useRef } from 'react'
-import { Label } from '../../consts'
+import { Label } from '../../types'
 
 interface MobileLayout {
   isMobile: boolean

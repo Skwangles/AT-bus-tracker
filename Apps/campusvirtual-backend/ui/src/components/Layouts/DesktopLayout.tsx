@@ -1,6 +1,6 @@
 import Instructions from '../Misc/Instructions'
 import LocationChangeControls from '../Navigation/LocationChangeControls'
-import { Label } from '../../consts'
+import { Label } from '../../types'
 
 interface DesktopLayout {
   isMobile: boolean

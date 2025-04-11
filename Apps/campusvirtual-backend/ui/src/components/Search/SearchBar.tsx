@@ -9,9 +9,9 @@ import '../../css/SearchBar.css'
 import { X } from 'react-feather'
 import DropDownContainer from './DropDownContainer'
 import SearchBarButtons from './SearchBarButtons'
-import { Label } from '../../consts'
 import { toast } from 'react-toastify'
 import { getLabelLongName } from '../../utils/labelUtils'
+import { Label } from '../../types'
 // Define the type for the props
 interface SearchBarProps {
   currentPoint: { location: string }

@@ -1,51 +1,37 @@
 import React, { useEffect, useState } from 'react'
 import { Canvas as ThreeCanvas } from '@react-three/fiber'
-import { Label, STARTING_LOCATION_GROUP } from '../consts'
+import { STARTING_LOCATION_GROUP } from '../consts'
 import { API_PREFIX, showMap, PROJECT_NAME } from '../consts'
 import axios from 'axios'
 import CameraRotationControls from './Camera/RotationController'
 import Map from './Misc/Map'
 import SearchBar from './Search/SearchBar'
-import { toast, ToastContainer, Bounce } from 'react-toastify'
+import { ToastContainer, Bounce } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.min.css'
 import { Map as FeatherMap } from 'react-feather'
-import Canvas, { NeighbourData } from './Navigation/Canvas'
+import Canvas from './Navigation/Canvas'
 import { DesktopLayout } from './Layouts/DesktopLayout'
 import { MobileLayout } from './Layouts/MobileLayout'
-import { getFloorUpOrDown } from '../utils/floorUpOrDownStrategies'
 import { buildCalcPath, moveForwardOnPath } from '../utils/pathfinding'
 import {
-  changeFloor,
   getChangeFloor,
   getChangeFloorUpOrDown,
   updateMovementAbilities,
 } from '../utils/goUporGoDown'
 import {
   initFromParams,
+  initIdFromParams,
   nullIdValue,
   setOnPopstateEvent,
   updateHistory,
   updateParams,
 } from '../utils/updateUrl'
-export interface PointData {
-  pose: number[]
-  ts: string
-  keyframe_id: number
-  x_trans: number
-  y_trans: number
-  z_trans: number
-  location: string
-}
+import { HotspotObj, Label, MoveDirectionType, PointData } from '../types'
+import { moveDirection } from '../utils/moveDirection'
+import { Camera } from 'three'
 
 const VirtualTour: React.FC = () => {
-  let params = new URLSearchParams(window.location.search)
-
-  const [currentId, setCurrentId] = useState<string>(() => {
-    if (params.has('id')) {
-      return params.get('id') ?? '-1'
-    }
-    return '-1'
-  })
+  const [currentId, setCurrentId] = useState<string>(() => initIdFromParams())
 
   const [currentPoint, setCurrentPoint] = useState<PointData>({
     pose: [],
@@ -57,9 +43,6 @@ const VirtualTour: React.FC = () => {
     y_trans: 0,
   })
 
-  const [floorWideNeighbours, setFloorWideNeighbours] = useState<
-    NeighbourData[]
-  >([])
   const [hasImage, setHasImage] = useState(false)
   const [locationGroup, setLocationGroup] = useState<string>('')
   const [pathfindMode, setPathfindMode] = useState(false)
@@ -67,6 +50,7 @@ const VirtualTour: React.FC = () => {
   const [allSearchableLocations, setAllSearchableLocations] = useState<Label[]>(
     []
   )
+  const [hotspots, setHotspots] = useState<HotspotObj[]>([])
 
   const [isInstructionsOpen, setInstructionsOpen] = useState(false)
   const [closeDrawer, setCloseDrawer] = useState(false)
@@ -225,17 +209,25 @@ const VirtualTour: React.FC = () => {
           <ambientLight intensity={0.6} />
           <directionalLight castShadow />
           <CameraRotationControls
+            actionMoveDirection={(
+              direction: MoveDirectionType,
+              camera: Camera
+            ) => {
+              const id = moveDirection(direction, camera, hotspots)
+              if (id) {
+                console.log('Setting currentId to', id)
+                setCurrentId(id)
+              }
+            }}
             initCameraRotation={camRotation}
             setCameraRotation={setCameraRotation}
           />
           <Canvas
             currentId={currentId}
             setCurrentId={setCurrentId}
-            currentPoint={currentPoint}
+            setHotspots={setHotspots}
+            hotspots={hotspots}
             setCurrentPoint={setCurrentPoint}
-            setNeighbours={setFloorWideNeighbours}
-            neighbours={floorWideNeighbours}
-            isRefined={true}
             isPathfindingMode={pathfindMode}
             highlightedPath={highlightedPath}
           />

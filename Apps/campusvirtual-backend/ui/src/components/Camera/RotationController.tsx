@@ -1,8 +1,13 @@
 import { useThree } from '@react-three/fiber'
 import { useRef, useEffect } from 'react'
 import { Euler } from 'three'
+import { MoveDirectionType } from '../../types'
 
-const CameraRotationControls = ({ initCameraRotation, setCameraRotation }) => {
+const CameraRotationControls = ({
+  actionMoveDirection,
+  initCameraRotation,
+  setCameraRotation,
+}) => {
   const { camera, gl } = useThree()
 
   const controlsRef = useRef({
@@ -55,13 +60,17 @@ const CameraRotationControls = ({ initCameraRotation, setCameraRotation }) => {
     // Slowly increases speed as key is held down
     // Then set the interval to move the camera as long as the key is held down
     console.log('keyDown', event.key, keyDown.current)
-    if (
-      event.key !== 'ArrowLeft' &&
-      event.key !== 'ArrowRight' &&
-      event.key !== 'ArrowUp' &&
-      event.key !== 'ArrowDown'
-    )
-      return
+    const validKeys = [
+      'ArrowLeft',
+      'ArrowRight',
+      'ArrowUp',
+      'ArrowDown',
+      'w',
+      's',
+      'a',
+      'd',
+    ]
+    if (!validKeys.includes(event.key)) return
 
     const isUpDown = event.key == 'ArrowUp' || event.key == 'ArrowDown'
     const isCurrentKeyUpDown =
@@ -117,6 +126,16 @@ const CameraRotationControls = ({ initCameraRotation, setCameraRotation }) => {
           pitch: camera.rotation.x,
         })
       }, INTERVAL_TIMEOUT)
+    }
+    // WASD movements on moveDirection
+    else if (event.key === 'w') {
+      actionMoveDirection(MoveDirectionType.Forward, camera)
+    } else if (event.key === 's') {
+      actionMoveDirection(MoveDirectionType.Backward, camera)
+    } else if (event.key === 'a') {
+      actionMoveDirection(MoveDirectionType.Left, camera)
+    } else if (event.key === 'd') {
+      actionMoveDirection(MoveDirectionType.Right, camera)
     } else {
       cancelInterval()
     }

@@ -24,14 +24,6 @@ interface HotspotProps {
   isPathfinding: boolean
 }
 
-export interface HotspotObj {
-  pose: THREE.Matrix4
-  position: [number, number, number]
-  rotation: [number, number, number]
-  id: string
-  ts: string
-}
-
 const Hotspot: React.FC<HotspotProps> = ({
   position,
   onClick,

@@ -1,7 +1,12 @@
-export const API_PREFIX = ""
+export const API_PREFIX = "http://localhost:3001"
 
 export const FLOOR_ORDERING_STRATEGY = "tga" // tga for <floor>.<room>  (or 'waikato' for <block>.<floor>.<room> stratgey)
 export const COORDS_TO_METRES = 1; // metres per coordinate - the backend should apply their version automatically, but this is a manual adjustment
+
+export const MOVE_SPEED = 5
+export const MOVE_FOV_CHECK = Math.PI / 4 // 45 degrees
+
+
 export const SPHERE_SIZE = 0.15
 export const HOTSPOT_Y_ADJUSTMENT_DOWN_TO_FLOOR_LEVEL = 2
 
@@ -37,23 +42,3 @@ export const HOTSPOT_OUTLINE = '#FFFFFF'
 export const HOTSPOT_HIGHLIGHTED = '#000FF0'
 
 
-export interface Label {
-  query: string, // query to search the database
-  label: string, // the actual label to be used
-  group?: string // the shared location with potentially other labels with the same location
-  type: number // 0 = Normal, 1 = Toilet, 2 = Elevator
-}
-
-export enum LabelType {
-  Normal = 0,
-  Toilet,
-  Elevator,
-  Group
-}
-
-export enum ReservedTypeIndex {
-  Anchor = 0,
-  Elevator,
-  Toilet,
-  MergePoint
-}

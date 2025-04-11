@@ -1,5 +1,11 @@
 let params = new URLSearchParams(window.location.search)
 
+export const initIdFromParams = () => {
+  if (params.has('id')) {
+    return params.get('id') ?? '-1'
+  }
+  return '-1'
+}
 
 export const initFromParams = () => {
 
@@ -14,7 +20,7 @@ export const initFromParams = () => {
 
 export const setOnPopstateEvent = (setCurrentId, setCameraRotation, camRotation) => {
 
-  window.onpopstate = (e) => {
+  window.onpopstate = () => {
     params = new URLSearchParams(window.location.search)
     if (params.has('id')) {
       setCurrentId(params.get('id') ?? '0')
