@@ -1,5 +1,7 @@
 import { COORDS_TO_METRES } from "../consts"
 import * as THREE from 'three'
+import { PointData } from "../types"
+import { checkPoint } from "./validators/pointValidator"
 
 export function inv(pose: number[][]) {
   if (!pose || pose.length !== 4 || pose[0].length !== 4 || pose[1].length !== 4 || pose[2].length !== 4 || pose[3].length !== 4) {
@@ -82,4 +84,13 @@ export const getYRotation = (matrix: number[]) => {
   const rotationY = Math.atan2(m31, m11)
 
   return -rotationY // Rotation in radians
+}
+
+export const getPointAsImageNumber(point: PointData){
+  
+    if (!checkPoint(point)) {
+      console.error("Invalid point fetched:" + JSON.stringify(point));
+      return null;
+    }
+
 }
