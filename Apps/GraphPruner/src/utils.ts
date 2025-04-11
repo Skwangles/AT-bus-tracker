@@ -18,23 +18,23 @@ import {
 
 /**
  * Get XYZ position of a node - is convenience interface on top of getNodeInfo, so is not a faster method
- * @param config 
- * @param keyframeId 
- * @param use_trans 
- * @returns 
+ * @param config
+ * @param keyframeId
+ * @param use_trans
+ * @returns
  */
 export async function getNodePosition(
   config: Config,
   keyframeId: string,
   use_trans = true
-): Promise<[number, number, number] | null> {
+): Promise<ThreeNumbersArray | null> {
   const nodeInfo = await getNodeInfo(config, keyframeId, use_trans);
   if (!nodeInfo) return null;
   return nodeInfo["position"];
 }
 
 /**
- * Get Number of keyframe nodes from DB 
+ * Get Number of keyframe nodes from DB
  * @returns number
  */
 export async function getNumberOfNodes() {
@@ -43,15 +43,15 @@ export async function getNumberOfNodes() {
 
 /**
  * Get node information, including if it has any special_labels
- * @param config 
- * @param keyframeId 
- * @param use_trans 
- * @returns 
+ * @param config
+ * @param keyframeId
+ * @param use_trans
+ * @returns
  */
 export async function getNodeInfo(
   config: Config,
   keyframeId: string,
-  use_trans = true,
+  use_trans = true
 ): Promise<NodeInfo | null> {
   const result = await readDB(
     `SELECT ts, pose, x_trans, y_trans, z_trans FROM ${config.table_prefix}nodes WHERE keyframe_id = ? LIMIT 1;`,
@@ -72,7 +72,7 @@ export async function getNodeInfo(
   node_info["label_count"] = Number(countOfLabels.total ?? -1);
 
   if (use_trans) {
-    const ret: [number, number, number] = [
+    const ret: ThreeNumbersArray = [
       -node_info.x_trans * config.coords_to_metres,
       -node_info.y_trans * config.coords_to_metres,
       node_info.z_trans * config.coords_to_metres,
@@ -158,11 +158,11 @@ export async function getPhysicalProximityNeighbours(
   )
     throw new Error(
       "Na passed to getPhysicalProximity - ID: " +
-      keyframeId +
-      " | Horizontal Proximity: " +
-      proximity +
-      " | Vertical Prox: " +
-      vertical_prox
+        keyframeId +
+        " | Horizontal Proximity: " +
+        proximity +
+        " | Vertical Prox: " +
+        vertical_prox
     );
 
   const result = await readDB(
@@ -213,7 +213,7 @@ export async function getNeighbours(
       config,
       keyframeId,
       config.outer_ring,
-      config.y_dist_thresh,
+      config.y_dist_thresh
     );
     return [...new Set([...directNeighbours, ...results])];
   }
@@ -223,8 +223,8 @@ export async function getNeighbours(
 
 // Helper function to calculate distance between two positions
 export function calculateXZDistance(
-  pos1: [number, number, number],
-  pos2: [number, number, number]
+  pos1: ThreeNumbersArray,
+  pos2: ThreeNumbersArray
 ): number | null {
   if (pos1.length < 3 || pos2.length < 3) {
     console.error("Invalid position array passed - has less then 3 values");
@@ -259,17 +259,16 @@ export async function isNodeOutdoors(config: Config, keyframeId: number) {
   return locData[0]["location"] === DFLT_OUTDOORS_LOCATION_NAME;
 }
 
-
 /**
  * 4x4 pose matrix to XYZ
- * @param config 
- * @param matrix 
- * @returns 
+ * @param config
+ * @param matrix
+ * @returns
  */
 export function calculatePositionFromMatrix(
   config: Config,
   matrix: number[]
-): [number, number, number] {
+): ThreeNumbersArray {
   const m = new THREE.Matrix4();
   //@ts-ignore
   m.set(...matrix);
@@ -300,7 +299,10 @@ export async function calculateImageSharpness(
   }
 }
 
-export function convertTimestampToImagename(config: Config, ts: Number | string) {
+export function convertTimestampToImagename(
+  config: Config,
+  ts: Number | string
+) {
   if (isNaN(Number(ts)))
     throw new Error("NaN passed as timestamp for convertTimestampToImagename");
 

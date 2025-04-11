@@ -1,21 +1,19 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import * as THREE from "three";
-import { useThree } from "@react-three/fiber";
-import axios from "axios";
-import { API_PREFIX } from "../../consts";
-import { getPositionOfNode, getYRotation } from "../../utils/utils";
 import SphereWithHotspots from "./SphereWithHotspots";
-import { NeighbourData, type HotspotObj, type PointData } from "../../types";
-import { toast } from "react-toastify";
-import { fetchPointData, getPointAndNeighbours } from "../../utils/updatePoint";
-import { checkPoint } from "../../utils/validators/pointValidator";
+import {
+  ThreeNumbersArray,
+  type HotspotObj,
+  type PointData,
+} from "../../types";
+import { fetchPointData } from "../../utils/updatePoint";
 
 interface CanvasProps {
   hotspots: HotspotObj[];
-  setHotspots: (hotspots: HotspotObj[]) => void;
+  setHotspots: React.Dispatch<React.SetStateAction<HotspotObj[]>>;
   currentId: string;
-  setCurrentId: (id: string) => void;
-  setCurrentPoint: (point: PointData) => void;
+  setCurrentId: React.Dispatch<React.SetStateAction<string>>;
+  setCurrentPoint: React.Dispatch<React.SetStateAction<PointData>>;
   isPathfindingMode: boolean;
   highlightedPath: number[];
 }
@@ -29,11 +27,11 @@ const Canvas: React.FC<CanvasProps> = ({
   isPathfindingMode,
   highlightedPath,
 }) => {
-  const [currentImage, setCurrentImage] = useState<string | null>(null);
+  const [currentImage, setCurrentImage] = useState<string>("");
   const [currentPosition, setCurrentPosition] = useState<THREE.Vector3>(
     new THREE.Vector3()
   );
-  const [rotation, setRotation] = useState<[number, number, number]>([0, 0, 0]);
+  const [rotation, setRotation] = useState<ThreeNumbersArray>([0, 0, 0]);
 
   useEffect(() => {
     fetchPointData(

@@ -1,6 +1,16 @@
 import { Config, NodeInfo } from "./consts";
-import { calculateImageSharpness, calculateXZDistance, convertTimestampToImagename, getNeighbours, getNextKeyframe, getNodeInfo, getNodePosition, getNumberOfNodes, isNodeOutdoors } from "./utils";
-import cliProgress from 'cli-progress'
+import {
+  calculateImageSharpness,
+  calculateXZDistance,
+  convertTimestampToImagename,
+  getNeighbours,
+  getNextKeyframe,
+  getNodeInfo,
+  getNodePosition,
+  getNumberOfNodes,
+  isNodeOutdoors,
+} from "./utils";
+import cliProgress from "cli-progress";
 import { readDB, writeDB } from "./db";
 /**
  *
@@ -20,44 +30,37 @@ function canRemovePoint(id: number, node_info: NodeInfo): boolean {
   return !hasSpecialPointInfo;
 }
 
-async function get_sharpness(
-  config: Config,
-  ts: number
-) {
+async function get_sharpness(config: Config, ts: number) {
   if (isNaN(Number(ts)))
     throw new Error("NaN timestamp passed to get_sharpness");
-  const fullImageName = convertTimestampToImagename(config, ts).trim()
+  const fullImageName = convertTimestampToImagename(config, ts).trim();
 
   // Check Preproccessed values
-  if (config['sharpness'] && config['sharpness'][fullImageName]) {
-    return config['sharpness']['']
-  }
-  else if (!config['sharpness']) {
-    config['sharpness'] = {}
+  if (config["sharpness"] && config["sharpness"][fullImageName]) {
+    return config["sharpness"][""];
+  } else if (!config["sharpness"]) {
+    config["sharpness"] = {};
   }
 
   const val =
-    (await calculateImageSharpness(
-      `${config.img_dir}${fullImageName}`
-    )) ?? 0;
-  config['sharpness'][fullImageName] = val;
+    (await calculateImageSharpness(`${config.img_dir}${fullImageName}`)) ?? 0;
+  config["sharpness"][fullImageName] = val;
   return val;
 }
 
-
 /**
- * Remove nodes ONLY if they removal does not compromise the OUTER ring 
- * @param config 
- * @param keyframeId 
- * @param position 
- * @param ignore_distance 
- * @param isOutdoors 
- * @returns 
+ * Remove nodes ONLY if they removal does not compromise the OUTER ring
+ * @param config
+ * @param keyframeId
+ * @param position
+ * @param ignore_distance
+ * @param isOutdoors
+ * @returns
  */
 export async function replaceNode(
   config: Config,
   keyframeId: number,
-  position: [number, number, number],
+  position: ThreeNumbersArray,
   ignore_distance = false,
   isOutdoors = false
 ) {
@@ -99,14 +102,9 @@ export async function replaceNode(
       const yDistance = Math.abs(newNeighbourPosition[2] - pos[2]);
       if (
         !ignore_distance &&
-        (distance >
-          (isOutdoors
-            ? config.otdr_outer_ring
-            : config.outer_ring) ||
+        (distance > (isOutdoors ? config.otdr_outer_ring : config.outer_ring) ||
           yDistance >
-          (isOutdoors
-            ? config.otdr_y_dist_thresh
-            : config.y_dist_thresh))
+            (isOutdoors ? config.otdr_y_dist_thresh : config.y_dist_thresh))
       ) {
         console.debug(
           "Cancelling delete - A new edge is too large - Distance:",
@@ -154,9 +152,7 @@ export async function replaceNode(
  * ring 2 - ideal distance
  * beyond ring 2 - distance too large to remove
  */
-export async function useGreedyTripleRingStrategy(
-  config: Config
-) {
+export async function useGreedyTripleRingStrategy(config: Config) {
   const bar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
   const nodeCount = await getNumberOfNodes();
   bar.start(nodeCount.total, 0);
@@ -246,22 +242,26 @@ export async function useGreedyTripleRingStrategy(
         if (distance == null) {
           throw new Error(
             "Distance calculation was null between - Current: " +
-            currentPosition +
-            " & Neighbour: " +
-            neighbourPosition
+              currentPosition +
+              " & Neighbour: " +
+              neighbourPosition
           );
         }
 
         // 2. Vertical distance check
         const yDistance = Math.abs(neighbourPosition[1] - currentPosition[1]);
 
-        if (yDistance > (useOutdoors ? config.otdr_y_dist_thresh : config.y_dist_thresh)) {
+        if (
+          yDistance >
+          (useOutdoors ? config.otdr_y_dist_thresh : config.y_dist_thresh)
+        ) {
           continue;
         }
 
         // 3. Check if inside the QuATR reduction's two rings
         if (
-          distance < (useOutdoors ? config.otdr_outer_ring : config.outer_ring) ||
+          distance <
+            (useOutdoors ? config.otdr_outer_ring : config.outer_ring) ||
           distance < (useOutdoors ? config.otdr_inner_ring : config.inner_ring)
         ) {
           // 4. Calculate sharpness heuristic (note: this is the most costly step)
@@ -287,7 +287,8 @@ export async function useGreedyTripleRingStrategy(
                 config,
                 neighbourId,
                 neighbourPosition,
-                distance <= (useOutdoors ? config.otdr_inner_ring : config.inner_ring),
+                distance <=
+                  (useOutdoors ? config.otdr_inner_ring : config.inner_ring),
                 useOutdoors
               )
             ) {
@@ -312,7 +313,13 @@ export async function useGreedyTripleRingStrategy(
       }
       console.log("Deleting current node:", currentNodeId);
       console.time("Delete Node");
-      await replaceNode(config, currentNodeId, currentPosition, false, isOutdoors);
+      await replaceNode(
+        config,
+        currentNodeId,
+        currentPosition,
+        false,
+        isOutdoors
+      );
       console.timeEnd("Delete Node");
     }
   }

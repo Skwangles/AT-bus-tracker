@@ -1,11 +1,14 @@
-import { PointData } from "../../types";
+import { NeighbourData, PointData } from "../../types";
 
 /**
  * Check if a point has the valid properties at runtime
  * @param point
  * @returns
  */
-export function checkPoint(point: PointData): boolean {
+export function checkPoint(
+  point: PointData | NeighbourData,
+  hasLocationTag = true
+): boolean {
   if (!point) {
     return false;
   }
@@ -19,15 +22,23 @@ export function checkPoint(point: PointData): boolean {
   }
 
   // Check number/string properties
-  if (isNaN(Number(point.ts))) {
+  if (!point.ts || isNaN(Number(point.ts))) {
     return false;
   }
 
-  if (isNaN(Number(point.keyframe_id)) && Number(point.keyframe_id) >= 0) {
+  if (isNaN(Number(point.keyframe_id)) || Number(point.keyframe_id) < 0) {
     return false;
   }
 
-  if (typeof point.location !== "string") {
+  if (
+    hasLocationTag &&
+    "location" in point &&
+    (!point.location || typeof point.location !== "string")
+  ) {
+    return false;
+  }
+
+  if (hasLocationTag && !("location" in point)) {
     return false;
   }
 

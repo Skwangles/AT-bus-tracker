@@ -1,5 +1,5 @@
-import * as THREE from 'three'
-import { useRef, useState } from 'react'
+import * as THREE from "three";
+import { useRef, useState } from "react";
 import {
   HOTSPOT_COLOUR,
   HOTSPOT_HIGHLIGHTED,
@@ -7,29 +7,29 @@ import {
   HOTSPOT_Y_ADJUSTMENT_DOWN_TO_FLOOR_LEVEL,
   SPHERE_SIZE,
   USE_GLB_MARKER_OBJECT,
-} from '../../consts'
-import Model from './Model'
-import { useFrame } from '@react-three/fiber'
+} from "../../consts";
+import Model from "./Model";
+import { useFrame } from "@react-three/fiber";
 
 // Utility function to detect mobile devices
-const isMobile = () => /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+const isMobile = () => /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
 interface HotspotProps {
-  position: [number, number, number]
-  rotation: [number, number, number]
-  image_identifier: string
-  onClick: () => void
-  isHighlighted: boolean
-  isEnd: boolean
-  isPathfinding: boolean
+  position: ThreeNumbersArray;
+  rotation: ThreeNumbersArray;
+  image_identifier: string;
+  onClick: () => void;
+  isHighlighted: boolean;
+  isEnd: boolean;
+  isPathfinding: boolean;
 }
 
 export interface HotspotObj {
-  pose: THREE.Matrix4
-  position: [number, number, number]
-  rotation: [number, number, number]
-  id: string
-  ts: string
+  pose: THREE.Matrix4;
+  position: ThreeNumbersArray;
+  rotation: ThreeNumbersArray;
+  id: string;
+  ts: string;
 }
 
 const Hotspot: React.FC<HotspotProps> = ({
@@ -41,19 +41,19 @@ const Hotspot: React.FC<HotspotProps> = ({
   isEnd,
 }) => {
   // Increase size for mobile
-  const sizeMultiplier = isMobile() ? 1.5 : 1
-  const sphereSize = SPHERE_SIZE * sizeMultiplier
-  const endMarkerSize = sphereSize * 3
-  const endMarkerOutlineSize = endMarkerSize * 1.09
-  const outlineSize = sphereSize * 1.09
+  const sizeMultiplier = isMobile() ? 1.5 : 1;
+  const sphereSize = SPHERE_SIZE * sizeMultiplier;
+  const endMarkerSize = sphereSize * 3;
+  const endMarkerOutlineSize = endMarkerSize * 1.09;
+  const outlineSize = sphereSize * 1.09;
 
-  position[1] -= HOTSPOT_Y_ADJUSTMENT_DOWN_TO_FLOOR_LEVEL
+  position[1] -= HOTSPOT_Y_ADJUSTMENT_DOWN_TO_FLOOR_LEVEL;
 
-  const endRef = useRef<any>(null)
-  const outlineEndRef = useRef<any>(null)
+  const endRef = useRef<any>(null);
+  const outlineEndRef = useRef<any>(null);
 
   // State to track hover
-  const [isHovered, setIsHovered] = useState(false)
+  const [isHovered, setIsHovered] = useState(false);
 
   useFrame((state, delta) => {
     if (
@@ -63,13 +63,13 @@ const Hotspot: React.FC<HotspotProps> = ({
       outlineEndRef.current &&
       outlineEndRef.current.rotation
     ) {
-      endRef.current.rotation.x += delta
-      outlineEndRef.current.rotation.x += delta
+      endRef.current.rotation.x += delta;
+      outlineEndRef.current.rotation.x += delta;
     }
-  })
+  });
 
   if (USE_GLB_MARKER_OBJECT && isEnd) {
-    return <Model position={position} onClick={onClick} />
+    return <Model position={position} onClick={onClick} />;
   }
 
   return isPathfinding && !isHighlighted ? (
@@ -95,7 +95,7 @@ const Hotspot: React.FC<HotspotProps> = ({
             isHovered
               ? HOTSPOT_HIGHLIGHTED
               : isEnd
-              ? '#FFFF00'
+              ? "#FFFF00"
               : isHighlighted
               ? HOTSPOT_HIGHLIGHTED
               : HOTSPOT_COLOUR
@@ -122,7 +122,7 @@ const Hotspot: React.FC<HotspotProps> = ({
         <meshBasicMaterial color={HOTSPOT_OUTLINE} side={THREE.BackSide} />
       </mesh>
     </>
-  )
-}
+  );
+};
 
-export default Hotspot
+export default Hotspot;

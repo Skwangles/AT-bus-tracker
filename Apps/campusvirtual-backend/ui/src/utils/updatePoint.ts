@@ -1,12 +1,21 @@
 import axios from "axios";
 import { API_PREFIX } from "../consts";
-import { PointData, NeighbourData } from "../types";
+import {
+  PointData,
+  NeighbourData,
+  HotspotObj,
+  ThreeNumbersArray,
+} from "../types";
 import { toast } from "react-toastify";
-import { getPositionOfNode, getYRotation } from "./utils";
+import {
+  getPointAsImageNumber,
+  getPositionOfNode,
+  getYRotation,
+} from "./utils";
 import { checkPoint } from "./validators/pointValidator";
 import * as THREE from "three";
-import { useCamera } from "@react-three/drei";
 import { useThree } from "@react-three/fiber";
+import React from "react";
 
 export async function getPointAndNeighbours(pointId: string) {
   const pointResponse = await axios.get<PointData>(
@@ -24,11 +33,11 @@ const { camera } = useThree();
 
 export const fetchPointData = async (
   pointId: string,
-  setCurrentPoint,
-  setCurrentImage,
-  setHotspots,
-  setCurrentPosition,
-  setRotation
+  setCurrentPoint: React.Dispatch<React.SetStateAction<PointData>>,
+  setCurrentImage: React.Dispatch<React.SetStateAction<string>>,
+  setHotspots: React.Dispatch<React.SetStateAction<HotspotObj[]>>,
+  setCurrentPosition: React.Dispatch<React.SetStateAction<THREE.Vector3>>,
+  setRotation: React.Dispatch<React.SetStateAction<ThreeNumbersArray>>
 ) => {
   try {
     const { point, neighbours } = await getPointAndNeighbours(pointId);
@@ -47,42 +56,83 @@ export const fetchPointData = async (
   }
 };
 
-export function updatePoint(point, setCurrentPoint, setCurrentImage) {
+/**
+ * Update what point data and point image is being used
+ * @param point
+ * @param setCurrentPoint
+ * @param setCurrentImage
+ * @returns
+ */
+export function updatePoint(
+  point: PointData,
+  setCurrentPoint: React.Dispatch<React.SetStateAction<PointData>>,
+  setCurrentImage: React.Dispatch<React.SetStateAction<string>>
+) {
   if (!checkPoint(point)) {
     console.error("Invalid point:" + JSON.stringify(point));
     return;
   }
 
   setCurrentPoint(point);
-  setCurrentImage(Number(point.ts).toFixed(5));
+  setCurrentImage(getPointAsImageNumber(point));
 }
 
-export function updateHotSpots(neighbours, setHotspots) {
-  const newHotspots = neighbours.map((neighbour) => {
-    if (!checkPoint(neighbour)) {
-      console.warn("Invalid hotspot:" + JSON.stringify(neighbour));
-      return;
-    }
+/**
+ * Convert neighbour data into displayable hotspots
+ * @param neighbours
+ * @param setHotspots
+ * @returns
+ */
+export function updateHotSpots(
+  neighbours: NeighbourData[],
+  setHotspots: React.Dispatch<React.SetStateAction<HotspotObj[]>>
+) {
+  if (!Array.isArray(neighbours)) {
+    console.warn("Invalid neighbours:" + JSON.stringify(neighbours));
+    return;
+  }
+  if (neighbours.length === 0) {
+    setHotspots([]);
+    return;
+  }
 
-    const pos = getPositionOfNode(neighbour);
-    const m = new THREE.Matrix4();
+  const newHotspots = neighbours
+    .map((neighbour) => {
+      if (!checkPoint(neighbour, false)) {
+        console.warn("Invalid hotspot:" + JSON.stringify(neighbour));
+        return null;
+      }
 
-    //@ts-expect-error - neighbour.pose is in the right format
-    m.set(...neighbour.pose);
+      const pos = getPositionOfNode(neighbour);
+      const m = new THREE.Matrix4();
 
-    return {
-      position: [pos[0], pos[1], pos[2]],
-      rotation: [0, getYRotation(neighbour.pose), 0],
-      pose: m,
-      id: neighbour.keyframe_id,
-      ts: neighbour.ts,
-    };
-  });
+      //@ts-expect-error - neighbour.pose is in the right format
+      m.set(...neighbour.pose);
+
+      const returnValue: HotspotObj = {
+        position: [pos[0], pos[1], pos[2]],
+        rotation: [0, getYRotation(neighbour.pose), 0],
+        pose: m,
+        id: neighbour.keyframe_id,
+        ts: neighbour.ts,
+      };
+      return returnValue;
+    })
+    .filter((v) => v !== null);
 
   setHotspots(newHotspots);
 }
 
-export function updateRotation(point: PointData, setRotation) {
+/**
+ * Update the XYZ rotation
+ * @param point
+ * @param setRotation
+ * @returns
+ */
+export function updateRotation(
+  point: PointData,
+  setRotation: React.Dispatch<React.SetStateAction<ThreeNumbersArray>>
+) {
   if (!checkPoint(point)) {
     console.warn("Invalid hotspot:" + JSON.stringify(point));
     return;
@@ -95,7 +145,7 @@ export function updateRotation(point: PointData, setRotation) {
 export function updatePosition(
   point: PointData,
   camera: THREE.Camera,
-  setCurrentPosition
+  setCurrentPosition: React.Dispatch<React.SetStateAction<THREE.Vector3>>
 ) {
   if (!checkPoint(point)) {
     console.warn("Invalid hotspot:" + JSON.stringify(point));
