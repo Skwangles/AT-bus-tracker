@@ -26,9 +26,16 @@ import {
   updateHistory,
   updateParams,
 } from "../utils/updateUrl";
-import { HotspotObj, Label, MoveDirectionType, PointData } from "../types";
+import {
+  HotspotObj,
+  Label,
+  MoveDirectionType,
+  NeighbourData,
+  PointData,
+} from "../types";
 import { moveDirection } from "../utils/moveDirection";
 import { Camera } from "three";
+import Hotspot from "./Navigation/Hotspots";
 
 const VirtualTour: React.FC = () => {
   const [currentId, setCurrentId] = useState<string>(() => initIdFromParams());
@@ -50,7 +57,8 @@ const VirtualTour: React.FC = () => {
   const [allSearchableLocations, setAllSearchableLocations] = useState<Label[]>(
     []
   );
-  const [hotspots, setHotspots] = useState<HotspotObj[]>([]);
+  const [hotspots, setHotspots] = useState<HotspotObj[]>(() => []);
+
   const [isLoading, setIsLoading] = useState(true);
 
   const [isInstructionsOpen, setInstructionsOpen] = useState(false);
@@ -61,16 +69,6 @@ const VirtualTour: React.FC = () => {
     yaw: number;
     pitch: number;
   }>(initFromParams());
-
-  const moveWithControls = useCallback(
-    (direction: MoveDirectionType, camera: Camera) => {
-      const id = moveDirection(direction, camera, hotspots);
-      if (id) {
-        setCurrentId(id);
-      }
-    },
-    [hotspots]
-  );
 
   const changeFloor = getChangeFloor(currentId, setCurrentId);
 
@@ -153,6 +151,8 @@ const VirtualTour: React.FC = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  console.log("root level hotspots", hotspots);
+
   return (
     <>
       {/* Loading indicator */}
@@ -231,7 +231,8 @@ const VirtualTour: React.FC = () => {
           <ambientLight intensity={0.6} />
           <directionalLight castShadow />
           <CameraRotationControls
-            actionMoveDirection={moveWithControls}
+            setCurrentId={setCurrentId}
+            hotspots={hotspots}
             camRotation={camRotation}
           />
           <Canvas

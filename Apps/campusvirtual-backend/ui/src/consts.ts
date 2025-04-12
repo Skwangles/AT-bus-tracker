@@ -3,7 +3,7 @@ export const API_PREFIX = "http://localhost:3001";
 export const FLOOR_ORDERING_STRATEGY = "tga"; // tga for <floor>.<room>  (or 'waikato' for <block>.<floor>.<room> stratgey)
 export const COORDS_TO_METRES = 1; // metres per coordinate - the backend should apply their version automatically, but this is a manual adjustment
 
-export const MOVE_SPEED = 5;
+export const MOVE_SPEED = 10;
 export const MOVE_FOV_CHECK = Math.PI / 4; // 45 degrees
 
 export const SPHERE_SIZE = 0.15;

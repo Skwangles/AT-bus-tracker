@@ -1,10 +1,18 @@
 import { useThree } from "@react-three/fiber";
 import { useRef, useEffect } from "react";
 import { Euler } from "three";
-import { MoveDirectionType } from "../../types";
+import { HotspotObj, MoveDirectionType } from "../../types";
+import * as THREE from "three";
+import { moveDirection } from "../../utils/moveDirection";
 
-const CameraRotationControls = ({ actionMoveDirection, camRotation }) => {
+const CameraRotationControls = ({ hotspots, setCurrentId, camRotation }) => {
+  console.log("crc hotspots", hotspots);
   const { camera, gl } = useThree();
+  const hotspotsRef = useRef(hotspots);
+
+  useEffect(() => {
+    hotspotsRef.current = hotspots;
+  }, [hotspots]);
 
   const controlsRef = useRef({
     isMouseDown: false,
@@ -21,7 +29,7 @@ const CameraRotationControls = ({ actionMoveDirection, camRotation }) => {
     ), // Initialize Euler with initial rotation
   });
 
-  const DEFAULT_SPEED = 0.005;
+  const DEFAULT_SPEED = 0.01;
   const INTERVAL_TIMEOUT = 5;
   const speed = useRef(DEFAULT_SPEED);
   const speedIntervalUpDown = useRef<NodeJS.Timeout>();
@@ -49,6 +57,18 @@ const CameraRotationControls = ({ actionMoveDirection, camRotation }) => {
     cancelLeftRightInterval();
     cancelUpDownInterval();
     speed.current = DEFAULT_SPEED;
+  };
+
+  const actionMoveDirection = (
+    direction: MoveDirectionType,
+    camera: THREE.Camera,
+    hotspots: HotspotObj[]
+  ) => {
+    console.log("Hotspots1:", hotspots);
+    const id = moveDirection(direction, camera, hotspots);
+    if (id) {
+      setCurrentId(id);
+    }
   };
 
   const handleKeyDown = (event) => {
@@ -125,13 +145,22 @@ const CameraRotationControls = ({ actionMoveDirection, camRotation }) => {
     }
     // WASD movements on moveDirection
     else if (event.key === "w") {
-      actionMoveDirection(MoveDirectionType.Forward, camera);
+      console.log("WASD:", hotspotsRef.current);
+      actionMoveDirection(
+        MoveDirectionType.Forward,
+        camera,
+        hotspotsRef.current
+      );
     } else if (event.key === "s") {
-      actionMoveDirection(MoveDirectionType.Backward, camera);
+      actionMoveDirection(
+        MoveDirectionType.Backward,
+        camera,
+        hotspotsRef.current
+      );
     } else if (event.key === "a") {
-      actionMoveDirection(MoveDirectionType.Left, camera);
+      actionMoveDirection(MoveDirectionType.Left, camera, hotspotsRef.current);
     } else if (event.key === "d") {
-      actionMoveDirection(MoveDirectionType.Right, camera);
+      actionMoveDirection(MoveDirectionType.Right, camera, hotspotsRef.current);
     } else {
       cancelInterval();
     }

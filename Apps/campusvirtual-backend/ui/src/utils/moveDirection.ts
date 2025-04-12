@@ -18,18 +18,20 @@ function checkWithinFOV(
   hotspot: THREE.Vector3,
   fov: number = MOVE_FOV_CHECK,
   maxDistance: number = MOVE_SPEED * 2,
-  minDistance: number = MOVE_SPEED / 2,
-  maxYDistance: number = MOVE_SPEED * 2
+  minDistance: number = 0,
+  maxYDistance: number = MOVE_SPEED * 5
 ) {
   if (!cameraPosition || !direction || !hotspot) {
     throw new Error("cameraPosition, direction and hotspot must be defined");
   }
   if (cameraPosition.equals(hotspot)) {
     // if the hotspot is at the camera position, it is not in front of the camera
+    console.warn("Same position");
     return false;
   }
   if (Math.abs(cameraPosition.y - hotspot.y) > maxYDistance) {
     // if the hotspot is too high above or below the camera, it is not in front of the camera
+    console.warn("Max Y too much");
     return false;
   }
 
@@ -41,11 +43,13 @@ function checkWithinFOV(
     direction.dot(hotspot.clone().sub(cameraPosition).normalize())
   );
   if (angleFromDirectionTohotspot > fov) {
+    console.warn("Angle", angleFromDirectionTohotspot);
     return false;
   }
 
   const distance = cameraPosition.distanceTo(hotspot);
   if (distance > maxDistance || distance < minDistance) {
+    console.warn("Too much distance", distance);
     return false;
   }
 
@@ -67,6 +71,7 @@ export function moveDirection(
   camera: THREE.Camera,
   hotspots: HotspotObj[]
 ) {
+  console.log("Hotspots: ", hotspots);
   const cameraDirection = new THREE.Vector3();
   camera.getWorldDirection(cameraDirection);
   const cameraPosition = camera.position.clone();
@@ -87,17 +92,21 @@ export function moveDirection(
       break;
   }
 
+  console.info("move direction", moveDirection);
+
   let closestPointId: string | null = null;
   let closestDistance = Infinity;
 
   hotspots.forEach((hotspot) => {
     const hotspotPosition = new THREE.Vector3(...hotspot.position);
+
     const isWithinFOV = checkWithinFOV(
       cameraPosition,
       cameraDirection,
       hotspotPosition,
       MOVE_FOV_CHECK
     );
+    console.log(isWithinFOV);
     const distance = cameraPosition.distanceTo(hotspotPosition);
     if (isWithinFOV && distance < closestDistance) {
       closestDistance = distance;
