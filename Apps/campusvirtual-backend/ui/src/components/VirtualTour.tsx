@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Canvas as ThreeCanvas } from "@react-three/fiber";
 import { STARTING_LOCATION_GROUP } from "../consts";
 import { API_PREFIX, showMap, PROJECT_NAME } from "../consts";
@@ -26,16 +26,7 @@ import {
   updateHistory,
   updateParams,
 } from "../utils/updateUrl";
-import {
-  HotspotObj,
-  Label,
-  MoveDirectionType,
-  NeighbourData,
-  PointData,
-} from "../types";
-import { moveDirection } from "../utils/moveDirection";
-import { Camera } from "three";
-import Hotspot from "./Navigation/Hotspots";
+import { HotspotObj, Label, PointData } from "../types";
 
 const VirtualTour: React.FC = () => {
   const [currentId, setCurrentId] = useState<string>(() => initIdFromParams());
@@ -150,8 +141,6 @@ const VirtualTour: React.FC = () => {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-
-  console.log("root level hotspots", hotspots);
 
   return (
     <>

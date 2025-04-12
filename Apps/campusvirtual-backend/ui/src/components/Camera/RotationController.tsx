@@ -4,9 +4,9 @@ import { Euler } from "three";
 import { HotspotObj, MoveDirectionType } from "../../types";
 import * as THREE from "three";
 import { moveDirection } from "../../utils/moveDirection";
+import { toast } from "react-toastify";
 
 const CameraRotationControls = ({ hotspots, setCurrentId, camRotation }) => {
-  console.log("crc hotspots", hotspots);
   const { camera, gl } = useThree();
   const hotspotsRef = useRef(hotspots);
 
@@ -64,10 +64,11 @@ const CameraRotationControls = ({ hotspots, setCurrentId, camRotation }) => {
     camera: THREE.Camera,
     hotspots: HotspotObj[]
   ) => {
-    console.log("Hotspots1:", hotspots);
     const id = moveDirection(direction, camera, hotspots);
     if (id) {
       setCurrentId(id);
+    } else {
+      toast.warn("No point found in the given direction (WASD keys)");
     }
   };
 
@@ -145,7 +146,6 @@ const CameraRotationControls = ({ hotspots, setCurrentId, camRotation }) => {
     }
     // WASD movements on moveDirection
     else if (event.key === "w") {
-      console.log("WASD:", hotspotsRef.current);
       actionMoveDirection(
         MoveDirectionType.Forward,
         camera,

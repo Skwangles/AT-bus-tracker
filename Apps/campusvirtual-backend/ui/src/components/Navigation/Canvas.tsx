@@ -7,7 +7,6 @@ import {
   type PointData,
 } from "../../types";
 import { fetchPointData } from "../../utils/updatePoint";
-import { useThree } from "@react-three/fiber";
 
 interface CanvasProps {
   hotspots: HotspotObj[];
@@ -58,7 +57,6 @@ const Canvas: React.FC<CanvasProps> = ({
       hotspots={hotspots}
       onHotspotClick={handleHotspotClick}
       imageRotation={imageRotation}
-      isLoading={isLoading}
       setIsLoading={setIsLoading}
       isPathfindingMode={isPathfindingMode}
       highlightedOrbs={highlightedPath}

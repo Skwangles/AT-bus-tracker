@@ -1,6 +1,6 @@
 import { COORDS_TO_METRES } from "../consts";
 import * as THREE from "three";
-import { NeighbourData, PointData, ThreeNumbersArray } from "../types";
+import { ThreeNumbersArray } from "../types";
 
 export function inv(pose: number[][]) {
   if (

@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import { API_PREFIX, HIDE_POINTS_DURING_HIGHLIGHT } from "../../consts";
 import { HotspotObj, ThreeNumbersArray } from "../../types";
 import Hotspot from "./Hotspots";
@@ -7,7 +7,6 @@ import { toast } from "react-toastify";
 import { getPointAsImageNumber } from "../../utils/utils";
 import { useFrame, useThree } from "@react-three/fiber";
 import { lerp } from "three/src/math/MathUtils.js";
-import { is } from "@react-three/fiber/dist/declarations/src/core/utils";
 
 interface SphereWithHotspotsProps {
   position: React.MutableRefObject<THREE.Vector3>;
@@ -156,7 +155,6 @@ const Scene: React.FC<SphereWithHotspotsProps> = ({
   useEffect(() => {
     if (isTransitioning) return;
 
-    console.info("####### Propagate Transition changes");
     loadedImageRotation.current = imageRotation.current;
     loadedPosition.current = position.current;
     camera.position.set(
@@ -168,16 +166,11 @@ const Scene: React.FC<SphereWithHotspotsProps> = ({
 
   useEffect(() => {
     if (!isTransitioning) {
-      console.warn("Refetched Hotspots");
       setShownHotspots(
         calculateShownHotspots(hotspots, isPathfindingMode, highlightedOrbs)
       );
     }
   }, [isTransitioning, isPathfindingMode, highlightedOrbs]);
-
-  useEffect(() => {
-    console.log("Transitioning", isTransitioning);
-  }, [isTransitioning]);
 
   useFrame(() => {
     if (

@@ -7,7 +7,7 @@ import * as THREE from "three";
  * It should be within a certain angle of the camera direction, and within a certain distance
  * @param cameraPosition
  * @param direction
- * @param hotspot
+ * @param hotspotPosition
  * @param maxDistance
  * @param minDistance
  * @returns true, if the hotspot is in front of the camera within FOV, false otherwise
@@ -15,41 +15,47 @@ import * as THREE from "three";
 function checkWithinFOV(
   cameraPosition: THREE.Vector3,
   direction: THREE.Vector3,
-  hotspot: THREE.Vector3,
+  hotspotPosition: THREE.Vector3,
   fov: number = MOVE_FOV_CHECK,
   maxDistance: number = MOVE_SPEED * 2,
-  minDistance: number = 0,
-  maxYDistance: number = MOVE_SPEED * 5
+  minDistance: number = 1,
+  maxYDistance: number = MOVE_SPEED * 10
 ) {
-  if (!cameraPosition || !direction || !hotspot) {
+  if (!cameraPosition || !direction || !hotspotPosition) {
     throw new Error("cameraPosition, direction and hotspot must be defined");
   }
-  if (cameraPosition.equals(hotspot)) {
+  if (cameraPosition.equals(hotspotPosition)) {
     // if the hotspot is at the camera position, it is not in front of the camera
-    console.warn("Same position");
+    console.debug(
+      "No match - Points are same position" + JSON.stringify(hotspotPosition)
+    );
     return false;
   }
-  if (Math.abs(cameraPosition.y - hotspot.y) > maxYDistance) {
+
+  const yDistance = Math.abs(cameraPosition.y - hotspotPosition.y);
+  if (yDistance > maxYDistance) {
     // if the hotspot is too high above or below the camera, it is not in front of the camera
-    console.warn("Max Y too much");
+    console.debug("Max Y too much:" + yDistance);
     return false;
   }
 
   // Check if the hotspot is in front of the camera
 
   // flatten to 2D
-  hotspot.y = cameraPosition.y;
+  hotspotPosition.y = cameraPosition.y;
   const angleFromDirectionTohotspot = Math.acos(
-    direction.dot(hotspot.clone().sub(cameraPosition).normalize())
+    direction.dot(hotspotPosition.clone().sub(cameraPosition).normalize())
   );
   if (angleFromDirectionTohotspot > fov) {
-    console.warn("Angle", angleFromDirectionTohotspot);
+    console.debug(
+      "Angle between points too great:" + angleFromDirectionTohotspot
+    );
     return false;
   }
 
-  const distance = cameraPosition.distanceTo(hotspot);
+  const distance = cameraPosition.distanceTo(hotspotPosition);
   if (distance > maxDistance || distance < minDistance) {
-    console.warn("Too much distance", distance);
+    console.debug("Too much/little distance between people:", distance);
     return false;
   }
 
@@ -71,7 +77,6 @@ export function moveDirection(
   camera: THREE.Camera,
   hotspots: HotspotObj[]
 ) {
-  console.log("Hotspots: ", hotspots);
   const cameraDirection = new THREE.Vector3();
   camera.getWorldDirection(cameraDirection);
   const cameraPosition = camera.position.clone();
@@ -90,9 +95,10 @@ export function moveDirection(
     case MoveDirectionType.Right:
       moveDirection.crossVectors(cameraDirection, camera.up);
       break;
+    default:
+      console.error("Invalid move direction");
+      return null;
   }
-
-  console.info("move direction", moveDirection);
 
   let closestPointId: string | null = null;
   let closestDistance = Infinity;
@@ -102,11 +108,10 @@ export function moveDirection(
 
     const isWithinFOV = checkWithinFOV(
       cameraPosition,
-      cameraDirection,
+      moveDirection,
       hotspotPosition,
       MOVE_FOV_CHECK
     );
-    console.log(isWithinFOV);
     const distance = cameraPosition.distanceTo(hotspotPosition);
     if (isWithinFOV && distance < closestDistance) {
       closestDistance = distance;
@@ -114,7 +119,7 @@ export function moveDirection(
     }
   });
   if (closestPointId === null) {
-    console.error("No closest point found");
+    console.debug("No closest point found");
     return null;
   }
 
