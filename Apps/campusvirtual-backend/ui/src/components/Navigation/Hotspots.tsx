@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 import {
   HOTSPOT_COLOUR,
   HOTSPOT_HIGHLIGHTED,
+  HOTSPOT_HOVERED,
   HOTSPOT_OUTLINE,
   HOTSPOT_Y_ADJUSTMENT_DOWN_TO_FLOOR_LEVEL,
   SPHERE_SIZE,
@@ -76,7 +77,7 @@ const Hotspot: React.FC<HotspotProps> = ({
         onPointerOver={() => isClickable && setIsHovered(true)}
         onPointerOut={() => isClickable && setIsHovered(false)}
         receiveShadow
-        scale={isClickable ? 1 : 0}
+        scale={isClickable ? 1 : 0} // visibility attribute still renders the object, so it can still be clicked - scale makes it unclickable, but still rendered
       >
         {isEnd ? (
           <boxGeometry args={[endMarkerSize, endMarkerSize, endMarkerSize]} />
@@ -86,9 +87,9 @@ const Hotspot: React.FC<HotspotProps> = ({
         <meshStandardMaterial
           color={
             isHovered
-              ? HOTSPOT_HIGHLIGHTED
+              ? HOTSPOT_HOVERED
               : isEnd
-              ? "#FFFF00"
+              ? "#AAAAAA"
               : isHighlighted
               ? HOTSPOT_HIGHLIGHTED
               : HOTSPOT_COLOUR
