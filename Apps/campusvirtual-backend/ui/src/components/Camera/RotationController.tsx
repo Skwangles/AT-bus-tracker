@@ -21,7 +21,7 @@ const CameraRotationControls = ({ actionMoveDirection, camRotation }) => {
     ), // Initialize Euler with initial rotation
   });
 
-  const DEFAULT_SPEED = 0.05;
+  const DEFAULT_SPEED = 0.005;
   const INTERVAL_TIMEOUT = 5;
   const speed = useRef(DEFAULT_SPEED);
   const speedIntervalUpDown = useRef<NodeJS.Timeout>();

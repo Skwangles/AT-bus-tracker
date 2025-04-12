@@ -1,12 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
-import SphereWithHotspots from "./SphereWithHotspots";
+import Scene from "./Scene";
 import {
   ThreeNumbersArray,
   type HotspotObj,
   type PointData,
 } from "../../types";
 import { fetchPointData } from "../../utils/updatePoint";
+import { useThree } from "@react-three/fiber";
 
 interface CanvasProps {
   hotspots: HotspotObj[];
@@ -14,6 +15,8 @@ interface CanvasProps {
   currentId: string;
   setCurrentId: React.Dispatch<React.SetStateAction<string>>;
   setCurrentPoint: React.Dispatch<React.SetStateAction<PointData>>;
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+  isLoading: boolean;
   isPathfindingMode: boolean;
   highlightedPath: number[];
 }
@@ -24,14 +27,14 @@ const Canvas: React.FC<CanvasProps> = ({
   currentId,
   setCurrentId,
   setCurrentPoint,
+  setIsLoading,
+  isLoading,
   isPathfindingMode,
   highlightedPath,
 }) => {
   const [currentImage, setCurrentImage] = useState<string>("");
-  const [currentPosition, setCurrentPosition] = useState<THREE.Vector3>(
-    new THREE.Vector3()
-  );
-  const [rotation, setRotation] = useState<ThreeNumbersArray>([0, 0, 0]);
+  const currentPosition = useRef<THREE.Vector3>(new THREE.Vector3());
+  const imageRotation = useRef<ThreeNumbersArray>([0, 0, 0]);
 
   useEffect(() => {
     fetchPointData(
@@ -39,8 +42,8 @@ const Canvas: React.FC<CanvasProps> = ({
       setCurrentPoint,
       setCurrentImage,
       setHotspots,
-      setCurrentPosition,
-      setRotation
+      currentPosition,
+      imageRotation
     );
   }, [currentId, isPathfindingMode]); // pathfinding mode deletes non-path points, so need to refetch
 
@@ -49,12 +52,14 @@ const Canvas: React.FC<CanvasProps> = ({
   };
 
   return currentImage ? (
-    <SphereWithHotspots
+    <Scene
       position={currentPosition}
       textureUrl={currentImage}
       hotspots={hotspots}
       onHotspotClick={handleHotspotClick}
-      rotation={rotation}
+      imageRotation={imageRotation}
+      isLoading={isLoading}
+      setIsLoading={setIsLoading}
       isPathfindingMode={isPathfindingMode}
       highlightedOrbs={highlightedPath}
     />

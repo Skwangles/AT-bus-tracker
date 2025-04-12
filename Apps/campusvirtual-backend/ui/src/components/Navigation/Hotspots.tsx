@@ -33,6 +33,7 @@ const Hotspot: React.FC<HotspotProps> = ({
   isPathfinding,
   isEnd,
 }) => {
+  const isClickable = !isPathfinding || isHighlighted;
   // Increase size for mobile
   const sizeMultiplier = isMobile() ? 1.5 : 1;
   const sphereSize = SPHERE_SIZE * sizeMultiplier;
@@ -65,18 +66,17 @@ const Hotspot: React.FC<HotspotProps> = ({
     return <Model position={position} onClick={onClick} />;
   }
 
-  return isPathfinding && !isHighlighted ? (
-    <></>
-  ) : (
+  return (
     <>
       <mesh
         position={position}
         rotation={rotation}
         ref={endRef}
-        onClick={onClick}
-        onPointerOver={() => setIsHovered(true)}
-        onPointerOut={() => setIsHovered(false)}
+        onClick={isClickable ? onClick : () => {}}
+        onPointerOver={() => isClickable && setIsHovered(true)}
+        onPointerOut={() => isClickable && setIsHovered(false)}
         receiveShadow
+        scale={isClickable ? 1 : 0}
       >
         {isEnd ? (
           <boxGeometry args={[endMarkerSize, endMarkerSize, endMarkerSize]} />
@@ -100,6 +100,7 @@ const Hotspot: React.FC<HotspotProps> = ({
         rotation={rotation}
         ref={outlineEndRef}
         onClick={onClick}
+        scale={isClickable ? 1 : 0}
       >
         {isEnd ? (
           <boxGeometry

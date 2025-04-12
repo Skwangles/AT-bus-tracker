@@ -51,6 +51,7 @@ const VirtualTour: React.FC = () => {
     []
   );
   const [hotspots, setHotspots] = useState<HotspotObj[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [isInstructionsOpen, setInstructionsOpen] = useState(false);
   const [closeDrawer, setCloseDrawer] = useState(false);
@@ -63,10 +64,8 @@ const VirtualTour: React.FC = () => {
 
   const moveWithControls = useCallback(
     (direction: MoveDirectionType, camera: Camera) => {
-      console.error("Hotspots", hotspots);
       const id = moveDirection(direction, camera, hotspots);
       if (id) {
-        console.log("Setting currentId to", id);
         setCurrentId(id);
       }
     },
@@ -154,10 +153,17 @@ const VirtualTour: React.FC = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  console.log("Hotspots", hotspots);
-
   return (
     <>
+      {/* Loading indicator */}
+      {isLoading && (
+        <div className="loading-spinner">
+          <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 shadow-lg">
+            <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          </div>
+        </div>
+      )}
+
       <MobileLayout
         isMobile={isMobile}
         currentPoint={currentPoint}
@@ -167,6 +173,7 @@ const VirtualTour: React.FC = () => {
         canGoDown={canGoDown}
         canGoUp={canGoUp}
         locationGroup={locationGroup}
+        isLoading={isLoading}
         isInstructionsOpen={isInstructionsOpen}
         setInstructionsOpen={setInstructionsOpen}
       />
@@ -179,6 +186,7 @@ const VirtualTour: React.FC = () => {
         changeFloorUpOrDown={changeFloorUpOrDown}
         canGoDown={canGoDown}
         canGoUp={canGoUp}
+        isLoading={isLoading}
         locationGroup={locationGroup}
         isInstructionsOpen={isInstructionsOpen}
         setInstructionsOpen={setInstructionsOpen}
@@ -230,6 +238,8 @@ const VirtualTour: React.FC = () => {
             currentId={currentId}
             setCurrentId={setCurrentId}
             setHotspots={setHotspots}
+            setIsLoading={setIsLoading}
+            isLoading={isLoading}
             hotspots={hotspots}
             setCurrentPoint={setCurrentPoint}
             isPathfindingMode={pathfindMode}

@@ -14,7 +14,6 @@ import {
 } from "./utils";
 import { checkPoint } from "./validators/pointValidator";
 import * as THREE from "three";
-import { useThree } from "@react-three/fiber";
 import React from "react";
 
 export async function getPointAndNeighbours(pointId: string) {
@@ -29,15 +28,13 @@ export async function getPointAndNeighbours(pointId: string) {
   return { point: pointResponse.data, neighbours: neighboursResponse.data };
 }
 
-const { camera } = useThree();
-
 export const fetchPointData = async (
   pointId: string,
   setCurrentPoint: React.Dispatch<React.SetStateAction<PointData>>,
   setCurrentImage: React.Dispatch<React.SetStateAction<string>>,
   setHotspots: React.Dispatch<React.SetStateAction<HotspotObj[]>>,
-  setCurrentPosition: React.Dispatch<React.SetStateAction<THREE.Vector3>>,
-  setRotation: React.Dispatch<React.SetStateAction<ThreeNumbersArray>>
+  currentPosition: React.MutableRefObject<THREE.Vector3>,
+  imageRotation: React.MutableRefObject<ThreeNumbersArray>
 ) => {
   try {
     const { point, neighbours } = await getPointAndNeighbours(pointId);
@@ -49,8 +46,8 @@ export const fetchPointData = async (
 
     updatePoint(point, setCurrentPoint, setCurrentImage);
     updateHotSpots(neighbours, setHotspots);
-    updatePosition(point, camera, setCurrentPosition);
-    updateRotation(point, setRotation);
+    updatePosition(point, currentPosition);
+    updateImageRotation(point, imageRotation);
   } catch (error) {
     toast.error("Could not find point");
   }
@@ -129,30 +126,28 @@ export function updateHotSpots(
  * @param setRotation
  * @returns
  */
-export function updateRotation(
+export function updateImageRotation(
   point: PointData,
-  setRotation: React.Dispatch<React.SetStateAction<ThreeNumbersArray>>
+  rotation: React.MutableRefObject<ThreeNumbersArray>
 ) {
   if (!checkPoint(point)) {
     console.warn("Invalid hotspot:" + JSON.stringify(point));
     return;
   }
 
-  const newRotation = getYRotation(point.pose);
-  setRotation([0, newRotation, 0]);
+  const offsetToAlignToXAxis = Math.PI / 2;
+  const newRotation = getYRotation(point.pose) + offsetToAlignToXAxis;
+  rotation.current = [0, newRotation, 0];
 }
 
 export function updatePosition(
   point: PointData,
-  camera: THREE.Camera,
-  setCurrentPosition: React.Dispatch<React.SetStateAction<THREE.Vector3>>
+  currentPosition: React.MutableRefObject<THREE.Vector3>
 ) {
   if (!checkPoint(point)) {
     console.warn("Invalid hotspot:" + JSON.stringify(point));
     return;
   }
 
-  const newPosition = getPositionOfNode(point);
-  setCurrentPosition(new THREE.Vector3(...newPosition));
-  camera.position.set(newPosition[0], newPosition[1], newPosition[2]);
+  currentPosition.current = new THREE.Vector3(...getPositionOfNode(point));
 }
