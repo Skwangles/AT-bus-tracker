@@ -44,17 +44,15 @@ if (cluster.isPrimary) {
 
 
   const limiter = rateLimit({
-    windowMs: 1 * 60 * 1000, // 1 minute - i.e. you can't visit that many buttons
-    limit: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes).
-    standardHeaders: 'draft-8', // draft-6: `RateLimit-*` headers; draft-7 & draft-8: combined `RateLimit` header
-    legacyHeaders: false, // Disable the `X-RateLimit-*` headers.
-    // store: ... , // Redis, Memcached, etc. See below.
+    windowMs: 10 * 1000, // 10 sec window, for x many requests
+    limit: 100,
+    standardHeaders: 'draft-8',
+    legacyHeaders: false,
+    // store: ... , // Redis, Memcached, etc. 
   })
-
-  // Apply the rate limiting middleware to all requests.
   app.use(limiter)
 
-  // Render browser
+  // Serve UI
   app.get('/', function (req, res) {
     res.sendFile(path.join(__dirname, '../ui/dist', 'index.html'))
   })
