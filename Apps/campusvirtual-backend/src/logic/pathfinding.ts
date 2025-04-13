@@ -4,6 +4,7 @@ import { MinQueue } from "heapify";
 import { getNeighbours, getNodePosition } from "./utils";
 import { USE_TABLE_PREFIX, TABLE_PREFIX, EdgeType } from "../consts";
 import logger from "../logger";
+import { ThreeNumbersArray } from "../types";
 
 // Function to calculate Euclidean distance between two nodes
 function calculateDistance(
@@ -45,11 +46,9 @@ export async function aStarPathfinding(
     const currentId = openSet.pop()!;
 
     const currentNodeData = await readDB(
-      `SELECT n.keyframe_id, location FROM ${
-        USE_TABLE_PREFIX ? TABLE_PREFIX : ""
+      `SELECT n.keyframe_id, location FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""
       }nodes n 
-      JOIN ${
-        USE_TABLE_PREFIX ? TABLE_PREFIX : ""
+      JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""
       }node_locations n1 ON n.keyframe_id = n1.keyframe_id 
       WHERE n.keyframe_id = ?`,
       [currentId]

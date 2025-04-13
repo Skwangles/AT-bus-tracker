@@ -7,21 +7,18 @@ import {
 } from "../consts";
 import * as THREE from "three";
 import logger from "../logger";
+import { ThreeNumbersArray } from "../types";
 // Helper function to get neighbours
 export async function getNeighbours(keyframeId: number): Promise<any[]> {
   const result = await readDB(
-    `SELECT e.keyframe_id1 as keyframe_id, n.ts, COUNT(e1.keyframe_id1) as degree FROM ${
-      USE_TABLE_PREFIX ? TABLE_PREFIX : ""
+    `SELECT e.keyframe_id1 as keyframe_id, n.ts, COUNT(e1.keyframe_id1) as degree FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""
     }edges e 
-              JOIN ${
-                USE_TABLE_PREFIX ? TABLE_PREFIX : ""
-              }edges e1 ON e.keyframe_id1 = e1.keyframe_id0
-              JOIN ${
-                USE_TABLE_PREFIX ? TABLE_PREFIX : ""
-              }nodes n ON e.keyframe_id1 = n.keyframe_id 
-              WHERE e.keyframe_id0 = ? AND (e.type >= ${
-                EdgeType.Normal
-              }) AND (e1.type >= ${EdgeType.Normal}) 
+              JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""
+    }edges e1 ON e.keyframe_id1 = e1.keyframe_id0
+              JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""
+    }nodes n ON e.keyframe_id1 = n.keyframe_id 
+              WHERE e.keyframe_id0 = ? AND (e.type >= ${EdgeType.Normal
+    }) AND (e1.type >= ${EdgeType.Normal}) 
               GROUP BY e.keyframe_id1, n.ts`,
     [keyframeId]
   );
@@ -67,8 +64,7 @@ export async function getNodePosition(
   use_trans = true
 ): Promise<ThreeNumbersArray | null> {
   const result = (await readDB(
-    `SELECT pose, x_trans, y_trans, z_trans FROM ${
-      USE_TABLE_PREFIX ? TABLE_PREFIX : ""
+    `SELECT pose, x_trans, y_trans, z_trans FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""
     }nodes WHERE keyframe_id = ?LIMIT 1;`,
     [keyframeId],
     true
