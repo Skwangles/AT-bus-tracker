@@ -1,20 +1,21 @@
-import { MapPin, ChevronUp, Info } from 'react-feather'
-import Instructions from '../Misc/Instructions'
-import LocationChangeControls from '../Navigation/LocationChangeControls'
-import { useState, useEffect, useRef } from 'react'
-import { Label } from '../../consts'
+import { MapPin, ChevronUp, Info } from "react-feather";
+import Instructions from "../Misc/Instructions";
+import LocationChangeControls from "../Navigation/LocationChangeControls";
+import { useState, useEffect, useRef } from "react";
+import { Label } from "../../types";
 
 interface MobileLayout {
-  isMobile: boolean
-  currentPoint: any
-  allFloorNames: Label[]
-  changeFloor: any
-  changeFloorUpOrDown: any
-  canGoDown: boolean
-  canGoUp: boolean
-  locationGroup: string
-  isInstructionsOpen: boolean
-  setInstructionsOpen: any
+  isMobile: boolean;
+  currentPoint: any;
+  allFloorNames: Label[];
+  changeFloor: any;
+  changeFloorUpOrDown: any;
+  canGoDown: boolean;
+  canGoUp: boolean;
+  locationGroup: string;
+  isLoading: boolean;
+  isInstructionsOpen: boolean;
+  setInstructionsOpen: any;
 }
 
 export const MobileLayout: React.FC<MobileLayout> = ({
@@ -26,39 +27,49 @@ export const MobileLayout: React.FC<MobileLayout> = ({
   canGoDown,
   canGoUp,
   locationGroup,
+  isLoading,
   isInstructionsOpen,
   setInstructionsOpen,
 }) => {
-  const [showMobileMenu, setShowMobileMenu] = useState(false)
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   useEffect(() => {
     if (isMobile && !showMobileMenu) {
-      setInstructionsOpen(false)
+      setInstructionsOpen(false);
     }
-  }, [isMobile, showMobileMenu])
+  }, [isMobile, showMobileMenu]);
 
-  const drawerRef = useRef<HTMLDivElement>(null)
+  const drawerRef = useRef<HTMLDivElement>(null);
 
-  const [drawerHeight, setDrawerHeight] = useState(0)
+  const [drawerHeight, setDrawerHeight] = useState(0);
 
   useEffect(() => {
     if (drawerRef.current) {
-      setDrawerHeight(drawerRef.current.scrollHeight)
+      setDrawerHeight(drawerRef.current.scrollHeight);
     }
-  }, [showMobileMenu])
+  }, [showMobileMenu]);
 
   return (
     <>
       {isMobile && (
         <>
+          {/* Loading indicator */}
+          {isLoading && (
+            <div className="loading-spinner">
+              <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 shadow-lg">
+                <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+              </div>
+            </div>
+          )}
+
           {/* Location indicator with chevron */}
           <div
             className={`fixed left-1/2 -translate-x-1/2 z-[999] bg-[#101010F0] text-white px-4 py-2 shadow-lg flex items-center gap-2 cursor-pointer ${
-              showMobileMenu ? 'rounded-t-xl' : 'rounded-xl'
+              showMobileMenu ? "rounded-t-xl" : "rounded-xl"
             }`}
             style={{
-              bottom: showMobileMenu ? `${drawerHeight}px` : '1rem', // Adjust to align with drawer
-              transition: 'all 0.3s ease-in-out',
+              bottom: showMobileMenu ? `${drawerHeight}px` : "1rem", // Adjust to align with drawer
+              transition: "all 0.3s ease-in-out",
             }}
             onClick={() => setShowMobileMenu(!showMobileMenu)}
           >
@@ -66,7 +77,7 @@ export const MobileLayout: React.FC<MobileLayout> = ({
             <span>You are in: {currentPoint.location}</span>
             <ChevronUp
               className={`w-5 h-5 transition-transform duration-300 ${
-                showMobileMenu ? 'rotate-180' : ''
+                showMobileMenu ? "rotate-180" : ""
               }`}
             />
           </div>
@@ -75,14 +86,14 @@ export const MobileLayout: React.FC<MobileLayout> = ({
           <div
             ref={drawerRef}
             className={`fixed left-1/2 -translate-x-1/2 bg-[#101010F0] text-white shadow-lg transition-all duration-300 ease-in-out ${
-              showMobileMenu ? 'rounded-b-xl' : 'rounded-xl'
+              showMobileMenu ? "rounded-b-xl" : "rounded-xl"
             }`}
             style={{
-              bottom: showMobileMenu ? '0' : `-${drawerHeight}px`, // Use negative height to hide the drawer completely
-              width: '90%', // Match the width of the location indicator
-              maxHeight: '70vh', // Set a max height to prevent overflow
-              overflowY: 'auto', // Allow scrolling if content exceeds max height
-              transition: 'all 0.3s ease-in-out',
+              bottom: showMobileMenu ? "0" : `-${drawerHeight}px`, // Use negative height to hide the drawer completely
+              width: "90%", // Match the width of the location indicator
+              maxHeight: "70vh", // Set a max height to prevent overflow
+              overflowY: "auto", // Allow scrolling if content exceeds max height
+              transition: "all 0.3s ease-in-out",
               zIndex: 998,
             }}
           >
@@ -121,5 +132,5 @@ export const MobileLayout: React.FC<MobileLayout> = ({
         </>
       )}
     </>
-  )
-}
+  );
+};

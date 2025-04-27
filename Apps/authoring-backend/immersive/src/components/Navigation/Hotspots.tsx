@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 import {
   HOTSPOT_COLOUR,
   HOTSPOT_HIGHLIGHTED,
+  HOTSPOT_HOVERED,
   HOTSPOT_OUTLINE,
   HOTSPOT_Y_ADJUSTMENT_DOWN_TO_FLOOR_LEVEL,
   SPHERE_SIZE,
@@ -10,6 +11,7 @@ import {
 } from "../../consts";
 import Model from "./Model";
 import { useFrame } from "@react-three/fiber";
+import { ThreeNumbersArray } from "../../types";
 
 // Utility function to detect mobile devices
 const isMobile = () => /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -24,14 +26,6 @@ interface HotspotProps {
   isPathfinding: boolean;
 }
 
-export interface HotspotObj {
-  pose: THREE.Matrix4;
-  position: ThreeNumbersArray;
-  rotation: ThreeNumbersArray;
-  id: string;
-  ts: string;
-}
-
 const Hotspot: React.FC<HotspotProps> = ({
   position,
   onClick,
@@ -40,6 +34,7 @@ const Hotspot: React.FC<HotspotProps> = ({
   isPathfinding,
   isEnd,
 }) => {
+  const isClickable = !isPathfinding || isHighlighted;
   // Increase size for mobile
   const sizeMultiplier = isMobile() ? 1.5 : 1;
   const sphereSize = SPHERE_SIZE * sizeMultiplier;
@@ -72,18 +67,17 @@ const Hotspot: React.FC<HotspotProps> = ({
     return <Model position={position} onClick={onClick} />;
   }
 
-  return isPathfinding && !isHighlighted ? (
-    <></>
-  ) : (
+  return (
     <>
       <mesh
         position={position}
         rotation={rotation}
         ref={endRef}
-        onClick={onClick}
-        onPointerOver={() => setIsHovered(true)}
-        onPointerOut={() => setIsHovered(false)}
+        onClick={isClickable ? onClick : () => {}}
+        onPointerOver={() => isClickable && setIsHovered(true)}
+        onPointerOut={() => isClickable && setIsHovered(false)}
         receiveShadow
+        scale={isClickable ? 1 : 0} // visibility attribute still renders the object, so it can still be clicked - scale makes it unclickable, but still rendered
       >
         {isEnd ? (
           <boxGeometry args={[endMarkerSize, endMarkerSize, endMarkerSize]} />
@@ -93,9 +87,9 @@ const Hotspot: React.FC<HotspotProps> = ({
         <meshStandardMaterial
           color={
             isHovered
-              ? HOTSPOT_HIGHLIGHTED
+              ? HOTSPOT_HOVERED
               : isEnd
-              ? "#FFFF00"
+              ? "#AAAAAA"
               : isHighlighted
               ? HOTSPOT_HIGHLIGHTED
               : HOTSPOT_COLOUR
@@ -107,6 +101,7 @@ const Hotspot: React.FC<HotspotProps> = ({
         rotation={rotation}
         ref={outlineEndRef}
         onClick={onClick}
+        scale={isClickable ? 1 : 0}
       >
         {isEnd ? (
           <boxGeometry

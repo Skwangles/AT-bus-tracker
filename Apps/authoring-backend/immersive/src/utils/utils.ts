@@ -1,5 +1,6 @@
 import { COORDS_TO_METRES } from "../consts";
 import * as THREE from "three";
+import { ThreeNumbersArray } from "../types";
 
 export function inv(pose: number[][]) {
   if (
@@ -62,7 +63,7 @@ export function getPositionOfNode(point: {
   x_trans: number;
   y_trans: number;
   z_trans: number;
-}) {
+}): ThreeNumbersArray {
   if (USE_TRANS) {
     return [
       -point.x_trans * COORDS_TO_METRES,
@@ -105,3 +106,7 @@ export const getYRotation = (matrix: number[]) => {
 
   return -rotationY; // Rotation in radians
 };
+
+export function getPointAsImageNumber(point: { ts: number | string }): string {
+  return Number(point.ts).toFixed(5);
+}
