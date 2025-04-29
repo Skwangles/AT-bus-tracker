@@ -25,5 +25,6 @@ export async function readDB(query: string, params: (string | number)[] = [], is
 }
 
 initDB()
+console.log("Finished initialising DB")
 export { readDB as dbQuery }
 

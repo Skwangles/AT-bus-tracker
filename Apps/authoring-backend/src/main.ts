@@ -45,7 +45,13 @@ if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
 
 }
 
-app.listen(PORT, () => {
+console.log("Configured the server endpoints, starting server...")
+
+app.listen(PORT, (error) => {
+  if (error) {
+    logger.error(`Error starting server: ${error}`)
+    process.exit(1)
+  }
 
   logger.info(`Server running on port ${PORT}`)
   if (exitReader) {

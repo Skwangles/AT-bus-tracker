@@ -1,10 +1,11 @@
 import { Request, Response } from "express";
-import { USE_TABLE_PREFIX, TABLE_PREFIX, REASONABLE_MAX_STRING_SIZE, REASONABLE_MAX_Y_DIST_THRESHOLD, REASONABLE_MAX_XZ_DIST_THRESHOLD } from "../consts";
-import { readDB } from "../db";
+import { USE_TABLE_PREFIX, TABLE_PREFIX, REASONABLE_MAX_STRING_SIZE, REASONABLE_MAX_Y_DIST_THRESHOLD, REASONABLE_MAX_XZ_DIST_THRESHOLD, FLOOR_POINT_DEFAULT_TYPE } from "../consts";
+import { readDB, writeDB } from "../db";
 import { searchNeighbour } from "../logic/neighbourSearch";
 import { aStarPathfinding } from "../logic/pathfinding";
 import { BlobArrayToMatrix, convertToUICoordinateScale } from "../logic/utils";
 import logger from "../logger";
+import * as THREE from "three";
 
 export async function getFirstPointId(req: Request, res: Response) {
   const firstPoint = await readDB(`SELECT keyframe_id FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes WHERE keyframe_id >= 0 LIMIT 1;`, [], true);
@@ -89,5 +90,88 @@ export async function getPointInfoFromId(req: Request, res: Response) {
   else {
     logger.warn(`[getPointInfoFromId] id doesn't exist, or pose not in pointData: ${id} data: ${pointData}`)
     res.status(400).send("Point ID given does not exist!").end()
+  }
+}
+
+/**
+ * Create a new point with the given position, type, and label
+ */
+export async function createNewPoint(req: Request, res: Response) {
+  const { x_trans, y_trans, z_trans, type, label, location, description } = req.body;
+
+  // Validate input
+  if (isNaN(Number(x_trans)) || isNaN(Number(y_trans)) || isNaN(Number(z_trans)) ||
+    isNaN(Number(type)) || !location || location.length > REASONABLE_MAX_STRING_SIZE) {
+    logger.warn(`[createNewPoint] Invalid arguments: x_trans=${x_trans}, y_trans=${y_trans}, z_trans=${z_trans}, type=${type}, location=${location}`);
+    res.status(400).send("Invalid Arguments").end();
+    return;
+  }
+
+  try {
+    await writeDB("BEGIN;");
+
+    // Create a default identity pose matrix
+    const identityMatrix = new THREE.Matrix4().identity();
+    const matrixArray = new Float64Array(16);
+    identityMatrix.toArray(matrixArray);
+
+    // Create a buffer from the matrix array
+    const poseBuffer = Buffer.from(matrixArray.buffer);
+
+    // 1. Insert into nodes table
+    const timestamp = Date.now();
+    const result = await writeDB(
+      `INSERT INTO ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes 
+       (ts, pose, x_trans, y_trans, z_trans, zone) 
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [timestamp, poseBuffer, x_trans, y_trans, z_trans, null]
+    );
+
+    // Get the last inserted ID
+    const lastIdResult = await readDB(
+      `SELECT last_insert_rowid() as id`,
+      [],
+      true
+    );
+
+    if (!lastIdResult || !('id' in lastIdResult)) {
+      throw new Error("Failed to get last inserted ID");
+    }
+
+    const keyframeId = lastIdResult.id;
+
+    // 2. Insert into node_locations table
+    await writeDB(
+      `INSERT INTO ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations 
+       (keyframe_id, location) VALUES (?, ?)`,
+      [keyframeId, location]
+    );
+
+    // 3. Insert into special_labels table if label is provided
+    if (label) {
+      await writeDB(
+        `INSERT INTO ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}special_labels 
+         (keyframe_id, label) VALUES (?, ?)`,
+        [keyframeId, label]
+      );
+    }
+
+    // 4. Insert into floorplan_points table
+    await writeDB(
+      `INSERT INTO ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_points 
+       (location, x, y, keyframe_id, type) VALUES (?, ?, ?, ?, ?)`,
+      [location, 0.5, 0.5, keyframeId, type || FLOOR_POINT_DEFAULT_TYPE]
+    );
+
+    await writeDB("COMMIT;");
+
+    res.status(201).json({
+      keyframe_id: keyframeId,
+      message: "Point created successfully"
+    });
+  } catch (error) {
+    await writeDB("ROLLBACK;");
+    logger.error(`[createNewPoint] Error creating point: ${error}`);
+    res.status(500).json({ message: "Error creating point" });
   }
 }
