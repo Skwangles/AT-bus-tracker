@@ -288,6 +288,7 @@ const VirtualTour: React.FC = () => {
             setCurrentId={setCurrentId}
             hotspots={hotspots}
             camRotation={camRotation}
+            isCreatingPoint={isCreatingPoint}
           />
           <Canvas
             currentId={currentId}

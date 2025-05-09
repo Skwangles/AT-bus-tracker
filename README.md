@@ -63,6 +63,30 @@ If you would like to blur faces, I suggest using a library like:
 https://github.com/thaytan/blur360
 It is slow, and intensive, however, will likely help
 
+# DB
+
+## Nodes
+
+Nodes represent a point in space relative to the real world.
+Node points can come in different types - elevator (1) and image (0 - normal points)
+Types:
+=
+
+## Edge
+
+Connects nodes together as a navigable path - these edges show up on the minimap in the top left, so don't go overboard - eventually should make it transitive simplified?
+
+- Idea: Localwindow search with DFS?
+
+Types:
+
+- Covisibility = -1 - when two points share X number of 'landmarks', they become covisibilities, that's what these edges are - effectively 'can they see each other;
+- Normal, - Pathfinable and neighbouring
+- Loop - Slam's point to identify an edge as making a loop
+- MergePoint - Idea is that 'Zones' will allow the technology to expand to very largescale, rather than the accumulated drift. These points note the points where you are expecting to line up exactly
+- EdgeContraction - Pruned edge made as a result of a node reduction (i.e. created between nodes by proximity, rather than sequential or loop closures, though often times bridge where a sequential connection might be because of node-reduction complications)
+- PathfindOnly - Pathfindable, but should not actually be used for the GetNeighbours search
+
 # Modules
 
 ### CampusVirtual-FileProcessing - Insta360 SDK and image processor
