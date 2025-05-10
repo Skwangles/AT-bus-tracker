@@ -1,3 +1,4 @@
+
 ![CampusVirtual: Large-scale Low-cost Panoramic Virtual Tours](logo/CampusVirtualLogo.png)
 
 ## Installing
@@ -183,3 +184,194 @@ Allowed options:
   --picture-dir arg (=pictures/) Keyframe image output dir - Default
                                  'pictures/'
 ```
+
+# CampusVirtual Environment Management System
+
+This system provides a flexible and secure way to manage environment configurations for different deployment scenarios. It uses a combination of JSON configuration files and environment files to manage settings across different environments.
+
+## System Architecture
+
+```mermaid
+graph TD
+    A[RUNME.sh] --> B[env_manager.sh]
+    B --> C[Load Base .env]
+    B --> D[Load Profile Config]
+    B --> E[Load .env.secrets]
+    B --> F[Load Project Secrets]
+    
+    D --> G[Process Features]
+    D --> H[Process Paths]
+    D --> I[Process Config]
+    
+    G --> J[Export Variables]
+    H --> J
+    I --> J
+    C --> J
+    E --> J
+    F --> J
+```
+
+## Configuration Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant RUNME
+    participant EnvManager
+    participant Config
+    participant Secrets
+    
+    User->>RUNME: ./RUNME.sh <profile>
+    RUNME->>EnvManager: Load Configuration
+    EnvManager->>Config: Load Base .env
+    EnvManager->>Config: Load Profile JSON
+    EnvManager->>Secrets: Load .env.secrets
+    EnvManager->>Secrets: Load Project Secrets
+    EnvManager->>Config: Process Features
+    EnvManager->>Config: Process Paths
+    EnvManager->>Config: Process Config
+    EnvManager->>User: Export Variables
+```
+
+## Configuration Structure
+
+```mermaid
+classDiagram
+    class Profile {
+        +String name
+        +Features features
+        +Paths paths
+        +Config config
+        +String env_file
+    }
+    
+    class Features {
+        +Boolean stitch_insv
+        +Boolean vslam_map
+        +Boolean edit_vslam
+        +Boolean export_db
+        +Boolean start_authoring
+        +Boolean start_server
+    }
+    
+    class Paths {
+        +String home_dir
+        +String video_dir
+        +String image_dir
+        +String db_dir
+        +String vslam_map_dir
+        +String json_dir
+        +String floorplan_dir
+    }
+    
+    class Config {
+        +Integer keyframe_img_name_dp
+        +String stitch_resolution
+        +Integer vslam_epoch_start
+        +Boolean vslam_map_headless
+        +String server_port
+        +Array strip_remove
+        +Array strip_keep_labels
+    }
+    
+    Profile --> Features
+    Profile --> Paths
+    Profile --> Config
+```
+
+## Usage
+
+1. **Base Configuration**
+   Create a `.env` file in the project root with common settings:
+   ```bash
+   CV_HOME_DIR=/path/to/campusvirtual
+   CV_VIDEO_DIR=/path/to/videos
+   CV_KEYFRAME_IMG_DIR=/path/to/images
+   ```
+
+2. **Profile Configuration**
+   Create a JSON configuration file in the `configs` directory (e.g., `configs/tga.json`):
+   ```json
+   {
+     "name": "tga",
+     "features": {
+       "start_authoring": true,
+       "start_server": true
+     },
+     "paths": {
+       "home_dir": "/path/to/campusvirtual",
+       "video_dir": "/path/to/videos"
+     },
+     "config": {
+       "stitch_resolution": "5760x2880",
+       "server_port": 3001
+     }
+   }
+   ```
+
+3. **Sensitive Data**
+   Create a `.env.secrets` file for sensitive information:
+   ```bash
+   POSTHOG_API_KEY=your_api_key_here
+   POSTHOG_HOST=https://app.posthog.com
+   ```
+
+4. **Running the System**
+   ```bash
+   ./RUNME.sh tga
+   ```
+
+## Environment Variables
+
+The system processes three types of configurations:
+
+1. **Features**: Boolean flags that control system behavior
+   - `CV_STITCH_INSV`
+   - `CV_VSLAM_MAP`
+   - `CV_START_AUTHORING`
+   - `CV_START_SERVER`
+
+2. **Paths**: Directory locations
+   - `CV_HOME_DIR`
+   - `CV_VIDEO_DIR`
+   - `CV_IMAGE_DIR`
+   - `CV_DB_DIR`
+   - `CV_VSLAM_MAP_DIR`
+   - `CV_JSON_DIR`
+   - `CV_FLOORPLAN_DIR`
+
+3. **Config**: System configuration parameters
+   - `CV_KEYFRAME_IMG_NAME_DP`
+   - `CV_STITCH_RESOLUTION`
+   - `CV_VSLAM_EPOCH_START`
+   - `CV_SERVER_PORT`
+   - `CV_STRIP_REMOVE`
+   - `CV_STRIP_KEEP_LABELS`
+
+## Security
+
+The system implements several security measures:
+
+1. Sensitive data is kept in `.env.secrets` files
+2. Project-specific secrets are isolated in their respective directories
+3. Environment variables are processed securely with proper validation
+4. JSON configuration files are validated before processing
+
+## Error Handling
+
+The system includes comprehensive error handling:
+
+1. Validates JSON configuration files
+2. Checks for required environment variables
+3. Validates file existence
+4. Provides clear error messages
+5. Handles array conversions safely
+
+## Best Practices
+
+1. Keep sensitive data in `.env.secrets` files
+2. Use meaningful profile names
+3. Document configuration changes
+4. Validate JSON before committing
+5. Use environment variable substitution for dynamic values
+6. Keep project-specific secrets isolated
