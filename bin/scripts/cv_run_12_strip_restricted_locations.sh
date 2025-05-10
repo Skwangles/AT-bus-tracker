@@ -26,9 +26,6 @@ ORIGINAL_DIR=$(pwd)
 [[ -z "$1" && (-z "$CV_STRIP_INPUT_DB" || -z "$CV_DB_DIR") ]] && error_exit "Input SQLite3 database is not provided as an argument or environment variable"
 [[ -z "$2" && (-z "$CV_STRIP_OUTPUT_DB" || -z "$CV_DB_DIR") ]] && error_exit "Output SQLite3 database is not provided as an argument or environment variable"
 [[ -z "$3" && -z "$CV_STRIP_REMOVE" ]] && error_exit "Remove list (locations) is not provided as an argument or environment variable"
-[[ -z "$4" && -z "$CV_STRIP_KEEP_ID" ]] && error_exit "Keep ID list is not provided as an argument or environment variable"
-[[ -z "$5" && -z "$CV_STRIP_KEEP_LABELS" ]] && error_exit "Keep labels list is not provided as an argument or environment variable"
-[[ -z "$6" && -z "$CV_STRIP_TABLE_PREFIX" ]] && error_exit "Table prefix provided as an argument or environment variable"
 
 # Assign arguments or environment variables
 INPUT_DB=${1:-$CV_DB_DIR/$CV_STRIP_INPUT_DB}
