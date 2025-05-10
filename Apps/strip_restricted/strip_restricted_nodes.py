@@ -44,6 +44,7 @@ def delete_filtered_nodes(prefix, db_cursor, remove_list, keep_id_list, keep_lab
     keep_label_str = ', '.join(f"'{label}'" for label in keep_labels)
     print("Deleteing with params: Prefix:", prefix, "Remove List:", remove_list, "Keep Id List:", keep_id_list, "Keep Labels:", keep_labels, "Del Non Prefix", del_non_prefix)
 
+    # First, delete the nodes
     query = f"""
     DELETE FROM {prefix}nodes
     WHERE EXISTS (
@@ -62,8 +63,22 @@ def delete_filtered_nodes(prefix, db_cursor, remove_list, keep_id_list, keep_lab
     """
     print("Running query:", query)
     db_cursor.execute(query)
-    print("Deleting: ", db_cursor.rowcount)
-    if del_non_prefix and prefix is not "": 
+    print("Deleting nodes: ", db_cursor.rowcount)
+
+    # Then, delete any orphaned labels (labels for nodes that no longer exist)
+    query = f"""
+    DELETE FROM {prefix}special_labels
+    WHERE NOT EXISTS (
+        SELECT 1
+        FROM {prefix}nodes
+        WHERE {prefix}special_labels.keyframe_id = {prefix}nodes.keyframe_id
+    );
+    """
+    print("Running query:", query)
+    db_cursor.execute(query)
+    print("Deleting orphaned labels: ", db_cursor.rowcount)
+
+    if del_non_prefix and prefix != "": 
         print("Deleting all tables not matching the table prefix")
         print("Removing tables: nodes, edges, node_locations, special_labels, floorplan_points, floorplan_images")
         response = input("Are you sure? (Y/n):")
@@ -77,7 +92,6 @@ def delete_filtered_nodes(prefix, db_cursor, remove_list, keep_id_list, keep_lab
             db_cursor.execute("DROP TABLE IF EXISTS special_labels;")
             db_cursor.execute("DROP TABLE IF EXISTS floorplan_points;")
             db_cursor.execute("DROP TABLE IF EXISTS floorplan_images;")
-            
 
 def main():
     args = parse_args()
