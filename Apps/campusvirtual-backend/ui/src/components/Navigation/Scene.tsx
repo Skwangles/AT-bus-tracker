@@ -181,7 +181,7 @@ const Scene: React.FC<SphereWithHotspotsProps> = ({
       previousImgMeshRef.current.opacity = lerp(
         previousImgMeshRef.current.opacity,
         0,
-        0.1
+        0.25
       );
       // currentImgMeshRef.current.opacity = 1;
     } else if (

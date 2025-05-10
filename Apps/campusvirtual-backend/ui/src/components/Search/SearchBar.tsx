@@ -157,7 +157,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
               }
             }}
             placeholder="Search a location..."
-            className="w-full px-3 py-2 text-sm border-2 border-gray-200 rounded-lg shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+            className="w-full px-3 py-2 text-sm border-2 border-gray-200 rounded-lg shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-gray-900"
             onFocus={() => {
               setIsFocused(true);
               if (!query)
