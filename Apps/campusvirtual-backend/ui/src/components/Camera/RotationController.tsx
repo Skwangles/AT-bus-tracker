@@ -18,46 +18,32 @@ const CameraRotationControls = ({ hotspots, setCurrentId, camRotation }) => {
     isMouseDown: false,
     startX: 0,
     startY: 0,
-    rotationSpeed: 0.002,
+    rotationSpeed: 0.03,
+    mouseRotationSpeed: 0.002,
     initialPitch: camRotation.current["pitch"],
     initialYaw: camRotation.current["yaw"],
     euler: new Euler(
       camRotation.current["pitch"] ?? 0,
-      camRotation.current["yaw"] ?? 0,
+      camRotation.current["yaw"] ?? 0,a
       0,
       "YXZ"
-    ), // Initialize Euler with initial rotation
+    ),
+    // Movement control properties
+    speed: 0.03,
+    isMoving: false,
+    direction: 0
   });
 
-  const DEFAULT_SPEED = 0.01;
-  const INTERVAL_TIMEOUT = 5;
-  const speed = useRef(DEFAULT_SPEED);
-  const speedIntervalUpDown = useRef<NodeJS.Timeout>();
-  const speedIntervalLeftRight = useRef<NodeJS.Timeout>();
-  const keyDown = useRef<string>("");
+  const keyDown = useRef<Set<string>>(new Set());
+  const animationFrameRef = useRef<number>();
 
   const protectFromFlippingPitch = (nextX) => {
-    // Limit pitch to avoid flipping
     return Math.max(-Math.PI / 2, Math.min(Math.PI / 2, nextX));
   };
 
   useEffect(() => {
     camera.rotation.copy(controlsRef.current.euler);
   }, [camera]);
-
-  const cancelUpDownInterval = () => {
-    clearInterval(speedIntervalUpDown.current);
-  };
-
-  const cancelLeftRightInterval = () => {
-    clearInterval(speedIntervalLeftRight.current);
-  };
-
-  const cancelInterval = () => {
-    cancelLeftRightInterval();
-    cancelUpDownInterval();
-    speed.current = DEFAULT_SPEED;
-  };
 
   const actionMoveDirection = (
     direction: MoveDirectionType,
@@ -72,11 +58,28 @@ const CameraRotationControls = ({ hotspots, setCurrentId, camRotation }) => {
     }
   };
 
+  const updateMovement = () => {
+    const controls = controlsRef.current;
+    
+    if (controls.isMoving) {
+      if (controls.direction === 1) {
+        camera.rotation.y -= controls.speed;
+        controls.euler.y = camera.rotation.y;
+      } else if (controls.direction === -1) {
+        camera.rotation.y += controls.speed;
+        controls.euler.y = camera.rotation.y;
+      }
+      
+      camRotation.current = {
+        yaw: camera.rotation.y,
+        pitch: camera.rotation.x,
+      };
+
+      animationFrameRef.current = requestAnimationFrame(updateMovement);
+    }
+  };
+
   const handleKeyDown = (event) => {
-    // Moves camera left or right based on arrow keys
-    // Slowly increases speed as key is held down
-    // Then set the interval to move the camera as long as the key is held down
-    console.log("keyDown", event.key, keyDown.current);
     const validKeys = [
       "ArrowLeft",
       "ArrowRight",
@@ -89,102 +92,110 @@ const CameraRotationControls = ({ hotspots, setCurrentId, camRotation }) => {
     ];
     if (!validKeys.includes(event.key)) return;
 
-    const isUpDown = event.key == "ArrowUp" || event.key == "ArrowDown";
-    const isCurrentKeyUpDown =
-      keyDown.current == "ArrowUp" || keyDown.current == "ArrowDown";
+    // Add key to set of pressed keys
+    keyDown.current.add(event.key);
 
-    if (isUpDown == isCurrentKeyUpDown && keyDown.current != event.key) {
-      if (isUpDown) {
-        cancelUpDownInterval();
-      } else {
-        cancelLeftRightInterval();
-      }
-    }
-
-    keyDown.current = event.key;
-
-    if (event.key === "ArrowLeft") {
-      cancelLeftRightInterval();
-      speedIntervalLeftRight.current = setInterval(() => {
-        camera.rotation.y += speed.current;
-        camRotation.current = {
-          yaw: camera.rotation.y,
-          pitch: camera.rotation.x,
-        };
-      }, INTERVAL_TIMEOUT);
-    } else if (event.key === "ArrowRight") {
-      cancelLeftRightInterval();
-      speedIntervalLeftRight.current = setInterval(() => {
-        camera.rotation.y -= speed.current;
-        camRotation.current = {
-          yaw: camera.rotation.y,
-          pitch: camera.rotation.x,
-        };
-      }, INTERVAL_TIMEOUT);
-    } else if (event.key === "ArrowUp") {
-      cancelUpDownInterval();
-      speedIntervalUpDown.current = setInterval(() => {
-        camera.rotation.x = protectFromFlippingPitch(
-          camera.rotation.x + speed.current
-        );
-        camRotation.current = {
-          yaw: camera.rotation.y,
-          pitch: camera.rotation.x,
-        };
-      }, INTERVAL_TIMEOUT);
-    } else if (event.key === "ArrowDown") {
-      cancelUpDownInterval();
-      speedIntervalUpDown.current = setInterval(() => {
-        camera.rotation.x = protectFromFlippingPitch(
-          camera.rotation.x - speed.current
-        );
-        camRotation.current = {
-          yaw: camera.rotation.y,
-          pitch: camera.rotation.x,
-        };
-      }, INTERVAL_TIMEOUT);
-    }
-    // WASD movements on moveDirection
-    else if (event.key === "w") {
+    // Handle WASD movement first
+    if (event.key === "w") {
       actionMoveDirection(
         MoveDirectionType.Forward,
         camera,
         hotspotsRef.current
       );
+      return;
     } else if (event.key === "s") {
       actionMoveDirection(
         MoveDirectionType.Backward,
         camera,
         hotspotsRef.current
       );
+      return;
     } else if (event.key === "a") {
       actionMoveDirection(MoveDirectionType.Left, camera, hotspotsRef.current);
+      return;
     } else if (event.key === "d") {
       actionMoveDirection(MoveDirectionType.Right, camera, hotspotsRef.current);
-    } else {
-      cancelInterval();
+      return;
+    }
+
+    // Handle arrow keys
+    if (event.key === "ArrowLeft") {
+      controlsRef.current.isMoving = true;
+      controlsRef.current.direction = -1;
+      if (!animationFrameRef.current) {
+        animationFrameRef.current = requestAnimationFrame(updateMovement);
+      }
+    } else if (event.key === "ArrowRight") {
+      controlsRef.current.isMoving = true;
+      controlsRef.current.direction = 1;
+      if (!animationFrameRef.current) {
+        animationFrameRef.current = requestAnimationFrame(updateMovement);
+      }
+    } else if (event.key === "ArrowUp") {
+      camera.rotation.x = protectFromFlippingPitch(
+        camera.rotation.x + controlsRef.current.rotationSpeed
+      );
+      controlsRef.current.euler.x = camera.rotation.x;
+      camRotation.current = {
+        yaw: camera.rotation.y,
+        pitch: camera.rotation.x,
+      };
+    } else if (event.key === "ArrowDown") {
+      camera.rotation.x = protectFromFlippingPitch(
+        camera.rotation.x - controlsRef.current.rotationSpeed
+      );
+      controlsRef.current.euler.x = camera.rotation.x;
+      camRotation.current = {
+        yaw: camera.rotation.y,
+        pitch: camera.rotation.x,
+      };
     }
   };
 
   const handleKeyUp = (event) => {
-    console.log("keyUp", event.key, keyDown.current);
-    if (event.key === keyDown.current) {
-      cancelInterval();
+    // Remove key from set of pressed keys
+    keyDown.current.delete(event.key);
+
+    // Check if we should stop horizontal movement
+    if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+      // Only stop if neither left nor right arrow is pressed
+      if (!keyDown.current.has("ArrowLeft") && !keyDown.current.has("ArrowRight")) {
+        controlsRef.current.isMoving = false;
+        if (animationFrameRef.current) {
+          cancelAnimationFrame(animationFrameRef.current);
+          animationFrameRef.current = undefined;
+        }
+      } else {
+        // Update direction based on remaining pressed key
+        if (keyDown.current.has("ArrowLeft")) {
+          controlsRef.current.direction = -1;
+        } else if (keyDown.current.has("ArrowRight")) {
+          controlsRef.current.direction = 1;
+        }
+      }
     }
   };
 
   useEffect(() => {
-    // Keyboard controls
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
   }, []);
 
   useEffect(() => {
     const handleMouseDown = (event) => {
-      cancelInterval();
       controlsRef.current.isMouseDown = true;
       controlsRef.current.startX = event.clientX;
       controlsRef.current.startY = event.clientY;
+      // Sync Euler angles with current camera rotation
+      controlsRef.current.euler.copy(camera.rotation);
     };
 
     const handleMouseUp = () => {
@@ -196,10 +207,11 @@ const CameraRotationControls = ({ hotspots, setCurrentId, camRotation }) => {
     };
 
     const handleTouchStart = (event) => {
-      cancelInterval();
       controlsRef.current.isMouseDown = true;
       controlsRef.current.startX = event.touches[0].clientX;
       controlsRef.current.startY = event.touches[0].clientY;
+      // Sync Euler angles with current camera rotation
+      controlsRef.current.euler.copy(camera.rotation);
     };
 
     const handleMouseMove = (event) => {
@@ -213,9 +225,9 @@ const CameraRotationControls = ({ hotspots, setCurrentId, camRotation }) => {
       controlsRef.current.startX = currentX;
       controlsRef.current.startY = currentY;
 
-      // Update Euler rotation
-      controlsRef.current.euler.y += deltaX * controlsRef.current.rotationSpeed;
-      controlsRef.current.euler.x += deltaY * controlsRef.current.rotationSpeed;
+      // Update Euler rotation with mouse sensitivity
+      controlsRef.current.euler.y += deltaX * controlsRef.current.mouseRotationSpeed;
+      controlsRef.current.euler.x += deltaY * controlsRef.current.mouseRotationSpeed;
 
       // Limit pitch to avoid flipping
       controlsRef.current.euler.x = protectFromFlippingPitch(
@@ -230,8 +242,7 @@ const CameraRotationControls = ({ hotspots, setCurrentId, camRotation }) => {
     };
 
     const handleTouchMove = (event) => {
-      if (!controlsRef.current.isMouseDown || event.touches.length !== 1)
-        return;
+      if (!controlsRef.current.isMouseDown || event.touches.length !== 1) return;
 
       const currentX = event.touches[0].clientX;
       const currentY = event.touches[0].clientY;
@@ -241,9 +252,9 @@ const CameraRotationControls = ({ hotspots, setCurrentId, camRotation }) => {
       controlsRef.current.startX = currentX;
       controlsRef.current.startY = currentY;
 
-      // Update Euler rotation
-      controlsRef.current.euler.y += deltaX * controlsRef.current.rotationSpeed;
-      controlsRef.current.euler.x += deltaY * controlsRef.current.rotationSpeed;
+      // Update Euler rotation with mouse sensitivity
+      controlsRef.current.euler.y += deltaX * controlsRef.current.mouseRotationSpeed;
+      controlsRef.current.euler.x += deltaY * controlsRef.current.mouseRotationSpeed;
 
       // Limit pitch to avoid flipping
       controlsRef.current.euler.x = Math.max(
