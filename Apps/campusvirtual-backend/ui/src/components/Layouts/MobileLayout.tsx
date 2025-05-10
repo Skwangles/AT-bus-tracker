@@ -56,27 +56,31 @@ export const MobileLayout: React.FC<MobileLayout> = ({
           {/* Loading indicator */}
           {isLoading && (
             <div className="loading-spinner">
-              <div className="bg-white/80 backdrop-blur-sm rounded-lg p-4 shadow-lg">
-                <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+              <div className="bg-white/90 backdrop-blur-sm rounded-lg p-6 shadow-lg">
+                <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
               </div>
             </div>
           )}
 
           {/* Location indicator with chevron */}
           <div
-            className={`fixed left-1/2 -translate-x-1/2 z-[999] bg-[#101010F0] text-white px-4 py-2 shadow-lg flex items-center gap-2 cursor-pointer ${
+            className={`fixed left-1/2 -translate-x-1/2 z-[999] bg-[#101010F0] text-white px-6 py-4 shadow-lg flex items-center gap-3 cursor-pointer ${
               showMobileMenu ? "rounded-t-xl" : "rounded-xl"
             }`}
             style={{
-              bottom: showMobileMenu ? `${drawerHeight}px` : "1rem", // Adjust to align with drawer
+              bottom: showMobileMenu ? `${drawerHeight}px` : "1rem",
               transition: "all 0.3s ease-in-out",
+              minHeight: "44px",
             }}
             onClick={() => setShowMobileMenu(!showMobileMenu)}
+            role="button"
+            aria-label="Toggle location menu"
+            tabIndex={0}
           >
-            <MapPin className="w-5 h-5" />
-            <span>You are in: {currentPoint.location}</span>
+            <MapPin className="w-6 h-6 text-blue-400" />
+            <span className="text-lg font-medium">You are in: {currentPoint.location}</span>
             <ChevronUp
-              className={`w-5 h-5 transition-transform duration-300 ${
+              className={`w-6 h-6 text-blue-400 transition-transform duration-300 ${
                 showMobileMenu ? "rotate-180" : ""
               }`}
             />
@@ -89,17 +93,17 @@ export const MobileLayout: React.FC<MobileLayout> = ({
               showMobileMenu ? "rounded-b-xl" : "rounded-xl"
             }`}
             style={{
-              bottom: showMobileMenu ? "0" : `-${drawerHeight}px`, // Use negative height to hide the drawer completely
-              width: "90%", // Match the width of the location indicator
-              maxHeight: "70vh", // Set a max height to prevent overflow
-              overflowY: "auto", // Allow scrolling if content exceeds max height
+              bottom: showMobileMenu ? "0" : `-${drawerHeight}px`,
+              width: "90%",
+              maxHeight: "70vh",
+              overflowY: "auto",
               transition: "all 0.3s ease-in-out",
               zIndex: 998,
             }}
           >
-            <div className="p-4 space-y-4">
+            <div className="p-6 space-y-6">
               {/* Floor controls */}
-              <div className="border-t border-gray-700 pt-4">
+              <div className="border-t border-gray-700 pt-6">
                 <LocationChangeControls
                   canGoUp={canGoUp}
                   canGoDown={canGoDown}
@@ -124,10 +128,11 @@ export const MobileLayout: React.FC<MobileLayout> = ({
           )}
           {/* Instructions button */}
           <button
-            className="fixed bottom-4 right-4 z-[1001] bg-white/90 hover:bg-white rounded-full p-3 shadow-lg flex items-center justify-center"
+            className="fixed bottom-6 right-6 z-[1001] bg-white/90 hover:bg-white rounded-full p-4 shadow-lg flex items-center justify-center min-h-[44px] min-w-[44px]"
             onClick={() => setInstructionsOpen(!isInstructionsOpen)}
+            aria-label="Toggle instructions"
           >
-            <Info className="w-5 h-5 text-black" />
+            <Info className="w-6 h-6 text-black" />
           </button>
         </>
       )}
