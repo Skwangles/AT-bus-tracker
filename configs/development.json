@@ -1,0 +1,27 @@
+{
+  "name": "development",
+  "features": {
+    "stitch_insv": true,
+    "vslam_map": true,
+    "edit_vslam": true,
+    "export_db": true,
+    "precalculate_image_sharpness": true,
+    "graph_prune": true,
+    "merge_maps": false,
+    "edit_db_visually": true,
+    "extract_used_images": true,
+    "init_data": true,
+    "start_authoring": true,
+    "strip_restricted_nodes": false,
+    "start_server": true
+  },
+  "paths": {
+    "home_dir": "${CV_HOME_DIR}",
+    "video_dir": "${CV_VIDEO_DIR}",
+    "image_dir": "${CV_KEYFRAME_IMG_DIR}",
+    "db_dir": "${CV_DB_DIR}",
+    "vslam_map_dir": "${CV_VSLAM_MAP_DIR}",
+    "json_dir": "${CV_JSON_DIR}"
+  },
+  "env_file": ".env.development"
+} 

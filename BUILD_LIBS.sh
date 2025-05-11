@@ -47,7 +47,7 @@ sudo apt install -y build-essential pkg-config cmake git wget curl unzip
 # g2o dependencies
 sudo apt install -y libatlas-base-dev libsuitesparse-dev libdw-dev libdwarf-dev
 # OpenCV dependencies
-sudo apt install -y libgtk-3-dev ffmpeg libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libavresample-dev libtbb-dev
+sudo apt install -y libgtk-3-dev ffmpeg libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libswresample-dev libtbb-dev
 # eigen dependencies
 sudo apt install -y gfortran
 # backward-cpp dependencies (optional)
@@ -66,8 +66,8 @@ sudo apt install -y libglm-dev libglfw3-dev libpng-dev libjpeg-dev libeigen3-dev
 # Protobuf dependencies
 sudo apt install -y autogen autoconf libtool
 # Node.js
-sudo apt install -y nodejs
-sudo apt install -y npm
+# sudo apt install -y nodejs
+# sudo apt install -y npm
 
 
 

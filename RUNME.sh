@@ -1,7 +1,5 @@
 #!/bin/bash
 
-echo "Usage: $0 <custom env file path>"
-
 # Exit on error
 set -e
 
@@ -13,105 +11,100 @@ check_command() {
   fi
 }
 
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )" # https://saturncloud.io/blog/how-to-get-the-directory-where-a-bash-script-is-located/#:~:text=The%20first%20method%20to%20get,directory%20name%20from%20the%20path.
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
+# Check if profile name is provided
 if [ -z "$1" ]; then
-  source $SCRIPT_DIR/SOURCE_SETUP.sh
-else
-  echo "Sourcing from custom env file: $1"
-  source $SCRIPT_DIR/SOURCE_SETUP.sh $1
-  if [ $? -ne 0 ]; then
-    echo "Failed to source custom env file: $1"
+    echo "Usage: $0 <profile_name> [custom_env_file]"
     exit 1
-  fi
 fi
 
+# Load environment using the new manager
+source "$SCRIPT_DIR/bin/scripts/env_manager.sh" "$1" "$2"
+check_command "Loading environment configuration"
 
-if [ -z "$CV_HOME_DIR" ]; then
-  echo "Failed to add environment variables to path - please check the variable is being exported in the env file and that SOURCE_SETUP.sh has been run"
-  exit 1
-fi
-
+# Make scripts executable
 sudo chmod +x $CV_HOME_DIR/bin/scripts/*.sh
-check_command "sudo chmod +x $CV_HOME_DIR/bin/scripts/*.sh"
+check_command "Making scripts executable"
 
 cd $CV_HOME_DIR || { echo "Failed to change directory to $CV_HOME_DIR"; exit 1; }
 
+# Copy environment files to subdirectories
 ./bin/scripts/cv_run_0_copy_env_file.sh
-check_command "./bin/scripts/cv_run_0_copy_env_file.sh"
+check_command "Copying environment files"
 
-# Optionally build dependencies
-# ./BUILD_LIBS.sh
-check_command "./BUILD_LIBS.sh"
+# Build dependencies
+./BUILD_LIBS.sh
+check_command "Building dependencies"
 
 echo "Building CampusVirtual Files"
 ./BUILD_CAMPUS_VIRTUAL.sh
-check_command "./BUILD_CAMPUS_VIRTUAL.sh"
+check_command "Building CampusVirtual"
 
-if [ "$CV_STITCH_INSV_FILES" == true ]; then
+# Run features based on configuration
+if [ "$CV_STITCH_INSV" == true ]; then
   ./bin/scripts/cv_run_1_process_files.sh
-  check_command "./bin/scripts/cv_run_1_process_files.sh"
+  check_command "Processing files"
 fi
 
-if [ "$CV_VSLAM_MAP_VIDEOS" == true ]; then
+if [ "$CV_VSLAM_MAP" == true ]; then
   ./bin/scripts/cv_run_2_map.sh
-  check_command "./bin/scripts/cv_run_2_map.sh"
+  check_command "Mapping videos"
 fi
 
-if [ "$CV_EDIT_VSLAM_MAP" == true ]; then
+if [ "$CV_EDIT_VSLAM" == true ]; then
   ./bin/scripts/cv_run_3_edit_vslam_map.sh
-  check_command "./bin/scripts/cv_run_3_view_vslam_map.sh"
+  check_command "Editing VSLAM map"
 fi
 
 if [ "$CV_EXPORT_DB" == true ]; then
   ./bin/scripts/cv_run_4_export_sqlite.sh
-  check_command "./bin/scripts/cv_run_4_export_sqlite.sh"
+  check_command "Exporting to SQLite"
 fi
 
 if [ "$CV_PRECALCULATE_IMAGE_SHARPNESS" == true ]; then
   ./bin/scripts/cv_run_5_sharpness_calculate.sh
-  check_command "./bin/scripts/cv_run_5_sharpness_calculate.sh"
+  check_command "Calculating image sharpness"
 fi
 
 if [ "$CV_GRAPH_PRUNE" == true ]; then
   ./bin/scripts/cv_run_6_prune_graph.sh
-  check_command "./bin/scripts/cv_run_6_prune_graph.sh"
+  check_command "Pruning graph"
 fi
 
 if [ "$CV_MERGE_MAPS" == true ]; then
   ./bin/scripts/cv_run_7_merge_maps.sh
-  check_command "./bin/scripts/cv_run_7_merge_maps.sh"
+  check_command "Merging maps"
 fi
 
 if [ "$CV_EDIT_DB_VISUALLY" == true ]; then
   ./bin/scripts/cv_run_8_edit_db.sh
-  check_command "./bin/scripts/cv_run_8_view_db.sh"
+  check_command "Editing database visually"
 fi
 
 if [ "$CV_EXTRACT_USED_IMAGES" == true ]; then
   ./bin/scripts/cv_run_9_extract_images.sh
-  check_command "./bin/scripts/cv_run_9_extract_images.sh"
+  check_command "Extracting used images"
 fi
 
 if [ "$CV_INIT_DATA" == true ]; then
   ./bin/scripts/cv_run_10_init_data.sh
-  check_command "./bin/scripts/cv_run_10_init_data.sh"
+  check_command "Initializing data"
 fi
-
 
 if [ "$CV_START_AUTHORING" == true ]; then
   ./bin/scripts/cv_run_11_start_authoring.sh
-  check_command "./bin/scripts/cv_run_11_start_authoring.sh"
+  check_command "Starting authoring system"
 fi
 
 if [ "$CV_STRIP_RESTRICTED_NODES" == true ]; then
   ./bin/scripts/cv_run_12_strip_restricted_locations.sh
-  check_command "cv_run_12_strip_restricted_locations.sh"
+  check_command "Stripping restricted locations"
 fi
 
 if [ "$CV_START_SERVER" == true ]; then
   ./bin/scripts/cv_run_13_start_frontend.sh
-  check_command "./bin/scripts/cv_run_11_start_frontend.sh"
+  check_command "Starting frontend server"
 fi
 
 echo "Script completed successfully."
