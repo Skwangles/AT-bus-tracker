@@ -17,7 +17,7 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 if [ -z "$1" ]; then
     echo "Usage: $0 <profile_name> [custom_env_file]"
     exit 1
-fi
+  fi
 
 # Load environment using the new manager
 source "$SCRIPT_DIR/bin/scripts/env_manager.sh" "$1" "$2"
