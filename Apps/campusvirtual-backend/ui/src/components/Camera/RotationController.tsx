@@ -24,7 +24,7 @@ const CameraRotationControls = ({ hotspots, setCurrentId, camRotation }) => {
     initialYaw: camRotation.current["yaw"],
     euler: new Euler(
       camRotation.current["pitch"] ?? 0,
-      camRotation.current["yaw"] ?? 0,a
+      camRotation.current["yaw"] ?? 0,
       0,
       "YXZ"
     ),
