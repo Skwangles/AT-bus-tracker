@@ -2,7 +2,6 @@ import { Request, Response } from "express";
 import path from "path";
 import sharp from "sharp";
 import {
-  SEND_TEST_IMAGE,
   KEYFRAME_IMG_DIR,
   KEYFRAME_IMG_EXTENSION,
   USE_TABLE_PREFIX,
@@ -42,12 +41,6 @@ export async function getImageByTs(req: Request, res: Response): Promise<void> {
       ).join(", ")}`
     );
     res.status(400).send("Invalid Arguments");
-    return;
-  }
-
-  if (SEND_TEST_IMAGE) {
-    logger.debug(`[getImageByTs] Sending test image enabled!`);
-    res.sendFile(path.join(KEYFRAME_IMG_DIR, "test.jpg"));
     return;
   }
 
