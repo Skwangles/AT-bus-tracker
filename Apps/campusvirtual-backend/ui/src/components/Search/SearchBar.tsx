@@ -64,29 +64,33 @@ const SearchBar: React.FC<SearchBarProps> = ({
     localStorage.setItem("recentSearches", JSON.stringify(updated));
   };
 
+  const getFormattedLabel = (label: Label): string => {
+    if (label.type === 2) { // Elevator type
+      return `Elevator: ${label.label} (${label.group})`;
+    }
+    return getLabelLongName(label.group, label.label);
+  };
+
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const value = event.target.value;
+    const value = event.target.value.toLowerCase();
     setQuery(value);
     if (value) {
       const filteredSuggestions = searchableLabels.filter((item) => {
-        const largeName = getLabelLongName(item.group, item.label);
-        const result =
-          largeName.includes(value.toLowerCase()) &&
-          value.length <= largeName.length;
-        return result;
+        const formattedLabel = getFormattedLabel(item);
+        return formattedLabel.toLowerCase().includes(value);
       });
       setSuggestions(
-        filteredSuggestions.sort((a, b) => a.label.localeCompare(b.label))
+        filteredSuggestions.sort((a, b) => getFormattedLabel(a).localeCompare(getFormattedLabel(b)))
       );
     } else {
       setSuggestions(
-        searchableLabels.sort((a, b) => a.label.localeCompare(b.label))
+        searchableLabels.sort((a, b) => getFormattedLabel(a).localeCompare(getFormattedLabel(b)))
       );
     }
   };
 
   const handleSuggestionClick = (suggestion: Label, hide = true) => {
-    setQuery(getLabelLongName(suggestion.group, suggestion.label));
+    setQuery(getFormattedLabel(suggestion));
     if (hide) {
       inputRef.current?.focus();
       setIsFocused(false);
@@ -100,11 +104,9 @@ const SearchBar: React.FC<SearchBarProps> = ({
       return;
     }
 
-    // Find the label object based on long name or short name
+    // Find the label object based on formatted name or short name
     let labelObj = searchableLabels.find((v: Label) =>
-      getLabelLongName(v.group, v.label)
-        .toLowerCase()
-        .includes(label.toLowerCase())
+      getFormattedLabel(v).toLowerCase().includes(label.toLowerCase())
     );
     if (!labelObj) {
       labelObj = searchableLabels.find(
@@ -131,14 +133,14 @@ const SearchBar: React.FC<SearchBarProps> = ({
     } else {
       jumpToCallback(labelObj.query);
     }
-    setQuery(labelObj.label);
+    setQuery(getFormattedLabel(labelObj));
     setIsFocused(false);
   };
 
   const clearSearch = () => {
     setQuery("");
     setSuggestions(
-      searchableLabels.sort((a, b) => a.label.localeCompare(b.label))
+      searchableLabels.sort((a, b) => getFormattedLabel(a).localeCompare(getFormattedLabel(b)))
     );
   };
 
@@ -163,7 +165,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
               if (!query)
                 setSuggestions(
                   searchableLabels.sort((a, b) =>
-                    a.label.localeCompare(b.label)
+                    getFormattedLabel(a).localeCompare(getFormattedLabel(b))
                   )
                 );
             }}

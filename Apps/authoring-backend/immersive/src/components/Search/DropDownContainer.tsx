@@ -51,41 +51,41 @@ export default function DropDownContainer({
   }
 
   useEffect(() => {
-    // 1. Populate top level group names
-    const dict = {}
-    for (const val of suggestions) {
-      if (val.type == LabelType.Group) {
-        dict[val.label.trim().toLowerCase()] = [val]
-      } else if (val.type == LabelType.Elevator) {
-        dict[val.group!.trim().toLowerCase() ?? 'elevator'] = [val]
-      }
-    }
-
-    const groupedLabels = { ...dict }
+    // 1. First, group all labels by their group
+    const groupedLabels = {}
     for (const label of suggestions) {
-      if (label.type == LabelType.Group) {
-        continue
+      const group = label.group?.trim().toLowerCase() ?? 'elevator'
+      
+      if (!groupedLabels[group]) {
+        // Initialize group with a parent label
+        groupedLabels[group] = [{
+          query: label.group,
+          label: label.group,
+          group: null,
+          type: LabelType.Group,
+        }]
       }
-
-      const group = label.group!.trim().toLowerCase()
-      if (groupedLabels[group]) {
-        groupedLabels[group].push(label)
-      } else {
-        groupedLabels[group] = [
-          {
-            // If doesn't exist, keep the high level
-            query: label.group,
-            label: label.group,
-            group: null,
-            type: LabelType.Group,
-          },
-          label,
-        ]
-      }
+      
+      // Add the label to its group
+      groupedLabels[group].push(label)
     }
 
-    setDisplaySuggestions(groupedLabels ?? {})
-  }, [suggestions])
+    // 2. If there's a search query, expand groups that have matching children
+    if (query) {
+      const queryLower = query.toLowerCase()
+      Object.keys(groupedLabels).forEach(group => {
+        const hasMatchingChild = groupedLabels[group].some(label => 
+          label.label.toLowerCase().includes(queryLower) ||
+          (label.type === LabelType.Elevator && label.shaft?.toLowerCase().includes(queryLower))
+        )
+        if (hasMatchingChild) {
+          setExpandedFloor(groupedLabels[group][0].label)
+        }
+      })
+    }
+
+    setDisplaySuggestions(groupedLabels)
+  }, [suggestions, query])
 
   return (
     <div

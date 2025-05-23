@@ -35,7 +35,7 @@ export async function getAllSearchableLabels(req: Request, res: Response) {
     return {
       query: location.location,
       label: location.location,
-      group: null,
+      group: location.location,
       type: LabelType.GroupName
     }
   })
@@ -77,7 +77,8 @@ export async function getAllSearchableLabels(req: Request, res: Response) {
 
       return {
         query: label.label,
-        group: splitElevator[1].trim(), // the Elevator group name will be its own location e.g. 'Elevator Shaft 1'
+        group: label.location.trim(),
+        shaft: splitElevator[1].trim(), // the Elevator shaft name e.g. 'Elevator Shaft 1'
         label: splitElevator[2]?.trim() ?? label.location, // e.g. 'Floor 1 Entry'
         type: LabelType.Elevator
       }
@@ -103,13 +104,15 @@ export async function getAllSearchableLabels(req: Request, res: Response) {
 }
 
 export async function getPointWithLocationGroupOrLabelName(req: Request, res: Response) {
-  const name = String(req.params.floor).trim()
+  const name = String(req.params.locationgroup).trim()
+  console.log("Params: ", req.params)
 
   if (!name || name == "" || name.length > REASONABLE_MAX_STRING_SIZE) {
     logger.warn(`[GetPointWithLocGroupOrLabelName] Invalid name: ${name}`)
     res.status(400).send("Invalid Arguments").end()
     return
   }
+
 
   // Get FIRST node which has that location/label
   const nodeWithSpecialLabel = await readDB(`SELECT n.keyframe_id, s.label FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}special_labels s ON s.keyframe_id = n.keyframe_id WHERE s.label = ? LIMIT 1`, [name], true)

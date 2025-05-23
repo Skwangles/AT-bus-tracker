@@ -103,7 +103,7 @@ export async function getAllSearchableLabels(req: Request, res: Response) {
 }
 
 export async function getPointWithLocationGroupOrLabelName(req: Request, res: Response) {
-  const name = String(req.params.floor).trim()
+  const name = String(req.params.name).trim()
 
   if (!name || name == "" || name.length > REASONABLE_MAX_STRING_SIZE) {
     logger.warn(`[GetPointWithLocGroupOrLabelName] Invalid name: ${name}`)
