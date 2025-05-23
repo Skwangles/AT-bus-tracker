@@ -44,7 +44,7 @@ async function copyFileIfExists(file: string | number, input_pic_dir: string, ou
   const filePath = path.join(input_pic_dir, Number(file).toFixed(ts_dp) + img_ext);
   const outputPath = path.join(output_pic_dir, Number(file).toFixed(ts_dp) + img_ext);
   console.log(filePath, "to", outputPath);
-  if (fs.existsSync(filePath) && !fs.existsSync(outputPath)) {
+  if (fs.existsSync(filePath) && !fs.existsSync(outputPath)) {  
     await fs.promises.copyFile(filePath, outputPath);
   }
 }
