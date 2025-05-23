@@ -4,18 +4,15 @@ This repository contains the containerized microservices for the Campus Virtual 
 
 ## Architecture Overview
 
-```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│  Model          │     │  Map            │     │  Blurring       │
-│  Generation     │────▶│  Processing     │────▶│  Service        │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
-        │                       │                       │
-        │                       │                       │
-        ▼                       ▼                       ▼
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│  Authoring      │◀────│  Frontend       │     │  Control        │
-│  Service        │     │  Dashboard      │     │  Dashboard      │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
+```mermaid
+graph TD
+    A[Model Generation] --> B[Map Processing]
+    B --> C[Blurring Service]
+    A --> D[Authoring Service]
+    B --> D
+    C --> D
+    E[Frontend Dashboard] --> D
+    E --> F[Control Dashboard]
 ```
 
 ## Services
