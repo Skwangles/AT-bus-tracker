@@ -29,3 +29,5 @@ export interface LocationGroup {
   name: string;
   description?: string;
 } 
+
+export type ThreeNumbersArray = [number, number, number];
