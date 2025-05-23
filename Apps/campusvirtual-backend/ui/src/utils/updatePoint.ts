@@ -34,9 +34,17 @@ export const fetchPointData = async (
   setCurrentImage: React.Dispatch<React.SetStateAction<string>>,
   setHotspots: React.Dispatch<React.SetStateAction<HotspotObj[]>>,
   currentPosition: React.MutableRefObject<THREE.Vector3>,
-  imageRotation: React.MutableRefObject<ThreeNumbersArray>
+  imageRotation: React.MutableRefObject<ThreeNumbersArray>,
+  setCurrentId?: React.Dispatch<React.SetStateAction<string>>
 ) => {
   try {
+    // If ID is -1, get the first point ID and update state
+    if (pointId === "-1" && setCurrentId) {
+      const firstPointResponse = await axios.get(`${API_PREFIX}/api/v1/point/first`);
+      setCurrentId(firstPointResponse.data.toString());
+      return; // Let the effect hook handle the process with the new ID
+    }
+
     const { point, neighbours } = await getPointAndNeighbours(pointId);
 
     if (!checkPoint(point)) {
