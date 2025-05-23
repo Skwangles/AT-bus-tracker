@@ -1,7 +1,7 @@
 import path from 'path'
 import cors from 'cors'
 import express from 'express'
-import { PORT } from './consts'
+import { PORT} from './consts'
 import pointsRoutes from './routes/points.routes'
 import imageRoutes from './routes/image.routes'
 import locationGroupRoutes from './routes/locationGroups.routes'
@@ -12,8 +12,6 @@ import os from 'os'
 import { rateLimit } from 'express-rate-limit'
 
 const numCPUs = os.cpus().length // Get the number of CPU cores
-
-
 
 // If this is the master process, fork workers
 if (cluster.isPrimary) {
@@ -42,7 +40,6 @@ if (cluster.isPrimary) {
   app.use(cors({ origin: '*' }))
   app.use(express.static(path.join(__dirname, '../ui/dist')))
 
-
   const limiter = rateLimit({
     windowMs: 10 * 1000, // 10 sec window, for x many requests
     limit: 100,
@@ -57,11 +54,11 @@ if (cluster.isPrimary) {
     res.sendFile(path.join(__dirname, '../ui/dist', 'index.html'))
   })
 
-  // Register routes
-  app.use(pointsRoutes)
-  app.use(imageRoutes)
-  app.use(locationGroupRoutes)
-  app.use(mapRoutes)
+  // Register routes with API prefix
+  app.use(`/api/v1/point`, pointsRoutes)
+  app.use(`/api/v1/image`, imageRoutes)
+  app.use(`/api/v1/locationgroup`, locationGroupRoutes)
+  app.use(`/api/v1/map`, mapRoutes)
 
   // Start the Express server on a worker
   app.listen(PORT, () => {

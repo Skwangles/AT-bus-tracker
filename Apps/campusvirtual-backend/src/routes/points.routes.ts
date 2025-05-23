@@ -1,14 +1,11 @@
 import { Router } from "express";
-import { findNeigboursFromPointId, getFirstPointId, getPointInfoFromId, pathfindFromPointId } from "../controllers/points.controller";
+import { getFirstPointId, pathfindFromPointId, findNeigboursFromPointId, getPointInfoFromId } from "../controllers/points.controller";
 
-const app = Router();
+const router = Router();
 
-app.get('/api/v1/point/:id/path/:location', pathfindFromPointId);
+router.get("/first", getFirstPointId);
+router.get("/:id", getPointInfoFromId);
+router.get("/:id/neighbours/:distance_thresh_m/:y_dist_thresh_m", findNeigboursFromPointId);
+router.get("/:id/pathfind/:location", pathfindFromPointId);
 
-app.get('/api/v1/point/:id/neighbours/:distance_thresh_m/:y_dist_thresh_m', findNeigboursFromPointId)
-
-app.get('/api/v1/point/:id', getPointInfoFromId)
-
-app.get('/api/v1/point', getFirstPointId)
-
-export default app;
+export default router;
