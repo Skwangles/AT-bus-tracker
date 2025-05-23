@@ -1,5 +1,5 @@
 import { useThree } from "@react-three/fiber";
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { Euler } from "three";
 import { HotspotObj, MoveDirectionType } from "../../types";
 import * as THREE from "three";
@@ -9,6 +9,7 @@ import { toast } from "react-toastify";
 const CameraRotationControls = ({ hotspots, setCurrentId, camRotation }) => {
   const { camera, gl } = useThree();
   const hotspotsRef = useRef(hotspots);
+  const [isCanvasFocused, setIsCanvasFocused] = useState(false);
 
   useEffect(() => {
     hotspotsRef.current = hotspots;
@@ -80,6 +81,9 @@ const CameraRotationControls = ({ hotspots, setCurrentId, camRotation }) => {
   };
 
   const handleKeyDown = (event) => {
+    // Only handle keyboard events if canvas is focused
+    if (!isCanvasFocused) return;
+
     const validKeys = [
       "ArrowLeft",
       "ArrowRight",
@@ -153,6 +157,9 @@ const CameraRotationControls = ({ hotspots, setCurrentId, camRotation }) => {
   };
 
   const handleKeyUp = (event) => {
+    // Only handle keyboard events if canvas is focused
+    if (!isCanvasFocused) return;
+
     // Remove key from set of pressed keys
     keyDown.current.delete(event.key);
 
@@ -187,7 +194,7 @@ const CameraRotationControls = ({ hotspots, setCurrentId, camRotation }) => {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, []);
+  }, [isCanvasFocused]); // Add isCanvasFocused to dependencies
 
   useEffect(() => {
     const handleMouseDown = (event) => {
@@ -196,6 +203,8 @@ const CameraRotationControls = ({ hotspots, setCurrentId, camRotation }) => {
       controlsRef.current.startY = event.clientY;
       // Sync Euler angles with current camera rotation
       controlsRef.current.euler.copy(camera.rotation);
+      // Set canvas as focused when mouse is clicked on it
+      setIsCanvasFocused(true);
     };
 
     const handleMouseUp = () => {
@@ -212,6 +221,8 @@ const CameraRotationControls = ({ hotspots, setCurrentId, camRotation }) => {
       controlsRef.current.startY = event.touches[0].clientY;
       // Sync Euler angles with current camera rotation
       controlsRef.current.euler.copy(camera.rotation);
+      // Set canvas as focused when touch starts on it
+      setIsCanvasFocused(true);
     };
 
     const handleMouseMove = (event) => {
@@ -273,6 +284,13 @@ const CameraRotationControls = ({ hotspots, setCurrentId, camRotation }) => {
       controlsRef.current.isMouseDown = false;
     };
 
+    // Add click outside handler to unfocus canvas
+    const handleClickOutside = (event) => {
+      if (!gl.domElement.contains(event.target)) {
+        setIsCanvasFocused(false);
+      }
+    };
+
     // Mouse controls
     gl.domElement.addEventListener("mousedown", handleMouseDown);
     gl.domElement.addEventListener("mousemove", handleMouseMove);
@@ -285,6 +303,9 @@ const CameraRotationControls = ({ hotspots, setCurrentId, camRotation }) => {
     gl.domElement.addEventListener("touchend", handleTouchEnd);
     gl.domElement.addEventListener("touchcancel", handleTouchEnd);
 
+    // Add click outside listener
+    document.addEventListener("mousedown", handleClickOutside);
+
     return () => {
       gl.domElement.removeEventListener("mousedown", handleMouseDown);
       gl.domElement.removeEventListener("mousemove", handleMouseMove);
@@ -295,6 +316,9 @@ const CameraRotationControls = ({ hotspots, setCurrentId, camRotation }) => {
       gl.domElement.removeEventListener("touchmove", handleTouchMove);
       gl.domElement.removeEventListener("touchend", handleTouchEnd);
       gl.domElement.removeEventListener("touchcancel", handleTouchEnd);
+
+      // Remove click outside listener
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [camera, gl.domElement]);
 
