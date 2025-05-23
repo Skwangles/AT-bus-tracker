@@ -1,5 +1,4 @@
-export const DFLT_SQLITE_DB_PATH =
-  "/media/skwangles/KINGSTON/TGA - Out/MAPS/tga-building.db";
+export const DFLT_SQLITE_DB_PATH = "maps/campus.db";
 
 export const DFLT_INPUT_DIR = "./pictures/"
 export const DFLT_OUTPUT_DIR = "./refined_pictures/"

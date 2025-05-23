@@ -7,14 +7,14 @@ export const DFLT_OUTDOORS_Y_DIST_THRESHOLD = 2;
 export const DFLT_Y_DIST_THRESHOLD = 2;
 export const DFLT_KEYFRAME_IMG_EXTENSION = ".png";
 export const DFLT_KEYFRAME_IMG_DIR =
-  "/media/skwangles/KINGSTON/TGA - Out/pictures/";
+  "pictures/";
 export const DFLT_OUTDOORS_LOCATION_NAME = "outdoors";
 
 export const DFLT_TABLE_PREFIX = "refined_";
 
 export const DFLT_USE_SQLITE = true;
 export const DFLT_SQLITE_DB_PATH =
-  "/media/skwangles/KINGSTON/TGA - Out/MAPS/tga-building.db";
+  "cv.db";
 
 export const DFLT_USE_PRECALCULATED_IMAGE_SHARPNESS = true
 export const DFLT_PREPROCESSED_IMG_SHARPNESS_JSON = "sharpness.json";

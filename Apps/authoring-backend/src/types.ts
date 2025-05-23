@@ -5,6 +5,10 @@ export interface Label {
   label: string; // the actual label to be used
   group?: string; // the shared location with potentially other labels with the same location
   type: number; // 0 = Normal, 1 = Toilet, 2 = Elevator
+  id: number;
+  name: string;
+  groups: string[];
+  shaft?: string;
 }
 
 export enum LabelType {
@@ -44,6 +48,14 @@ export interface PointData {
   y_trans: number;
   z_trans: number;
   location: string;
+  id: number;
+  x: number;
+  y: number;
+  z: number;
+  type: number;
+  label?: string;
+  groups?: string[];
+  shaft?: string;
 }
 
 export interface NeighbourData {
@@ -60,4 +72,18 @@ export type ThreeNumbersArray = [number, number, number];
 export interface RotationData {
   yaw: number;
   pitch: number;
+}
+
+export enum EdgeType {
+  Covisibility = -1,
+  Normal,
+  Loop,
+  MergePoint,
+  EdgeContraction,
+}
+
+export interface LocationGroup {
+  id: number;
+  name: string;
+  description?: string;
 }
