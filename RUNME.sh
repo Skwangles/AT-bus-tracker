@@ -34,8 +34,10 @@ cd $CV_HOME_DIR || { echo "Failed to change directory to $CV_HOME_DIR"; exit 1; 
 check_command "Copying environment files"
 
 # Build dependencies
-./BUILD_LIBS.sh
-check_command "Building dependencies"
+if [ "$CV_BUILD_LIBS" == true ]; then
+  ./BUILD_LIBS.sh
+  check_command "Building dependencies"
+fi
 
 echo "Building CampusVirtual Files"
 ./BUILD_CAMPUS_VIRTUAL.sh
@@ -82,24 +84,24 @@ if [ "$CV_EDIT_DB_VISUALLY" == true ]; then
   check_command "Editing database visually"
 fi
 
-if [ "$CV_EXTRACT_USED_IMAGES" == true ]; then
-  ./bin/scripts/cv_run_9_extract_images.sh
-  check_command "Extracting used images"
-fi
-
 if [ "$CV_INIT_DATA" == true ]; then
-  ./bin/scripts/cv_run_10_init_data.sh
+  ./bin/scripts/cv_run_9_init_data.sh
   check_command "Initializing data"
 fi
 
 if [ "$CV_START_AUTHORING" == true ]; then
-  ./bin/scripts/cv_run_11_start_authoring.sh
+  ./bin/scripts/cv_run_10_start_authoring.sh
   check_command "Starting authoring system"
 fi
 
 if [ "$CV_STRIP_RESTRICTED_NODES" == true ]; then
-  ./bin/scripts/cv_run_12_strip_restricted_locations.sh
+  ./bin/scripts/cv_run_11_strip_restricted_locations.sh
   check_command "Stripping restricted locations"
+fi
+
+if [ "$CV_EXTRACT_USED_IMAGES" == true ]; then
+  ./bin/scripts/cv_run_12_extract_images.sh
+  check_command "Extracting used images"
 fi
 
 if [ "$CV_START_SERVER" == true ]; then

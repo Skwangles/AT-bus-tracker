@@ -29,8 +29,6 @@ libs/
 combined.log
 exceptions.log
 .env*
-.env.secrets
-!.env.tga
 !.env.example
 cv_merge_maps
 *.tsbuildinfo
