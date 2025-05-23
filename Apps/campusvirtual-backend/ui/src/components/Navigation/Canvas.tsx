@@ -42,7 +42,8 @@ const Canvas: React.FC<CanvasProps> = ({
       setCurrentImage,
       setHotspots,
       currentPosition,
-      imageRotation
+      imageRotation,
+      setCurrentId
     );
   }, [currentId, isPathfindingMode]); // pathfinding mode deletes non-path points, so need to refetch
 

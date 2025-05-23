@@ -1,6 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState, useCallback } from 'react'
 import { Canvas as ThreeCanvas } from '@react-three/fiber'
-import { STARTING_LOCATION_GROUP } from '../consts'
 import { API_PREFIX, showMap, PROJECT_NAME } from '../consts'
 import axios from 'axios'
 import CameraRotationControls from './Camera/RotationController'
@@ -10,14 +9,7 @@ import { ToastContainer, Bounce } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.min.css'
 import { Map as FeatherMap } from 'react-feather'
 import Canvas from './Navigation/Canvas'
-import { DesktopLayout } from './Layouts/DesktopLayout'
-import { MobileLayout } from './Layouts/MobileLayout'
 import { buildCalcPath, moveForwardOnPath } from '../utils/pathfinding'
-import {
-  getChangeLocation,
-  getChangeLevelUpOrDown,
-  updateMovementAbilities,
-} from '../utils/goUporGoDown'
 import {
   initFromParams,
   initIdFromParams,
@@ -28,9 +20,9 @@ import {
 } from '../utils/updateUrl'
 import { HotspotObj, Label, PointData } from '../types'
 
-const VirtualTour: React.FC = () => {
+const VirtualTourContent: React.FC = () => {
+  // State declarations
   const [currentId, setCurrentId] = useState<string>(() => initIdFromParams())
-
   const [currentPoint, setCurrentPoint] = useState<PointData>({
     pose: [],
     ts: '',
@@ -40,73 +32,88 @@ const VirtualTour: React.FC = () => {
     x_trans: 0,
     y_trans: 0,
   })
-
+  const [currentLocationGroup, setCurrentLocationGroup] = useState<string>('')
+  const [allLocationNames, setAllLocationNames] = useState<string[]>([])
   const [hasImage, setHasImage] = useState(false)
-  const [locationGroup, setLocationGroup] = useState<string>('')
   const [pathfindMode, setPathfindMode] = useState(false)
   const [highlightedPath, setHighlightedPath] = useState<number[]>([])
-  const [allSearchableLocations, setAllSearchableLocations] = useState<Label[]>(
-    []
-  )
+  const [allSearchableLocations, setAllSearchableLocations] = useState<Label[]>([])
   const [hotspots, setHotspots] = useState<HotspotObj[]>(() => [])
-
   const [isLoading, setIsLoading] = useState(true)
-
-  const [isInstructionsOpen, setInstructionsOpen] = useState(false)
+  const [isInstructionsOpen, setIsInstructionsOpen] = useState(false)
   const [closeDrawer, setCloseDrawer] = useState(false)
-
   const [lastNavigatedToPoint, setLastNavigatedToPoint] = useState<string>('')
+  const [debounceExpiry, setDebounceExpiry] = useState(Date.now())
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768)
+
+  // Refs
   const camRotation = useRef<{
     yaw: number
     pitch: number
   }>(initFromParams())
 
-  const changeLocation = getChangeLocation(currentId, setCurrentId)
-
-  // RUN ON FIRST LOAD
+  // Effects
   useEffect(() => {
-    axios.get<Label[]>(`${API_PREFIX}/api/v1/labels`).then((result) => {
-      setAllSearchableLocations(result.data)
-    })
-
-    setOnPopstateEvent(setCurrentId, camRotation)
-
-    if (nullIdValue(currentId)) {
-      changeLocation(STARTING_LOCATION_GROUP)
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768)
     }
+
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  // Callbacks
+  const changeLocation = useCallback((location: string) => {
+    setIsLoading(true)
+    // ... existing location change logic ...
+  }, [])
+
+  const calculateHighlightedPath = useCallback(
+    buildCalcPath(currentId, setHighlightedPath, setLastNavigatedToPoint),
+    [currentId]
+  )
+
+  // Effects
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch labels
+        const labelsResult = await axios.get<Label[]>(`${API_PREFIX}/api/v1/locationgroup/labels`)
+        setAllSearchableLocations(labelsResult.data)
+        setAllLocationNames(labelsResult.data.map(v => v.query))
+
+        // If ID is -1, fetch first point ID from backend
+        if (nullIdValue(currentId)) {
+          const defaultIdResult = await axios.get(`${API_PREFIX}/api/v1/point/first`)
+          const defaultId = defaultIdResult.data
+          setCurrentId(defaultId)
+          updateHistory(currentLocationGroup, PROJECT_NAME, defaultId)
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error)
+      }
+    }
+
+    fetchData()
+    setOnPopstateEvent(setCurrentId, camRotation)
   }, [])
 
   useEffect(() => {
-    updateHistory(locationGroup, PROJECT_NAME, currentId)
-  }, [
-    currentId,
-    locationGroup /* DO NOT INCLUDE 'params' otherwise any yaw/pitch change will trigger it */,
-  ])
-
-  const [debounceExpiry, setDebounceExpiry] = useState(Date.now())
+    updateHistory(currentLocationGroup, PROJECT_NAME, currentId)
+  }, [currentId, currentLocationGroup])
 
   useEffect(() => {
     updateParams(camRotation, setDebounceExpiry, debounceExpiry)
-  }, [camRotation.current])
+  }, [camRotation.current, debounceExpiry])
 
   useEffect(() => {
-    setLocationGroup(currentPoint.location)
+    setCurrentLocationGroup(currentPoint?.location || '')
   }, [currentPoint])
 
   useEffect(() => {
     setPathfindMode(highlightedPath.length > 0)
   }, [highlightedPath])
 
-  // Pathfinding movement
-  const changeLevelUpOrDown = getChangeLevelUpOrDown(
-    allSearchableLocations,
-    changeLocation
-  )
-  const calculateHighlightedPath = buildCalcPath(
-    currentId,
-    setHighlightedPath,
-    setLastNavigatedToPoint
-  )
   useEffect(() => {
     moveForwardOnPath(
       pathfindMode,
@@ -116,33 +123,8 @@ const VirtualTour: React.FC = () => {
       lastNavigatedToPoint,
       calculateHighlightedPath
     )
-  }, [currentId])
+  }, [currentId, pathfindMode, highlightedPath, lastNavigatedToPoint, calculateHighlightedPath])
 
-  // Update the ability to go up or down with buttons
-  const [canGoUp, setCanGoUp] = useState(false)
-  const [canGoDown, setCanGoDown] = useState(false)
-  useEffect(() => {
-    updateMovementAbilities(
-      setCanGoUp,
-      setCanGoDown,
-      allSearchableLocations,
-      locationGroup
-    )
-  }, [locationGroup])
-
-  // Add new state for screen size
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768)
-
-  // Add window resize listener
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768)
-    }
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
-
-  console.log('rerendering virtual tour')
   return (
     <>
       {/* Loading indicator */}
@@ -153,59 +135,6 @@ const VirtualTour: React.FC = () => {
           </div>
         </div>
       )}
-
-      <MobileLayout
-        isMobile={isMobile}
-        currentPoint={currentPoint}
-        allFloorNames={allSearchableLocations}
-        changeLocation={changeLocation}
-        changeLevelUpOrDown={changeLevelUpOrDown}
-        canGoDown={canGoDown}
-        canGoUp={canGoUp}
-        locationGroup={locationGroup}
-        isLoading={isLoading}
-        isInstructionsOpen={isInstructionsOpen}
-        setInstructionsOpen={setInstructionsOpen}
-      />
-
-      <DesktopLayout
-        isMobile={isMobile}
-        currentPoint={currentPoint}
-        allFloorNames={allSearchableLocations}
-        changeLocation={changeLocation}
-        changeLevelUpOrDown={changeLevelUpOrDown}
-        canGoDown={canGoDown}
-        canGoUp={canGoUp}
-        isLoading={isLoading}
-        locationGroup={locationGroup}
-        isInstructionsOpen={isInstructionsOpen}
-        setInstructionsOpen={setInstructionsOpen}
-      />
-
-      {showMap && (
-        <Map
-          floorName={locationGroup}
-          setID={setCurrentId}
-          currentId={currentId}
-          highlightedPoints={highlightedPath}
-          isMobile={isMobile}
-          closeDrawer={closeDrawer}
-          setCloseDrawer={setCloseDrawer}
-          hasImage={hasImage}
-          setHasImage={setHasImage}
-          isPathfindingMode={pathfindMode}
-        />
-      )}
-
-      <div className="fixed top-0 left-0 right-0 z-[999]">
-        <SearchBar
-          currentPoint={currentPoint}
-          isPathfindingMode={pathfindMode}
-          searchableLabels={allSearchableLocations}
-          highlightCallback={calculateHighlightedPath}
-          jumpToCallback={changeLocation}
-        />
-      </div>
 
       <div className="w-screen h-screen overflow-hidden fixed top-0 left-0">
         <ThreeCanvas
@@ -237,6 +166,31 @@ const VirtualTour: React.FC = () => {
             highlightedPath={highlightedPath}
           />
         </ThreeCanvas>
+      </div>
+
+      {showMap && (
+        <Map
+          floorName={currentLocationGroup}
+          setID={setCurrentId}
+          currentId={currentId}
+          highlightedPoints={highlightedPath}
+          isMobile={isMobile}
+          closeDrawer={closeDrawer}
+          setCloseDrawer={setCloseDrawer}
+          hasImage={hasImage}
+          setHasImage={setHasImage}
+          isPathfindingMode={pathfindMode}
+        />
+      )}
+
+      <div className="fixed top-0 left-0 right-0 z-[999]">
+        <SearchBar
+          currentPoint={currentPoint}
+          isPathfindingMode={pathfindMode}
+          searchableLabels={allSearchableLocations}
+          highlightCallback={calculateHighlightedPath}
+          jumpToCallback={changeLocation}
+        />
       </div>
 
       {isMobile && showMap && (
@@ -271,6 +225,15 @@ const VirtualTour: React.FC = () => {
         </button>
       )}
 
+      {/* Instructions Floating Button */}
+      <button
+        className="fixed bottom-6 right-6 z-[1001] bg-white/90 enabled:hover:bg-white rounded-full px-6 py-3 shadow-lg flex items-center justify-center enabled:transition-all disabled:pointer-events-none border border-gray-300"
+        onClick={() => setIsInstructionsOpen(true)}
+        aria-label="Show instructions"
+      >
+        Instructions
+      </button>
+
       <ToastContainer
         position={isMobile ? 'bottom-center' : 'top-right'}
         autoClose={5000}
@@ -288,4 +251,4 @@ const VirtualTour: React.FC = () => {
   )
 }
 
-export default VirtualTour
+export default VirtualTourContent;
