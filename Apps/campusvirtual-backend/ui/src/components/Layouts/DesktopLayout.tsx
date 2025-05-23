@@ -1,36 +1,46 @@
 import Instructions from "../Misc/Instructions";
 import LocationChangeControls from "../Navigation/LocationChangeControls";
-import { Label } from "../../types";
+import { Label, PointData } from "../../types";
 
-interface DesktopLayout {
+interface DesktopLayoutProps {
   isMobile: boolean;
-  currentPoint: any;
+  currentPoint: PointData;
   allFloorNames: Label[];
-  changeFloor: any;
-  changeFloorUpOrDown: any;
+  changeLocation: any;
+  changeLevelUpOrDown: any;
   canGoDown: boolean;
   canGoUp: boolean;
+  isLoading: boolean;
   locationGroup: string;
   isInstructionsOpen: boolean;
-  setInstructionsOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  isLoading: boolean;
+  setInstructionsOpen: (isOpen: boolean) => void;
 }
 
-export const DesktopLayout: React.FC<DesktopLayout> = ({
+export const DesktopLayout: React.FC<DesktopLayoutProps> = ({
   isMobile,
   currentPoint,
   allFloorNames,
-  changeFloor,
-  changeFloorUpOrDown,
+  changeLocation,
+  changeLevelUpOrDown,
   canGoDown,
   canGoUp,
-  locationGroup,
   isLoading,
+  locationGroup,
   isInstructionsOpen,
   setInstructionsOpen,
 }) => {
   return (
-    <>
+    <div className="hidden md:block">
+      <div className="fixed top-4 right-4 z-[999]">
+        <LocationChangeControls
+          canGoUp={canGoUp}
+          canGoDown={canGoDown}
+          changeLevelUpOrDown={changeLevelUpOrDown}
+          locationGroup={locationGroup}
+          allLocationNames={allFloorNames.map((v) => v.query)}
+          changeLocation={changeLocation}
+        />
+      </div>
       {!isMobile && (
         <>
           {/* Loading indicator */}
@@ -42,17 +52,6 @@ export const DesktopLayout: React.FC<DesktopLayout> = ({
             </div>
           )}
 
-          <div className="fixed right-0 bottom-0 z-50 m-4">
-            <LocationChangeControls
-              canGoUp={canGoUp}
-              canGoDown={canGoDown}
-              changeFloorUpOrDown={changeFloorUpOrDown}
-              locationGroup={locationGroup}
-              allFloorNames={allFloorNames.map((v) => v.query)}
-              changeFloor={changeFloor}
-            />
-          </div>
-
           <Instructions
             point={currentPoint}
             isOpen={isInstructionsOpen}
@@ -62,6 +61,6 @@ export const DesktopLayout: React.FC<DesktopLayout> = ({
           />
         </>
       )}
-    </>
+    </div>
   );
 };

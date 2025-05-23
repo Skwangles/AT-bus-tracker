@@ -3,7 +3,8 @@ import * as THREE from "three";
 export interface Label {
   query: string; // query to search the database
   label: string; // the actual label to be used
-  group?: string; // the shared location with potentially other labels with the same location
+  group: string; // the location group this label belongs to
+  shaft?: string; // elevator specific option
   type: number; // 0 = Normal, 1 = Toilet, 2 = Elevator
 }
 
@@ -11,7 +12,7 @@ export enum LabelType {
   Normal = 0,
   Toilet,
   Elevator,
-  Group,
+  Group
 }
 
 export enum ReservedTypeIndex {
@@ -60,4 +61,14 @@ export type ThreeNumbersArray = [number, number, number];
 export interface RotationData {
   yaw: number;
   pitch: number;
+}
+
+export interface FloorGroup {
+  name: string;  // Floor name (B, G, 1, 2, etc.)
+  order: number; // For sorting (B=-1, G=0, 1=1, 2=2, etc.)
+  items: {
+    rooms: Label[];
+    elevators: Label[];
+    toilets: Label[];
+  };
 }

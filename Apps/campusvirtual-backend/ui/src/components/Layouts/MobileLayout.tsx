@@ -2,32 +2,32 @@ import { MapPin, ChevronUp, Info } from "react-feather";
 import Instructions from "../Misc/Instructions";
 import LocationChangeControls from "../Navigation/LocationChangeControls";
 import { useState, useEffect, useRef } from "react";
-import { Label } from "../../types";
+import { Label, PointData } from "../../types";
 
-interface MobileLayout {
+interface MobileLayoutProps {
   isMobile: boolean;
-  currentPoint: any;
+  currentPoint: PointData;
   allFloorNames: Label[];
-  changeFloor: any;
-  changeFloorUpOrDown: any;
+  changeLocation: any;
+  changeLevelUpOrDown: any;
   canGoDown: boolean;
   canGoUp: boolean;
-  locationGroup: string;
   isLoading: boolean;
+  locationGroup: string;
   isInstructionsOpen: boolean;
-  setInstructionsOpen: any;
+  setInstructionsOpen: (isOpen: boolean) => void;
 }
 
-export const MobileLayout: React.FC<MobileLayout> = ({
+export const MobileLayout: React.FC<MobileLayoutProps> = ({
   isMobile,
   currentPoint,
   allFloorNames,
-  changeFloor,
-  changeFloorUpOrDown,
+  changeLocation,
+  changeLevelUpOrDown,
   canGoDown,
   canGoUp,
-  locationGroup,
   isLoading,
+  locationGroup,
   isInstructionsOpen,
   setInstructionsOpen,
 }) => {
@@ -50,7 +50,17 @@ export const MobileLayout: React.FC<MobileLayout> = ({
   }, [showMobileMenu]);
 
   return (
-    <>
+    <div className="md:hidden">
+      <div className="fixed bottom-4 right-4 z-[999]">
+        <LocationChangeControls
+          canGoUp={canGoUp}
+          canGoDown={canGoDown}
+          changeLevelUpOrDown={changeLevelUpOrDown}
+          locationGroup={locationGroup}
+          allLocationNames={allFloorNames.map((v) => v.query)}
+          changeLocation={changeLocation}
+        />
+      </div>
       {isMobile && (
         <>
           {/* Loading indicator */}
@@ -107,10 +117,10 @@ export const MobileLayout: React.FC<MobileLayout> = ({
                 <LocationChangeControls
                   canGoUp={canGoUp}
                   canGoDown={canGoDown}
-                  changeFloorUpOrDown={changeFloorUpOrDown}
+                  changeLevelUpOrDown={changeLevelUpOrDown}
                   locationGroup={locationGroup}
-                  allFloorNames={allFloorNames.map((v) => v.query)}
-                  changeFloor={changeFloor}
+                  allLocationNames={allFloorNames.map((v) => v.query)}
+                  changeLocation={changeLocation}
                 />
               </div>
             </div>
@@ -136,6 +146,6 @@ export const MobileLayout: React.FC<MobileLayout> = ({
           </button>
         </>
       )}
-    </>
+    </div>
   );
 };

@@ -68,7 +68,7 @@ const Map: React.FC<MapProps> = ({
   const [stageHeight, setStageHeight] = useState<number>(800)
 
   const [image] = useImage(
-    `${API_PREFIX}/api/v1/floorplans/${floorName}/image`,
+    `${API_PREFIX}/api/v1/maps/${floorName}/image`,
     'anonymous'
   )
   const [personImage] = useImage(personImgPng)
@@ -105,7 +105,7 @@ const Map: React.FC<MapProps> = ({
             keyframe_id: number
             type: number
           }>
-        }>(`${API_PREFIX}/api/v1/floorplans/${floorName}`)
+        }>(`${API_PREFIX}/api/v1/maps/${floorName}`)
 
         if (
           !response.data ||

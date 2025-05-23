@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { API_PREFIX } from '../consts'
+import axios from 'axios'
 
 const FileUpload = ({
   currentFloor,
@@ -27,19 +28,16 @@ const FileUpload = ({
     formData.append('file', selectedFile)
 
     try {
-      const response = await fetch(
-        `${API_PREFIX}/api/v1/floorplans/${currentFloor}/image`,
+      await axios.post(
+        `${API_PREFIX}/api/v1/maps/${currentFloor}/image`,
+        formData,
         {
-          method: 'POST',
-          body: formData,
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
         }
       )
-
-      if (response.ok) {
-        setUploadStatus('File uploaded successfully.')
-      } else {
-        setUploadStatus('Failed to upload file.')
-      }
+      setUploadStatus('File uploaded successfully.')
     } catch (error) {
       console.error('Error uploading file:', error)
       setUploadStatus('Error uploading file.')
