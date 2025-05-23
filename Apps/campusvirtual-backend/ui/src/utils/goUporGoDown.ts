@@ -1,18 +1,18 @@
 import axios from "axios"
 import { toast } from "react-toastify"
 import { API_PREFIX } from "../consts"
-import { getFloorUpOrDown } from "./floorUpOrDownStrategies"
+import { getLevelUpOrDown } from "./floorUpOrDownStrategies"
 
 export const updateMovementAbilities = (setCanGoUp, setCanGoDown, allSearchableLocations, locationGroup) => {
   setCanGoUp(
-    !!getFloorUpOrDown(
+    !!getLevelUpOrDown(
       allSearchableLocations.map((v) => v.query),
       locationGroup,
       true
     )
   )
   setCanGoDown(
-    !!getFloorUpOrDown(
+    !!getLevelUpOrDown(
       allSearchableLocations.map((v) => v.query),
       locationGroup,
       false
@@ -20,33 +20,31 @@ export const updateMovementAbilities = (setCanGoUp, setCanGoDown, allSearchableL
   )
 }
 
-export const getChangeFloorUpOrDown = (allSearchableLocations, changeFloor) => {
-
-  return (floor: string, isUp: boolean) => {
-    const newFloor = getFloorUpOrDown(
+export const getChangeLevelUpOrDown = (allSearchableLocations, changeLocation) => {
+  return (location: string, isUp: boolean) => {
+    const newLocation = getLevelUpOrDown(
       allSearchableLocations.map((v) => v.query),
-      floor,
+      location,
       isUp
     )
-    if (!newFloor) {
+    if (!newLocation) {
       toast.warn(
-        'Cannot change floor - No floor is ' + (isUp ? 'above' : 'below')
+        'Cannot change level - No level is ' + (isUp ? 'above' : 'below')
       )
       return
     }
 
-    if (allSearchableLocations.map((v) => v.query).includes(newFloor)) {
-      changeFloor(newFloor)
+    if (allSearchableLocations.map((v) => v.query).includes(newLocation)) {
+      changeLocation(newLocation)
     }
   }
 }
 
-export const getChangeFloor = (currentId, setCurrentId) => {
-
-  return (requestedFloor: string) => {
+export const getChangeLocation = (currentId, setCurrentId) => {
+  return (requestedLocation: string) => {
     axios
       .get<{ keyframe_id: number }>(
-        `${API_PREFIX}/api/v1/floor/${requestedFloor}/point`
+        `${API_PREFIX}/api/v1/locationgroup/${requestedLocation}/point`
       )
       .then((value) => {
         const result = value.data.keyframe_id
@@ -54,9 +52,9 @@ export const getChangeFloor = (currentId, setCurrentId) => {
         setCurrentId(Number(result).toString())
       })
       .catch((reason) => {
-        toast.warn(requestedFloor + ' is not a reachable location.')
+        toast.warn(requestedLocation + ' is not a reachable location.')
 
-        // In the case the 'DEFAULT FLOOR' is not found, we will fetch the first point
+        // In the case the 'DEFAULT LOCATION' is not found, we will fetch the first point
         if (Number(currentId) === -1) {
           axios.get<number>(`${API_PREFIX}/api/v1/point`).then((value) => {
             setCurrentId(value.data.toString())
