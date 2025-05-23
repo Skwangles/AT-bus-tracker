@@ -5,9 +5,9 @@ import axios from 'axios'
 import CameraRotationControls from './Camera/RotationController'
 import Map from './Misc/Map'
 import SearchBar from './Search/SearchBar'
-import { ToastContainer, Bounce } from 'react-toastify'
+import { ToastContainer, Bounce, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.min.css'
-import { Map as FeatherMap } from 'react-feather'
+import { Map as FeatherMap, Info, X } from 'react-feather'
 import Canvas from './Navigation/Canvas'
 import { buildCalcPath, moveForwardOnPath } from '../utils/pathfinding'
 import {
@@ -19,6 +19,7 @@ import {
   updateParams,
 } from '../utils/updateUrl'
 import { HotspotObj, Label, PointData } from '../types'
+import Instructions from './Misc/Instructions'
 
 const VirtualTourContent: React.FC = () => {
   // State declarations
@@ -227,12 +228,30 @@ const VirtualTourContent: React.FC = () => {
 
       {/* Instructions Floating Button */}
       <button
-        className="fixed bottom-6 right-6 z-[1001] bg-white/90 enabled:hover:bg-white rounded-full px-6 py-3 shadow-lg flex items-center justify-center enabled:transition-all disabled:pointer-events-none border border-gray-300"
-        onClick={() => setIsInstructionsOpen(true)}
-        aria-label="Show instructions"
+        className="fixed bottom-6 right-6 z-[1001] bg-white/90 enabled:hover:bg-white rounded-full px-6 py-3 shadow-lg flex items-center justify-center gap-2 enabled:transition-all disabled:pointer-events-none border border-gray-300"
+        onClick={() => setIsInstructionsOpen(!isInstructionsOpen)}
+        aria-label={isInstructionsOpen ? "Close instructions" : "Show instructions"}
       >
-        Instructions
+        {isInstructionsOpen ? (
+          <>
+            <X size={20} />
+            <span>Close</span>
+          </>
+        ) : (
+          <>
+            <Info size={20} />
+            <span>Instructions</span>
+          </>
+        )}
       </button>
+
+      {/* Instructions Component */}
+      <Instructions
+        point={currentPoint}
+        isOpen={isInstructionsOpen}
+        setIsOpen={setIsInstructionsOpen}
+        className={isMobile ? "mobile-instructions" : "desktop-instructions"}
+      />
 
       <ToastContainer
         position={isMobile ? 'bottom-center' : 'top-right'}

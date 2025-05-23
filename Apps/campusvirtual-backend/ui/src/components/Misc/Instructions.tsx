@@ -1,67 +1,137 @@
 import React from 'react'
 import '../../css/Instructions.css'
-import { Info, X } from 'react-feather'
+import {
+  ArrowUp,
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight,
+  MousePointer,
+  MapPin,
+  Search,
+  Map,
+  User,
+  LogOut,
+  Circle,
+  Square,
+  RotateCcw,
+  Info,
+} from 'react-feather'
 
 interface InstructionsProps {
   point: { keyframe_id: number; location: string; ts: string }
   isOpen: boolean
   setIsOpen: (isOpen: boolean) => void
   className?: string
-  showToggle?: boolean
 }
+
+const isMobile = () => window.innerWidth <= 768
 
 const Instructions: React.FC<InstructionsProps> = ({
   point,
   isOpen,
   setIsOpen,
   className = '',
-  showToggle = true,
 }) => {
+  const mobile = isMobile()
   return (
     <div className={`stats-container ${className}`}>
-      {showToggle && (
-        <button
-          className={`stat-drawer-toggle ${isOpen ? 'open' : ''}`}
-          onClick={() => setIsOpen(!isOpen)}
-        >
-          {isOpen ? <X size={20} /> : <Info size={20} />}
-          <span className="ml-2">{isOpen ? 'Close' : 'Help'}</span>
-        </button>
-      )}
-
       {isOpen && (
         <div className="stats">
-          <h3 className="stats-heading">General Usage</h3>
-          <ul>
-            <li>Drag on the screen to move where you are looking</li>
-            <li>Click on the Red orbs to jump to a different position</li>
+          <h3 className="stats-heading">How to Navigate</h3>
+          <ul className="instructions-list">
+            {mobile ? (
+              <>
+                <li>
+                  <MousePointer className="instruction-icon" />
+                  <span>Drag or swipe to look around</span>
+                </li>
+              </>
+            ) : (
+              <>
+                <li>
+                  <span className="flex items-center gap-2">
+                    <span className="key">W</span>
+                    <span className="key">A</span>
+                    <span className="key">S</span>
+                    <span className="key">D</span>
+                  </span>
+                  <span>to move</span>
+                </li>
+                <li>
+                  <span className="flex items-center gap-1">
+                    <ArrowUp size={16} />
+                    <ArrowLeft size={16} />
+                    <ArrowDown size={16} />
+                    <ArrowRight size={16} />
+                  </span>
+                  <span>to look around</span>
+                </li>
+                <li>
+                  <MousePointer className="instruction-icon" />
+                  <span>Drag to look around</span>
+                </li>
+              </>
+            )}
             <li>
-              The current region/location you are in is show in the bottom left
+              <Circle className="instruction-icon" color="#ff4444" />
+              <span>Click red orbs to jump to new locations</span>
+            </li>
+            <li>
+              <MapPin className="instruction-icon" />
+              <span>Your current location is shown just below the search bar at the top</span>
             </li>
           </ul>
+
           <h3 className="stats-heading">Search</h3>
-          <ul>
+          <ul className="instructions-list">
             <li>
-              Search for a region/location in the search bar and jump to it
-              directly, or have it highlight the path in blue and guide you!
+              <Search className="instruction-icon" />
+              <span>Use the search bar at the top to find locations</span>
             </li>
             <li>
-              The end of a highlighted path is shown with a yellow rotating
-              square!
+              <Square className="instruction-icon" color="#ffd700" />
+              <RotateCcw className="instruction-icon" color="#ffd700" />
+              <span>Yellow rotating square marks your destination</span>
             </li>
             <li>
-              Clear a highlighted path using a button in the top right (only
-              shows when a path is highlighted)
+              <Circle className="instruction-icon" color="#4444ff" />
+              <span>Blue path guides you to your destination</span>
             </li>
           </ul>
+
           <h3 className="stats-heading">Map</h3>
-          <ul>
-            <li>Toggle the map with a button in the top left</li>
-            <li>Hover over the map to increase its size</li>
+          <ul className="instructions-list">
             <li>
-              Map Key: Person Icon = Your Current position, Door Icon= Move to
-              next the region, Red= Regular viewing point, Blue = A highlighted
-              path
+              <Map className="instruction-icon" />
+              <span>Open the map with the button in the <b>top left</b></span>
+            </li>
+            <li>
+              <div className="map-legend">
+                <div className="legend-item">
+                  <User className="instruction-icon" />
+                  <span>Your position</span>
+                </div>
+                <div className="legend-item">
+                  <LogOut className="instruction-icon" />
+                  <span>Next region</span>
+                </div>
+                <div className="legend-item">
+                  <Circle className="instruction-icon" color="#ff4444" />
+                  <span>Viewing point</span>
+                </div>
+                <div className="legend-item">
+                  <Circle className="instruction-icon" color="#4444ff" />
+                  <span>Highlighted path</span>
+                </div>
+              </div>
+            </li>
+          </ul>
+
+          <h3 className="stats-heading">Help</h3>
+          <ul className="instructions-list">
+            <li>
+              <Info className="instruction-icon" />
+              <span>Click the <b>Instructions</b> button in the <b>bottom right</b> to open or close this help window</span>
             </li>
           </ul>
         </div>
