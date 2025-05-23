@@ -10,16 +10,16 @@ const App: React.FC = () => {
     null
   )
 
-  useEffect(() => {
-    const fetchFloorplans = async () => {
-      try {
-        const response = await axios.get(`${API_PREFIX}/api/v1/floorplans`)
-        setFloorplans(response.data)
-      } catch (error) {
-        console.error('Error fetching floorplans:', error)
-      }
+  const fetchFloorplans = async () => {
+    try {
+      const response = await axios.get(`${API_PREFIX}/api/v1/maps`)
+      setFloorplans(response.data)
+    } catch (error) {
+      console.error('Error fetching floorplans:', error)
     }
+  }
 
+  useEffect(() => {
     fetchFloorplans()
   }, [])
 

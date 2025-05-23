@@ -44,7 +44,7 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
           type: number
           labelCount: number
         }>
-      }>(`${API_PREFIX}/api/v1/floorplans/${floorplan}`)
+      }>(`${API_PREFIX}/api/v1/maps/${floorplan}`)
       if (
         !response.data ||
         !response.data.nodes ||
@@ -56,7 +56,7 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
       }
       const img = new Image()
       if (floorplan) {
-        img.src = `${API_PREFIX}/api/v1/floorplans/${floorplan}/image`
+        img.src = `${API_PREFIX}/api/v1/maps/${floorplan}/image`
       }
       setHasImage(Boolean(response.data.has_image))
       img.onload = () => {
@@ -170,7 +170,7 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
     setDragStartPos(null)
 
     for (const node of nodes.filter((node) => selectedPoints.has(node.id))) {
-      axios.post(`${API_PREFIX}/api/v1/floorplans/${floorplan}/update`, {
+      axios.post(`${API_PREFIX}/api/v1/maps/${floorplan}/update`, {
         id: node.id,
         x: node.x,
         y: node.y,
@@ -180,7 +180,7 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
 
   const updateAllPoints = (nodes: Node[]) => {
     axios
-      .post(`${API_PREFIX}/api/v1/floorplans/${floorplan}/updatemultiple`, {
+      .post(`${API_PREFIX}/api/v1/maps/${floorplan}/updatemultiple`, {
         points: nodes,
       })
       .catch((e) => {
@@ -225,9 +225,6 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
               width={stageWidth}
               height={stageHeight}
               ref={layer}
-              // draggable
-              // onDragMove={handleDragMove}
-              // onDragEnd={handleDragEnd}
             >
               <Layer>
                 {image && nodes && (
@@ -276,7 +273,6 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
                           onTouchEnd={handleMouseUp}
                           onDragStart={handleDragStart}
                           onDragMove={handleDragMove}
-                          // onDragEnd={handleDragEnd}
                         />
                       ))}
                   </>
