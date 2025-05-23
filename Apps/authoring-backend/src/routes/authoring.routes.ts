@@ -33,11 +33,11 @@ const storage = multer.diskStorage({
 export const uploadFloorplanImageMiddleware = multer({ storage });
 
 
-app.post("/api/v1/floorplans/:name/image", uploadFloorplanImageMiddleware.single("file"), updateFloorplanImage)
+app.post("/api/v1/maps/:name/image", uploadFloorplanImageMiddleware.single("file"), updateFloorplanImage)
 
-app.post("/api/v1/floorplans/:name/updatemultiple", updateMultipleMapPoints);
+app.post("/api/v1/maps/:name/updatemultiple", updateMultipleMapPoints);
 
-app.post("/api/v1/floorplans/:name/update", updateMapPoint);
+app.post("/api/v1/maps/:name/update", updateMapPoint);
 
 app.post("/api/v1/point/:id/label", addLabelToMapPoint)
 

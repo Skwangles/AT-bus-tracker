@@ -3,11 +3,11 @@ import { getMapPoints, getAllLocationGroups, getLocationGroupImageByName, mapFea
 
 const app = Router();
 
-app.get('/api/v1/floorplans/:name/image', mapFeaturesEnabled, getLocationGroupImageByName)
+app.get('/api/v1/maps/:name/image', mapFeaturesEnabled, getLocationGroupImageByName)
 
-app.get('/api/v1/floorplans/:name', mapFeaturesEnabled, getMapPoints)
+app.get('/api/v1/maps/:name', mapFeaturesEnabled, getMapPoints)
 
-app.get('/api/v1/floorplans', mapFeaturesEnabled, getAllLocationGroups)
+app.get('/api/v1/maps', mapFeaturesEnabled, getAllLocationGroups)
 
 
 export default app;
