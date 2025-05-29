@@ -20,38 +20,49 @@ import {
 } from '../utils/updateUrl'
 import { HotspotObj, Label, PointData } from '../types'
 import Instructions from './Misc/Instructions'
+import * as THREE from 'three'
+import { useThree } from '@react-three/fiber'
+
+// Helper component to get camera reference
+interface CameraPositionGetterProps {
+  setCameraRef: (camera: THREE.Camera) => void
+}
+
+const CameraPositionGetter: React.FC<CameraPositionGetterProps> = ({ setCameraRef }) => {
+  const { camera } = useThree()
+
+  useEffect(() => {
+    setCameraRef(camera)
+  }, [camera, setCameraRef])
+
+  return null
+}
 
 const VirtualTourContent: React.FC = () => {
   // State declarations
-  const [currentId, setCurrentId] = useState<string>(() => initIdFromParams())
-  const [currentPoint, setCurrentPoint] = useState<PointData>({
-    pose: [],
-    ts: '',
-    keyframe_id: -1,
-    location: '',
-    z_trans: 0,
+  const [currentId, setCurrentId] = useState<string>(initIdFromParams())
+  const [currentPoint, setCurrentPoint] = useState<PointData>(() => ({
+    pose: Array(16).fill(0),
+    ts: Date.now().toString(),
+    keyframe_id: 0,
     x_trans: 0,
     y_trans: 0,
-  })
+    z_trans: 0,
+    location: ''
+  }))
   const [currentLocationGroup, setCurrentLocationGroup] = useState<string>('')
-  const [allLocationNames, setAllLocationNames] = useState<string[]>([])
   const [hasImage, setHasImage] = useState(false)
-  const [pathfindMode, setPathfindMode] = useState(false)
   const [highlightedPath, setHighlightedPath] = useState<number[]>([])
   const [allSearchableLocations, setAllSearchableLocations] = useState<Label[]>([])
-  const [hotspots, setHotspots] = useState<HotspotObj[]>(() => [])
-  const [isLoading, setIsLoading] = useState(true)
+  const [hotspots, setHotspots] = useState<HotspotObj[]>([])
+  const [isLoading, setIsLoading] = useState(false)
   const [isInstructionsOpen, setIsInstructionsOpen] = useState(false)
   const [closeDrawer, setCloseDrawer] = useState(false)
-  const [lastNavigatedToPoint, setLastNavigatedToPoint] = useState<string>('')
+  const [lastNavigatedToPoint, setLastNavigatedToPoint] = useState<string>("")
   const [debounceExpiry, setDebounceExpiry] = useState(Date.now())
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768)
-
-  // Refs
-  const camRotation = useRef<{
-    yaw: number
-    pitch: number
-  }>(initFromParams())
+  const cameraRef = useRef<THREE.Camera | null>(null)
+  const camRotation = useRef(initFromParams())
 
   // Effects
   useEffect(() => {
@@ -65,13 +76,35 @@ const VirtualTourContent: React.FC = () => {
 
   // Callbacks
   const changeLocation = useCallback((location: string) => {
-    setIsLoading(true)
-    // ... existing location change logic ...
-  }, [])
+    setIsLoading(true);
+    axios
+      .get<{ keyframe_id: number }>(
+        `${API_PREFIX}/api/v1/locationgroup/${location}/point`
+      )
+      .then((value) => {
+        const result = value.data.keyframe_id;
+        if (isNaN(Number(result))) {
+          setIsLoading(false);
+          return;
+        }
+        setCurrentId(Number(result).toString());
+        setIsLoading(false);
+      })
+      .catch((reason) => {
+        toast.warn(location + ' is not a reachable location.');
+        setIsLoading(false);
+        // In the case the 'DEFAULT LOCATION' is not found, we will fetch the first point
+        if (Number(currentId) === -1) {
+          axios.get<number>(`${API_PREFIX}/api/v1/point`).then((value) => {
+            setCurrentId(value.data.toString());
+          });
+        }
+      });
+  }, [currentId]);
 
   const calculateHighlightedPath = useCallback(
-    buildCalcPath(currentId, setHighlightedPath, setLastNavigatedToPoint),
-    [currentId]
+    buildCalcPath(currentId, setHighlightedPath, setLastNavigatedToPoint, cameraRef.current, hotspots),
+    [currentId, hotspots]
   )
 
   // Effects
@@ -81,7 +114,6 @@ const VirtualTourContent: React.FC = () => {
         // Fetch labels
         const labelsResult = await axios.get<Label[]>(`${API_PREFIX}/api/v1/locationgroup/labels`)
         setAllSearchableLocations(labelsResult.data)
-        setAllLocationNames(labelsResult.data.map(v => v.query))
 
         // If ID is -1, fetch first point ID from backend
         if (nullIdValue(currentId)) {
@@ -112,19 +144,15 @@ const VirtualTourContent: React.FC = () => {
   }, [currentPoint])
 
   useEffect(() => {
-    setPathfindMode(highlightedPath.length > 0)
-  }, [highlightedPath])
-
-  useEffect(() => {
     moveForwardOnPath(
-      pathfindMode,
+      highlightedPath.length > 0,
       highlightedPath,
       currentId,
       setHighlightedPath,
       lastNavigatedToPoint,
       calculateHighlightedPath
     )
-  }, [currentId, pathfindMode, highlightedPath, lastNavigatedToPoint, calculateHighlightedPath])
+  }, [currentId, highlightedPath, lastNavigatedToPoint, calculateHighlightedPath])
 
   return (
     <>
@@ -145,11 +173,12 @@ const VirtualTourContent: React.FC = () => {
             overflow: 'hidden',
             touchAction: 'none',
           }}
-          camera={{ position: [0, 0, 10], fov: isMobile ? 90 : 90 }}
+          camera={{ position: [0, 0, 10], fov: isMobile ? 100 : 110 }}
           shadows
         >
           <ambientLight intensity={0.6} />
           <directionalLight castShadow />
+          <CameraPositionGetter setCameraRef={(camera) => { cameraRef.current = camera }} />
           <CameraRotationControls
             setCurrentId={setCurrentId}
             hotspots={hotspots}
@@ -163,7 +192,7 @@ const VirtualTourContent: React.FC = () => {
             isLoading={isLoading}
             hotspots={hotspots}
             setCurrentPoint={setCurrentPoint}
-            isPathfindingMode={pathfindMode}
+            isPathfindingMode={highlightedPath.length > 0}
             highlightedPath={highlightedPath}
           />
         </ThreeCanvas>
@@ -180,14 +209,14 @@ const VirtualTourContent: React.FC = () => {
           setCloseDrawer={setCloseDrawer}
           hasImage={hasImage}
           setHasImage={setHasImage}
-          isPathfindingMode={pathfindMode}
+          isPathfindingMode={highlightedPath.length > 0}
         />
       )}
 
       <div className="fixed top-0 left-0 right-0 z-[999]">
         <SearchBar
           currentPoint={currentPoint}
-          isPathfindingMode={pathfindMode}
+          isPathfindingMode={highlightedPath.length > 0}
           searchableLabels={allSearchableLocations}
           highlightCallback={calculateHighlightedPath}
           jumpToCallback={changeLocation}

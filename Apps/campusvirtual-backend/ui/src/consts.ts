@@ -15,7 +15,7 @@ export const SHOW_NAV_SEARCH = true;
 export const HIDE_EDGES = false;
 
 // Usability fixes - WIP, do not use!
-export const HIDE_POINTS_DURING_HIGHLIGHT = false;
+export const HIDE_POINTS_DURING_HIGHLIGHT = true;
 export const HIDE_POINTS_ON_MAP_DURING_HIGHLIGHT = true;
 export const USE_GLB_MARKER_OBJECT = false;
 
