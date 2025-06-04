@@ -3,19 +3,35 @@ import { readDB } from "../db"
 import { Request, Response } from "express"
 import { convertToUICoordinateScale } from "../logic/utils"
 import logger from "../logger"
+import { LabelType } from "../types"
+import { LabelStrategyFactory } from "../utils/labelStrategies"
 
 interface Label {
-  query: string, // query to search the database
-  label: string, // the actual label to be used
-  group?: string // the shared location with potentially other labels with the same location
-  type?: number
+  query: string;
+  label: string;
+  type: number;
+  parents: string[];
+  children: Label[];
+  coordinates: {
+    x: number;
+    y: number;
+    z: number;
+  };
 }
 
-enum LabelType {
-  Normal = 0,
-  Toilet,
-  Elevator,
-  GroupName
+interface LocationResult {
+  location: string;
+  x: number;
+  y: number;
+  z: number;
+}
+
+interface SpecialLabelResult {
+  label: string;
+  location: string;
+  x: number;
+  y: number;
+  z: number;
 }
 
 enum ReservedTypeIndex {
@@ -26,81 +42,119 @@ enum ReservedTypeIndex {
 }
 
 export async function getAllSearchableLabels(req: Request, res: Response) {
+  try {
+    // Get all locations with their coordinates
+    const locations = await readDB(`
+      SELECT DISTINCT l.location, n.x_trans as x, n.y_trans as y, n.z_trans as z 
+      FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l
+      JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n ON n.keyframe_id = l.keyframe_id;
+    `) as LocationResult[];
 
-  const locations = await readDB(`SELECT DISTINCT l.location FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l;`)
-  const parsed_locations = locations.map((location: any) => {
-    if (!location || location == "" || location.length > REASONABLE_MAX_STRING_SIZE) {
-      return null
-    }
-    return {
-      query: location.location,
-      label: location.location,
-      group: location.location,
-      type: LabelType.GroupName
-    }
-  })
+    // Get all special labels with their locations and coordinates
+    const specialLabels = await readDB(`
+      SELECT s.label, l.location, n.x_trans as x, n.y_trans as y, n.z_trans as z 
+      FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}special_labels s 
+      JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l ON l.keyframe_id = s.keyframe_id
+      JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n ON n.keyframe_id = s.keyframe_id
+      WHERE s.label IS NOT NULL 
+      AND s.label <> '' 
+      AND s.label <> '${ReservedTypeIndex[ReservedTypeIndex.Anchor]}'
+    `) as SpecialLabelResult[];
 
-  const labels = await readDB(`SELECT label, l.location FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}special_labels s 
-    JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l ON l.keyframe_id = s.keyframe_id
-    WHERE s.label is not NULL AND s.label <> '' AND s.label <> '${ReservedTypeIndex[ReservedTypeIndex.Anchor]}'`)
-
-  // Parse special labels types
-  const parsed_labels = labels.map((label: any) => {
-    const labelString = String(label.label).trim()
-    if (!label || label == "" || label.length > REASONABLE_MAX_STRING_SIZE) {
-      return null
-    }
-
-    // Short circuit on normal points - i.e. Room 1.7, Balcony, etc.
-    if (!RESERVED_START_OF_LABELS.some(reserved_string => labelString.toLowerCase().startsWith(reserved_string.toLowerCase()))) {
-      return {
-        query: label.label,
-        group: label.location.trim(),
-        label: labelString,
-        type: LabelType.Normal
-      }
-    }
-
-    // Parse each special label type - !!elevator, !!toilet, etc.
-    if (labelString.toLowerCase().startsWith(RESERVED_START_OF_LABELS[ReservedTypeIndex.Elevator])) {
-      //e.g. '!!elevator, elevator shaft 1, floor 1 entry' <- may or may not have a comma after the toilet code
-      let strippedElevator = String(labelString).replace(RESERVED_START_OF_LABELS[ReservedTypeIndex.Elevator], "").trim()
-      if (strippedElevator.startsWith(",")) {
-        strippedElevator.replace(",", " ")
-      }
-      const splitElevator = strippedElevator.split(",")
-
-      if (splitElevator.length == 0) {
-        logger.error(`[getAllSearchableLabels] Error parsing special label ${label.label}`)
-        return null
+    const labelMap = new Map<string, Label>();
+    const elevatorShaftMap = new Map<string, Label[]>();
+    
+    // Process regular locations
+    locations.forEach((location: LocationResult) => {
+      if (!location || !location.location || location.location.length > REASONABLE_MAX_STRING_SIZE) {
+        return;
       }
 
-      return {
-        query: label.label,
-        group: label.location.trim(),
-        shaft: splitElevator[1].trim(), // the Elevator shaft name e.g. 'Elevator Shaft 1'
-        label: splitElevator[2]?.trim() ?? label.location, // e.g. 'Floor 1 Entry'
-        type: LabelType.Elevator
-      }
-    } else if (labelString.toLowerCase().startsWith(RESERVED_START_OF_LABELS[ReservedTypeIndex.Toilet])) {
-      // e.g. '!!toilet, description of toilet' <- may or may not have a comma after the toilet code
-      let toiletDescriptor = String(labelString).replace(RESERVED_START_OF_LABELS[ReservedTypeIndex.Toilet], "").trim()
-      if (toiletDescriptor.startsWith(",")) {
-        toiletDescriptor = toiletDescriptor.replace(",", "").trim()
+      const strategy = LabelStrategyFactory.createStrategy(location.location);
+      const { label, parents, type } = strategy.processLabel(location.location);
+
+      labelMap.set(location.location, {
+        query: location.location,
+        label,
+        type,
+        parents,
+        children: [],
+        coordinates: {
+          x: location.x,
+          y: location.y,
+          z: location.z
+        }
+      });
+    });
+
+    // Process special labels
+    specialLabels.forEach((specialLabel: SpecialLabelResult) => {
+      if (!specialLabel || !specialLabel.label || specialLabel.label.length > REASONABLE_MAX_STRING_SIZE) {
+        return;
       }
 
-      return {
-        query: label.label,
-        group: label.location.trim(),
-        label: toiletDescriptor,
-        type: LabelType.Toilet
-      }
-    } else {
-      return null
-    }
-  }).filter((label: any) => label !== null)
+      const strategy = LabelStrategyFactory.createStrategy(specialLabel.location);
+      const { label, parents, type } = strategy.processLabel(
+        specialLabel.label,
+        specialLabel.location
+      );
 
-  res.json([...parsed_locations, ...parsed_labels])
+      const specialLabelObj = {
+        query: specialLabel.label,
+        label,
+        type,
+        parents,
+        children: [],
+        coordinates: {
+          x: specialLabel.x,
+          y: specialLabel.y,
+          z: specialLabel.z
+        }
+      };
+
+      // Handle elevator labels
+      if (type === LabelType.Elevator) {
+        const elevatorParts = specialLabel.label.split(',');
+        if (elevatorParts.length >= 2) {
+          const shaftName = elevatorParts[1].trim();
+          if (!elevatorShaftMap.has(shaftName)) {
+            elevatorShaftMap.set(shaftName, []);
+          }
+          elevatorShaftMap.get(shaftName)?.push(specialLabelObj);
+        }
+      }
+
+      // If this is a special label for an existing location, add it as a child
+      const parentLabel = labelMap.get(specialLabel.location);
+      if (parentLabel) {
+        parentLabel.children.push(specialLabelObj);
+      }
+      
+      labelMap.set(specialLabel.label, specialLabelObj);
+    });
+
+    // Link elevator children in a hierarchical structure
+    elevatorShaftMap.forEach((elevators, shaftName) => {
+      if (elevators.length > 1) {
+        // Sort elevators by their description (last part after comma)
+        elevators.sort((a, b) => {
+          const aDesc = a.query.split(',')[2]?.trim() || '';
+          const bDesc = b.query.split(',')[2]?.trim() || '';
+          return aDesc.localeCompare(bDesc);
+        });
+
+        // Create a hierarchical structure where each elevator is a child of the previous one
+        for (let i = 0; i < elevators.length - 1; i++) {
+          elevators[i].children.push(elevators[i + 1]);
+        }
+      }
+    });
+
+    res.json(Array.from(labelMap.values()));
+  } catch (error) {
+    logger.error('Error getting searchable labels:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 }
 
 export async function getPointWithLocationGroupOrLabelName(req: Request, res: Response) {

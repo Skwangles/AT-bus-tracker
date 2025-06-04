@@ -1,18 +1,23 @@
 import * as THREE from "three";
 
 export interface Label {
-  query: string; // query to search the database
-  label: string; // the actual label to be used
-  group: string; // the location group this label belongs to
-  shaft?: string; // elevator specific option
-  type: number; // 0 = Normal, 1 = Toilet, 2 = Elevator
+  query: string;
+  label: string;
+  type: LabelType;
+  parents: string[];
+  children: Label[];
+  coordinates: {
+    x: number;
+    y: number;
+    z: number;
+  };
 }
 
 export enum LabelType {
   Normal = 0,
   Toilet,
   Elevator,
-  Group
+  GroupName
 }
 
 export enum ReservedTypeIndex {

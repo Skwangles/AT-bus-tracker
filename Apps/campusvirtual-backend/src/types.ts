@@ -6,6 +6,13 @@ export enum EdgeType {
   EdgeContraction,
 }
 
+export enum LabelType {
+  Normal = 0,
+  Toilet,
+  Elevator,
+  GroupName
+}
+
 export interface PointData {
   id: number;
   x: number;
@@ -18,10 +25,16 @@ export interface PointData {
 }
 
 export interface Label {
-  id: number;
-  name: string;
-  groups: string[];
-  shaft?: string;
+  query: string;
+  label: string;
+  type: LabelType;
+  parents: string[];
+  children: Label[];
+  coordinates: {
+    x: number;
+    y: number;
+    z: number;
+  };
 }
 
 export interface LocationGroup {

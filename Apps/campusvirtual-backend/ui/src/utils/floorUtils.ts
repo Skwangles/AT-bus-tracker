@@ -1,87 +1,41 @@
-import { Label, LabelType, FloorGroup } from '../types';
+import { Label, LabelType } from '../types';
 
 export function getFloorOrder(floorName: string): number {
-  const name = floorName.toLowerCase().trim();
-  if (name === 'b') return -1;
-  if (name === 'g') return 0;
-  const num = parseInt(name);
-  return isNaN(num) ? 999 : num; // Put unknown floors at the end
+  if (floorName === 'B') return -1;
+  if (floorName === 'G') return 0;
+  return parseInt(floorName);
 }
 
-export function groupLabelsByFloor(labels: Label[]): FloorGroup[] {
-  const floorGroups: { [key: string]: FloorGroup } = {};
+export function groupLabelsByFloor(labels: Label[]) {
+  const floorGroups: { [key: string]: Label[] } = {};
 
-  // Initialize floor groups
-  labels.forEach(label => {
-    if (label.type === LabelType.Group) {
-      const floorName = label.label.trim();
-      if (!floorGroups[floorName]) {
-        floorGroups[floorName] = {
-          name: floorName,
-          order: getFloorOrder(floorName),
-          items: {
-            rooms: [],
-            elevators: [],
-            toilets: []
-          }
-        };
-      }
-    }
-  });
-
-  // Sort labels into their respective groups
-  labels.forEach(label => {
-    if (label.type === LabelType.Group) return; // Skip group labels
-
-    // Skip staircase labels
-    if (label.label.toLowerCase().endsWith('- staircase')) {
-      return;
+  // First, group by the first parent (which should be the floor)
+  labels.forEach((label) => {
+    if (label.type === LabelType.GroupName) {
+      return; // Skip group labels
     }
 
-    const floorName = label.group?.trim() || '';
-    if (floorGroups[floorName]) {
-      switch (label.type) {
-        case LabelType.Elevator: {
-          // Try to match elevator to a floor group
-          let targetFloor = floorName;
-          let labelLower = label.label.toLowerCase().trim();
+    const floorName = label.parents[0]?.trim() || '';
+    if (!floorName) return;
 
-          // If label is 'Floor X', convert to 'Level X'
-          const floorMatch = labelLower.match(/^floor (.+)$/);
-          if (floorMatch) {
-            targetFloor = `Level ${floorMatch[1].toUpperCase()}`;
-          }
-
-          // If label is 'Level X Elevator', strip ' Elevator'
-          const levelElevatorMatch = labelLower.match(/^(level .+) elevator$/);
-          if (levelElevatorMatch) {
-            targetFloor = levelElevatorMatch[1]
-              .split(' ')
-              .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-              .join(' ');
-          }
-
-          // If label is 'Floor G', convert to 'Level G'
-          if (labelLower === 'floor g') {
-            targetFloor = 'Level G';
-          }
-
-          if (floorGroups[targetFloor]) {
-            floorGroups[targetFloor].items.elevators.push(label);
-          }
-          break;
-        }
-        case LabelType.Toilet:
-          floorGroups[floorName].items.toilets.push(label);
-          break;
-        default:
-          floorGroups[floorName].items.rooms.push(label);
-      }
+    if (!floorGroups[floorName]) {
+      floorGroups[floorName] = [];
     }
+    floorGroups[floorName].push(label);
   });
 
   // Convert to array and sort by floor order
-  return Object.values(floorGroups).sort((a, b) => a.order - b.order);
+  return Object.entries(floorGroups)
+    .map(([name, items]) => ({
+      name,
+      order: getFloorOrder(name),
+      items: {
+        rooms: items.filter(item => item.type === LabelType.Normal),
+        elevators: items.filter(item => item.type === LabelType.Elevator),
+        toilets: items.filter(item => item.type === LabelType.Toilet)
+      }
+    }))
+    .sort((a, b) => a.order - b.order);
 }
 
 export function parseSpecialLabel(label: string): { type: LabelType; description: string } | null {

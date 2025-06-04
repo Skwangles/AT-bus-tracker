@@ -1,6 +1,6 @@
 import React from 'react'
 import { Label } from '../../../types'
-import { getLabelLongName } from '../../../utils/labelUtils'
+import { getLabelDisplayName, getLabelIcon, getLabelColor } from '../../../utils/labelUtils'
 
 interface RecentSearchesProps {
   recentSearches: Label[]
@@ -8,20 +8,21 @@ interface RecentSearchesProps {
 }
 
 const RecentSearches: React.FC<RecentSearchesProps> = ({ recentSearches, handleSuggestionClick }) => {
-  if (!recentSearches.length) return null;
+  if (recentSearches.length === 0) return null;
 
   return (
-    <div className="recent-searches mb-2" tabIndex={0}>
-      <h3 className="px-4 py-2 m-0 text-sm font-semibold text-gray-600 uppercase bg-gray-50">
+    <div className="recent-searches">
+      <h3 className="px-4 py-2 text-sm font-semibold text-gray-600 uppercase bg-gray-50">
         Recent Searches
       </h3>
-      {recentSearches.map((recent, index) => (
+      {recentSearches.map((recent) => (
         <div
-          key={`recent-${index}`}
-          className="suggestion-item cursor-pointer hover:text-blue-500"
+          key={recent.query}
+          className={`suggestion-item flex items-center ${getLabelColor(recent)}`}
           onClick={() => handleSuggestionClick(recent)}
         >
-          {getLabelLongName(recent.group, recent.label)}
+          <span className="mr-2">{getLabelIcon(recent)}</span>
+          <span>{getLabelDisplayName(recent)}</span>
         </div>
       ))}
     </div>

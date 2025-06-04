@@ -1,20 +1,20 @@
 import React from 'react'
 import { Label, LabelType } from '../../../types'
-import { ChevronDown, ChevronLeft, ArrowUp, Coffee, Search } from 'react-feather'
-import { groupLabelsByFloor } from '../../../utils/floorUtils'
-import LocationItem from './LocationItem'
+import { getLabelDisplayName, getLabelIcon, getLabelColor } from '../../../utils/labelUtils'
+import { Search } from 'react-feather'
 
 interface FloorGroupProps {
-  floor: ReturnType<typeof groupLabelsByFloor>[0]
+  floor: {
+    name: string;
+    items: {
+      rooms: Label[];
+      elevators: Label[];
+      toilets: Label[];
+    };
+  }
   isExpanded: boolean
   onToggle: () => void
   onItemClick: (label: Label) => void
-}
-
-const keyboardToClick = (event: React.KeyboardEvent, callback: () => void) => {
-  if (event.key === 'Enter' || event.key === ' ') {
-    callback()
-  }
 }
 
 const toTitleCase = (str: string): string => {
@@ -36,18 +36,28 @@ const FloorGroup: React.FC<FloorGroupProps> = ({ floor, isExpanded, onToggle, on
   const handleFloorClick = (event: React.MouseEvent) => {
     // Create a floor label for searching
     const floorLabel: Label = {
-      type: LabelType.Group,
-      group: 'Floor',
+      type: LabelType.GroupName,
       label: floor.name,
-      query: floor.name
+      query: floor.name,
+      parents: [],
+      children: [],
+      coordinates: { x: 0, y: 0, z: 0 }
     }
     onItemClick(floorLabel)
   }
 
   const displayName = toTitleCase(floor.name)
 
-  // Debug: log elevator items for this floor
-  console.log('Elevators for', floor.name, floor.items.elevators)
+  const renderLabel = (label: Label) => (
+    <div
+      key={label.query}
+      className={`suggestion-item flex items-center ${getLabelColor(label)}`}
+      onClick={() => onItemClick(label)}
+    >
+      <span className="mr-2">{getLabelIcon(label)}</span>
+      <span>{getLabelDisplayName(label)}</span>
+    </div>
+  );
 
   if (!hasItems) {
     return (
@@ -69,70 +79,22 @@ const FloorGroup: React.FC<FloorGroupProps> = ({ floor, isExpanded, onToggle, on
   }
 
   return (
-    <div>
+    <div className="floor-group">
       <div
-        role="button"
-        tabIndex={0}
-        className="suggestion-item cursor-pointer hover:text-blue-500"
+        className="floor-header flex items-center justify-between px-4 py-2 cursor-pointer hover:bg-gray-50"
         onClick={onToggle}
-        onKeyDown={(event) => keyboardToClick(event, onToggle)}
       >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <b>{displayName}</b>
-            {isExpanded ? (
-              <ChevronDown className="ml-2 h-5 w-5 text-gray-500" />
-            ) : (
-              <ChevronLeft className="ml-2 h-5 w-5 text-gray-500" />
-            )}
-          </div>
-          <button
-            className="p-1 hover:text-blue-500 focus:outline-none"
-            onClick={(e) => {
-              e.stopPropagation()
-              handleFloorClick(e)
-            }}
-            title={`Search for ${displayName}`}
-          >
-            <Search className="h-4 w-4" />
-          </button>
-        </div>
+        <span className="font-medium">{displayName}</span>
+        <span className="text-gray-500">
+          {isExpanded ? '▼' : '▶'}
+        </span>
       </div>
-
       {isExpanded && (
-        <>
-          {floor.items.rooms.map((room, idx) => (
-            <LocationItem
-              key={`room-${idx}`}
-              label={room}
-              onClick={() => onItemClick(room)}
-              indent
-            />
-          ))}
-
-          {floor.items.elevators.map((elevator, idx) => (
-            <LocationItem
-              key={`elevator-${idx}`}
-              label={{
-                ...elevator,
-                label: elevator.label.split('-').slice(1).join('-').trim() || 'Elevator'
-              }}
-              onClick={() => onItemClick(elevator)}
-              icon={<ArrowUp className="h-4 w-4 mr-2 text-gray-500" />}
-              indent
-            />
-          ))}
-
-          {floor.items.toilets.map((toilet, idx) => (
-            <LocationItem
-              key={`toilet-${idx}`}
-              label={toilet}
-              onClick={() => onItemClick(toilet)}
-              icon={<Coffee className="h-4 w-4 mr-2 text-gray-500" />}
-              indent
-            />
-          ))}
-        </>
+        <div className="floor-items">
+          {floor.items.rooms.map(renderLabel)}
+          {floor.items.elevators.map(renderLabel)}
+          {floor.items.toilets.map(renderLabel)}
+        </div>
       )}
     </div>
   )
