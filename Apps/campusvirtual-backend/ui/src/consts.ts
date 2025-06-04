@@ -1,4 +1,4 @@
-export const API_PREFIX = "";
+export const API_PREFIX = "http://localhost:3001";
 
 export const FLOOR_ORDERING_STRATEGY = "tga"; // tga for <floor>.<room>  (or 'waikato' for <block>.<floor>.<room> stratgey)
 export const COORDS_TO_METRES = 1; // metres per coordinate - the backend should apply their version automatically, but this is a manual adjustment

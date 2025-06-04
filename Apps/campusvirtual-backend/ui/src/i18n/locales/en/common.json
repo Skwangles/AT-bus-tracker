@@ -1,0 +1,83 @@
+{
+  "navigation": {
+    "search": "Search",
+    "map": "Map",
+    "list": "List",
+    "instructions": "Instructions",
+    "close": "Close"
+  },
+  "location": {
+    "outdoors": "Outdoors",
+    "level": "Level {{level}}",
+    "unreachable": "{{location}} is not a reachable location."
+  },
+  "project": {
+    "name": "CampusVirtual"
+  },
+  "ui": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Retry",
+    "map": {
+      "open": "Open map",
+      "close": "Close map"
+    },
+    "instructions": {
+      "show": "Show instructions",
+      "close": "Close instructions"
+    }
+  },
+  "search": {
+    "placeholder": "Search a location...",
+    "ariaLabel": "Search for a location",
+    "clear": "Clear search",
+    "buttons": {
+      "guide": "Guide",
+      "clearPath": "Clear Path",
+      "goTo": "Go To",
+      "ariaLabels": {
+        "highlight": "Highlight path to location",
+        "goto": "Go to location"
+      }
+    }
+  },
+  "errors": {
+    "fetchData": "Error fetching data:",
+    "invalidLabel": "Label is invalid: {{label}}"
+  },
+  "instructions": {
+    "title": "How to Navigate",
+    "navigation": {
+      "mobile": {
+        "look": "Drag or swipe to look around"
+      },
+      "desktop": {
+        "move": "to move",
+        "look": "to look around",
+        "drag": "Drag to look around"
+      },
+      "jump": "Click red orbs to jump to new locations",
+      "location": "Your current location is shown just below the search bar at the top"
+    },
+    "search": {
+      "title": "Search",
+      "useSearch": "Use the search bar at the top to find locations",
+      "destination": "Yellow rotating square marks your destination",
+      "path": "Blue path guides you to your destination"
+    },
+    "map": {
+      "title": "Map",
+      "open": "Open the map with the button in the top left",
+      "legend": {
+        "position": "Your position",
+        "nextRegion": "Next region",
+        "viewingPoint": "Viewing point",
+        "highlightedPath": "Highlighted path"
+      }
+    },
+    "help": {
+      "title": "Help",
+      "toggle": "Click the Instructions button in the bottom right to open or close this help window"
+    }
+  }
+} 

@@ -16,6 +16,7 @@ import {
   RotateCcw,
   Info,
 } from 'react-feather'
+import { useTranslation } from 'react-i18next'
 
 interface InstructionsProps {
   point: { keyframe_id: number; location: string; ts: string }
@@ -32,18 +33,19 @@ const Instructions: React.FC<InstructionsProps> = ({
   setIsOpen,
   className = '',
 }) => {
+  const { t } = useTranslation('common');
   const mobile = isMobile()
   return (
     <div className={`stats-container ${className}`}>
       {isOpen && (
         <div className="stats">
-          <h3 className="stats-heading">How to Navigate</h3>
+          <h3 className="stats-heading">{t('instructions.title')}</h3>
           <ul className="instructions-list">
             {mobile ? (
               <>
                 <li>
                   <MousePointer className="instruction-icon" />
-                  <span>Drag or swipe to look around</span>
+                  <span>{t('instructions.navigation.mobile.look')}</span>
                 </li>
               </>
             ) : (
@@ -55,7 +57,7 @@ const Instructions: React.FC<InstructionsProps> = ({
                     <span className="key">S</span>
                     <span className="key">D</span>
                   </span>
-                  <span>to move</span>
+                  <span>{t('instructions.navigation.desktop.move')}</span>
                 </li>
                 <li>
                   <span className="flex items-center gap-1">
@@ -64,74 +66,74 @@ const Instructions: React.FC<InstructionsProps> = ({
                     <ArrowDown size={16} />
                     <ArrowRight size={16} />
                   </span>
-                  <span>to look around</span>
+                  <span>{t('instructions.navigation.desktop.look')}</span>
                 </li>
                 <li>
                   <MousePointer className="instruction-icon" />
-                  <span>Drag to look around</span>
+                  <span>{t('instructions.navigation.desktop.drag')}</span>
                 </li>
               </>
             )}
             <li>
               <Circle className="instruction-icon" color="#ff4444" />
-              <span>Click red orbs to jump to new locations</span>
+              <span>{t('instructions.navigation.jump')}</span>
             </li>
             <li>
               <MapPin className="instruction-icon" />
-              <span>Your current location is shown just below the search bar at the top</span>
+              <span>{t('instructions.navigation.location')}</span>
             </li>
           </ul>
 
-          <h3 className="stats-heading">Search</h3>
+          <h3 className="stats-heading">{t('instructions.search.title')}</h3>
           <ul className="instructions-list">
             <li>
               <Search className="instruction-icon" />
-              <span>Use the search bar at the top to find locations</span>
+              <span>{t('instructions.search.useSearch')}</span>
             </li>
             <li>
               <Square className="instruction-icon" color="#ffd700" />
               <RotateCcw className="instruction-icon" color="#ffd700" />
-              <span>Yellow rotating square marks your destination</span>
+              <span>{t('instructions.search.destination')}</span>
             </li>
             <li>
               <Circle className="instruction-icon" color="#4444ff" />
-              <span>Blue path guides you to your destination</span>
+              <span>{t('instructions.search.path')}</span>
             </li>
           </ul>
 
-          <h3 className="stats-heading">Map</h3>
+          <h3 className="stats-heading">{t('instructions.map.title')}</h3>
           <ul className="instructions-list">
             <li>
               <Map className="instruction-icon" />
-              <span>Open the map with the button in the <b>top left</b></span>
+              <span>{t('instructions.map.open')}</span>
             </li>
             <li>
               <div className="map-legend">
                 <div className="legend-item">
                   <User className="instruction-icon" />
-                  <span>Your position</span>
+                  <span>{t('instructions.map.legend.position')}</span>
                 </div>
                 <div className="legend-item">
                   <LogOut className="instruction-icon" />
-                  <span>Next region</span>
+                  <span>{t('instructions.map.legend.nextRegion')}</span>
                 </div>
                 <div className="legend-item">
                   <Circle className="instruction-icon" color="#ff4444" />
-                  <span>Viewing point</span>
+                  <span>{t('instructions.map.legend.viewingPoint')}</span>
                 </div>
                 <div className="legend-item">
                   <Circle className="instruction-icon" color="#4444ff" />
-                  <span>Highlighted path</span>
+                  <span>{t('instructions.map.legend.highlightedPath')}</span>
                 </div>
               </div>
             </li>
           </ul>
 
-          <h3 className="stats-heading">Help</h3>
+          <h3 className="stats-heading">{t('instructions.help.title')}</h3>
           <ul className="instructions-list">
             <li>
               <Info className="instruction-icon" />
-              <span>Click the <b>Instructions</b> button in the <b>bottom right</b> to open or close this help window</span>
+              <span>{t('instructions.help.toggle')}</span>
             </li>
           </ul>
         </div>

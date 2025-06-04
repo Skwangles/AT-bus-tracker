@@ -1,0 +1,83 @@
+{
+  "navigation": {
+    "search": "Buscar",
+    "map": "Mapa",
+    "list": "Lista",
+    "instructions": "Instrucciones",
+    "close": "Cerrar"
+  },
+  "location": {
+    "outdoors": "Exterior",
+    "level": "Nivel {{level}}",
+    "unreachable": "{{location}} no es una ubicación accesible."
+  },
+  "project": {
+    "name": "CampusVirtual"
+  },
+  "ui": {
+    "loading": "Cargando...",
+    "error": "Ocurrió un error",
+    "retry": "Reintentar",
+    "map": {
+      "open": "Abrir mapa",
+      "close": "Cerrar mapa"
+    },
+    "instructions": {
+      "show": "Mostrar instrucciones",
+      "close": "Cerrar instrucciones"
+    }
+  },
+  "search": {
+    "placeholder": "Buscar una ubicación...",
+    "ariaLabel": "Buscar una ubicación",
+    "clear": "Limpiar búsqueda",
+    "buttons": {
+      "guide": "Guiar",
+      "clearPath": "Limpiar Ruta",
+      "goTo": "Ir a",
+      "ariaLabels": {
+        "highlight": "Resaltar ruta a la ubicación",
+        "goto": "Ir a la ubicación"
+      }
+    }
+  },
+  "errors": {
+    "fetchData": "Error al obtener datos:",
+    "invalidLabel": "Etiqueta inválida: {{label}}"
+  },
+  "instructions": {
+    "title": "Cómo Navegar",
+    "navigation": {
+      "mobile": {
+        "look": "Arrastra o desliza para mirar alrededor"
+      },
+      "desktop": {
+        "move": "para moverte",
+        "look": "para mirar alrededor",
+        "drag": "Arrastra para mirar alrededor"
+      },
+      "jump": "Haz clic en las esferas rojas para saltar a nuevas ubicaciones",
+      "location": "Tu ubicación actual se muestra justo debajo de la barra de búsqueda en la parte superior"
+    },
+    "search": {
+      "title": "Búsqueda",
+      "useSearch": "Usa la barra de búsqueda en la parte superior para encontrar ubicaciones",
+      "destination": "El cuadrado amarillo giratorio marca tu destino",
+      "path": "La ruta azul te guía hacia tu destino"
+    },
+    "map": {
+      "title": "Mapa",
+      "open": "Abre el mapa con el botón en la parte superior izquierda",
+      "legend": {
+        "position": "Tu posición",
+        "nextRegion": "Siguiente región",
+        "viewingPoint": "Punto de vista",
+        "highlightedPath": "Ruta resaltada"
+      }
+    },
+    "help": {
+      "title": "Ayuda",
+      "toggle": "Haz clic en el botón Instrucciones en la parte inferior derecha para abrir o cerrar esta ventana de ayuda"
+    }
+  }
+} 

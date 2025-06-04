@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { Label, LabelType } from '../../types'
-import { getLabelDisplayName, getLabelIcon, getLabelColor } from '../../utils/labelUtils'
+import { getLabelDisplayName, getLabelColor } from '../../utils/labelUtils'
 import { ChevronDown, ChevronRight, ArrowUp, User } from 'react-feather'
 
 interface DropDownContainerProps {

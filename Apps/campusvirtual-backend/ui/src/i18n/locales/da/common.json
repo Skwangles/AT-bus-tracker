@@ -1,0 +1,83 @@
+{
+  "navigation": {
+    "search": "Søg",
+    "map": "Kort",
+    "list": "Liste",
+    "instructions": "Instruktioner",
+    "close": "Luk"
+  },
+  "location": {
+    "outdoors": "Udendørs",
+    "level": "Etage {{level}}",
+    "unreachable": "{{location}} er ikke en tilgængelig placering."
+  },
+  "project": {
+    "name": "CampusVirtual"
+  },
+  "ui": {
+    "loading": "Indlæser...",
+    "error": "Der opstod en fejl",
+    "retry": "Prøv igen",
+    "map": {
+      "open": "Åbn kort",
+      "close": "Luk kort"
+    },
+    "instructions": {
+      "show": "Vis instruktioner",
+      "close": "Luk instruktioner"
+    }
+  },
+  "search": {
+    "placeholder": "Søg efter en placering...",
+    "ariaLabel": "Søg efter en placering",
+    "clear": "Ryd søgning",
+    "buttons": {
+      "guide": "Guide",
+      "clearPath": "Ryd rute",
+      "goTo": "Gå til",
+      "ariaLabels": {
+        "highlight": "Fremhæv rute til placering",
+        "goto": "Gå til placering"
+      }
+    }
+  },
+  "errors": {
+    "fetchData": "Fejl ved hentning af data:",
+    "invalidLabel": "Ugyldigt mærke: {{label}}"
+  },
+  "instructions": {
+    "title": "Sådan navigerer du",
+    "navigation": {
+      "mobile": {
+        "look": "Træk eller swipe for at kigge rundt"
+      },
+      "desktop": {
+        "move": "for at bevæge dig",
+        "look": "for at kigge rundt",
+        "drag": "Træk for at kigge rundt"
+      },
+      "jump": "Klik på røde kugler for at hoppe til nye placeringer",
+      "location": "Din nuværende placering vises lige under søgefeltet øverst"
+    },
+    "search": {
+      "title": "Søgning",
+      "useSearch": "Brug søgefeltet øverst til at finde placeringer",
+      "destination": "Gul roterende firkant markerer din destination",
+      "path": "Blå sti fører dig til din destination"
+    },
+    "map": {
+      "title": "Kort",
+      "open": "Åbn kortet med knappen i øverste venstre hjørne",
+      "legend": {
+        "position": "Din position",
+        "nextRegion": "Næste område",
+        "viewingPoint": "Udsigtspunkt",
+        "highlightedPath": "Fremhævet sti"
+      }
+    },
+    "help": {
+      "title": "Hjælp",
+      "toggle": "Klik på knappen Instruktioner i nederste højre hjørne for at åbne eller lukke dette hjælpevindue"
+    }
+  }
+} 

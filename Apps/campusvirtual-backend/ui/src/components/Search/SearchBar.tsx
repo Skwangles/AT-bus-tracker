@@ -12,6 +12,7 @@ import SearchBarButtons from "./SearchBarButtons";
 import { toast } from "react-toastify";
 import { getLabelLongName, getLabelDisplayName } from "../../utils/labelUtils";
 import { Label } from "../../types";
+import { useTranslation } from "react-i18next";
 
 // Define the type for the props
 interface SearchBarProps {
@@ -29,6 +30,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
   highlightCallback,
   isPathfindingMode,
 }) => {
+  const { t } = useTranslation('common');
   const [query, setQuery] = useState<string>("");
   const [suggestions, setSuggestions] = useState<Label[]>([]);
   const [isFocused, setIsFocused] = useState<boolean>(false);
@@ -115,7 +117,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
 
     // Validate Label
     if (!labelObj || !labelObj.query || !labelObj.label) {
-      toast.error("Label is invalid: " + label);
+      toast.error(t('errors.invalidLabel', { label }));
       console.error(
         "Label is invalid: " +
           label +
@@ -157,7 +159,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
                 handleAction(query, "jump");
               }
             }}
-            placeholder="Search a location..."
+            placeholder={t('search.placeholder')}
             className="w-full px-3 py-2 text-sm border-2 border-gray-200 rounded-lg shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-gray-900"
             onFocus={() => {
               setIsFocused(true);
@@ -168,13 +170,13 @@ const SearchBar: React.FC<SearchBarProps> = ({
                   )
                 );
             }}
-            aria-label="Search for a location"
+            aria-label={t('search.ariaLabel')}
           />
           {query && (
             <button
               className="clear-button"
               onClick={clearSearch}
-              aria-label="Clear search"
+              aria-label={t('search.clear')}
             >
               <X size={16} aria-hidden="true" />
             </button>

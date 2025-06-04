@@ -22,6 +22,8 @@ import { HotspotObj, Label, PointData } from '../types'
 import Instructions from './Misc/Instructions'
 import * as THREE from 'three'
 import { useThree } from '@react-three/fiber'
+import { LanguageSwitcher } from './LanguageSwitcher'
+import { useTranslation } from 'react-i18next'
 
 // Helper component to get camera reference
 interface CameraPositionGetterProps {
@@ -39,6 +41,8 @@ const CameraPositionGetter: React.FC<CameraPositionGetterProps> = ({ setCameraRe
 }
 
 const VirtualTourContent: React.FC = () => {
+  const { t } = useTranslation('common');
+  
   // State declarations
   const [currentId, setCurrentId] = useState<string>(initIdFromParams())
   const [currentPoint, setCurrentPoint] = useState<PointData>(() => ({
@@ -91,7 +95,7 @@ const VirtualTourContent: React.FC = () => {
         setIsLoading(false);
       })
       .catch((reason) => {
-        toast.warn(location + ' is not a reachable location.');
+        toast.warn(t('location.unreachable', { location }));
         setIsLoading(false);
         // In the case the 'DEFAULT LOCATION' is not found, we will fetch the first point
         if (Number(currentId) === -1) {
@@ -100,7 +104,7 @@ const VirtualTourContent: React.FC = () => {
           });
         }
       });
-  }, [currentId]);
+  }, [currentId, t]);
 
   const calculateHighlightedPath = useCallback(
     buildCalcPath(currentId, setHighlightedPath, setLastNavigatedToPoint, cameraRef.current, hotspots),
@@ -223,6 +227,11 @@ const VirtualTourContent: React.FC = () => {
         />
       </div>
 
+      {/* Move Language Switcher to bottom left */}
+      <div className="fixed bottom-6 left-6 z-[1001]">
+        <LanguageSwitcher />
+      </div>
+
       {isMobile && showMap && (
         <button
           className="fixed top-4 left-4 z-[1001] bg-white/90 enabled:hover:bg-white rounded-full p-3 shadow-lg flex items-center justify-center disabled:pointer-events-none"
@@ -245,7 +254,7 @@ const VirtualTourContent: React.FC = () => {
           `}
           disabled={!hasImage}
           onClick={() => setCloseDrawer(!closeDrawer)}
-          aria-label={closeDrawer ? 'Close map' : 'Open map'}
+          aria-label={closeDrawer ? t('ui.map.close') : t('ui.map.open')}
         >
           <FeatherMap
             className="w-5 h-5"
@@ -259,17 +268,17 @@ const VirtualTourContent: React.FC = () => {
       <button
         className="fixed bottom-6 right-6 z-[1001] bg-white/90 enabled:hover:bg-white rounded-full px-6 py-3 shadow-lg flex items-center justify-center gap-2 enabled:transition-all disabled:pointer-events-none border border-gray-300"
         onClick={() => setIsInstructionsOpen(!isInstructionsOpen)}
-        aria-label={isInstructionsOpen ? "Close instructions" : "Show instructions"}
+        aria-label={isInstructionsOpen ? t('ui.instructions.close') : t('ui.instructions.show')}
       >
         {isInstructionsOpen ? (
           <>
             <X size={20} />
-            <span>Close</span>
+            <span>{t('navigation.close')}</span>
           </>
         ) : (
           <>
             <Info size={20} />
-            <span>Instructions</span>
+            <span>{t('navigation.instructions')}</span>
           </>
         )}
       </button>

@@ -1,0 +1,83 @@
+{
+  "navigation": {
+    "search": "搜尋",
+    "map": "地圖",
+    "list": "列表",
+    "instructions": "使用說明",
+    "close": "關閉"
+  },
+  "location": {
+    "outdoors": "室外",
+    "level": "{{level}}層",
+    "unreachable": "{{location}} 不是可到達的位置。"
+  },
+  "project": {
+    "name": "虛擬校園"
+  },
+  "ui": {
+    "loading": "載入中...",
+    "error": "發生錯誤",
+    "retry": "重試",
+    "map": {
+      "open": "開啟地圖",
+      "close": "關閉地圖"
+    },
+    "instructions": {
+      "show": "顯示使用說明",
+      "close": "關閉使用說明"
+    }
+  },
+  "search": {
+    "placeholder": "搜尋位置...",
+    "ariaLabel": "搜尋位置",
+    "clear": "清除搜尋",
+    "buttons": {
+      "guide": "導航",
+      "clearPath": "清除路線",
+      "goTo": "前往",
+      "ariaLabels": {
+        "highlight": "高亮顯示到該位置的路線",
+        "goto": "前往該位置"
+      }
+    }
+  },
+  "errors": {
+    "fetchData": "獲取數據時出錯：",
+    "invalidLabel": "無效的標籤：{{label}}"
+  },
+  "instructions": {
+    "title": "如何導航",
+    "navigation": {
+      "mobile": {
+        "look": "拖動或滑動以環顧四周"
+      },
+      "desktop": {
+        "move": "移動",
+        "look": "環顧四周",
+        "drag": "拖動以環顧四周"
+      },
+      "jump": "點擊紅色球體跳轉到新位置",
+      "location": "您當前位置顯示在頂部搜尋欄下方"
+    },
+    "search": {
+      "title": "搜尋",
+      "useSearch": "使用頂部搜尋欄查找位置",
+      "destination": "黃色旋轉方塊標記您的目的地",
+      "path": "藍色路徑引導您到達目的地"
+    },
+    "map": {
+      "title": "地圖",
+      "open": "點擊左上角按鈕開啟地圖",
+      "legend": {
+        "position": "您的位置",
+        "nextRegion": "下一個區域",
+        "viewingPoint": "觀察點",
+        "highlightedPath": "高亮路徑"
+      }
+    },
+    "help": {
+      "title": "幫助",
+      "toggle": "點擊右下角的說明按鈕開啟或關閉此幫助視窗"
+    }
+  }
+} 
