@@ -34,12 +34,12 @@ export function getLabelIcon(label: Label): string {
 export function getLabelColor(label: Label): string {
   switch (label.type) {
     case LabelType.Elevator:
-      return 'text-blue-600';
+      return 'primary.main'; // MUI primary color
     case LabelType.Toilet:
-      return 'text-green-600';
+      return 'success.main'; // MUI success color
     case LabelType.GroupName:
-      return 'text-gray-600';
+      return 'text.secondary'; // MUI secondary text color
     default:
-      return 'text-gray-800';
+      return 'text.primary'; // MUI primary text color
   }
 }
