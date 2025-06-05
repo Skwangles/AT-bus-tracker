@@ -45,4 +45,4 @@ export const STARTING_LOCATION_GROUP = "Level 1";
 export const HOTSPOT_COLOUR = "#E1251B";
 export const HOTSPOT_OUTLINE = "#FFFFFF";
 export const HOTSPOT_HIGHLIGHTED = "#0F0FF0";
-export const HOTSPOT_HOVERED = "#F0F0F0";
+export const HOTSPOT_HOVERED = "#2196F3"; // MUI primary blue color for better selection indication
