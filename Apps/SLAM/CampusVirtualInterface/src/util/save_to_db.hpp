@@ -53,10 +53,10 @@ std::vector<video_timestamp> load_video_timestamps_sqlite3(sqlite3* db) {
     return results;
 }
 
-std::vector<timestamp_annotation> load_special_point_timestamps(sqlite3* db, std::vector<timestamp_annotation>& results) {
+std::vector<timestamp_annotation> load_user_defined_point_timestamps(sqlite3* db, std::vector<timestamp_annotation>& results) {
     sqlite3_stmt* stmt;
 
-    const char* sql = "SELECT name, timestamp, ms FROM special_point_timestamps";
+    const char* sql = "SELECT name, timestamp, ms FROM user_defined_point_timestamps";
 
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) == SQLITE_OK) {
         while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -95,7 +95,7 @@ std::vector<timestamp_annotation> load_timestamp_groups(sqlite3* db, std::vector
     return results;
 }
 
-int save_special_point_timestamps_to_sqlite3(sqlite3 *db, std::string group, double timestamp, double ms){
+int save_user_defined_point_timestamps_to_sqlite3(sqlite3 *db, std::string group, double timestamp, double ms){
     
     std::vector<std::pair<std::string, std::string>> columns{
         {"name", "BLOB"},
@@ -105,7 +105,7 @@ int save_special_point_timestamps_to_sqlite3(sqlite3 *db, std::string group, dou
 
     int ret = 0;
     if (ret == SQLITE_OK) {
-        std::string stmt_str = "CREATE TABLE IF NOT EXISTS special_point_timestamps(id INTEGER PRIMARY KEY AUTOINCREMENT";
+        std::string stmt_str = "CREATE TABLE IF NOT EXISTS user_defined_point_timestamps(id INTEGER PRIMARY KEY AUTOINCREMENT";
         for (const auto& column : columns) {
             stmt_str += ", " + column.first + " " + column.second;
         }
@@ -124,7 +124,7 @@ int save_special_point_timestamps_to_sqlite3(sqlite3 *db, std::string group, dou
 
     sqlite3_stmt* stmt = nullptr;
     if (ret == SQLITE_OK) {
-        std::string stmt_str = "INSERT INTO special_point_timestamps(";
+        std::string stmt_str = "INSERT INTO user_defined_point_timestamps(";
         bool first = true;
         for (const auto& column : columns) {
             if (first) {
@@ -356,16 +356,16 @@ int save_video_to_sqlite3(sqlite3 *db, std::string video_name, double start_time
 }
 
 
-void save_timestamps_to_sqlite3(sqlite3* db, std::vector<timestamp_annotation> timestamp_group_list, std::vector<timestamp_annotation> special_points_list){
+void save_timestamps_to_sqlite3(sqlite3* db, std::vector<timestamp_annotation> timestamp_group_list, std::vector<timestamp_annotation> user_defined_points_list){
 
     for (auto& timestamp_group : timestamp_group_list) {
         save_timestamp_groups_to_sqlite3(db, timestamp_group.group , timestamp_group.timestamp, timestamp_group.ms);
         std::cout << "Group: " << timestamp_group.group << " Timestamp: " << timestamp_group.timestamp <<  " Ms: " << timestamp_group.ms << std::endl;
     }
     
-    for (auto& special_point : special_points_list) {
-        save_special_point_timestamps_to_sqlite3(db, special_point.group , special_point.timestamp, special_point.ms);
-        std::cout << "Special Point: " << special_point.group << " Timestamp: " << special_point.timestamp <<  " Ms: " << special_point.ms << std::endl;
+    for (auto& user_defined_point : user_defined_points_list) {
+        save_user_defined_point_timestamps_to_sqlite3(db, user_defined_point.group , user_defined_point.timestamp, user_defined_point.ms);
+        std::cout << "User Defined Point: " << user_defined_point.group << " Timestamp: " << user_defined_point.timestamp <<  " Ms: " << user_defined_point.ms << std::endl;
     }
 
 }

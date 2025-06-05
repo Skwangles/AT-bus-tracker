@@ -83,7 +83,7 @@ def export_changes():
         print("Wrote:", cursor.rowcount)
         cursor.executemany("DELETE FROM " + table_name_prefix + "node_locations WHERE keyframe_id = ?;", delete_nodes)
         print("Wrote:", cursor.rowcount)
-        cursor.executemany("DELETE FROM " + table_name_prefix + "special_labels WHERE keyframe_id = ?;", delete_nodes)
+        cursor.executemany("DELETE FROM " + table_name_prefix + "user_defined_labels WHERE keyframe_id = ?;", delete_nodes)
         print("Wrote:", cursor.rowcount)
         cursor.executemany("DELETE FROM " + table_name_prefix+ "nodes WHERE keyframe_id = ?;", delete_nodes)
         print("Wrote:", cursor.rowcount)

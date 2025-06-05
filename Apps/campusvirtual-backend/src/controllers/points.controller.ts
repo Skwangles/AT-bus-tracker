@@ -35,7 +35,7 @@ export async function pathfindFromPointId(req: Request, res: Response) {
   }
 
   // Check label first, as these are manually annotated (and supposedly special) points
-  let locationResults = await readDB(`SELECT s.keyframe_id FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}special_labels s WHERE s.label = ? LIMIT 1;`, [locationCode], true);
+  let locationResults = await readDB(`SELECT s.keyframe_id FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}user_defined_labels s WHERE s.label = ? LIMIT 1;`, [locationCode], true);
   let isLabel = true;
   if (!locationResults) {
     isLabel = false

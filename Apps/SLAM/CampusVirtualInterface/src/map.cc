@@ -71,7 +71,7 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
                   const std::string& viewer_string,
                   nlohmann::json& json_obj,
                   std::vector<timestamp_annotation>& timestamp_group_list,
-                  std::vector<timestamp_annotation>& special_point_group_list,
+                  std::vector<timestamp_annotation>& user_defined_point_group_list,
                   const bool exit_on_imwrite_fail,
                   const std::string& image_output_dir = "pictures/",
                   const unsigned int slam_img_width = 1920,
@@ -162,9 +162,9 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
     unsigned int num_frame = 0;
     double timestamp = start_timestamp;
 
-    int32_t last_assigned_special_point_idx = 0;
+    int32_t last_assigned_user_defined_point_idx = 0;
     
-    std::vector<std::string> special_points;    
+    std::vector<std::string> user_defined_points;    
     
     int32_t last_loop_detection_disable_idx = 0; 
     double next_loop_disable_check = -1;
@@ -297,9 +297,9 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
                             timestamp_group_list.emplace_back(group, timestamp, ms_since_start);
                             
                             
-                            last_assigned_special_point_idx = get_special_points(json_obj, ms_since_start, last_assigned_special_point_idx, special_points);
-                            for (auto annotation : special_points){
-                                special_point_group_list.emplace_back(annotation, timestamp, ms_since_start);
+                            last_assigned_user_defined_point_idx = get_user_defined_points(json_obj, ms_since_start, last_assigned_user_defined_point_idx, user_defined_points);
+                            for (auto annotation : user_defined_points){
+                                user_defined_point_group_list.emplace_back(annotation, timestamp, ms_since_start);
                             }
                             
                             
@@ -537,7 +537,7 @@ int main(int argc, char* argv[]) {
     ///
     std::string map_db_in = map_db_path_in->value();
     std::vector<timestamp_annotation> timestamp_group_list;
-    std::vector<timestamp_annotation> special_point_group_list;
+    std::vector<timestamp_annotation> user_defined_point_group_list;
 
     if (map_db_path_in->is_set()){
         if (!fs::exists(map_db_in)){
@@ -553,7 +553,7 @@ int main(int argc, char* argv[]) {
         }
 
         load_timestamp_groups(db, timestamp_group_list);
-        load_special_point_timestamps(db, special_point_group_list);
+        load_user_defined_point_timestamps(db, user_defined_point_group_list);
 
         sqlite3_close(db);
     }
@@ -671,7 +671,7 @@ int main(int argc, char* argv[]) {
                                 viewer_string, 
                                 json_obj, 
                                 timestamp_group_list,
-                                special_point_group_list,
+                                user_defined_point_group_list,
                                 exit_if_imwrite_fails->is_set(),
                                 img_output_dir->value(),
                                 img_size["cols"].as<unsigned int>(),
@@ -698,7 +698,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     
-    save_timestamps_to_sqlite3(db, timestamp_group_list, special_point_group_list);
+    save_timestamps_to_sqlite3(db, timestamp_group_list, user_defined_point_group_list);
 
     sqlite3_close(db);
     

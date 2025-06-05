@@ -22,8 +22,8 @@ nlohmann::json filename_to_json_obj(std::string json_filename, std::string json_
 
 
 /**
- * @brief Get all special points from the data capture .jsons that occurred before the current frame's timestamp (minus those before the offset)
- * The offset should be used as a way to ensure no special point is assigned to multiple keyframes
+ * @brief Get all user defined points from the data capture .jsons that occurred before the current frame's timestamp (minus those before the offset)
+ * The offset should be used as a way to ensure no user defined point is assigned to multiple keyframes
  * 
  * @param obj 
  * @param ms 
@@ -31,7 +31,7 @@ nlohmann::json filename_to_json_obj(std::string json_filename, std::string json_
  * @param points 
  * @return int32_t the offset of points already returned as 'assigned' to a keyframe, start search from offset in future calls 
  */
-int32_t get_special_points(nlohmann::json &obj, double &ms, int32_t offset, std::vector<std::string>& points){
+int32_t get_user_defined_points(nlohmann::json &obj, double &ms, int32_t offset, std::vector<std::string>& points){
     if (ms < 0){
         return offset;
     }
@@ -40,7 +40,7 @@ int32_t get_special_points(nlohmann::json &obj, double &ms, int32_t offset, std:
 
     double seconds = ms/1000;
 
-    nlohmann::json timecode_array = obj["special"];
+    nlohmann::json timecode_array = obj["user_defined"];
     std::string group;
 
 
@@ -61,7 +61,7 @@ int32_t get_special_points(nlohmann::json &obj, double &ms, int32_t offset, std:
         
     }
 
-    // All Special points have been consumed
+    // All user defined points have been consumed
     return timecode_array.size();
 }
 

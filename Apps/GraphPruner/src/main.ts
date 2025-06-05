@@ -172,7 +172,7 @@ async function createAWorkingCopy() {
 
   await writeDB(`DROP TABLE IF EXISTS ${config.table_prefix}edges;`);
   await writeDB(`DROP TABLE IF EXISTS ${config.table_prefix}node_locations;`);
-  await writeDB(`DROP TABLE IF EXISTS ${config.table_prefix}special_labels;`);
+  await writeDB(`DROP TABLE IF EXISTS ${config.table_prefix}user_defined_labels;`);
   await writeDB(`DROP TABLE IF EXISTS ${config.table_prefix}floorplan_points;`);
   await writeDB(`DROP TABLE IF EXISTS ${config.table_prefix}floorplan_images;`);
   await writeDB(`DROP TABLE IF EXISTS ${config.table_prefix}nodes;`);
@@ -193,14 +193,14 @@ async function createAWorkingCopy() {
   progBar.increment(1, { msg: "Created working nodes table" });
 
   await writeDB(`
-        CREATE TABLE ${config.table_prefix}special_labels (
+        CREATE TABLE ${config.table_prefix}user_defined_labels (
             keyframe_id INTEGER NOT NULL,
             label TEXT,
             zone TEXT DEFAULT NULL,
             FOREIGN KEY (keyframe_id) REFERENCES ${config.table_prefix}nodes(keyframe_id) ON DELETE CASCADE,
             PRIMARY KEY (label, keyframe_id)
         );`);
-  progBar.increment(1, { msg: "Created working special_labels table" });
+  progBar.increment(1, { msg: "Created working user_defined_labels table" });
 
   await writeDB(`
         CREATE TABLE ${config.table_prefix}edges (
@@ -234,7 +234,7 @@ async function createAWorkingCopy() {
   );
   await writeDB(`INSERT INTO ${config.table_prefix}edges SELECT * FROM edges;`);
   await writeDB(
-    `INSERT INTO ${config.table_prefix}special_labels SELECT * FROM special_labels;`
+    `INSERT INTO ${config.table_prefix}user_defined_labels SELECT * FROM user_defined_labels;`
   );
   progBar.increment(1, { msg: "INSERT INTO tables completed" });
   progBar.stop();

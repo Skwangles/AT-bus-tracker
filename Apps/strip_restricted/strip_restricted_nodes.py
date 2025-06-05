@@ -56,9 +56,9 @@ def delete_filtered_nodes(prefix, db_cursor, remove_list, keep_id_list, keep_lab
     AND {prefix}nodes.keyframe_id NOT IN ({keep_id_str})
     AND NOT EXISTS (
         SELECT 1
-        FROM {prefix}special_labels
-        WHERE {prefix}nodes.keyframe_id = {prefix}special_labels.keyframe_id
-          AND {prefix}special_labels.label IN ({keep_label_str})
+        FROM {prefix}user_defined_labels
+        WHERE {prefix}nodes.keyframe_id = {prefix}user_defined_labels.keyframe_id
+          AND {prefix}user_defined_labels.label IN ({keep_label_str})
     );
     """
     print("Running query:", query)
@@ -67,11 +67,11 @@ def delete_filtered_nodes(prefix, db_cursor, remove_list, keep_id_list, keep_lab
 
     # Then, delete any orphaned labels (labels for nodes that no longer exist)
     query = f"""
-    DELETE FROM {prefix}special_labels
+    DELETE FROM {prefix}user_defined_labels
     WHERE NOT EXISTS (
         SELECT 1
         FROM {prefix}nodes
-        WHERE {prefix}special_labels.keyframe_id = {prefix}nodes.keyframe_id
+        WHERE {prefix}user_defined_labels.keyframe_id = {prefix}nodes.keyframe_id
     );
     """
     print("Running query:", query)
@@ -80,7 +80,7 @@ def delete_filtered_nodes(prefix, db_cursor, remove_list, keep_id_list, keep_lab
 
     if del_non_prefix and prefix != "": 
         print("Deleting all tables not matching the table prefix")
-        print("Removing tables: nodes, edges, node_locations, special_labels, floorplan_points, floorplan_images")
+        print("Removing tables: nodes, edges, node_locations, user_defined_labels, floorplan_points, floorplan_images")
         response = input("Are you sure? (Y/n):")
         while (response.lower() != '' and response.lower() != 'y' and response.lower() != 'n'):
             print("Invalid input, choose y or n")
@@ -89,7 +89,7 @@ def delete_filtered_nodes(prefix, db_cursor, remove_list, keep_id_list, keep_lab
             db_cursor.execute("DROP TABLE IF EXISTS nodes;")
             db_cursor.execute("DROP TABLE IF EXISTS edges;")
             db_cursor.execute("DROP TABLE IF EXISTS node_locations;")
-            db_cursor.execute("DROP TABLE IF EXISTS special_labels;")
+            db_cursor.execute("DROP TABLE IF EXISTS user_defined_labels;")
             db_cursor.execute("DROP TABLE IF EXISTS floorplan_points;")
             db_cursor.execute("DROP TABLE IF EXISTS floorplan_images;")
 

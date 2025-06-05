@@ -50,7 +50,7 @@ void create_tables_if_not_exist(sqlite3* db) {
         DROP TABLE IF EXISTS nodes;
         DROP TABLE IF EXISTS edges;
         DROP TABLE IF EXISTS node_locations;
-        DROP TABLE IF EXISTS special_labels;
+        DROP TABLE IF EXISTS user_defined_labels;
 
         CREATE TABLE nodes (
             ts REAL NOT NULL,
@@ -62,7 +62,7 @@ void create_tables_if_not_exist(sqlite3* db) {
             zone TEXT DEFAULT NULL
         );
 
-        CREATE TABLE special_labels (
+        CREATE TABLE user_defined_labels (
             keyframe_id INTEGER NOT NULL,
             label TEXT,
             zone TEXT DEFAULT NULL,
@@ -96,15 +96,15 @@ void create_tables_if_not_exist(sqlite3* db) {
     }
 }
 
-void special_labels_to_sqlite(sqlite3* db, const std::string& map_db_path) {
+void user_defined_labels_to_sqlite(sqlite3* db, const std::string& map_db_path) {
     sqlite3* source_db = nullptr;
     int ret = sqlite3_open(map_db_path.c_str(), &source_db);
     if (ret != SQLITE_OK) {
         spdlog::error("Failed to open source SQL database");
         return;
     }
-    std::vector<timestamp_annotation> special_points;
-    load_special_point_timestamps(source_db, special_points);
+    std::vector<timestamp_annotation> user_defined_points;
+    load_user_defined_point_timestamps(source_db, user_defined_points);
 
     sqlite3_stmt* stmt = nullptr;
     const char* sql = "SELECT keyframe_id FROM nodes WHERE ABS(ts - ?) < 0.00001 LIMIT 1";
@@ -117,7 +117,7 @@ void special_labels_to_sqlite(sqlite3* db, const std::string& map_db_path) {
     }
 
     sqlite3_stmt* insert_stmt = nullptr;
-    const char* insert_sql = "INSERT INTO special_labels (keyframe_id, label) VALUES (?, ?)";
+    const char* insert_sql = "INSERT INTO user_defined_labels (keyframe_id, label) VALUES (?, ?)";
     ret = sqlite3_prepare_v2(db, insert_sql, -1, &insert_stmt, nullptr);
     if (ret != SQLITE_OK) {
         spdlog::error("Failed to prepare insert statement: {}", sqlite3_errmsg(db));
@@ -134,31 +134,31 @@ void special_labels_to_sqlite(sqlite3* db, const std::string& map_db_path) {
         return;
     }
 
-    for (const timestamp_annotation& special_point : special_points) {
-        sqlite3_bind_double(stmt, 1, special_point.timestamp);
+    for (const timestamp_annotation& user_defined_point : user_defined_points) {
+        sqlite3_bind_double(stmt, 1, user_defined_point.timestamp);
         
         if (sqlite3_step(stmt) == SQLITE_ROW) {
             int id = sqlite3_column_int(stmt, 0);
-            spdlog::info("Special Label - Paired ts: {} with keyframe id {}", special_point.timestamp, id);
+            spdlog::info("User Defined Label - Paired ts: {} with keyframe id {}", user_defined_point.timestamp, id);
             
             sqlite3_bind_int(insert_stmt, 1, id);
-            sqlite3_bind_text(insert_stmt, 2, special_point.group.c_str(), -1, SQLITE_STATIC);
+            sqlite3_bind_text(insert_stmt, 2, user_defined_point.group.c_str(), -1, SQLITE_STATIC);
             
             if (sqlite3_step(insert_stmt) != SQLITE_DONE) {
-                spdlog::error("Failed to insert special label: {}", sqlite3_errmsg(db));
+                spdlog::error("Failed to insert user defined label: {}", sqlite3_errmsg(db));
             }
             
             sqlite3_reset(insert_stmt);
             sqlite3_clear_bindings(insert_stmt);
         } else {
             // Since videos are passed in sequentially, the closest timestamp should be the next best point
-            sqlite3_bind_double(fetch_closest_timestamp, 1, special_point.timestamp);
+            sqlite3_bind_double(fetch_closest_timestamp, 1, user_defined_point.timestamp);
 
             if (sqlite3_step(fetch_closest_timestamp) == SQLITE_ROW) {
                 int closest_id = sqlite3_column_int(fetch_closest_timestamp, 0);
                 
                 sqlite3_bind_int(insert_stmt, 1, closest_id);
-                sqlite3_bind_text(insert_stmt, 2, special_point.group.c_str(), -1, SQLITE_STATIC);
+                sqlite3_bind_text(insert_stmt, 2, user_defined_point.group.c_str(), -1, SQLITE_STATIC);
 
                 if (sqlite3_step(insert_stmt) != SQLITE_DONE) {
                     spdlog::error("The original matched timestamp doesn't exist, and there are no more closest points: {}", sqlite3_errmsg(db));
@@ -167,7 +167,7 @@ void special_labels_to_sqlite(sqlite3* db, const std::string& map_db_path) {
                 sqlite3_clear_bindings(insert_stmt);
             }
             else {
-                spdlog::warn("Special Label - Could not find a timestamp match for {} of label {}", special_point.timestamp, special_point.group);
+                spdlog::warn("User Defined Label - Could not find a timestamp match for {} of label {}", user_defined_point.timestamp, user_defined_point.group);
             }
             sqlite3_reset(fetch_closest_timestamp);
             sqlite3_clear_bindings(fetch_closest_timestamp);
@@ -359,7 +359,7 @@ void convert_to_sqlite(const std::shared_ptr<stella_vslam::system>& slam,
     sqlite3_finalize(edge_stmt);
 
     timestamp_groups_to_sqlite(db, map_db_path);
-    special_labels_to_sqlite(db, map_db_path);
+    user_defined_labels_to_sqlite(db, map_db_path);
 
     // Commit transaction
     ret = sqlite3_exec(db, "COMMIT", nullptr, nullptr, &err_msg);

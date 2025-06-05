@@ -35,7 +35,7 @@ private:
         std::vector<NodeInfo> labeled_nodes;
         sqlite3_stmt* stmt;
         std::string query = "SELECT n.keyframe_id, ts, pose, x_trans, y_trans, z_trans, s.label "
-                            "FROM nodes n JOIN special_labels s ON n.keyframe_id = s.keyframe_id WHERE s.label LIKE '" + prefix + "%'";
+                            "FROM nodes n JOIN user_defined_labels s ON n.keyframe_id = s.keyframe_id WHERE s.label LIKE '" + prefix + "%'";
         
         if (sqlite3_prepare_v2(db, query.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
             spdlog::error("Failed to prepare statement: {}", sqlite3_errmsg(db));
@@ -190,7 +190,7 @@ private:
             spdlog::info("No First DB zone 1 set, skipping overwrite...");
         }
 
-        spdlog::info("Extracting merge points (special_labels denoted by '$$...')");
+        spdlog::info("Extracting merge points (user_defined_labels denoted by '$$...')");
         auto first_labeled_nodes = extractLabeledNodes(first_db);
         auto second_labeled_nodes = extractLabeledNodes(second_db);
 
@@ -219,8 +219,8 @@ private:
         spdlog::info("Copying Node Locations...");
         copy_node_locations(out_db, second_db, id_offset);
         
-        spdlog::info("Copying Special Labels...");
-        copy_special_labels(out_db, second_db, id_offset);
+        spdlog::info("Copying User Defined Labels...");
+        copy_user_defined_labels(out_db, second_db, id_offset);
 
         spdlog::info("Connecting Merge Points...");
         create_edge_between_merge_points(out_db, id_offset, merge_keyframes);
@@ -445,14 +445,14 @@ private:
         sqlite3_finalize(insert_nodes_stmt);
     }
 
-    void copy_special_labels(sqlite3* dst_db, sqlite3* src_db, int32_t id_offset){
+    void copy_user_defined_labels(sqlite3* dst_db, sqlite3* src_db, int32_t id_offset){
         int ret;
         // Copy node locations
         const char* select_labels_query = R"(
-            SELECT keyframe_id, label FROM special_labels
+            SELECT keyframe_id, label FROM user_defined_labels
         )";
         const char* insert_labels_query = R"(
-            INSERT INTO special_labels (keyframe_id, label) VALUES (?, ?)
+            INSERT INTO user_defined_labels (keyframe_id, label) VALUES (?, ?)
         )";
 
         sqlite3_stmt* select_labels_stmt;
@@ -472,7 +472,7 @@ private:
             return;
         }
 
-        // Process special labels row by row
+        // Process user defined labels row by row
         while (sqlite3_step(select_labels_stmt) == SQLITE_ROW) {
             int keyframe_id = sqlite3_column_int(select_labels_stmt, 0);
             const unsigned char* label = sqlite3_column_text(select_labels_stmt, 1);
@@ -481,7 +481,7 @@ private:
             sqlite3_bind_text(insert_labels_stmt, 2, reinterpret_cast<const char*>(label), -1, SQLITE_STATIC);
 
             if (sqlite3_step(insert_labels_stmt) != SQLITE_DONE) {
-                spdlog::error("Failed to insert special point: {}", sqlite3_errmsg(dst_db));
+                spdlog::error("Failed to insert user defined point: {}", sqlite3_errmsg(dst_db));
             }
             sqlite3_reset(insert_labels_stmt); // Reset for next iteration
         }
@@ -495,23 +495,23 @@ private:
         std::string update_nodes_only_nulls = "UPDATE nodes SET zone = '"+ zone_name+"' WHERE zone IS NULL;";
         std::string update_edges_only_nulls = "UPDATE edges SET zone = '" + zone_name + "' WHERE zone IS NULL;";
         std::string update_locations_only_nulls = "UPDATE node_locations SET zone = '"+ zone_name +"' WHERE zone IS NULL;";
-        std::string special_labels_only_nulls = "UPDATE special_labels SET zone = '"+ zone_name +"' WHERE zone IS NULL;";
+        std::string user_defined_labels_only_nulls = "UPDATE user_defined_labels SET zone = '"+ zone_name +"' WHERE zone IS NULL;";
         std::string update_nodes = "UPDATE nodes SET zone = '" + zone_name + "';";
         std::string update_edges = "UPDATE edges SET zone = '" + zone_name + "';";
         std::string update_locations = "UPDATE node_locations SET zone = '" + zone_name + "';";
-        std::string special_labels = "UPDATE special_labels SET zone = '" + zone_name + "';";
+        std::string user_defined_labels = "UPDATE user_defined_labels SET zone = '" + zone_name + "';";
 
         if (only_nulls) {
             sqlite3_exec(target_db, update_nodes_only_nulls.c_str(), nullptr, nullptr, nullptr);
             sqlite3_exec(target_db, update_edges_only_nulls.c_str(), nullptr, nullptr, nullptr);
             sqlite3_exec(target_db, update_locations_only_nulls.c_str(), nullptr, nullptr, nullptr);
-            sqlite3_exec(target_db, special_labels_only_nulls.c_str(), nullptr, nullptr, nullptr);
+            sqlite3_exec(target_db, user_defined_labels_only_nulls.c_str(), nullptr, nullptr, nullptr);
         }
         else {
             sqlite3_exec(target_db, update_nodes.c_str(), nullptr, nullptr, nullptr);
             sqlite3_exec(target_db, update_edges.c_str(), nullptr, nullptr, nullptr);
             sqlite3_exec(target_db, update_locations.c_str(), nullptr, nullptr, nullptr);
-            sqlite3_exec(target_db, special_labels.c_str(), nullptr, nullptr, nullptr);
+            sqlite3_exec(target_db, user_defined_labels.c_str(), nullptr, nullptr, nullptr);
         }
         spdlog::info("Updated.");
         return true;

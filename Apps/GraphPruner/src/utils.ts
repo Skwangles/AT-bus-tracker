@@ -42,7 +42,7 @@ export async function getNumberOfNodes() {
 }
 
 /**
- * Get node information, including if it has any special_labels
+ * Get node information, including if it has any user_defined_labels
  * @param config
  * @param keyframeId
  * @param use_trans
@@ -64,7 +64,7 @@ export async function getNodeInfo(
   }
 
   const countOfLabels = await readDB(
-    `SELECT COUNT(*) as total FROM ${config.table_prefix}special_labels WHERE keyframe_id = ?`,
+    `SELECT COUNT(*) as total FROM ${config.table_prefix}user_defined_labels WHERE keyframe_id = ?`,
     [keyframeId],
     true
   );

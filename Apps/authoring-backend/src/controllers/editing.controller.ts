@@ -56,7 +56,7 @@ export async function addLabelToMapPoint(req: Request, res: Response) {
   }
   const changes = await writeDB(
     `INSERT OR IGNORE INTO ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""
-    }special_labels (keyframe_id, label) VALUES (?, ?) WHERE 
+    }user_defined_labels (keyframe_id, label) VALUES (?, ?) WHERE 
     EXISTS (SELECT keyframe_id FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes WHERE keyframe_id = ?)`,
     [id, label, id]
   );

@@ -28,7 +28,7 @@ export async function pathfindFromPointId(req: Request, res: Response) {
   }
 
   // Check label first, as these are manually annotated (and supposedly special) points
-  let locationResults = await readDB(`SELECT s.keyframe_id FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}special_labels s WHERE s.label = ? LIMIT 1;`, [locationCode], true);
+  let locationResults = await readDB(`SELECT s.keyframe_id FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}user_defined_labels s WHERE s.label = ? LIMIT 1;`, [locationCode], true);
   let isLabel = true;
   if (!locationResults) {
     isLabel = false
@@ -147,10 +147,10 @@ export async function createNewPoint(req: Request, res: Response) {
       [keyframeId, location]
     );
 
-    // 3. Insert into special_labels table if label is provided
+    // 3. Insert into user_defined_labels table if label is provided
     if (label) {
       await writeDB(
-        `INSERT INTO ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}special_labels 
+        `INSERT INTO ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}user_defined_labels 
          (keyframe_id, label) VALUES (?, ?)`,
         [keyframeId, label]
       );

@@ -5,7 +5,7 @@ python strip_restricted_nodes.py input.db output.db --remove='["floor1", "floor2
 ## Notes:
 
 The --remove, --keep_id, and --keep_labels arguments are expected to be provided in valid JSON format (e.g., lists).
-The script assumes the tables refined_nodes, refined_node_locations, and refined_special_labels exist with the expected structure (e.g., refined_node_locations containing a location column and refined_special_labels containing a label column).
+The script assumes the tables refined_nodes, refined_node_locations, and refined_user_defined_labels exist with the expected structure (e.g., refined_node_locations containing a location column and refined_user_defined_labels containing a label column).
 
 ## Installation
 
