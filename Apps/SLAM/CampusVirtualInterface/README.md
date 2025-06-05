@@ -6,9 +6,9 @@ Reads in a JSON file
 {
 "data": [{"g": "string...", "t": seconds}, ...],
 "user_defined": [{"g": "string...", "t": seconds}, ...],
-"!!!OPTIONAL!!!": {
+-- !!!OPTIONAL!!! -- Remove this line if copying
 "disable_loop": [{"disable": true/false, "t": <seconds>}, ...]
-}
+
 }
 ```
 
