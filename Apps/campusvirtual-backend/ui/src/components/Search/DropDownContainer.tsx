@@ -2,6 +2,19 @@ import React, { useState, useMemo } from 'react'
 import { Label, LabelType } from '../../types'
 import { getLabelDisplayName, getLabelColor } from '../../utils/labelUtils'
 import { ChevronDown, ChevronRight, ArrowUp, User } from 'react-feather'
+import {
+  List,
+  ListItem,
+  ListItemText,
+  ListItemIcon,
+  Collapse,
+  Typography,
+  Paper,
+  Divider,
+  IconButton,
+  Box
+} from '@mui/material'
+import { styled } from '@mui/material/styles'
 
 interface DropDownContainerProps {
   setIsFocused: (isFocused: boolean) => void
@@ -11,6 +24,32 @@ interface DropDownContainerProps {
   suggestions: Label[]
   handleSuggestionClick: (suggestion: Label, hide?: boolean) => void
 }
+
+const StyledPaper = styled(Paper)(({ theme }) => ({
+  position: 'absolute',
+  top: '100%',
+  left: 0,
+  right: 0,
+  maxHeight: '400px',
+  overflowY: 'auto',
+  zIndex: 50,
+  marginTop: theme.spacing(1),
+  boxShadow: theme.shadows[3]
+}))
+
+const StyledListItem = styled(ListItem)(({ theme }) => ({
+  '&:hover': {
+    backgroundColor: theme.palette.action.hover,
+    '& .MuiListItemText-primary': {
+      color: theme.palette.primary.main
+    }
+  },
+  cursor: 'pointer',
+  padding: theme.spacing(1, 2),
+  transition: theme.transitions.create(['background-color', 'color'], {
+    duration: theme.transitions.duration.shortest
+  })
+}))
 
 const DropDownContainer: React.FC<DropDownContainerProps> = ({
   setIsFocused,
@@ -34,32 +73,29 @@ const DropDownContainer: React.FC<DropDownContainerProps> = ({
 
   // Group suggestions by floor
   const groupedSuggestions = useMemo(() => {
-    const groups: { [key: string]: { rooms: Label[], elevators: Label[], toilets: Label[] } } = {}
+    const groups: { [key: string]: { self: Label | null, rooms: Label[], elevators: Label[], toilets: Label[] } } = {}
     
-    suggestions.forEach(label => {
-      // Skip staircase groups
-      if (label.label.toLowerCase().endsWith('- staircase')) return
-
-      const floorName = label.parents[0] || 'Other'
-      if (!groups[floorName]) {
-        groups[floorName] = { rooms: [], elevators: [], toilets: [] }
-      }
-
-      // Categorize labels by type
-      switch (label.type) {
-        case LabelType.Normal:
-          groups[floorName].rooms.push(label)
-          break
-        case LabelType.Toilet:
-          groups[floorName].toilets.push(label)
-          break
-        case LabelType.Elevator:
-          groups[floorName].elevators.push(label)
-          break
-      }
+    suggestions.filter(label => label.type === LabelType.GroupName).forEach(label => {
+      if (label.query.toLowerCase().endsWith('- staircase')) return
+      
+      const groupName = label.query
+      groups[groupName] = { self: label, rooms: [], elevators: [], toilets: [] }
+      
+      label.children.forEach(child => {
+        switch (child.type) {
+          case LabelType.Normal:
+            groups[groupName].rooms.push(child)
+            break
+          case LabelType.Toilet:
+            groups[groupName].toilets.push(child)
+            break
+          case LabelType.Elevator:
+            groups[groupName].elevators.push(child)
+            break
+        }
+      })
     })
 
-    // Sort floors in order: B, G, 1, 2, 3, etc.
     return Object.entries(groups).sort(([a], [b]) => {
       if (a === 'B') return -1
       if (b === 'B') return 1
@@ -69,63 +105,68 @@ const DropDownContainer: React.FC<DropDownContainerProps> = ({
     })
   }, [suggestions])
 
-  const renderLabel = (label: Label, depth: number = 0) => {
-    // Skip rendering children for elevators
-    const hasChildren = label.type !== LabelType.Elevator && label.children && label.children.length > 0
+  const renderLabel = (label: Label, keyPrefix: string, depth: number = 0, showChildren: boolean = true) => {
+    const hasChildren = showChildren && label.type !== LabelType.Elevator && label.children && label.children.length > 0
     const isExpanded = expandedGroups.has(label.query)
     const color = getLabelColor(label)
 
-    // Get the appropriate icon component
     const getIcon = () => {
       switch (label.type) {
         case LabelType.Elevator:
-          return <ArrowUp className="h-4 w-4 mr-2" />
+          return <ArrowUp className="h-4 w-4" />
         case LabelType.Toilet:
-          return <User className="h-4 w-4 mr-2" />
+          return <User className="h-4 w-4" />
         default:
           return null
       }
     }
 
     return (
-      <div key={label.query} style={{ paddingLeft: `${depth * 1.5}rem` }}>
-        <div
-          className={`suggestion-item flex items-center justify-between ${color}`}
+      <Box key={keyPrefix + label.query} sx={{ pl: depth * 2 }}>
+        <StyledListItem
           onClick={() => handleSuggestionClick(label)}
+          sx={{ 
+            '& .MuiListItemText-primary': {
+              color: color
+            }
+          }}
         >
-          <div className="flex items-center">
+          <ListItemIcon sx={{ minWidth: 36 }}>
             {hasChildren && (
-              <button
+              <IconButton
+                size="small"
                 onClick={(e) => {
                   e.stopPropagation()
                   toggleGroup(label.query)
                 }}
-                className="mr-2 p-1 hover:bg-gray-100 rounded"
               >
-                {isExpanded ? (
-                  <ChevronDown size={16} />
-                ) : (
-                  <ChevronRight size={16} />
-                )}
-              </button>
+                {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+              </IconButton>
             )}
             {getIcon()}
-            <span>{getLabelDisplayName(label)}</span>
-          </div>
-        </div>
-        {hasChildren && isExpanded && (
-          <div>
-            {label.children.map((child) => renderLabel(child, depth + 1))}
-          </div>
+          </ListItemIcon>
+          <ListItemText primary={getLabelDisplayName(label)} />
+        </StyledListItem>
+        {hasChildren && (
+          <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding>
+              {label.children.map((child) => renderLabel(child, keyPrefix + "-child", depth + 1))}
+            </List>
+          </Collapse>
         )}
-      </div>
+      </Box>
     )
   }
 
+  const uniqueRecentSearches = useMemo(() => {
+    return [...new Set(recentSearches.map(recent => recent.query))]
+      .map(query => recentSearches.find(recent => recent.query === query))
+      .filter(recent => recent !== undefined)
+  }, [recentSearches])
+
   return (
-    <div
+    <StyledPaper
       ref={dropdownRef}
-      className="dropdown-container"
       onKeyDown={(e) => {
         if (e.key === 'Escape') {
           setIsFocused(false)
@@ -133,45 +174,65 @@ const DropDownContainer: React.FC<DropDownContainerProps> = ({
       }}
     >
       {!query && recentSearches.length > 0 && (
-        <div className="recent-searches">
-          <h3 className="px-4 py-2 text-sm font-semibold text-gray-600 uppercase bg-gray-50">
+        <>
+          <Typography
+            variant="subtitle2"
+            sx={{
+              px: 2,
+              py: 1,
+              bgcolor: 'grey.100',
+              color: 'text.secondary',
+              textTransform: 'uppercase'
+            }}
+          >
             Recent Searches
-          </h3>
-          {recentSearches.map((recent) => renderLabel(recent))}
-        </div>
+          </Typography>
+          <List>
+            {uniqueRecentSearches.map((recent) => renderLabel(recent, "recent-searches", 0, false))}
+          </List>
+          <Divider />
+        </>
       )}
 
-      <div className="suggestions">
-        <h3 className="px-4 py-2 text-sm font-semibold text-gray-600 uppercase bg-gray-50">
-          Suggestions
-        </h3>
-        
-        {/* Render floor groups */}
-        {groupedSuggestions.map(([floorName, items]) => (
-          <div key={floorName} className="floor-group">
-            <div
-              className="floor-header flex items-center justify-between px-4 py-2 cursor-pointer hover:bg-gray-50"
-              onClick={() => toggleGroup(floorName)}
+      <Typography
+        variant="subtitle2"
+        sx={{
+          px: 2,
+          py: 1,
+          bgcolor: 'grey.100',
+          color: 'text.secondary',
+          textTransform: 'uppercase'
+        }}
+      >
+        Suggestions
+      </Typography>
+      
+      <List>
+        {groupedSuggestions.map(([groupName, items]) => (
+          <Box key={groupName}>
+            <StyledListItem
+              onClick={() => toggleGroup(groupName)}
+              sx={{ fontWeight: 'medium' }}
             >
-              <span className="font-medium">Floor {floorName}</span>
-              <span className="text-gray-500">
-                {expandedGroups.has(floorName) ? '▼' : '▶'}
-              </span>
-            </div>
-            {expandedGroups.has(floorName) && (
-              <div className="floor-items">
-                {/* Render elevators first */}
-                {items.elevators.map(label => renderLabel(label, 1))}
-                {/* Then toilets */}
-                {items.toilets.map(label => renderLabel(label, 1))}
-                {/* Finally rooms */}
-                {items.rooms.map(label => renderLabel(label, 1))}
-              </div>
-            )}
-          </div>
+              <ListItemIcon sx={{ minWidth: 36 }}>
+                <IconButton size="small">
+                  {expandedGroups.has(groupName) ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                </IconButton>
+              </ListItemIcon>
+              <ListItemText primary={groupName} />
+            </StyledListItem>
+            <Collapse in={expandedGroups.has(groupName)} timeout="auto" unmountOnExit>
+              <List component="div" disablePadding>
+                {items.self && renderLabel(items.self, "group", 1, false)}
+                {items.elevators.map(label => renderLabel(label, "elevators", 1))}
+                {items.toilets.map(label => renderLabel(label, "toilets", 1))}
+                {items.rooms.map(label => renderLabel(label, "rooms", 1))}
+              </List>
+            </Collapse>
+          </Box>
         ))}
-      </div>
-    </div>
+      </List>
+    </StyledPaper>
   )
 }
 
