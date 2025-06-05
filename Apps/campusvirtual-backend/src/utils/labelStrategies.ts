@@ -29,17 +29,19 @@ export class ThreePartLabelStrategy implements LabelProcessingStrategy {
         label = `Toilet: ${description}`;
       }
     }
-    
-    // Calculate parents from location only
+  
     let parents: string[] = [];
-    if (location) {
-      const locationParts = location.split('.');
-      if (locationParts.length >= 2) {
-        parents = [locationParts[0], locationParts[1]]; // [building, floor]
-      } else {
-        parents = [location]; // Fallback if location doesn't have expected format
+
+      const locationParts = query.split('.');
+
+      if (!location || location.length === 0) {
+        parents = locationParts[0] ? [locationParts[0]] : [];
+      } else if (locationParts.length >= 2) {
+          parents = [locationParts[0], location]; // [building, <map group - likely floor>]
+      } else if (location){
+        parents = [location]; // Fallback if query doesn't have expected format
       }
-    }
+    
     
     return {
       label,
