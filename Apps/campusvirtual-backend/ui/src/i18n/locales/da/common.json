@@ -79,5 +79,16 @@
       "title": "Hjælp",
       "toggle": "Klik på knappen Instruktioner i nederste højre hjørne for at åbne eller lukke dette hjælpevindue"
     }
+  },
+  "homepage": {
+    "howToUseTitle": "Sådan bruges",
+    "howToUseText": "Velkommen til CampusVirtual! Start din virtuelle rundtur ved at vælge et af vores foreslåede startsteder nedenfor, eller brug søgefeltet til at finde et specifikt sted. Brug musen til at se dig omkring, og piletasterne eller WASD til at navigere rundt på campus. Klik på hotspots for at lære mere om de forskellige områder.",
+    "searchPlaceholder": "Søg efter et sted...",
+    "noLocations": "Ingen tilgængelige steder.",
+    "fetchError": "Kunne ikke hente steder.",
+    "outdoorsDescription": "Start din rundtur fra campusindgangen",
+    "level1Description": "Begynd fra stueetagen",
+    "level2Description": "Start fra anden sal",
+    "level3Description": "Begynd fra øverste etage"
   }
 } 

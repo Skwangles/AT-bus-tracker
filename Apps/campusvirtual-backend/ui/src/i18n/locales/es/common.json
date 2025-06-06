@@ -79,5 +79,16 @@
       "title": "Ayuda",
       "toggle": "Haz clic en el botón Instrucciones en la parte inferior derecha para abrir o cerrar esta ventana de ayuda"
     }
+  },
+  "homepage": {
+    "howToUseTitle": "Cómo usar",
+    "howToUseText": "¡Bienvenido a CampusVirtual! Comience su recorrido virtual seleccionando una de nuestras ubicaciones sugeridas a continuación, o use la caja de búsqueda para encontrar una ubicación específica. Use el ratón para mirar alrededor y las teclas de flecha o WASD para navegar por el campus. Haga clic en los puntos de interés para obtener más información sobre las diferentes áreas.",
+    "searchPlaceholder": "Buscar una ubicación...",
+    "noLocations": "No hay ubicaciones disponibles.",
+    "fetchError": "No se pudieron obtener las ubicaciones.",
+    "outdoorsDescription": "Comience su recorrido desde la entrada del campus",
+    "level1Description": "Comience desde la planta baja",
+    "level2Description": "Comience desde el segundo piso",
+    "level3Description": "Comience desde el último piso"
   }
 } 

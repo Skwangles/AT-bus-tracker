@@ -79,5 +79,16 @@
       "title": "Help",
       "toggle": "Click the Instructions button in the bottom right to open or close this help window"
     }
+  },
+  "homepage": {
+    "howToUseTitle": "How to Use",
+    "howToUseText": "Welcome to CampusVirtual! Start your virtual tour by selecting one of our suggested starting locations below, or use the search box to find a specific location. Use your mouse to look around, and the arrow keys or WASD to navigate through the campus. Click on hotspots to learn more about different areas.",
+    "searchPlaceholder": "Search a location...",
+    "noLocations": "No locations available.",
+    "fetchError": "Failed to fetch locations.",
+    "outdoorsDescription": "Start your tour from the campus entrance",
+    "level1Description": "Begin from the ground floor",
+    "level2Description": "Start from the second floor",
+    "level3Description": "Begin from the top floor"
   }
 } 

@@ -79,5 +79,16 @@
       "title": "帮助",
       "toggle": "点击右下角的说明按钮打开或关闭此帮助窗口"
     }
+  },
+  "homepage": {
+    "howToUseTitle": "使用说明",
+    "howToUseText": "欢迎来到 CampusVirtual！请选择下方建议的起始位置之一开始您的虚拟校园之旅，或使用搜索框查找特定位置。使用鼠标环顾四周，并用方向键或 WASD 键在校园中移动。点击热点了解更多区域信息。",
+    "searchPlaceholder": "搜索位置...",
+    "noLocations": "没有可用的位置。",
+    "fetchError": "无法获取位置。",
+    "outdoorsDescription": "从校园入口开始您的旅程",
+    "level1Description": "从一楼开始",
+    "level2Description": "从二楼开始",
+    "level3Description": "从顶楼开始"
   }
 } 

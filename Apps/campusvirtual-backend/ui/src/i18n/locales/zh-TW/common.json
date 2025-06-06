@@ -79,5 +79,16 @@
       "title": "幫助",
       "toggle": "點擊右下角的說明按鈕開啟或關閉此幫助視窗"
     }
+  },
+  "homepage": {
+    "howToUseTitle": "使用說明",
+    "howToUseText": "歡迎來到 CampusVirtual！請從下方建議的起始位置之一開始您的虛擬校園之旅，或使用搜尋框尋找特定地點。使用滑鼠環顧四周，並用方向鍵或 WASD 鍵在校園中移動。點擊熱點以了解更多區域資訊。",
+    "searchPlaceholder": "搜尋位置...",
+    "noLocations": "沒有可用的位置。",
+    "fetchError": "無法獲取位置。",
+    "outdoorsDescription": "從校園入口開始您的旅程",
+    "level1Description": "從一樓開始",
+    "level2Description": "從二樓開始",
+    "level3Description": "從頂樓開始"
   }
 } 
