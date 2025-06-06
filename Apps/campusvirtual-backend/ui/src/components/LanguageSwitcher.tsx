@@ -50,7 +50,8 @@ export function LanguageSwitcher() {
         open={open}
         onClose={handleClose}
         onClick={handleClose}
-        PaperProps={{
+        slotProps={{
+          paper: {
           elevation: 3,
           sx: {
             mt: 1.5,
@@ -59,7 +60,7 @@ export function LanguageSwitcher() {
               py: 1,
             },
           },
-        }}
+        }}}
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
