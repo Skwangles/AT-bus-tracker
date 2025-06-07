@@ -4,21 +4,21 @@ import { API_PREFIX } from "../consts"
 import * as THREE from "three"
 import { HotspotObj } from "../types"
 
-export const moveForwardOnPath = (pathfindMode, highlightedPath, currentId, setHighlightedPath, lastNavigatedToPoint, calculateHighlightedPath) => {
+export const moveForwardOnPath = (pathfindMode, highlightedPath, currentId, setHighlightedPath, calculateHighlightedPath) => {
   if (pathfindMode && highlightedPath.includes(Number(currentId))) {
     // Remove points earlier on in the path than the current point
-    setHighlightedPath(
-      highlightedPath.indexOf(Number(currentId)) == highlightedPath.length - 1
-        ? []
-        : highlightedPath.slice(highlightedPath.indexOf(Number(currentId)))
-    )
-  } else if (pathfindMode && !highlightedPath.includes(Number(currentId))) {
-    // Recalculate when the user strays from the path
-    calculateHighlightedPath(lastNavigatedToPoint)
+    const indexOfCurrentId = highlightedPath.indexOf(Number(currentId))
+    if (indexOfCurrentId === 0) {
+      // If already at the start of the path, do nothing
+      return
+    }
+    const newPath = highlightedPath.slice(indexOfCurrentId)
+    setHighlightedPath(newPath)
   }
 }
 
-export const buildCalcPath = (currentId, setHighlightedPath, setLastNavigatedToPoint, camera, hotspots: HotspotObj[]) => {
+export const buildCalcPath = (currentId, setHighlightedPath, camera, hotspots: HotspotObj[]) => {
+  // console.log("Building calculate path function")
   return async (selectedLocation: string) => {
     if (!selectedLocation || selectedLocation.length === 0) {
       // Clear the path/show all points
@@ -38,7 +38,6 @@ export const buildCalcPath = (currentId, setHighlightedPath, setLastNavigatedToP
         toast.success(
           `Path to ${selectedLocation} is now highlighted, follow the blue dots...`
         )
-        setLastNavigatedToPoint(selectedLocation)
 
         // Look at the furthest visible point in the path
         if (camera && path.length > 0) {

@@ -70,7 +70,6 @@ const VirtualTourContent: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [isInstructionsOpen, setIsInstructionsOpen] = useState(false)
   const [closeDrawer, setCloseDrawer] = useState(false)
-  const [lastNavigatedToPoint, setLastNavigatedToPoint] = useState<string>("")
   const [debounceExpiry, setDebounceExpiry] = useState(Date.now())
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768)
   const cameraRef = useRef<THREE.Camera | null>(null)
@@ -118,12 +117,13 @@ const VirtualTourContent: React.FC = () => {
   }, [currentId, t]);
 
   const calculateHighlightedPath = useCallback(
-    buildCalcPath(currentId, setHighlightedPath, setLastNavigatedToPoint, cameraRef.current, hotspots),
-    [currentId, hotspots]
+    buildCalcPath(currentId, setHighlightedPath, cameraRef.current, hotspots),
+    [currentId]
   )
 
   // Effects
   useEffect(() => {
+    console.log("Initialising Virtual Tour")
     const fetchData = async () => {
       try {
         // Fetch labels
@@ -147,14 +147,17 @@ const VirtualTourContent: React.FC = () => {
   }, [])
 
   useEffect(() => {
+    console.log("Setting current location group to:", currentPoint?.location)
     updateHistory(currentLocationGroup, PROJECT_NAME, currentId)
   }, [currentId, currentLocationGroup])
 
   useEffect(() => {
+    console.log("Setting cam rotation to:", camRotation.current)
     updateParams(camRotation, setDebounceExpiry, debounceExpiry)
   }, [camRotation.current, debounceExpiry])
 
   useEffect(() => {
+    console.log("Setting current location group to:", currentPoint?.location)
     setCurrentLocationGroup(currentPoint?.location || '')
   }, [currentPoint])
 
@@ -164,10 +167,9 @@ const VirtualTourContent: React.FC = () => {
       highlightedPath,
       currentId,
       setHighlightedPath,
-      lastNavigatedToPoint,
       calculateHighlightedPath
     )
-  }, [currentId, highlightedPath, lastNavigatedToPoint, calculateHighlightedPath])
+  }, [currentId, highlightedPath, ])
 
   useEffect(() => {
     const fetchElevatorChildren = async () => {

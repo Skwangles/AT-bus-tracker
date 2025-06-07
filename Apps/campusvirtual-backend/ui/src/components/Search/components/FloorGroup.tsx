@@ -33,7 +33,6 @@ const FloorGroup: React.FC<FloorGroupProps> = ({ floor, isExpanded, onToggle, on
   const hasItems = floor.items.rooms.length > 0 || 
                   floor.items.elevators.length > 0 || 
                   floor.items.toilets.length > 0;
-  console.log("Floor:", floor)
 
   const handleFloorClick = (event: React.MouseEvent) => {
     // Create a floor label for searching
