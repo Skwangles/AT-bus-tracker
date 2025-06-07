@@ -2,14 +2,21 @@ import { RotationData } from "../types";
 
 let params = new URLSearchParams(window.location.search);
 
+export const refetchParams = () => {
+  params = new URLSearchParams(window.location.search);
+}
+
 export const initIdFromParams = () => {
+  refetchParams();
   if (params.has("id")) {
     return params.get("id") ?? "-1";
   }
+  console.log("initIdFromParams: No id found, returning -1");
   return "-1";
 };
 
 export const initFromParams = () => {
+  refetchParams();
   if (params.has("yaw") || params.has("pitch")) {
     return {
       yaw: Number(params.get("yaw") ?? 0),
@@ -21,7 +28,7 @@ export const initFromParams = () => {
 
 export const setOnPopstateEvent = (setCurrentId, camRotation) => {
   window.onpopstate = () => {
-    params = new URLSearchParams(window.location.search);
+    refetchParams();
     if (params.has("id")) {
       setCurrentId(params.get("id") ?? "0");
     }
@@ -42,6 +49,7 @@ export const updateParams = (
   setDebounceExpiry: React.Dispatch<React.SetStateAction<number>>,
   debounceExpiry: number
 ) => {
+  refetchParams();
   params.set("yaw", Number(camRotation.current["yaw"]).toFixed(4));
   params.set("pitch", Number(camRotation.current["pitch"]).toFixed(4));
   const now = Date.now();
@@ -53,6 +61,7 @@ export const updateParams = (
 };
 
 export function updateHistory(locationGroup, PROJECT_NAME, currentId) {
+  refetchParams();
   document.title = locationGroup
     ? `${PROJECT_NAME} - ${locationGroup}`
     : PROJECT_NAME;
@@ -61,9 +70,6 @@ export function updateHistory(locationGroup, PROJECT_NAME, currentId) {
 }
 
 export function nullIdValue(currentId) {
-  return (
-    Number(currentId) === -1 ||
-    !params.has("id") ||
-    Number(params.get("id")) === -1
-  );
+  // Only consider it null if the ID is -1 or if there's no ID parameter
+  return Number(currentId) === -1 || !params.has("id");
 }
