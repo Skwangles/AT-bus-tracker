@@ -83,9 +83,27 @@ export async function getPointInfoFromId(req: Request, res: Response) {
     return
   }
 
-  const pointData = await readDB(`SELECT n.keyframe_id, n.ts, n.pose, l.location, n.x_trans, n.y_trans, n.z_trans FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n LEFT JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l ON n.keyframe_id = l.keyframe_id WHERE n.keyframe_id = ?;`, [id], true);
+  const pointData = await readDB(
+    `SELECT n.keyframe_id, n.ts, n.pose, l.location, n.x_trans, n.y_trans, n.z_trans 
+     FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n 
+     LEFT JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l 
+     ON n.keyframe_id = l.keyframe_id 
+     WHERE n.keyframe_id = ?;`, 
+    [id], true
+  );
+
+  // Fetch associated labels
+  const labelRows = await readDB(
+    `SELECT label FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}user_defined_labels WHERE keyframe_id = ?;`,
+    [id]
+  );
+  const labels = Array.isArray(labelRows) ? labelRows.map((row: any) => row.label) : [];
+
   if (pointData && 'pose' in pointData) {
-    res.json(convertToUICoordinateScale({ ...pointData, pose: BlobArrayToMatrix(pointData.pose) }))
+    res.json({
+      ...convertToUICoordinateScale({ ...pointData, pose: BlobArrayToMatrix(pointData.pose) }),
+      labels
+    });
   }
   else {
     logger.warn(`[getPointInfoFromId] id doesn't exist, or pose not in pointData: ${id} data: ${pointData}`)
@@ -173,5 +191,22 @@ export async function createNewPoint(req: Request, res: Response) {
     await writeDB("ROLLBACK;");
     logger.error(`[createNewPoint] Error creating point: ${error}`);
     res.status(500).json({ message: "Error creating point" });
+  }
+}
+
+export async function getRandomPointId(req: Request, res: Response) {
+  try {
+    const result = await readDB(
+      `SELECT keyframe_id FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes WHERE keyframe_id >= 0 ORDER BY RANDOM() LIMIT 1;`,
+      [],
+      true
+    );
+    if (result && 'keyframe_id' in result) {
+      res.json({ keyframe_id: result.keyframe_id });
+    } else {
+      res.status(404).json({ message: "No points found" });
+    }
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching random point" });
   }
 }

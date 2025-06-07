@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createNewPoint, findNeigboursFromPointId, getFirstPointId, getPointInfoFromId, pathfindFromPointId } from "../controllers/points.controller";
+import { createNewPoint, findNeigboursFromPointId, getFirstPointId, getPointInfoFromId, pathfindFromPointId, getRandomPointId } from "../controllers/points.controller";
 
 const app = Router();
 
@@ -13,5 +13,8 @@ app.get('/api/v1/point', getFirstPointId)
 
 // Add new route for creating points
 app.post('/api/v1/point', createNewPoint)
+
+// Add random point endpoint
+app.get('/api/v1/point/random', getRandomPointId);
 
 export default app;

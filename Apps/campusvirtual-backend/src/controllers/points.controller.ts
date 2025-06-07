@@ -108,3 +108,20 @@ export async function getPointInfoFromId(req: Request, res: Response) {
     res.status(400).send("Point ID given does not exist!").end()
   }
 }
+
+export async function getRandomPointId(req: Request, res: Response) {
+  try {
+    const result = await readDB(
+      `SELECT keyframe_id FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes WHERE keyframe_id >= 0 ORDER BY RANDOM() LIMIT 1;`,
+      [],
+      true
+    );
+    if (result && 'keyframe_id' in result) {
+      res.json({ keyframe_id: result.keyframe_id });
+    } else {
+      res.status(404).json({ message: "No points found" });
+    }
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching random point" });
+  }
+}

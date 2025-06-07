@@ -92,5 +92,21 @@
     "level1Description": "從一樓開始",
     "level2Description": "從二樓開始",
     "level3Description": "從頂樓開始"
+  },
+  "landing": {
+    "welcome": "歡迎！以下是使用指南：",
+    "howTo": {
+      "search": "搜尋位置",
+      "hotspots": "點擊熱點進行探索",
+      "move": "使用方向鍵或 WASD 移動"
+    },
+    "suggested": "建議的起始點",
+    "noSuggestions": "暫無建議。",
+    "start": "開始",
+    "random": "隨機",
+    "outdoorsDescription": "從校園入口開始您的旅程",
+    "level1Description": "從一樓開始",
+    "level2Description": "從二樓開始",
+    "level3Description": "從頂樓開始"
   }
 } 

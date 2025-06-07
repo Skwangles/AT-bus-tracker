@@ -92,5 +92,21 @@
     "level1Description": "Begynd fra stueetagen",
     "level2Description": "Start fra anden sal",
     "level3Description": "Begynd fra øverste etage"
+  },
+  "landing": {
+    "welcome": "Velkommen! Sådan kommer du i gang:",
+    "howTo": {
+      "search": "Søg efter en placering",
+      "hotspots": "Klik på hotspots for at udforske",
+      "move": "Brug piletasterne eller WASD for at bevæge dig"
+    },
+    "suggested": "Foreslåede startpunkter",
+    "noSuggestions": "Ingen forslag tilgængelige.",
+    "start": "Start",
+    "random": "Tilfældig",
+    "outdoorsDescription": "Start din rundtur fra campusindgangen",
+    "level1Description": "Begynd fra stueetagen",
+    "level2Description": "Start fra anden sal",
+    "level3Description": "Begynd fra øverste etage"
   }
 } 

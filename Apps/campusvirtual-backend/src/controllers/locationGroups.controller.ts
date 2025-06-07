@@ -63,11 +63,9 @@ async function getUserDefinedLabels(){
     JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n ON s.keyframe_id = n.keyframe_id
     WHERE s.label IS NOT NULL
     AND s.label <> ''
-    AND s.label NOT LIKE '%- staircase%'
     AND s.label <> '${RESERVED_START_OF_LABELS[ReservedTypeIndex.Anchor]}'
     ORDER BY s.label
   `) as UserDefinedLabelResult[];
-
   return userDefinedLabels;
 }
 
@@ -123,14 +121,15 @@ async function processUserDefinedLabels(userDefinedLabels: UserDefinedLabelResul
     };
 
     // Handle elevator shaft labels
-    if (userDefinedLabel.label.includes(',')) {
+    if (userDefinedLabel.label.includes(RESERVED_START_OF_LABELS[ReservedTypeIndex.Elevator])) {
       const elevatorParts = userDefinedLabel.label.split(',');
       const shaftName = elevatorParts[0].trim();
       if (!elevatorShaftMap.has(shaftName)) {
         elevatorShaftMap.set(shaftName, []);
       }
       elevatorShaftMap.get(shaftName)?.push(userDefinedLabelObj);
-    } else {
+    } 
+    else {
       // Handle regular labels
       const parentLabel = labelMap.get(userDefinedLabel.location);
       if (parentLabel) {
@@ -141,7 +140,7 @@ async function processUserDefinedLabels(userDefinedLabels: UserDefinedLabelResul
   });
 }
 
-async function linkElevatorChildren(elevatorShaftMap: Map<string, Label[]>){
+async function linkElevatorChildren(elevatorShaftMap: Map<string, Label[]>, labelMap: Map<string, Label>){
    // Link elevator children in a hierarchical structure
    elevatorShaftMap.forEach((elevators, shaftName) => {
     if (elevators.length > 1) {
@@ -155,9 +154,18 @@ async function linkElevatorChildren(elevatorShaftMap: Map<string, Label[]>){
       // Create a hierarchical structure where each elevator is a child of the previous one
       for (let i = 0; i < elevators.length - 1; i++) {
         elevators[i].children.push(elevators[i + 1] as Label);
-      }
+      }      
     }
   });
+
+  // Now all the elevators are linked, we can add each of the elevators childrens into the corresponding label in the labelMap
+    // Add each of the elevators childrens into the corresponding label in the labelMap
+    elevatorShaftMap.forEach((elevators) => {
+      elevators.forEach((elevator) => {
+        labelMap.set(elevator.query, elevator);
+        labelMap.get(elevator.parents[0])?.children.push(elevator);  
+      })
+    });
 }
 
 export async function getAllSearchableLabels(req: Request, res: Response) {
@@ -173,7 +181,7 @@ export async function getAllSearchableLabels(req: Request, res: Response) {
     
     await processLocationGroups(locations, labelMap);
     await processUserDefinedLabels(userDefinedLabels, labelMap, elevatorShaftMap);
-    await linkElevatorChildren(elevatorShaftMap);
+    await linkElevatorChildren(elevatorShaftMap, labelMap);
 
     res.json(Array.from(labelMap.values()));
   } catch (error) {
@@ -210,5 +218,79 @@ export async function getPointWithLocationGroupOrLabelName(req: Request, res: Re
     logger.warn(`[GetPointWithLocGroupOrLabelName] Could not find with floorname: ${name}`)
     res.status(404).send("Could not find any nodes with that location").end();
     return
+  }
+}
+
+/**
+ * GET /api/v1/locationGroups/suggestions
+ * Returns a list of suggested starting locations for the landing page.
+ * Each suggestion has a title, description, and pointId.
+ */
+export async function getSuggestedLocations(req: Request, res: Response) {
+  try {
+    // Define the suggested locations with their corresponding location names in the database
+    const suggestedLocations = [
+      {
+        title: 'Campus Entrance',
+        description: 'Outside the front of the building',
+        locationName: 'outdoors'
+      },
+      {
+        title: 'Level G',
+        description: 'Begin from the ground floor',
+        locationName: 'Level G'
+      },
+      {
+        title: 'Level 1',
+        description: 'Begin from the first floor',
+        locationName: 'Level 1'
+      },
+      {
+        title: 'Level 2',
+        description: 'Start from the second floor',
+        locationName: 'Level 2'
+      },
+      {
+        title: 'Level 3',
+        description: 'Begin from the top floor',
+        locationName: 'Level 3'
+      }
+    ];
+
+    // Fetch point IDs for each location
+    const locationsWithPoints = await Promise.all(
+      suggestedLocations.map(async (location) => {
+        // Get the first node with this location
+        const nodeWithLocation = await readDB(
+          `SELECT n.keyframe_id 
+           FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n 
+           JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l 
+           ON n.keyframe_id = l.keyframe_id 
+           WHERE l.location = ? 
+           LIMIT 1`,
+          [location.locationName],
+          true
+        );
+
+        return {
+          ...location,
+          pointId: nodeWithLocation ? nodeWithLocation.keyframe_id : null
+        };
+      })
+    );
+
+    // Filter out any locations that don't have a valid point ID
+    const validLocations = locationsWithPoints.filter(loc => loc.pointId !== null);
+
+    if (validLocations.length === 0) {
+      logger.warn('No valid suggested locations found in the database');
+      res.status(404).json({ error: 'No suggested locations available' });
+      return;
+    }
+
+    res.json(validLocations);
+  } catch (error) {
+    logger.error('Error getting suggested locations:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 }

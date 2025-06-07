@@ -24,7 +24,7 @@ const ErrorLanding: React.FC<ErrorLandingProps> = ({ errorType, onRetry }) => {
     if (errorType === 'server') {
       return (
         <>
-          <AlertCircle size={64} color="#E1251B" />
+          <AlertCircle size={64} color="#fff" style={{ background: '#E1251B', borderRadius: '50%' }} />
           <Typography variant="h4" component="h1" gutterBottom>
             {t('error.server.title', 'Unable to Connect to Server')}
           </Typography>
@@ -99,14 +99,20 @@ const ErrorLanding: React.FC<ErrorLandingProps> = ({ errorType, onRetry }) => {
     <Box
       sx={{
         minHeight: '100vh',
+        width: '100vw',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         bgcolor: 'background.default',
-        p: 2
+        p: 2,
+        m: 0,
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        zIndex: 9999,
       }}
     >
-      <Container maxWidth="sm">
+      <Container maxWidth="sm" disableGutters sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
         <Paper
           elevation={3}
           sx={{
@@ -115,7 +121,9 @@ const ErrorLanding: React.FC<ErrorLandingProps> = ({ errorType, onRetry }) => {
             flexDirection: 'column',
             alignItems: 'center',
             textAlign: 'center',
-            borderRadius: 2
+            borderRadius: 2,
+            width: '100%',
+            maxWidth: 420,
           }}
         >
           {renderContent()}

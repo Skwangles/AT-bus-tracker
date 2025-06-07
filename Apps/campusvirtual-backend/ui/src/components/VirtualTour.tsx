@@ -14,6 +14,7 @@ import {
   initFromParams,
   initIdFromParams,
   nullIdValue,
+  refetchParams,
   setOnPopstateEvent,
   updateHistory,
   updateParams,
@@ -24,6 +25,10 @@ import * as THREE from 'three'
 import { useThree } from '@react-three/fiber'
 import { LanguageSwitcher } from './LanguageSwitcher'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
+import { ThemeProvider, useTheme } from '@mui/material/styles'
+import theme from '../theme'
+import { ArrowBack } from '@mui/icons-material'
 
 // Helper component to get camera reference
 interface CameraPositionGetterProps {
@@ -41,7 +46,10 @@ const CameraPositionGetter: React.FC<CameraPositionGetterProps> = ({ setCameraRe
 }
 
 const VirtualTourContent: React.FC = () => {
+  refetchParams();
   const { t } = useTranslation('common');
+  const navigate = useNavigate();
+  const muiTheme = useTheme();
   
   // State declarations
   const [currentId, setCurrentId] = useState<string>(initIdFromParams())
@@ -67,6 +75,9 @@ const VirtualTourContent: React.FC = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768)
   const cameraRef = useRef<THREE.Camera | null>(null)
   const camRotation = useRef(initFromParams())
+  const [isElevatorModalOpen, setIsElevatorModalOpen] = useState(false)
+  const [elevatorChildren, setElevatorChildren] = useState<Label[]>([])
+  const [currentLabels, setCurrentLabels] = useState<string[]>([])
 
   // Effects
   useEffect(() => {
@@ -158,8 +169,22 @@ const VirtualTourContent: React.FC = () => {
     )
   }, [currentId, highlightedPath, lastNavigatedToPoint, calculateHighlightedPath])
 
+  useEffect(() => {
+    const fetchElevatorChildren = async () => {
+      try {
+        const response = await axios.get<Label[]>(`${API_PREFIX}/api/v1/locationgroup/${currentId}/elevatorChildren`)
+        setElevatorChildren(response.data)
+        setCurrentLabels(response.data.map(label => label.label))
+      } catch (error) {
+        console.error('Error fetching elevator children:', error)
+      }
+    }
+
+    fetchElevatorChildren()
+  }, [currentId])
+
   return (
-    <>
+    <ThemeProvider theme={theme}>
       {/* Loading indicator */}
       {isLoading && (
         <div className="loading-spinner">
@@ -227,14 +252,27 @@ const VirtualTourContent: React.FC = () => {
         />
       </div>
 
-      {/* Move Language Switcher to bottom left */}
-      <div className="fixed bottom-6 left-6 z-[1001]">
+      {/* Move Language Switcher to top right */}
+      <div className="fixed top-6 right-6 z-[1001]">
         <LanguageSwitcher />
       </div>
 
+      {/* Back to Start button */}
+      <button
+        className="fixed top-6 left-6 z-[1001] flex items-center gap-2 px-4 py-2 rounded-lg transition-colors border-0 focus:outline-none shadow-lg"
+        style={{
+          background: muiTheme.palette.primary.main,
+          color: muiTheme.palette.text.primary,
+        }}
+        onClick={() => navigate('/')}
+      >
+        <ArrowBack className="w-5 h-5" />
+        <span>{t('navigation.backToHome')}</span>
+      </button>
+
       {isMobile && showMap && (
         <button
-          className="fixed top-4 left-4 z-[1001] bg-white/90 enabled:hover:bg-white rounded-full p-3 shadow-lg flex items-center justify-center disabled:pointer-events-none"
+          className="fixed bottom-6 left-6 z-[1001] bg-white/90 enabled:hover:bg-white rounded-full p-3 shadow-lg flex items-center justify-center disabled:pointer-events-none"
           disabled={!hasImage}
           onClick={() => setCloseDrawer(true)}
         >
@@ -250,7 +288,7 @@ const VirtualTourContent: React.FC = () => {
           className={`
             fixed z-[1001] bg-white/90 enabled:hover:bg-white rounded-full p-3 shadow-lg 
             flex items-center justify-center enabled:transition-all disabled:pointer-events-none
-            ${isMobile ? 'top-4 left-4' : 'top-4 left-4'}
+            ${isMobile ? 'bottom-6 left-6' : 'bottom-6 left-6'}
           `}
           disabled={!hasImage}
           onClick={() => setCloseDrawer(!closeDrawer)}
@@ -266,7 +304,11 @@ const VirtualTourContent: React.FC = () => {
 
       {/* Instructions Floating Button */}
       <button
-        className="fixed bottom-6 right-6 z-[1001] bg-white/90 enabled:hover:bg-white rounded-full px-6 py-3 shadow-lg flex items-center justify-center gap-2 enabled:transition-all disabled:pointer-events-none border border-gray-300"
+        className="fixed bottom-6 right-6 z-[1001] flex items-center justify-center gap-2 px-6 py-3 rounded-full shadow-lg border border-gray-300 transition-all"
+        style={{
+          background: muiTheme.palette.primary.main,
+          color: muiTheme.palette.text.primary,
+        }}
         onClick={() => setIsInstructionsOpen(!isInstructionsOpen)}
         aria-label={isInstructionsOpen ? t('ui.instructions.close') : t('ui.instructions.show')}
       >
@@ -304,7 +346,46 @@ const VirtualTourContent: React.FC = () => {
         theme="light"
         transition={Bounce}
       />
-    </>
+
+      {/* Elevator Modal */}
+      {isElevatorModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[2000]">
+          <div className="bg-white p-8 rounded-lg min-w-[260px] max-h-[80vh] overflow-y-auto">
+            <h2 className="text-2xl font-bold mb-4 text-center">{t('navigation.elevator')}</h2>
+            <ul className="mb-4">
+              {elevatorChildren.map(label => {
+                const isCurrent = currentLabels.includes(label.label);
+                const key = label.pointId;
+                const navId = label.pointId;
+                return (
+                  <li key={key} className="mb-2">
+                    <button
+                      className={`w-full flex items-center gap-2 px-4 py-2 rounded ${isCurrent ? 'bg-red-100 text-red-600 font-bold' : 'bg-gray-100 text-gray-900'} hover:bg-blue-100 transition-colors`}
+                      onClick={() => {
+                        if (!isCurrent) {
+                          navigate(`/tour?id=${encodeURIComponent(navId)}`);
+                          setIsElevatorModalOpen(false);
+                        }
+                      }}
+                      disabled={isCurrent}
+                    >
+                      {isCurrent && <span className="material-icons text-red-600">person</span>}
+                      <span>{label.label}</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+            <button
+              className="mt-2 w-full bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 transition-colors"
+              onClick={() => setIsElevatorModalOpen(false)}
+            >
+              {t('ui.elevator.cancel', 'Cancel')}
+            </button>
+          </div>
+        </div>
+      )}
+    </ThemeProvider>
   )
 }
 

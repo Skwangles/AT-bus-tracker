@@ -1,6 +1,7 @@
 import * as THREE from "three";
 
 export interface Label {
+  pointId: string;
   query: string;
   label: string;
   type: LabelType;

@@ -92,5 +92,21 @@
     "level1Description": "Comience desde la planta baja",
     "level2Description": "Comience desde el segundo piso",
     "level3Description": "Comience desde el último piso"
+  },
+  "landing": {
+    "welcome": "¡Bienvenido! Aquí tienes cómo empezar:",
+    "howTo": {
+      "search": "Buscar una ubicación",
+      "hotspots": "Haz clic en los puntos de interés para explorar",
+      "move": "Usa las flechas o WASD para moverte"
+    },
+    "suggested": "Puntos de inicio sugeridos",
+    "noSuggestions": "No hay sugerencias disponibles.",
+    "start": "Comenzar",
+    "random": "Aleatorio",
+    "outdoorsDescription": "Comience su recorrido desde la entrada del campus",
+    "level1Description": "Comience desde la planta baja",
+    "level2Description": "Comience desde el segundo piso",
+    "level3Description": "Comience desde el último piso"
   }
 } 

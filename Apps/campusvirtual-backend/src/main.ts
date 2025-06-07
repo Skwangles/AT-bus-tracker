@@ -55,15 +55,21 @@ if (cluster.isPrimary) {
   });
 
   // Serve UI
-  app.get('/', function (req, res) {
-    res.sendFile(path.join(__dirname, '../ui/dist', 'index.html'))
-  })
+  
 
   // Register routes with API prefix
   app.use(`/api/v1/point`, pointsRoutes)
   app.use(`/api/v1/image`, imageRoutes)
   app.use(`/api/v1/locationgroup`, locationGroupRoutes)
   app.use(`/api/v1/map`, mapRoutes)
+  
+  app.get('/tour', function (req, res) {
+    res.sendFile(path.join(__dirname, '../ui/dist', 'index.html'))
+  })
+  app.get('/', function (req, res) {
+    res.sendFile(path.join(__dirname, '../ui/dist', 'index.html'))
+  })
+  
 
   // Start the Express server on a worker
   app.listen(PORT, () => {

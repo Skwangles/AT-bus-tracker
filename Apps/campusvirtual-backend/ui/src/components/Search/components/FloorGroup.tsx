@@ -1,6 +1,6 @@
 import React from 'react'
 import { Label, LabelType } from '../../../types'
-import { getLabelDisplayName, getLabelIcon, getLabelColor } from '../../../utils/labelUtils'
+import { getLabelDisplayName, getLabelIcon} from '../../../utils/labelUtils'
 import { Search } from 'react-feather'
 
 interface FloorGroupProps {
@@ -43,7 +43,8 @@ const FloorGroup: React.FC<FloorGroupProps> = ({ floor, isExpanded, onToggle, on
       query: floor.name,
       parents: [],
       children: [],
-      coordinates: { x: 0, y: 0, z: 0 }
+      coordinates: { x: 0, y: 0, z: 0 },
+      pointId: floor.items.self?.pointId || '-1'
     }
     onItemClick(floorLabel)
   }
@@ -53,7 +54,8 @@ const FloorGroup: React.FC<FloorGroupProps> = ({ floor, isExpanded, onToggle, on
   const renderLabel = (label: Label) => (
     <div
       key={label.parents.join('.') + label.query}
-      className={`suggestion-item flex items-center ${getLabelColor(label)}`}
+      className="suggestion-item flex items-center"
+      style={{ color: '#000', background: '#fff' }}
       onClick={() => onItemClick(label)}
     >
       <span className="mr-2">{getLabelIcon(label)}</span>
@@ -63,13 +65,14 @@ const FloorGroup: React.FC<FloorGroupProps> = ({ floor, isExpanded, onToggle, on
 
   if (!hasItems) {
     return (
-      <div className="suggestion-item">
+      <div className="suggestion-item" style={{ color: '#000', background: '#fff' }}>
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <b>{displayName}</b>
           </div>
           <button
-            className="p-1 hover:text-blue-500 focus:outline-none"
+            className="p-1 focus:outline-none"
+            style={{ color: '#000' }}
             onClick={handleFloorClick}
             title={`Search for ${displayName}`}
           >
@@ -83,11 +86,12 @@ const FloorGroup: React.FC<FloorGroupProps> = ({ floor, isExpanded, onToggle, on
   return (
     <div className="floor-group">
       <div
-        className="floor-header flex items-center justify-between px-4 py-2 cursor-pointer hover:bg-gray-50"
+        className="floor-header flex items-center justify-between px-4 py-2 cursor-pointer"
+        style={{ color: '#000', background: '#fff' }}
         onClick={onToggle}
       >
         <span className="font-medium">{displayName}</span>
-        <span className="text-gray-500">
+        <span style={{ color: '#000' }}>
           {isExpanded ? '▼' : '▶'}
         </span>
       </div>

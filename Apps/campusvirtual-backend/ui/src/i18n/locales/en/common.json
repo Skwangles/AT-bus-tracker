@@ -92,5 +92,21 @@
     "level1Description": "Begin from the ground floor",
     "level2Description": "Start from the second floor",
     "level3Description": "Begin from the top floor"
+  },
+  "landing": {
+    "welcome": "Welcome! Here's how to get started:",
+    "howTo": {
+      "search": "Search for a location",
+      "hotspots": "Click hotspots to explore",
+      "move": "Use arrows or WASD to move"
+    },
+    "suggested": "Suggested Starting Points",
+    "noSuggestions": "No suggestions available.",
+    "start": "Start",
+    "random": "Random",
+    "outdoorsDescription": "Start your tour from the campus entrance",
+    "level1Description": "Begin from the ground floor",
+    "level2Description": "Start from the second floor",
+    "level3Description": "Begin from the top floor"
   }
 } 

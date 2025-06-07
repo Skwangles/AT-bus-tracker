@@ -19,9 +19,19 @@ const LocationItem: React.FC<LocationItemProps> = ({ label, onClick, icon, inden
     <div
       role="button"
       tabIndex={0}
-      className={`suggestion-item cursor-pointer hover:text-blue-500 ${indent ? 'pl-4' : ''}`}
+      style={{
+        color: '#000',
+        background: '#fff',
+        paddingLeft: indent ? 32 : undefined,
+        cursor: 'pointer',
+        transition: 'color 0.2s',
+      }}
       onClick={onClick}
       onKeyDown={(event) => keyboardToClick(event, onClick)}
+      onMouseOver={e => (e.currentTarget.style.color = '#000')}
+      onFocus={e => (e.currentTarget.style.color = '#000')}
+      onMouseOut={e => (e.currentTarget.style.color = '#000')}
+      onBlur={e => (e.currentTarget.style.color = '#000')}
     >
       <div className="flex items-center">
         {icon}

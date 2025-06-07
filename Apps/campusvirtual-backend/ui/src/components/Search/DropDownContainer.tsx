@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { Label, LabelType } from '../../types'
-import { getLabelDisplayName, getLabelColor } from '../../utils/labelUtils'
+import { getLabelDisplayName } from '../../utils/labelUtils'
 import { ChevronDown, ChevronRight, ArrowUp, User } from 'react-feather'
 import {
   List,
@@ -14,7 +14,7 @@ import {
   IconButton,
   Box
 } from '@mui/material'
-import { styled } from '@mui/material/styles'
+import { styled, useTheme } from '@mui/material/styles'
 
 interface DropDownContainerProps {
   setIsFocused: (isFocused: boolean) => void
@@ -34,14 +34,19 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
   overflowY: 'auto',
   zIndex: 50,
   marginTop: theme.spacing(1),
-  boxShadow: theme.shadows[3]
+  boxShadow: theme.shadows[3],
+  backgroundColor: theme.palette.common.white,
+  color: theme.palette.common.black,
 }))
 
 const StyledListItem = styled(ListItem)(({ theme }) => ({
+  '& .MuiListItemText-primary': {
+    color: theme.palette.common.black
+  },
   '&:hover': {
     backgroundColor: theme.palette.action.hover,
     '& .MuiListItemText-primary': {
-      color: theme.palette.primary.main
+      color: theme.palette.common.black
     }
   },
   cursor: 'pointer',
@@ -59,6 +64,7 @@ const DropDownContainer: React.FC<DropDownContainerProps> = ({
   suggestions,
   handleSuggestionClick,
 }) => {
+  const theme = useTheme();
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
 
   const toggleGroup = (groupName: string) => {
@@ -108,7 +114,6 @@ const DropDownContainer: React.FC<DropDownContainerProps> = ({
   const renderLabel = (label: Label, keyPrefix: string, depth: number = 0, showChildren: boolean = true) => {
     const hasChildren = showChildren && label.type !== LabelType.Elevator && label.children && label.children.length > 0
     const isExpanded = expandedGroups.has(label.query)
-    const color = getLabelColor(label)
 
     const getIcon = () => {
       switch (label.type) {
@@ -125,9 +130,9 @@ const DropDownContainer: React.FC<DropDownContainerProps> = ({
       <Box key={keyPrefix + label.query} sx={{ pl: depth * 2 }}>
         <StyledListItem
           onClick={() => handleSuggestionClick(label)}
-          sx={{ 
+          sx={{
             '& .MuiListItemText-primary': {
-              color: color
+              color: theme.palette.common.black
             }
           }}
         >
@@ -145,7 +150,7 @@ const DropDownContainer: React.FC<DropDownContainerProps> = ({
             )}
             {getIcon()}
           </ListItemIcon>
-          <ListItemText primary={getLabelDisplayName(label)} />
+          <ListItemText primary={getLabelDisplayName(label)} sx={{ color: theme.palette.common.black }} />
         </StyledListItem>
         {hasChildren && (
           <Collapse in={isExpanded} timeout="auto" unmountOnExit>
@@ -171,6 +176,10 @@ const DropDownContainer: React.FC<DropDownContainerProps> = ({
         if (e.key === 'Escape') {
           setIsFocused(false)
         }
+      }}
+      sx={{
+        bgcolor: theme.palette.common.white,
+        color: theme.palette.common.black,
       }}
     >
       {!query && recentSearches.length > 0 && (
@@ -212,14 +221,18 @@ const DropDownContainer: React.FC<DropDownContainerProps> = ({
           <Box key={groupName}>
             <StyledListItem
               onClick={() => toggleGroup(groupName)}
-              sx={{ fontWeight: 'medium' }}
+              sx={{ fontWeight: 'medium',
+                '& .MuiListItemText-primary': {
+                  color: theme.palette.common.black
+                }
+              }}
             >
               <ListItemIcon sx={{ minWidth: 36 }}>
                 <IconButton size="small">
                   {expandedGroups.has(groupName) ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                 </IconButton>
               </ListItemIcon>
-              <ListItemText primary={groupName} />
+              <ListItemText primary={groupName} sx={{ color: theme.palette.common.black }} />
             </StyledListItem>
             <Collapse in={expandedGroups.has(groupName)} timeout="auto" unmountOnExit>
               <List component="div" disablePadding>

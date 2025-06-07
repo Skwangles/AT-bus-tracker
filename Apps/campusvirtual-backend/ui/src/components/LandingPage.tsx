@@ -1,242 +1,272 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { Box, Typography, Button, Stack, Grid } from '@mui/material';
+import { ThemeProvider, useTheme } from '@mui/material/styles';
+import RoomIcon from '@mui/icons-material/Room';
+import SearchIcon from '@mui/icons-material/Search';
+import MouseIcon from '@mui/icons-material/Mouse';
+import DirectionsWalkIcon from '@mui/icons-material/DirectionsWalk';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import CasinoIcon from '@mui/icons-material/Casino';
+import backgroundImg from '../assets/landingpage.png';
+import taurangaLogo from '../assets/tauranga.png';
+import theme from '../theme';
 import { useNavigate } from 'react-router-dom';
-import {
-  Box,
-  Container,
-  Typography,
-  Grid,
-  Card,
-  CardContent,
-  CardActionArea,
-  Paper,
-  CircularProgress,
-//   useTheme,
-//   useMediaQuery,
-} from '@mui/material';
-// import { DirectionsWalk as WalkIcon, Elevator as ElevatorIcon } from '@mui/icons-material';
-import { styled } from '@mui/material/styles';
-import LandingSearchBar from './LandingSearchBar';
 import { API_PREFIX } from '../consts';
-import { Label } from '../types';
-import { LanguageSwitcher } from './LanguageSwitcher';
 import { useTranslation } from 'react-i18next';
+import { LanguageSwitcher } from './LanguageSwitcher';
 
-const StyledCard = styled(Card)(({ theme }) => ({
-  height: '100%',
-  transition: 'transform 0.2s',
-  '&:hover': {
-    transform: 'scale(1.02)',
-  },
-}));
+const HOW_TO_KEYS = [
+  { icon: <SearchIcon sx={{ fontSize: 32, color: '#fff', mb: 0.5 }} />, key: 'landing.howTo.search' },
+  { icon: <MouseIcon sx={{ fontSize: 32, color: '#fff', mb: 0.5 }} />, key: 'landing.howTo.hotspots' },
+  { icon: <DirectionsWalkIcon sx={{ fontSize: 32, color: '#fff', mb: 0.5 }} />, key: 'landing.howTo.move' },
+];
 
 const LandingPage: React.FC = () => {
-  const navigate = useNavigate();
-//   const theme = useTheme();
-//   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { t } = useTranslation('common');
-  const [searchableLabels, setSearchableLabels] = useState<Label[]>([]);
-  const [loadingLabels, setLoadingLabels] = useState(true);
-  const [fetchError, setFetchError] = useState<string | null>(null);
-  const [suggestedLocations, setSuggestedLocations] = useState<{ title: string; description: string; pointId: string }[]>([]);
-  const [loadingSuggestions, setLoadingSuggestions] = useState(true);
-  const [suggestionsError, setSuggestionsError] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const muiTheme = useTheme();
+  const [suggested, setSuggested] = useState<{ pointId: string | number, title: string, description: string }[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [randomLoading, setRandomLoading] = useState(false);
 
   useEffect(() => {
-    const fetchLabels = async () => {
-      setLoadingLabels(true);
-      setFetchError(null);
-      try {
-        const response = await fetch(`${API_PREFIX}/api/v1/locationgroup/labels`);
-        if (!response.ok) throw new Error('Failed to fetch labels');
-        const data = await response.json();
-        if (Array.isArray(data) && data.length > 0) {
-          setSearchableLabels(data);
-        } else {
-          setSearchableLabels([]);
-          setFetchError('noLocations');
-        }
-      } catch (e) {
-        setSearchableLabels([]);
-        setFetchError('fetchError');
-      } finally {
-        setLoadingLabels(false);
-      }
-    };
-    fetchLabels();
+    setLoading(true);
+    fetch(`${API_PREFIX}/api/v1/locationgroup/suggestions`)
+      .then(res => res.json())
+      .then(data => {
+        setSuggested(Array.isArray(data) ? data : []);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
   }, []);
 
-  useEffect(() => {
-    const fetchSuggestions = async () => {
-      setLoadingSuggestions(true);
-      setSuggestionsError(null);
-      try {
-        const response = await fetch(`${API_PREFIX}/api/v1/locationgroup/suggestions`);
-        if (!response.ok) throw new Error('Failed to fetch suggestions');
-        const data = await response.json();
-        if (Array.isArray(data) && data.length > 0) {
-          setSuggestedLocations(data);
-        } else {
-          setSuggestedLocations([]);
-          setSuggestionsError('No suggestions available.');
-        }
-      } catch (e) {
-        setSuggestedLocations([]);
-        setSuggestionsError('Failed to fetch suggestions.');
-      } finally {
-        setLoadingSuggestions(false);
+  const handleRandom = async () => {
+    setRandomLoading(true);
+    try {
+      const res = await fetch(`${API_PREFIX}/api/v1/point/random`);
+      const data = await res.json();
+      if (data && data.keyframe_id) {
+        navigate(`/tour?id=${data.keyframe_id}`);
       }
-    };
-    fetchSuggestions();
-  }, []);
-
-  const handleLocationClick = (pointId: string) => {
-    navigate(`/tour?id=${pointId}`);
+    } finally {
+      setRandomLoading(false);
+    }
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        width: '100vw',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        bgcolor: 'background.default',
-        position: 'relative',
-      }}
-    >
-      {/* Language Switcher in top right */}
-      <Box sx={{ position: 'absolute', top: 24, right: 24, zIndex: 10 }}>
-        <LanguageSwitcher />
-      </Box>
-      <Container
-        maxWidth="sm"
+    <ThemeProvider theme={theme}>
+      <Box
         sx={{
+          minHeight: '100vh',
+          width: '100vw',
+          position: 'relative',
+          overflow: 'hidden',
           display: 'flex',
-          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          p: { xs: 2, sm: 3, md: 4 },
+          '::before': {
+            content: '""',
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundImage: `url(${backgroundImg})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            filter: 'blur(8px)',
+            zIndex: 0,
+          },
         }}
       >
-        <Box textAlign="center" mb={{ xs: 4, sm: 5, md: 6 }}>
-          <Typography
-            variant="h2"
-            component="h1"
-            gutterBottom
-            sx={{
-              fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' },
-              fontWeight: 600,
-            }}
-          >
+        {/* Top-left logo */}
+        <Box 
+          sx={{ 
+            position: 'fixed', 
+            top: 24, 
+            left: 32, 
+            zIndex: 2, 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: 1,
+            cursor: 'pointer',
+            '&:hover': {
+              opacity: 0.8
+            }
+          }}
+          onClick={() => window.open('https://campusvirtual.io', '_blank')}
+        >
+          <RoomIcon sx={{ color: muiTheme.palette.text.primary, fontSize: 28, mr: 1, filter: `drop-shadow(0 1px 4px ${muiTheme.palette.primary.main})` }} />
+          <Typography variant="h6" sx={{ color: muiTheme.palette.text.primary, fontWeight: 700, letterSpacing: 1, textShadow: `0 2px 8px ${muiTheme.palette.primary.main}` }}>
             CampusVirtual
           </Typography>
-          <Typography
-            variant="h4"
-            color="text.secondary"
-            gutterBottom
-            sx={{
-              fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' },
-            }}
-          >
-            University of Waikato Tauranga Campus
-          </Typography>
         </Box>
 
-        <Paper
+        {/* Top-right Language Switcher */}
+        <Box sx={{ position: 'fixed', top: 24, right: 32, zIndex: 2 }}>
+          <LanguageSwitcher />
+        </Box>
+
+        {/* Centered Card */}
+        <Box
           sx={{
-            p: { xs: 2, sm: 3, md: 4 },
-            mb: { xs: 4, sm: 5, md: 6 },
-            borderRadius: 2,
-            maxWidth: 600,
-            mx: 'auto',
-            textAlign: 'center',
+            position: 'relative',
+            zIndex: 1,
+            minWidth: { xs: 320, sm: 420, md: 540 },
+            maxWidth: '90vw',
+            px: { xs: 3, sm: 6 },
+            py: { xs: 5, sm: 7 },
+            borderRadius: muiTheme.shape.borderRadius,
+            bgcolor: muiTheme.palette.background.paper,
+            boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.18)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
           }}
         >
-          <Typography
-            variant="h5"
-            gutterBottom
+          <Box
+            component="img"
+            src={taurangaLogo}
+            alt="University of Waikato - Tauranga"
             sx={{
-              fontSize: { xs: '1.25rem', sm: '1.5rem' },
+              height: { xs: '100px', sm: '150px', md: '200px' },
+              width: { xs: '100px', sm: '150px', md: '200px' },
+              mb: 2,
+              // filter: 'drop-shadow(0 2px 12px #000)',
+              borderRadius: '50%',
+              objectFit: 'cover',
+            }}
+          />
+          <Typography
+            variant="h6"
+            sx={{
+              color: muiTheme.palette.text.primary,
+              fontWeight: muiTheme.typography.fontWeightRegular,
+              mb: 3,
+              textAlign: 'center',
+              fontSize: { xs: '1.1rem', sm: '1.2rem', md: '1.25rem' },
+              maxWidth: 520,
+              opacity: 0.92,
             }}
           >
-            {t('homepage.howToUseTitle')}
+            {t('landing.welcome', "Welcome! Here's how to get started:")}
           </Typography>
-          <Typography
-            variant="body1"
-            sx={{
-              fontSize: { xs: '0.875rem', sm: '1rem' },
-              lineHeight: 1.6,
-            }}
-          >
-            {t('homepage.howToUseText')}
-          </Typography>
-        </Paper>
-
-        <Box sx={{ mb: { xs: 4, sm: 5, md: 6 }, width: '100%', maxWidth: 400, mx: 'auto', minHeight: 56 }}>
-          {loadingLabels ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 56 }}>
-              <CircularProgress size={28} />
-            </Box>
-          ) : fetchError ? (
-            <Typography color="error" align="center">{t(`homepage.${fetchError}`)}</Typography>
-          ) : (
-            <LandingSearchBar labels={searchableLabels} placeholder={t('homepage.searchPlaceholder')} />
-          )}
-        </Box>
-
-        <Grid
-          container
-          spacing={{ xs: 2, sm: 3 }}
-          justifyContent="center"
-        >
-          {loadingSuggestions ? (
-            <Grid item xs={12}>
-              <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 120 }}>
-                <CircularProgress size={28} />
+          {/* How to use with icons */}
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={4} mb={4} alignItems="center" justifyContent="center">
+            {HOW_TO_KEYS.map((step, idx) => (
+              <Box key={idx} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', maxWidth: 140 }}>
+                {step.icon}
+                <Typography sx={{ color: muiTheme.palette.text.primary, fontWeight: 500, fontSize: '1rem', textAlign: 'center' }}>{t(step.key)}</Typography>
               </Box>
-            </Grid>
-          ) : suggestionsError ? (
-            <Grid item xs={12}>
-              <Typography color="error" align="center">{suggestionsError}</Typography>
-            </Grid>
-          ) : suggestedLocations.map((location) => (
-            <Grid item xs={12} sm={6} md={3} key={location.pointId}>
-              <StyledCard>
-                <CardActionArea onClick={() => handleLocationClick(location.pointId)}>
-                  <CardContent
-                    sx={{
-                      textAlign: 'center',
-                      py: { xs: 2, sm: 3 },
-                      px: { xs: 1, sm: 2 },
-                    }}
-                  >
-                    <Typography
-                      variant="h6"
-                      gutterBottom
-                      sx={{
-                        fontSize: { xs: '1rem', sm: '1.25rem' },
-                      }}
-                    >
-                      {location.title}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{
-                        fontSize: { xs: '0.75rem', sm: '0.875rem' },
-                      }}
-                    >
-                      {location.description}
-                    </Typography>
-                  </CardContent>
-                </CardActionArea>
-              </StyledCard>
-            </Grid>
-          ))}
-        </Grid>
-      </Container>
-    </Box>
+            ))}
+          </Stack>
+          {/* Suggested starting points */}
+          <Typography variant="subtitle1" sx={{ color: muiTheme.palette.text.primary, fontWeight: 600, mb: 2, textAlign: 'center', letterSpacing: 1 }}>
+            {t('landing.suggested', 'Suggested Starting Points')}
+          </Typography>
+          <Grid container spacing={2} justifyContent="center" wrap="wrap">
+            {loading ? (
+              <Grid item xs={12} sx={{ textAlign: 'center' }}>
+                <Typography sx={{ color: muiTheme.palette.text.primary, opacity: 0.8 }}>{t('ui.loading', 'Loading...')}</Typography>
+              </Grid>
+            ) : suggested.length === 0 ? (
+              <Grid item xs={12} sx={{ textAlign: 'center' }}>
+                <Typography sx={{ color: muiTheme.palette.text.primary, opacity: 0.8 }}>{t('landing.noSuggestions', 'No suggestions available.')}</Typography>
+              </Grid>
+            ) : suggested.map((s) => (
+              <Grid item key={s.pointId}>
+                <Button
+                  fullWidth
+                  variant="contained"
+                  onClick={() => navigate(`/tour?id=${s.pointId}`)}
+                  sx={{
+                    background: muiTheme.palette.secondary.main,
+                    color: muiTheme.palette.text.primary,
+                    borderRadius: '999px',
+                    px: 2,
+                    py: 2,
+                    fontWeight: 700,
+                    fontSize: '1.1rem',
+                    boxShadow: '0 2px 8px 0 rgba(0,0,0,0.12)',
+                    textTransform: 'none',
+                    mb: 1,
+                    '&:hover': {
+                      background: muiTheme.palette.text.primary,
+                      color: muiTheme.palette.primary.main,
+                    },
+                  }}
+                >
+                  {t(`location.${s.title.toLowerCase().replace(/ /g, '')}`, s.title)}
+                </Button>
+                <Typography 
+                  sx={{ 
+                    color: muiTheme.palette.text.secondary, 
+                    fontSize: '0.95rem', 
+                    textAlign: 'center', 
+                    maxWidth: '100%', 
+                    wordBreak: 'break-word', 
+                    whiteSpace: 'normal',
+                    lineHeight: 1.35,
+                  }}
+                >
+                  {t(`landing.${s.title.toLowerCase().replace(/ /g, '')}Description`, s.description)}
+                </Typography>
+              </Grid>
+            ))}
+          </Grid>
+          {/* Start and Random buttons */}
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mt={5} width="100%" justifyContent="center">
+            <Button
+              variant="contained"
+              color="success"
+              startIcon={<PlayArrowIcon />}
+              onClick={() => navigate('/tour')}
+              sx={{
+                background: muiTheme.palette.success.main,
+                color: muiTheme.palette.text.primary,
+                borderRadius: '999px',
+                px: 4,
+                py: 1.5,
+                fontWeight: 700,
+                fontSize: '1.1rem',
+                textTransform: 'none',
+                boxShadow: '0 2px 8px 0 rgba(67,160,71,0.12)',
+                '&:hover': {
+                  background: '#388e3c',
+                  color: muiTheme.palette.text.primary,
+                },
+              }}
+            >
+              {t('landing.start', 'Start')}
+            </Button>
+            <Button
+              variant="contained"
+              color="secondary"
+              startIcon={<CasinoIcon />}
+              onClick={handleRandom}
+              disabled={randomLoading}
+              sx={{
+                background: muiTheme.palette.secondary.main,
+                color: muiTheme.palette.text.primary,
+                borderRadius: '999px',
+                px: 4,
+                py: 1.5,
+                fontWeight: 700,
+                fontSize: '1.1rem',
+                textTransform: 'none',
+                boxShadow: '0 2px 8px 0 rgba(0,0,0,0.12)',
+                '&:hover': {
+                  background: muiTheme.palette.text.primary,
+                  color: muiTheme.palette.primary.main,
+                },
+              }}
+            >
+              {randomLoading ? t('ui.loading', 'Loading...') : t('landing.random', 'Random')}
+            </Button>
+          </Stack>
+        </Box>
+      </Box>
+    </ThemeProvider>
   );
 };
 

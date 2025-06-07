@@ -1,7 +1,7 @@
 .minimap-wrapper {
   position: fixed;
   left: 0;
-  top: 0;
+  bottom: 0;
   margin: 1rem;
   transition: all 0.3s ease;
   z-index: 1000;
