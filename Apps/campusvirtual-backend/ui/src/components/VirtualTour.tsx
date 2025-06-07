@@ -269,7 +269,7 @@ const VirtualTourContent: React.FC = () => {
         onClick={() => navigate('/')}
       >
         <ArrowBack className="w-5 h-5" />
-        <span>{t('navigation.backToHome')}</span>
+        {!isMobile && <span>{t('navigation.backToHome')}</span>}
       </button>
 
       {isMobile && showMap && (
@@ -317,12 +317,12 @@ const VirtualTourContent: React.FC = () => {
         {isInstructionsOpen ? (
           <>
             <X size={20} />
-            <span>{t('navigation.close')}</span>
+            {!isMobile && <span>{t('navigation.close')}</span>}
           </>
         ) : (
           <>
             <Info size={20} />
-            <span>{t('navigation.instructions')}</span>
+            {!isMobile && <span>{t('navigation.instructions')}</span>}
           </>
         )}
       </button>
