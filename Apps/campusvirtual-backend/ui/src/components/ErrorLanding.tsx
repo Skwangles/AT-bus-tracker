@@ -26,7 +26,7 @@ const ErrorLanding: React.FC<ErrorLandingProps> = ({ errorType, onRetry }) => {
         <>
           <AlertCircle size={64} color="#fff" style={{ background: '#E1251B', borderRadius: '50%' }} />
           <Typography variant="h4" component="h1" gutterBottom>
-            {t('error.server.title', 'Unable to Connect to Server')}
+            {t('error.server.title', 'Unable to Connect to CampusVirtual\'s Server')}
           </Typography>
           <Typography variant="body1" color="text.secondary" paragraph>
             {t('error.server.description', 'We couldn\'t establish a connection to the server. This might be due to:')}
