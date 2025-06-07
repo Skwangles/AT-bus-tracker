@@ -4,7 +4,9 @@
     "map": "地图",
     "list": "列表",
     "instructions": "使用说明",
-    "close": "关闭"
+    "close": "关闭",
+    "backToHome": "返回首页",
+    "elevator": "电梯"
   },
   "location": {
     "outdoors": "室外",

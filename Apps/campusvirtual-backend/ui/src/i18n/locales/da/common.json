@@ -4,7 +4,9 @@
     "map": "Kort",
     "list": "Liste",
     "instructions": "Instruktioner",
-    "close": "Luk"
+    "close": "Luk",
+    "backToHome": "Tilbage til Start",
+    "elevator": "Elevator"
   },
   "location": {
     "outdoors": "Udendørs",

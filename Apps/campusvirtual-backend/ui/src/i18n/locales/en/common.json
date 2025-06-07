@@ -4,7 +4,9 @@
     "map": "Map",
     "list": "List",
     "instructions": "Instructions",
-    "close": "Close"
+    "close": "Close",
+    "backToHome": "Back to Home",
+    "elevator": "Elevator"
   },
   "location": {
     "outdoors": "Outdoors",

@@ -4,7 +4,9 @@
     "map": "地圖",
     "list": "列表",
     "instructions": "使用說明",
-    "close": "關閉"
+    "close": "關閉",
+    "backToHome": "返回首頁",
+    "elevator": "電梯"
   },
   "location": {
     "outdoors": "室外",

@@ -4,7 +4,9 @@
     "map": "Mapa",
     "list": "Lista",
     "instructions": "Instrucciones",
-    "close": "Cerrar"
+    "close": "Cerrar",
+    "backToHome": "Volver al Inicio",
+    "elevator": "Ascensor"
   },
   "location": {
     "outdoors": "Exterior",
