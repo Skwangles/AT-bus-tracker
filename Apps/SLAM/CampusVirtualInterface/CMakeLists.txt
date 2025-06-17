@@ -62,7 +62,7 @@ add_executable(cv_map src/map.cc)
 
 list(APPEND EXECUTABLE_TARGETS cv_map)
 
-add_executable(cv_slam_to_sqlite src/slam_to_sqlite.cc)
+add_executable(cv_slam_to_sqlite src/slam_to_sqlite.cc src/util/elevator.cpp)
 list(APPEND EXECUTABLE_TARGETS cv_slam_to_sqlite)
 
 add_executable(cv_view_map src/view.cc)

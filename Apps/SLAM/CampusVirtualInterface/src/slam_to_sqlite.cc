@@ -28,6 +28,7 @@
 #include <string>
 
 #include "util/save_to_db.hpp"
+#include "util/elevator.hpp"
 
 #include <sqlite3.h>
 
@@ -42,8 +43,8 @@ namespace fs = ghc::filesystem;
 #include <gperftools/profiler.h>
 #endif
 
-// Function to create necessary tables in SQLite
-void create_tables_if_not_exist(sqlite3* db) {
+// Function to create basic tables in SQLite
+void create_basic_tables_if_not_exist(sqlite3* db) {
     char* err_msg = nullptr;
     
     const char* sql = R"(
@@ -93,6 +94,11 @@ void create_tables_if_not_exist(sqlite3* db) {
     if (rc != SQLITE_OK) {
         spdlog::error("SQL error: {}", err_msg);
         sqlite3_free(err_msg);
+    }
+
+    // Use elevator.hpp function to create additional tables and modify existing ones
+    if (!create_tables_if_not_exist(db)) {
+        spdlog::error("Failed to create elevator-related tables");
     }
 }
 
@@ -242,6 +248,13 @@ void timestamp_groups_to_sqlite(sqlite3* db, const std::string& map_db_path) {
     sqlite3_close(source_db);
 }
 
+void process_user_defined_labels_to_other_nodes(sqlite3* db) {
+    // Use the elevator.hpp function to convert user defined labels
+    if (!convert_user_defined_labels_to_other_nodes(db)) {
+        spdlog::error("Failed to convert user defined labels to other nodes");
+    }
+}
+
 void convert_to_sqlite(const std::shared_ptr<stella_vslam::system>& slam,
                       const std::shared_ptr<stella_vslam::config>& cfg,
                       const std::string& map_db_path,
@@ -256,7 +269,7 @@ void convert_to_sqlite(const std::shared_ptr<stella_vslam::system>& slam,
 
     std::cout << "Connected to database" << std::endl;
     
-    create_tables_if_not_exist(db);
+    create_basic_tables_if_not_exist(db);
 
     // Begin transaction
     char* err_msg = nullptr;
@@ -360,6 +373,7 @@ void convert_to_sqlite(const std::shared_ptr<stella_vslam::system>& slam,
 
     timestamp_groups_to_sqlite(db, map_db_path);
     user_defined_labels_to_sqlite(db, map_db_path);
+    process_user_defined_labels_to_other_nodes(db);
 
     // Commit transaction
     ret = sqlite3_exec(db, "COMMIT", nullptr, nullptr, &err_msg);
