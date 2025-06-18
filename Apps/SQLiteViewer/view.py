@@ -39,6 +39,45 @@ def load_nodes(db_path):
     
     return nodes
 
+def load_other_nodes(db_path):
+    """Load other_nodes from the SQLite database."""
+    connection = sqlite3.connect(db_path)
+    cursor = connection.cursor()
+    
+    # Check if other_nodes table exists
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='other_nodes'")
+    if not cursor.fetchone():
+        print("other_nodes table not found, skipping...")
+        connection.close()
+        return []
+    
+    sql_str = "SELECT id, ref_id, label, description, type, x_trans, y_trans, z_trans FROM other_nodes"
+    print("Executing:", sql_str)
+    cursor.execute(sql_str)
+    other_nodes_data = cursor.fetchall()
+    connection.close()
+    
+    # Convert to Node objects for consistency
+    other_nodes = []
+    for row in other_nodes_data:
+        node_id, ref_id, label, description, node_type, x_trans, y_trans, z_trans = row
+        # Create a Node object with the other_node data
+        # We'll use a special keyframe_id format to distinguish from regular nodes
+        special_id = f"other_{node_id}"
+        
+        # Create a proper dummy pose matrix (4x4 identity matrix as bytes)
+        dummy_pose = np.eye(4, dtype=np.double).tobytes()
+        
+        node = Node(special_id, [x_trans, y_trans, z_trans], dummy_pose)
+        node.original_id = node_id
+        node.ref_id = ref_id
+        node.label = label
+        node.description = description
+        node.node_type = node_type
+        other_nodes.append(node)
+    
+    return other_nodes
+
 def load_edges(db_path, all=False):
     """Load edges from the SQLite database."""
     connection = sqlite3.connect(db_path)
@@ -47,6 +86,26 @@ def load_edges(db_path, all=False):
     edges = cursor.fetchall()  # List of tuples
     connection.close()
     return edges
+
+def load_elevator_edges(db_path):
+    """Load elevator edges from the SQLite database."""
+    connection = sqlite3.connect(db_path)
+    cursor = connection.cursor()
+    
+    # Check if elevator_edges table exists
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='elevator_edges'")
+    if not cursor.fetchone():
+        print("elevator_edges table not found, skipping...")
+        connection.close()
+        return []
+    
+    sql_str = "SELECT id, shaft_id, id0, id1 FROM elevator_edges"
+    print("Executing:", sql_str)
+    cursor.execute(sql_str)
+    elevator_edges_data = cursor.fetchall()
+    connection.close()
+    
+    return elevator_edges_data
 
 nodes = []
 mapped = {}
@@ -218,7 +277,7 @@ def get_lines_from_ids(edge1, edge2):
     p0, p1 = nodes[mapped[edge1]], nodes[mapped[edge2]]
     return [p0, p1]
 
-def render(nodes_list, edges=None):
+def render(nodes_list, other_nodes_list=None, edges=None):
     """Render nodes and edges in 3D using PyVista."""
     global pos_map
     global idx_to_id
@@ -237,6 +296,12 @@ def render(nodes_list, edges=None):
     for i, node in tqdm(enumerate(nodes)):
         pos_map[str(node.position)] = i
         
+    # Add other_nodes to the lookup as well
+    if other_nodes_list:
+        start_idx = len(nodes_list)
+        for i, node in tqdm(enumerate(other_nodes_list)):
+            mapped[node.keyframe_id] = start_idx + i
+            idx_to_id[start_idx + i] = node.keyframe_id
     
     # Add nodes to the plot
     print("Adding nodes to the plot...")
@@ -246,6 +311,43 @@ def render(nodes_list, edges=None):
     for node in tqdm(nodes):
         plotter.add_mesh(node.get_arrow(), color="green", pickable=True)
         # plotter.add_point_labels(node.position, [str(node.keyframe_id)], font_size=10, point_size=10, color="black")
+    
+    # Add other_nodes to the plot in a different color
+    if other_nodes_list:
+        print("Adding other_nodes to the plot...")
+        for node in tqdm(other_nodes_list):
+            # Create a sphere instead of arrow for other_nodes
+            # Color based on node type
+            type_colors = {
+                0: "gray",      # Normal
+                1: "red",       # Elevator
+                2: "orange",    # Toilet
+                3: "purple"     # Info
+            }
+            node_color = type_colors.get(node.node_type, "blue")
+            sphere = pv.Sphere(center=node.position, radius=0.05)
+            plotter.add_mesh(sphere, color=node_color, pickable=True)
+            # Add a small label showing the node type
+            type_names = {0: "N", 1: "E", 2: "I", 3: "R"}  # Normal, Elevator, Info, Room
+            type_label = type_names.get(node.node_type, "?")
+            plotter.add_point_labels(node.position, [type_label], font_size=8, point_size=8)
+        
+    # Add legend
+    legend_entries = [
+        ("Green Arrows", "Regular SLAM nodes"),
+        ("Gray Spheres", "Normal other nodes"),
+        ("Red Spheres", "Elevator nodes"),
+        ("Orange Spheres", "Info/Toilet nodes"),
+        ("Purple Spheres", "Room nodes"),
+        ("N", "Normal node"),
+        ("E", "Elevator node"),
+        ("I", "Info/Toilet node"),
+        ("R", "Room node")
+    ]
+    
+    # Create a simple text legend
+    legend_text = "\n".join([f"{symbol}: {description}" for symbol, description in legend_entries])
+    plotter.add_text(legend_text, position='upper_left', font_size=12, color='black')
         
     # print("Points:", points)
     # plotter.add_mesh(points, color="blue", point_size=5.0, render_points_as_spheres=True, pickable=True)
@@ -286,10 +388,14 @@ if __name__ == "__main__":
             table_name_prefix = ""
         
     nodes = load_nodes(db_path)
+    other_nodes = load_other_nodes(db_path)
     edges = load_edges(db_path, False)
+    elevator_edges = load_elevator_edges(db_path)
 
     print(f"Loaded {len(nodes)} nodes.")
+    print(f"Loaded {len(other_nodes)} other_nodes.")
     print(f"Loaded {len(edges)} edges.")
+    print(f"Loaded {len(elevator_edges)} elevator edges.")
     
     print(""" Controls 
           p - select point
@@ -299,4 +405,4 @@ if __name__ == "__main__":
           e - execute the actions - e.g. remove IDs from the remove list
           """)
 
-    render(nodes, edges)
+    render(nodes, other_nodes, edges)

@@ -47,8 +47,8 @@ const std::string RESERVED_ELEVATOR = "!!elevator";
 enum OtherNodeType {
     OTHER_NORMAL_NODE = 0,    // Regular navigation node
     OTHER_ELEVATOR_NODE = 1,  // Elevator point node
-    OTHER_INFO_NODE = 2,      // Information point
-    OTHER_ROOM_NODE = 3       // Room point
+    OTHER_TOILET_NODE = 2,      // Information point
+    OTHER_INFO_NODE = 3       // Room point
 };
 
 // New struct to hold other node information

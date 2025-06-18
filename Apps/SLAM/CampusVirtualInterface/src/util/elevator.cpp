@@ -322,7 +322,7 @@ bool convert_user_defined_labels_to_other_nodes(sqlite3* db) {
             node.description = description;
             elevator_shafts[shaft_id].push_back(node);
         } else if (label.find("!!toilet") == 0) {
-            node.type = OTHER_INFO_NODE;  // Type 2 for toilet
+            node.type = OTHER_TOILET_NODE;  // Type 2 for toilet
             // Parse toilet label: "!!toilet, <description>"
             size_t comma_pos = label.find(",");
             if (comma_pos != std::string::npos) {
@@ -330,14 +330,11 @@ bool convert_user_defined_labels_to_other_nodes(sqlite3* db) {
                 // Trim leading whitespace
                 node.description = node.description.substr(node.description.find_first_not_of(" \t"));
             } else {
-                node.description = label.substr(8); // Remove "!!toilet" prefix
+                node.description = label.substr(7); // Remove "!!toilet" prefix
             }
-        } else if (label.find("info:") == 0) {
+        } else if (label.find("!!info") == 0) {
             node.type = OTHER_INFO_NODE;
-            node.description = label.substr(5);
-        } else if (label.find("room:") == 0) {
-            node.type = OTHER_ROOM_NODE;
-            node.description = label.substr(5);
+            node.description = label.substr(7);
         } else {
             node.type = OTHER_NORMAL_NODE;
             node.description = label;
