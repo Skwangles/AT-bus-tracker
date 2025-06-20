@@ -5,7 +5,7 @@
   "scripts": {
     "build-authoring": "cd authoring && npm install && npm run build && cd ..",
     "build-immersive": "cd immersive && npm install && npm run build && cd ..",
-    "build": "npm run build-authoring && npm run build-immersive && npm install && tsc -b",
+    "build": "npm run build-authoring && npm install && tsc -b",
     "start": "npm run build && node dist/main.js"
   },
   "author": "",
