@@ -9,8 +9,9 @@ import * as THREE from "three";
 import logger from "../logger";
 import { ThreeNumbersArray } from "../types";
 // Helper function to get neighbours
-export async function getNeighbours(keyframeId: number): Promise<any[]> {
-  const result = await readDB(
+export async function getNeighbours(keyframeId: number, get_elevator_neighbours = false): Promise<any[]> {
+  // Get regular neighbours from edges table
+  const regularNeighbours = await readDB(
     `SELECT e.keyframe_id1 as keyframe_id, n.ts, COUNT(e1.keyframe_id1) as degree FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""
     }edges e 
               JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""
@@ -22,7 +23,36 @@ export async function getNeighbours(keyframeId: number): Promise<any[]> {
               GROUP BY e.keyframe_id1, n.ts`,
     [keyframeId]
   );
-  return result;
+
+  let elevatorNeighbours: any[] = []
+  if (get_elevator_neighbours) {
+    // Get elevator neighbours via other_nodes and elevator_edges
+    elevatorNeighbours = await readDB(
+      `SELECT DISTINCT n2.keyframe_id, n2.ts, 1 as degree
+      FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n
+      JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes on1 ON n.keyframe_id = on1.ref_id
+      JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}elevator_edges ee ON (on1.id = ee.id0 OR on1.id = ee.id1)
+      JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes on2 ON (on2.id = ee.id0 OR on2.id = ee.id1)
+      JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n2 ON on2.ref_id = n2.keyframe_id
+      WHERE n.keyframe_id = ? 
+      AND on1.id != on2.id
+      AND on1.type = 1 
+        AND on2.type = 1`,
+        [keyframeId]
+      );
+  }
+
+  // Combine and deduplicate neighbours
+  const allNeighbours = [...regularNeighbours, ...elevatorNeighbours];
+  const uniqueNeighbours = new Map();
+  
+  for (const neighbour of allNeighbours) {
+    if (!uniqueNeighbours.has(neighbour.keyframe_id)) {
+      uniqueNeighbours.set(neighbour.keyframe_id, neighbour);
+    }
+  }
+  
+  return Array.from(uniqueNeighbours.values());
 }
 
 export function BlobArrayToMatrix(array: Buffer): number[] {
