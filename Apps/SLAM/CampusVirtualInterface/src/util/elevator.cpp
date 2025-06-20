@@ -5,41 +5,6 @@
 
 bool create_tables_if_not_exist(sqlite3* db) {
     int ret = 0;
-    
-    // Add node_type column to nodes table if it doesn't exist
-    const char* add_node_type_sql = 
-        "ALTER TABLE nodes ADD COLUMN node_type INTEGER DEFAULT 0;";
-    ret = sqlite3_exec(db, add_node_type_sql, nullptr, nullptr, nullptr);
-    if (ret != SQLITE_OK && ret != SQLITE_DONE) {
-        spdlog::error("Failed to add node_type column: {}", sqlite3_errmsg(db));
-        return false;
-    }
-
-    // Add edge_type column to edges table if it doesn't exist
-    const char* add_edge_type_sql = 
-        "ALTER TABLE edges ADD COLUMN edge_type INTEGER DEFAULT 0;";
-    ret = sqlite3_exec(db, add_edge_type_sql, nullptr, nullptr, nullptr);
-    if (ret != SQLITE_OK && ret != SQLITE_DONE) {
-        spdlog::error("Failed to add edge_type column: {}", sqlite3_errmsg(db));
-        return false;
-    }
-
-    // Create indexes if they don't exist
-    const char* create_node_index_sql = 
-        "CREATE INDEX IF NOT EXISTS idx_nodes_type ON nodes(node_type);";
-    ret = sqlite3_exec(db, create_node_index_sql, nullptr, nullptr, nullptr);
-    if (ret != SQLITE_OK) {
-        spdlog::error("Failed to create node type index: {}", sqlite3_errmsg(db));
-        return false;
-    }
-
-    const char* create_edge_index_sql = 
-        "CREATE INDEX IF NOT EXISTS idx_edges_type ON edges(edge_type);";
-    ret = sqlite3_exec(db, create_edge_index_sql, nullptr, nullptr, nullptr);
-    if (ret != SQLITE_OK) {
-        spdlog::error("Failed to create edge type index: {}", sqlite3_errmsg(db));
-        return false;
-    }
 
     // Create other_nodes table
     if (!create_other_nodes_table(db)) {
@@ -82,29 +47,6 @@ bool parse_elevator_label(const std::string& label, std::string& shaft_id, std::
     return false;
 }
 
-bool create_elevator_point(sqlite3* db, ElevatorPoint& point) {
-    sqlite3_stmt* stmt = nullptr;
-    const char* sql = "INSERT INTO nodes (x_trans, y_trans, z_trans, node_type) VALUES (?, ?, ?, 1) RETURNING keyframe_id;";
-    
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
-        spdlog::error("Failed to prepare elevator point insert: {}", sqlite3_errmsg(db));
-        return false;
-    }
-
-    sqlite3_bind_double(stmt, 1, point.x_trans);
-    sqlite3_bind_double(stmt, 2, point.y_trans);
-    sqlite3_bind_double(stmt, 3, point.z_trans);
-
-    if (sqlite3_step(stmt) != SQLITE_ROW) {
-        spdlog::error("Failed to insert elevator point: {}", sqlite3_errmsg(db));
-        sqlite3_finalize(stmt);
-        return false;
-    }
-
-    point.elevator_point_id = sqlite3_column_int(stmt, 0);
-    sqlite3_finalize(stmt);
-    return true;
-}
 
 bool create_elevator_edges(sqlite3* db, const std::vector<ElevatorPoint>& points) {
     if (points.size() < 2) {
@@ -131,26 +73,6 @@ bool create_elevator_edges(sqlite3* db, const std::vector<ElevatorPoint>& points
     return true;
 }
 
-bool update_original_point_label(sqlite3* db, int keyframe_id) {
-    sqlite3_stmt* stmt = nullptr;
-    const char* sql = "UPDATE nodes SET node_type = 2 WHERE keyframe_id = ?;";
-    
-    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
-        spdlog::error("Failed to prepare original point update: {}", sqlite3_errmsg(db));
-        return false;
-    }
-
-    sqlite3_bind_int(stmt, 1, keyframe_id);
-
-    if (sqlite3_step(stmt) != SQLITE_DONE) {
-        spdlog::error("Failed to update original point: {}", sqlite3_errmsg(db));
-        sqlite3_finalize(stmt);
-        return false;
-    }
-
-    sqlite3_finalize(stmt);
-    return true;
-}
 
 bool create_other_nodes_table(sqlite3* db) {
     const char* sql = R"(

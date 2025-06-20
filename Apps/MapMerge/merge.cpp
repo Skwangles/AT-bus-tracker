@@ -219,7 +219,7 @@ private:
         spdlog::info("Copying Node Locations...");
         copy_node_locations(out_db, second_db, id_offset);
         
-        spdlog::info("Copying User Defined Labels...");
+        spdlog::info("Copying Labels and Other Nodes...");
         copy_user_defined_labels(out_db, second_db, id_offset);
 
         spdlog::info("Connecting Merge Points...");
@@ -447,7 +447,98 @@ private:
 
     void copy_user_defined_labels(sqlite3* dst_db, sqlite3* src_db, int32_t id_offset){
         int ret;
-        // Copy node locations
+        
+        // Copy other_nodes table
+        const char* select_other_nodes_query = R"(
+            SELECT ref_id, label, description, type, x_trans, y_trans, z_trans FROM other_nodes
+        )";
+        const char* insert_other_nodes_query = R"(
+            INSERT INTO other_nodes (ref_id, label, description, type, x_trans, y_trans, z_trans) VALUES (?, ?, ?, ?, ?, ?, ?)
+        )";
+
+        sqlite3_stmt* select_other_nodes_stmt;
+        sqlite3_stmt* insert_other_nodes_stmt;
+
+        // Prepare SELECT and INSERT statements for other_nodes
+        ret = sqlite3_prepare_v2(src_db, select_other_nodes_query, -1, &select_other_nodes_stmt, nullptr);
+        if (ret != SQLITE_OK) {
+            spdlog::error("Failed to prepare SELECT other_nodes: {}", sqlite3_errmsg(src_db));
+        } else {
+            ret = sqlite3_prepare_v2(dst_db, insert_other_nodes_query, -1, &insert_other_nodes_stmt, nullptr);
+            if (ret != SQLITE_OK) {
+                spdlog::error("Failed to prepare INSERT other_nodes: {}", sqlite3_errmsg(dst_db));
+                sqlite3_finalize(select_other_nodes_stmt);
+            } else {
+                // Process other_nodes row by row
+                while (sqlite3_step(select_other_nodes_stmt) == SQLITE_ROW) {
+                    int ref_id = sqlite3_column_int(select_other_nodes_stmt, 0);
+                    const unsigned char* label = sqlite3_column_text(select_other_nodes_stmt, 1);
+                    const unsigned char* description = sqlite3_column_text(select_other_nodes_stmt, 2);
+                    int type = sqlite3_column_int(select_other_nodes_stmt, 3);
+                    double x_trans = sqlite3_column_double(select_other_nodes_stmt, 4);
+                    double y_trans = sqlite3_column_double(select_other_nodes_stmt, 5);
+                    double z_trans = sqlite3_column_double(select_other_nodes_stmt, 6);
+
+                    sqlite3_bind_int(insert_other_nodes_stmt, 1, ref_id + id_offset);
+                    sqlite3_bind_text(insert_other_nodes_stmt, 2, reinterpret_cast<const char*>(label), -1, SQLITE_STATIC);
+                    sqlite3_bind_text(insert_other_nodes_stmt, 3, reinterpret_cast<const char*>(description), -1, SQLITE_STATIC);
+                    sqlite3_bind_int(insert_other_nodes_stmt, 4, type);
+                    sqlite3_bind_double(insert_other_nodes_stmt, 5, x_trans);
+                    sqlite3_bind_double(insert_other_nodes_stmt, 6, y_trans);
+                    sqlite3_bind_double(insert_other_nodes_stmt, 7, z_trans);
+
+                    if (sqlite3_step(insert_other_nodes_stmt) != SQLITE_DONE) {
+                        spdlog::error("Failed to insert other_node: {}", sqlite3_errmsg(dst_db));
+                    }
+                    sqlite3_reset(insert_other_nodes_stmt); // Reset for next iteration
+                }
+                sqlite3_finalize(select_other_nodes_stmt);
+                sqlite3_finalize(insert_other_nodes_stmt);
+            }
+        }
+
+        // Copy elevator_edges table
+        const char* select_elevator_edges_query = R"(
+            SELECT shaft_id, id0, id1 FROM elevator_edges
+        )";
+        const char* insert_elevator_edges_query = R"(
+            INSERT INTO elevator_edges (shaft_id, id0, id1) VALUES (?, ?, ?)
+        )";
+
+        sqlite3_stmt* select_elevator_edges_stmt;
+        sqlite3_stmt* insert_elevator_edges_stmt;
+
+        // Prepare SELECT and INSERT statements for elevator_edges
+        ret = sqlite3_prepare_v2(src_db, select_elevator_edges_query, -1, &select_elevator_edges_stmt, nullptr);
+        if (ret != SQLITE_OK) {
+            spdlog::error("Failed to prepare SELECT elevator_edges: {}", sqlite3_errmsg(src_db));
+        } else {
+            ret = sqlite3_prepare_v2(dst_db, insert_elevator_edges_query, -1, &insert_elevator_edges_stmt, nullptr);
+            if (ret != SQLITE_OK) {
+                spdlog::error("Failed to prepare INSERT elevator_edges: {}", sqlite3_errmsg(dst_db));
+                sqlite3_finalize(select_elevator_edges_stmt);
+            } else {
+                // Process elevator_edges row by row
+                while (sqlite3_step(select_elevator_edges_stmt) == SQLITE_ROW) {
+                    const unsigned char* shaft_id = sqlite3_column_text(select_elevator_edges_stmt, 0);
+                    int id0 = sqlite3_column_int(select_elevator_edges_stmt, 1);
+                    int id1 = sqlite3_column_int(select_elevator_edges_stmt, 2);
+
+                    sqlite3_bind_text(insert_elevator_edges_stmt, 1, reinterpret_cast<const char*>(shaft_id), -1, SQLITE_STATIC);
+                    sqlite3_bind_int(insert_elevator_edges_stmt, 2, id0);
+                    sqlite3_bind_int(insert_elevator_edges_stmt, 3, id1);
+
+                    if (sqlite3_step(insert_elevator_edges_stmt) != SQLITE_DONE) {
+                        spdlog::error("Failed to insert elevator_edge: {}", sqlite3_errmsg(dst_db));
+                    }
+                    sqlite3_reset(insert_elevator_edges_stmt); // Reset for next iteration
+                }
+                sqlite3_finalize(select_elevator_edges_stmt);
+                sqlite3_finalize(insert_elevator_edges_stmt);
+            }
+        }
+
+        // Copy legacy user_defined_labels table
         const char* select_labels_query = R"(
             SELECT keyframe_id, label FROM user_defined_labels
         )";
