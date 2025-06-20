@@ -34,8 +34,8 @@ export async function pathfindFromPointId(req: Request, res: Response) {
     return
   }
 
-  // Check label first, as these are manually annotated (and supposedly special) points
-  let locationResults = await readDB(`SELECT s.keyframe_id FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}user_defined_labels s WHERE s.label = ? LIMIT 1;`, [locationCode], true);
+  // Check other_nodes first, then user_defined_labels, then node_locations
+  let locationResults = await readDB(`SELECT otn.ref_id as keyframe_id FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes otn WHERE otn.label = ? LIMIT 1;`, [locationCode], true);
   let isLabel = true;
   if (!locationResults) {
     isLabel = false
@@ -100,8 +100,32 @@ export async function getPointInfoFromId(req: Request, res: Response) {
   }
 
   const pointData = await readDB(`SELECT n.keyframe_id, n.ts, n.pose, l.location, n.x_trans, n.y_trans, n.z_trans FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n LEFT JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l ON n.keyframe_id = l.keyframe_id WHERE n.keyframe_id = ?;`, [id], true);
+  
   if (pointData && 'pose' in pointData) {
-    res.json(convertToUICoordinateScale({ ...pointData, pose: BlobArrayToMatrix(pointData.pose) }))
+    // Get labels from other_nodes table (type 0 for normal, type 2 for toilet)
+    const otherNodeLabels = await readDB(`
+      SELECT otn.label, otn.type, otn.description 
+      FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes otn 
+      WHERE otn.ref_id = ? AND (otn.type = 0 OR otn.type = 2)
+      ORDER BY otn.type, otn.label
+    `, [id]);
+    
+    // Get elevator labels separately
+    const elevatorLabels = await readDB(`
+      SELECT otn.label, otn.type, otn.description 
+      FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes otn 
+      WHERE otn.ref_id = ? AND otn.type = 1
+      ORDER BY otn.label
+    `, [id]);
+    
+    const result = convertToUICoordinateScale({ 
+      ...pointData, 
+      pose: BlobArrayToMatrix(pointData.pose),
+      labels: otherNodeLabels,
+      elevatorLabels: elevatorLabels
+    });
+    
+    res.json(result)
   }
   else {
     logger.warn(`[getPointInfoFromId] id doesn't exist, or pose not in pointData: ${id} data: ${pointData}`)

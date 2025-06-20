@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useRef, useReducer } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import { Stage, Layer, Image as KonvaImage, Circle, Line } from 'react-konva'
 import FileUpload from './FileUpload'
 import PointControls from './PointControls'
 import { API_PREFIX, Edge, Node } from '../consts'
 import { findPathWithDijkstra } from '../logic/pathfinding'
-import { padCordAwayFromEdge, clamp } from '../logic/utils'
+import { clamp } from '../logic/utils'
 import Buttons from './Buttons'
 
 export interface FloorplanEditorProps {
@@ -21,7 +21,6 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
   const [stageHeight, setStageHeight] = useState<number>(800)
   const [selectedPoints, setSelectedPoints] = useState<Set<string>>(new Set())
   const [lastSelectedPoint, setLastSelectedPoint] = useState<Node | null>(null)
-  const [, forceUpdate] = useReducer((x) => x + 1, 0)
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const layer = useRef<any>(null)
@@ -30,20 +29,6 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
     x: number
     y: number
   } | null>(null)
-
-  const handlePointUpdate = async (point: any) => {
-    try {
-      await axios.post(`${API_PREFIX}/api/v1/maps/${floorplan}/update`, {
-        keyframe_id: point.keyframe_id,
-        x: point.x,
-        y: point.y,
-        type: point.type
-      });
-      fetchFloorplanData();
-    } catch (error) {
-      console.error('Error updating point:', error);
-    }
-  };
 
   const handleMultiplePointUpdate = async (points: any[]) => {
     try {
@@ -188,7 +173,7 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
     setLastSelectedPoint(foundNode || null)
   }
 
-  const handleMouseUp = (e: any) => {
+  const handleMouseUp = () => {
     if (selectedPoints.size > 0) {
       const selectedNodes = nodes.filter((node) =>
         selectedPoints.has(node.id)
@@ -196,11 +181,6 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
       handleMultiplePointUpdate(selectedNodes)
     }
     setDragStartPos(null)
-  }
-
-  const updateAllPoints = (nodes: Node[]) => {
-    setNodes(nodes)
-    handleMultiplePointUpdate(nodes)
   }
 
   const getNodeCoords = (id: string) => {

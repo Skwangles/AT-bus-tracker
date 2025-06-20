@@ -57,14 +57,14 @@ async function getLocationGroups(){
 
 async function getUserDefinedLabels(){
   const userDefinedLabels = await readDB(`
-    SELECT s.keyframe_id, s.label, l.location, n.x_trans as x, n.y_trans as y, n.z_trans as z
-    FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}user_defined_labels s
-    JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l ON s.keyframe_id = l.keyframe_id
-    JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n ON s.keyframe_id = n.keyframe_id
-    WHERE s.label IS NOT NULL
-    AND s.label <> ''
-    AND s.label <> '${RESERVED_START_OF_LABELS[ReservedTypeIndex.Anchor]}'
-    ORDER BY s.label
+    SELECT otn.ref_id as keyframe_id, otn.label, l.location, n.x_trans as x, n.y_trans as y, n.z_trans as z
+    FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes otn
+    JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l ON otn.ref_id = l.keyframe_id
+    JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n ON otn.ref_id = n.keyframe_id
+    WHERE otn.label IS NOT NULL
+    AND otn.label <> ''
+    AND otn.label <> '${RESERVED_START_OF_LABELS[ReservedTypeIndex.Anchor]}'
+    ORDER BY otn.label
   `) as UserDefinedLabelResult[];
   return userDefinedLabels;
 }
@@ -200,11 +200,20 @@ export async function getPointWithLocationGroupOrLabelName(req: Request, res: Re
     return
   }
 
-  // Get FIRST node which has that location/label
+  // Get FIRST node which has that location/label from other_nodes
+  const nodeWithOtherNodeLabel = await readDB(`SELECT otn.ref_id as keyframe_id, otn.label FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes otn WHERE otn.label = ? LIMIT 1`, [name], true)
+
+  if (nodeWithOtherNodeLabel) {
+    logger.debug(`[getPointWithLocationGroupOrLabelName] Found a label in other_nodes: ${nodeWithOtherNodeLabel}`)
+    res.json(nodeWithOtherNodeLabel)
+    return
+  }
+
+  // Fallback to user_defined_labels
   const nodeWithUserDefinedLabel = await readDB(`SELECT n.keyframe_id, s.label FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}user_defined_labels s ON s.keyframe_id = n.keyframe_id WHERE s.label = ? LIMIT 1`, [name], true)
 
   if (nodeWithUserDefinedLabel) {
-    logger.debug(`[getPointWithLocationGroupOrLabelName] Found a label: ${nodeWithUserDefinedLabel}`)
+    logger.debug(`[getPointWithLocationGroupOrLabelName] Found a label in user_defined_labels: ${nodeWithUserDefinedLabel}`)
     res.json(nodeWithUserDefinedLabel)
     return
   }
