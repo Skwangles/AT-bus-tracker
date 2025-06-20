@@ -1,5 +1,13 @@
 import { Label, LabelType } from '../types';
 
+export function toTitleCase(str: string): string {
+  if (!str) return '';
+  return str.replace(
+    /\w\S*/g,
+    (txt) => txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase()
+  );
+}
+
 export function getLabelLongName(label: Label): string {
   if (label.type === LabelType.Elevator) {
     return label.label; // Elevator labels are already formatted
@@ -15,7 +23,7 @@ export function getLabelLongName(label: Label): string {
 
 export function getLabelDisplayName(label: Label): string {
   // Return the label as is, since it's already formatted on the backend
-  return label.label;
+  return toTitleCase(label.label);
 }
 
 export function getLabelIcon(label: Label): string {

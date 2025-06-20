@@ -1,12 +1,24 @@
-import React from 'react'
-import '../../css/Instructions.css'
+import React from 'react';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Typography,
+  useTheme,
+  useMediaQuery,
+} from '@mui/material';
 import {
   ArrowUp,
   ArrowDown,
   ArrowLeft,
   ArrowRight,
   MousePointer,
-  MapPin,
   Search,
   Map,
   User,
@@ -15,131 +27,129 @@ import {
   Square,
   RotateCcw,
   Info,
-} from 'react-feather'
-import { useTranslation } from 'react-i18next'
+  X,
+} from 'react-feather';
+import { useTranslation } from 'react-i18next';
 
 interface InstructionsProps {
-  point: { keyframe_id: number; location: string; ts: string }
-  isOpen: boolean
-  setIsOpen: (isOpen: boolean) => void
-  className?: string
+  isOpen: boolean;
+  onClose: () => void;
 }
-
-const isMobile = () => window.innerWidth <= 768
 
 const Instructions: React.FC<InstructionsProps> = ({
-  point,
   isOpen,
-  setIsOpen,
-  className = '',
+  onClose,
 }) => {
   const { t } = useTranslation('common');
-  const mobile = isMobile()
+  const theme = useTheme();
+  const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
+
+  const instructionSections = [
+    {
+      title: t('instructions.title'),
+      items: fullScreen
+        ? [
+            { icon: <MousePointer />, text: t('instructions.navigation.mobile.look') },
+          ]
+        : [
+            {
+              icon: (
+                <span className="flex items-center gap-2">
+                  <span className="key">W</span>
+                  <span className="key">A</span>
+                  <span className="key">S</span>
+                  <span className="key">D</span>
+                </span>
+              ),
+              text: t('instructions.navigation.desktop.move'),
+            },
+            {
+              icon: (
+                <span className="flex items-center gap-1">
+                  <ArrowUp size={16} />
+                  <ArrowLeft size={16} />
+                  <ArrowDown size={16} />
+                  <ArrowRight size={16} />
+                </span>
+              ),
+              text: t('instructions.navigation.desktop.look'),
+            },
+            { icon: <MousePointer />, text: t('instructions.navigation.desktop.drag') },
+          ],
+    },
+    {
+      title: t('instructions.search.title'),
+      items: [
+        { icon: <Search />, text: t('instructions.search.useSearch') },
+        {
+          icon: (
+            <>
+              <Square color="#ffd700" /> <RotateCcw color="#ffd700" />
+            </>
+          ),
+          text: t('instructions.search.destination'),
+        },
+        { icon: <Circle color="#4444ff" />, text: t('instructions.search.path') },
+      ],
+    },
+    {
+      title: t('instructions.map.title'),
+      items: [
+        { icon: <Map />, text: t('instructions.map.open') },
+        { icon: <User />, text: t('instructions.map.legend.position'), legend: true },
+        { icon: <LogOut />, text: t('instructions.map.legend.nextRegion'), legend: true },
+        { icon: <Circle color="#ff4444" />, text: t('instructions.map.legend.viewingPoint'), legend: true },
+        { icon: <Circle color="#4444ff" />, text: t('instructions.map.legend.highlightedPath'), legend: true },
+      ],
+    },
+    {
+      title: t('instructions.help.title'),
+      items: [{ icon: <Info />, text: t('instructions.help.toggle') }],
+    },
+  ];
+
   return (
-    <div className={`stats-container ${className}`}>
-      {isOpen && (
-        <div className="stats">
-          <h3 className="stats-heading">{t('instructions.title')}</h3>
-          <ul className="instructions-list">
-            {mobile ? (
-              <>
-                <li>
-                  <MousePointer className="instruction-icon" />
-                  <span>{t('instructions.navigation.mobile.look')}</span>
-                </li>
-              </>
-            ) : (
-              <>
-                <li>
-                  <span className="flex items-center gap-2">
-                    <span className="key">W</span>
-                    <span className="key">A</span>
-                    <span className="key">S</span>
-                    <span className="key">D</span>
-                  </span>
-                  <span>{t('instructions.navigation.desktop.move')}</span>
-                </li>
-                <li>
-                  <span className="flex items-center gap-1">
-                    <ArrowUp size={16} />
-                    <ArrowLeft size={16} />
-                    <ArrowDown size={16} />
-                    <ArrowRight size={16} />
-                  </span>
-                  <span>{t('instructions.navigation.desktop.look')}</span>
-                </li>
-                <li>
-                  <MousePointer className="instruction-icon" />
-                  <span>{t('instructions.navigation.desktop.drag')}</span>
-                </li>
-              </>
-            )}
-            <li>
-              <Circle className="instruction-icon" color="#ff4444" />
-              <span>{t('instructions.navigation.jump')}</span>
-            </li>
-            <li>
-              <MapPin className="instruction-icon" />
-              <span>{t('instructions.navigation.location')}</span>
-            </li>
-          </ul>
+    <Dialog
+      open={isOpen}
+      onClose={onClose}
+      fullScreen={fullScreen}
+      maxWidth="md"
+      aria-labelledby="instructions-dialog-title"
+    >
+      <DialogTitle id="instructions-dialog-title">
+        {t('instructions.title')}
+        <Button
+          onClick={onClose}
+          style={{ position: 'absolute', right: 8, top: 8 }}
+          color="inherit"
+        >
+          <X />
+        </Button>
+      </DialogTitle>
+      <DialogContent dividers>
+        {instructionSections.map((section, index) => (
+          <div key={index} style={{ marginBottom: '2em' }}>
+            <Typography variant="h6" gutterBottom>
+              {section.title}
+            </Typography>
+            <List dense>
+              {section.items.map((item, itemIndex) => (
+                <ListItem key={itemIndex} style={item.legend ? { paddingLeft: '32px' } : {}}>
+                  <ListItemIcon>{item.icon}</ListItemIcon>
+                  <ListItemText primary={item.text} />
+                </ListItem>
+              ))}
+            </List>
+          </div>
+        ))}
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} color="primary" variant="contained">
+          {t('ui.close')}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
 
-          <h3 className="stats-heading">{t('instructions.search.title')}</h3>
-          <ul className="instructions-list">
-            <li>
-              <Search className="instruction-icon" />
-              <span>{t('instructions.search.useSearch')}</span>
-            </li>
-            <li>
-              <Square className="instruction-icon" color="#ffd700" />
-              <RotateCcw className="instruction-icon" color="#ffd700" />
-              <span>{t('instructions.search.destination')}</span>
-            </li>
-            <li>
-              <Circle className="instruction-icon" color="#4444ff" />
-              <span>{t('instructions.search.path')}</span>
-            </li>
-          </ul>
-
-          <h3 className="stats-heading">{t('instructions.map.title')}</h3>
-          <ul className="instructions-list">
-            <li>
-              <Map className="instruction-icon" />
-              <span>{t('instructions.map.open')}</span>
-            </li>
-            <li>
-              <div className="map-legend">
-                <div className="legend-item">
-                  <User className="instruction-icon" />
-                  <span>{t('instructions.map.legend.position')}</span>
-                </div>
-                <div className="legend-item">
-                  <LogOut className="instruction-icon" />
-                  <span>{t('instructions.map.legend.nextRegion')}</span>
-                </div>
-                <div className="legend-item">
-                  <Circle className="instruction-icon" color="#ff4444" />
-                  <span>{t('instructions.map.legend.viewingPoint')}</span>
-                </div>
-                <div className="legend-item">
-                  <Circle className="instruction-icon" color="#4444ff" />
-                  <span>{t('instructions.map.legend.highlightedPath')}</span>
-                </div>
-              </div>
-            </li>
-          </ul>
-
-          <h3 className="stats-heading">{t('instructions.help.title')}</h3>
-          <ul className="instructions-list">
-            <li>
-              <Info className="instruction-icon" />
-              <span>{t('instructions.help.toggle')}</span>
-            </li>
-          </ul>
-        </div>
-      )}
-    </div>
-  )
-}
-
-export default Instructions
+export default Instructions;

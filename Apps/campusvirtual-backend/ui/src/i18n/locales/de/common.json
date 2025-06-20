@@ -1,0 +1,119 @@
+{
+  "navigation": {
+    "instructions": "Anweisungen",
+    "close": "Schließen",
+    "elevator": "Aufzug"
+  },
+  "location": {
+    "outdoors": "Außenbereich",
+    "level": "Etage {{level}}",
+    "unreachable": "{{location}} ist kein erreichbarer Ort.",
+    "elevator": {
+      "error": "Konnte Aufzugstandorte nicht abrufen."
+    }
+  },
+  "project": {
+    "name": "CampusVirtual"
+  },
+  "ui": {
+    "loading": "Lädt...",
+    "close": "Schließen",
+    "error": "Ein Fehler ist aufgetreten",
+    "retry": "Wiederholen",
+    "logo": {
+      "alt": "CampusVirtual Logo"
+    },
+    "menu": {
+      "backToHome": "Zurück zur Startseite",
+      "reportProblem": "Problem melden",
+      "poweredBy": "Unterstützt von campusVirtual.io"
+    },
+    "map": {
+      "open": "Karte öffnen",
+      "close": "Karte schließen"
+    },
+    "instructions": {
+      "show": "Anweisungen anzeigen",
+      "close": "Anweisungen schließen"
+    },
+    "elevator": {
+      "cancel": "Abbrechen"
+    }
+  },
+  "search": {
+    "placeholder": "Nach einem Ort suchen...",
+    "ariaLabel": "Nach einem Ort suchen",
+    "clear": "Suche löschen",
+    "buttons": {
+      "guide": "Führen",
+      "clearPath": "Pfad löschen",
+      "goTo": "Gehe zu"
+    }
+  },
+  "errors": {
+    "fetchData": "Fehler beim Abrufen der Daten:",
+    "invalidLabel": "Ungültiges Label: {{label}}"
+  },
+  "instructions": {
+    "title": "So navigieren Sie",
+    "navigation": {
+      "mobile": {
+        "look": "Ziehen oder wischen Sie, um sich umzusehen"
+      },
+      "desktop": {
+        "move": "um sich zu bewegen",
+        "look": "um sich umzusehen",
+        "drag": "Ziehen Sie, um sich umzusehen"
+      },
+      "jump": "Klicken Sie auf rote Kugeln, um zu neuen Orten zu springen",
+      "location": "Ihr aktueller Standort wird direkt unter der Suchleiste oben angezeigt"
+    },
+    "search": {
+      "title": "Suche",
+      "useSearch": "Verwenden Sie die Suchleiste oben, um Orte zu finden",
+      "destination": "Gelbes rotierendes Quadrat markiert Ihr Ziel",
+      "path": "Blauer Pfad führt Sie zu Ihrem Ziel"
+    },
+    "map": {
+      "title": "Karte",
+      "open": "Öffnen Sie die Karte mit der Schaltfläche oben links",
+      "legend": {
+        "position": "Ihre Position",
+        "nextRegion": "Nächste Region",
+        "viewingPoint": "Blickpunkt",
+        "highlightedPath": "Hervorgehobener Pfad"
+      }
+    },
+    "help": {
+      "title": "Hilfe",
+      "toggle": "Klicken Sie auf die Schaltfläche Anweisungen unten rechts, um dieses Hilfe-Fenster zu öffnen oder zu schließen"
+    }
+  },
+  "homepage": {
+    "howToUseTitle": "So verwenden Sie es",
+    "howToUseText": "Willkommen bei CampusVirtual! Beginnen Sie Ihre virtuelle Tour, indem Sie einen der unten vorgeschlagenen Startorte auswählen oder das Suchfeld verwenden, um einen bestimmten Ort zu finden. Verwenden Sie die Maus, um sich umzusehen, und die Pfeiltasten oder WASD, um durch den Campus zu navigieren. Klicken Sie auf Hotspots, um mehr über verschiedene Bereiche zu erfahren.",
+    "searchPlaceholder": "Nach einem Ort suchen...",
+    "noLocations": "Keine Orte verfügbar.",
+    "fetchError": "Orte konnten nicht abgerufen werden.",
+    "outdoorsDescription": "Beginnen Sie Ihre Tour vom Campus-Eingang",
+    "level1Description": "Beginnen Sie vom Erdgeschoss",
+    "level2Description": "Beginnen Sie vom zweiten Stock",
+    "level3Description": "Beginnen Sie vom obersten Stock"
+  },
+  "landing": {
+    "welcome": "Willkommen! So beginnen Sie:",
+    "howTo": {
+      "search": "Nach einem Ort suchen",
+      "hotspots": "Klicken Sie auf Hotspots zum Erkunden",
+      "move": "Verwenden Sie Pfeile oder WASD zum Bewegen"
+    },
+    "suggested": "Vorgeschlagene Startpunkte",
+    "noSuggestions": "Keine Vorschläge verfügbar.",
+    "start": "Starten",
+    "random": "Zufällig",
+    "outdoorsDescription": "Beginnen Sie Ihre Tour vom Campus-Eingang",
+    "level1Description": "Beginnen Sie vom Erdgeschoss",
+    "level2Description": "Beginnen Sie vom zweiten Stock",
+    "level3Description": "Beginnen Sie vom obersten Stock"
+  }
+} 

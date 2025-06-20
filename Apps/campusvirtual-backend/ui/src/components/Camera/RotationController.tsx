@@ -1,12 +1,21 @@
+import React, { forwardRef, useImperativeHandle, useRef, useEffect, useState } from "react";
 import { useThree } from "@react-three/fiber";
-import { useRef, useEffect, useState } from "react";
 import { Euler } from "three";
-import { HotspotObj, MoveDirectionType } from "../../types";
+import { HotspotObj, MoveDirectionType, RotationData } from "../../types";
 import * as THREE from "three";
 import { moveDirection } from "../../utils/moveDirection";
 import { toast } from "react-toastify";
 
-const CameraRotationControls = ({ hotspots, setCurrentId, camRotation }) => {
+interface CameraRotationControlsProps {
+  hotspots: HotspotObj[];
+  setCurrentId: (id: string) => void;
+  camRotation: React.MutableRefObject<RotationData>;
+}
+
+const CameraRotationControls = forwardRef<
+  { handleMove: (direction: MoveDirectionType) => void; handleRotate: (direction: 'left' | 'right') => void; stopRotate: () => void },
+  CameraRotationControlsProps
+>(({ hotspots, setCurrentId, camRotation }, ref) => {
   const { camera, gl } = useThree();
   const hotspotsRef = useRef(hotspots);
   const [isCanvasFocused, setIsCanvasFocused] = useState(false);
@@ -30,7 +39,7 @@ const CameraRotationControls = ({ hotspots, setCurrentId, camRotation }) => {
       "YXZ"
     ),
     // Movement control properties
-    speed: 0.03,
+    speed: 0.015,
     isMoving: false,
     direction: 0
   });
@@ -41,6 +50,28 @@ const CameraRotationControls = ({ hotspots, setCurrentId, camRotation }) => {
   const protectFromFlippingPitch = (nextX) => {
     return Math.max(-Math.PI / 2, Math.min(Math.PI / 2, nextX));
   };
+
+  useImperativeHandle(ref, () => ({
+    handleMove: (direction: MoveDirectionType) => {
+      actionMoveDirection(direction, camera, hotspotsRef.current);
+    },
+    handleRotate: (direction: 'left' | 'right') => {
+      const controls = controlsRef.current;
+      controls.isMoving = true;
+      controls.direction = direction === 'left' ? -1 : 1;
+      if (!animationFrameRef.current) {
+        animationFrameRef.current = requestAnimationFrame(updateMovement);
+      }
+    },
+    stopRotate: () => {
+      const controls = controlsRef.current;
+      controls.isMoving = false;
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = undefined;
+      }
+    }
+  }));
 
   useEffect(() => {
     camera.rotation.copy(controlsRef.current.euler);
@@ -55,7 +86,7 @@ const CameraRotationControls = ({ hotspots, setCurrentId, camRotation }) => {
     if (id) {
       setCurrentId(id);
     } else {
-      toast.warn("No point found in the given direction (WASD keys)");
+      toast.warn("No point found in the given direction");
     }
   };
 
@@ -323,6 +354,6 @@ const CameraRotationControls = ({ hotspots, setCurrentId, camRotation }) => {
   }, [camera, gl.domElement]);
 
   return null;
-};
+});
 
 export default CameraRotationControls;

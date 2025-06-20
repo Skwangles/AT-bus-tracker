@@ -1,25 +1,20 @@
 {
   "navigation": {
-    "search": "Search",
-    "map": "Map",
-    "list": "List",
     "instructions": "Instructions",
     "close": "Close",
-    "backToHome": "Back to Home",
     "elevator": "Elevator"
   },
   "location": {
     "outdoors": "Outdoors",
     "level": "Level {{level}}",
-    "unreachable": "{{location}} is not a reachable location."
-  },
-  "project": {
-    "name": "CampusVirtual"
+    "unreachable": "{{location}} is not a reachable location.",
+    "elevator": {
+      "error": "Could not fetch elevator locations."
+    }
   },
   "ui": {
     "loading": "Loading...",
-    "error": "An error occurred",
-    "retry": "Retry",
+    "close": "Close",
     "map": {
       "open": "Open map",
       "close": "Close map"
@@ -27,24 +22,28 @@
     "instructions": {
       "show": "Show instructions",
       "close": "Close instructions"
+    },
+    "menu": {
+      "backToHome": "Back to Home",
+      "reportProblem": "Report a Problem",
+      "poweredBy": "Powered by campusVirtual.io"
+    },
+    "logo": {
+      "alt": "CampusVirtual Logo"
+    },
+    "elevator": {
+      "cancel": "Cancel"
     }
   },
   "search": {
     "placeholder": "Search a location...",
-    "ariaLabel": "Search for a location",
-    "clear": "Clear search",
     "buttons": {
       "guide": "Guide",
       "clearPath": "Clear Path",
-      "goTo": "Go To",
-      "ariaLabels": {
-        "highlight": "Highlight path to location",
-        "goto": "Go to location"
-      }
+      "goTo": "Go To"
     }
   },
   "errors": {
-    "fetchData": "Error fetching data:",
     "invalidLabel": "Label is invalid: {{label}}"
   },
   "instructions": {
@@ -81,17 +80,6 @@
       "title": "Help",
       "toggle": "Click the Instructions button in the bottom right to open or close this help window"
     }
-  },
-  "homepage": {
-    "howToUseTitle": "How to Use",
-    "howToUseText": "Welcome to CampusVirtual! Start your virtual tour by selecting one of our suggested starting locations below, or use the search box to find a specific location. Use your mouse to look around, and the arrow keys or WASD to navigate through the campus. Click on hotspots to learn more about different areas.",
-    "searchPlaceholder": "Search a location...",
-    "noLocations": "No locations available.",
-    "fetchError": "Failed to fetch locations.",
-    "outdoorsDescription": "Start your tour from the campus entrance",
-    "level1Description": "Begin from the ground floor",
-    "level2Description": "Start from the second floor",
-    "level3Description": "Begin from the top floor"
   },
   "landing": {
     "welcome": "Welcome! Here's how to get started:",

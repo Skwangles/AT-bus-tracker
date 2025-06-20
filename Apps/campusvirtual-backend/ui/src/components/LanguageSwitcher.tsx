@@ -1,14 +1,25 @@
 import { useTranslation } from 'react-i18next';
-import { IconButton, Menu, MenuItem, Tooltip } from '@mui/material';
+import { Button, Menu, MenuItem } from '@mui/material';
 import { Language as LanguageIcon } from '@mui/icons-material';
 import { useState } from 'react';
 
 const languages = [
   { code: 'en', name: 'English' },
+  { code: 'de', name: 'Deutsch' },
+  { code: 'fr', name: 'Français' },
   { code: 'es', name: 'Español' },
+  { code: 'it', name: 'Italiano' },
+  { code: 'pt', name: 'Português' },
+  { code: 'nl', name: 'Nederlands' },
+  { code: 'sv', name: 'Svenska' },
+  { code: 'no', name: 'Norsk' },
+  { code: 'da', name: 'Dansk' },
+  { code: 'fi', name: 'Suomi' },
+  { code: 'ru', name: 'Русский' },
+  { code: 'ja', name: '日本語' },
+  { code: 'ko', name: '한국어' },
   { code: 'zh-CN', name: '简体中文' },
   { code: 'zh-TW', name: '繁體中文' },
-  { code: 'da', name: 'Dansk' },
 ];
 
 export function LanguageSwitcher() {
@@ -29,22 +40,30 @@ export function LanguageSwitcher() {
     handleClose();
   };
 
+  // Get current language name
+  const currentLanguage = languages.find(lang => lang.code === i18n.language) || languages[0];
+
   return (
     <>
-      <Tooltip title="Change language">
-        <IconButton
-          onClick={handleClick}
-          size="small"
-          sx={{ 
-            bgcolor: 'rgba(255, 255, 255, 0.9)',
-            '&:hover': {
-              bgcolor: 'rgba(255, 255, 255, 1)',
-            },
-          }}
-        >
-          <LanguageIcon />
-        </IconButton>
-      </Tooltip>
+      <Button
+        onClick={handleClick}
+        startIcon={<LanguageIcon />}
+        variant="outlined"
+        fullWidth
+        sx={{ 
+          color: '#1B1B1E',
+          borderColor: '#B6E7B0',
+          textTransform: 'none',
+          fontWeight: 600,
+          background: '#E5F3F3',
+          '&:hover': { 
+            background: '#B6E7B0', 
+            borderColor: '#B6E7B0' 
+          },
+        }}
+      >
+        {currentLanguage.name}
+      </Button>
       <Menu
         anchorEl={anchorEl}
         open={open}

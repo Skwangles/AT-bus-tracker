@@ -1,0 +1,122 @@
+{
+  "navigation": {
+    "search": "Søk",
+    "map": "Kart",
+    "list": "Liste",
+    "instructions": "Instruksjoner",
+    "close": "Lukk",
+    "elevator": "Heis"
+  },
+  "location": {
+    "outdoors": "Utendørs",
+    "level": "Nivå {{level}}",
+    "unreachable": "{{location}} er ikke et tilgjengelig sted.",
+    "elevator": {
+      "error": "Kunne ikke hente heisplasseringer."
+    }
+  },
+  "project": {
+    "name": "CampusVirtual"
+  },
+  "ui": {
+    "loading": "Laster...",
+    "close": "Lukk",
+    "error": "En feil har oppstått",
+    "retry": "Prøv igjen",
+    "logo": {
+      "alt": "CampusVirtual-logo"
+    },
+    "menu": {
+      "backToHome": "Tilbake til Hjem",
+      "reportProblem": "Rapporter et problem",
+      "poweredBy": "Drevet av campusVirtual.io"
+    },
+    "map": {
+      "open": "Åpne kart",
+      "close": "Lukk kart"
+    },
+    "instructions": {
+      "show": "Vis instruksjoner",
+      "close": "Lukk instruksjoner"
+    },
+    "elevator": {
+      "cancel": "Avbryt"
+    }
+  },
+  "search": {
+    "placeholder": "Søk etter et sted...",
+    "ariaLabel": "Søk etter et sted",
+    "clear": "Tøm søk",
+    "buttons": {
+      "guide": "Guide",
+      "clearPath": "Tøm sti",
+      "goTo": "Gå til"
+    }
+  },
+  "errors": {
+    "fetchData": "Feil ved henting av data:",
+    "invalidLabel": "Ugyldig etikett: {{label}}"
+  },
+  "instructions": {
+    "title": "Hvordan navigere",
+    "navigation": {
+      "mobile": {
+        "look": "Dra eller sveip for å se deg rundt"
+      },
+      "desktop": {
+        "move": "for å bevege deg",
+        "look": "for å se deg rundt",
+        "drag": "Dra for å se deg rundt"
+      },
+      "jump": "Klikk på røde kuler for å hoppe til nye steder",
+      "location": "Din nåværende posisjon vises rett under søkefeltet øverst"
+    },
+    "search": {
+      "title": "Søk",
+      "useSearch": "Bruk søkefeltet øverst for å finne steder",
+      "destination": "Det roterende gule kvadratet markerer destinasjonen din",
+      "path": "Den blå stien guider deg til destinasjonen din"
+    },
+    "map": {
+      "title": "Kart",
+      "open": "Åpne kartet med knappen øverst til venstre",
+      "legend": {
+        "position": "Din posisjon",
+        "nextRegion": "Neste region",
+        "viewingPoint": "Utsiktspunkt",
+        "highlightedPath": "Uthevet sti"
+      }
+    },
+    "help": {
+      "title": "Hjelp",
+      "toggle": "Klikk på Instruksjoner-knappen nederst til høyre for å åpne eller lukke dette hjelpevinduet"
+    }
+  },
+  "homepage": {
+    "howToUseTitle": "Slik bruker du",
+    "howToUseText": "Velkommen til CampusVirtual! Start din virtuelle tur ved å velge et av de foreslåtte startstedene nedenfor, eller bruk søkefeltet for å finne et bestemt sted. Bruk musen til å se deg rundt og piltastene eller WASD for å navigere på campus. Klikk på hotspots for å lære mer om forskjellige områder.",
+    "searchPlaceholder": "Søk etter et sted...",
+    "noLocations": "Ingen steder tilgjengelig.",
+    "fetchError": "Kunne ikke hente steder.",
+    "outdoorsDescription": "Start turen fra campusinngangen",
+    "level1Description": "Start fra første etasje",
+    "level2Description": "Start fra andre etasje",
+    "level3Description": "Start fra øverste etasje"
+  },
+  "landing": {
+    "welcome": "Velkommen! Slik kommer du i gang:",
+    "howTo": {
+      "search": "Søk etter et sted",
+      "hotspots": "Klikk på hotspots for å utforske",
+      "move": "Bruk piler eller WASD for å bevege deg"
+    },
+    "suggested": "Foreslåtte startpunkter",
+    "noSuggestions": "Ingen forslag tilgjengelig.",
+    "start": "Start",
+    "random": "Tilfeldig",
+    "outdoorsDescription": "Start turen fra campusinngangen",
+    "level1Description": "Start fra første etasje",
+    "level2Description": "Start fra andre etasje",
+    "level3Description": "Start fra øverste etasje"
+  }
+} 

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Typography, Button, Stack, Grid } from '@mui/material';
 import { ThemeProvider, useTheme } from '@mui/material/styles';
-import RoomIcon from '@mui/icons-material/Room';
 import SearchIcon from '@mui/icons-material/Search';
 import MouseIcon from '@mui/icons-material/Mouse';
 import DirectionsWalkIcon from '@mui/icons-material/DirectionsWalk';
@@ -79,28 +78,6 @@ const LandingPage: React.FC = () => {
           },
         }}
       >
-        {/* Top-left logo */}
-        <Box 
-          sx={{ 
-            position: 'fixed', 
-            top: 24, 
-            left: 32, 
-            zIndex: 2, 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: 1,
-            cursor: 'pointer',
-            '&:hover': {
-              opacity: 0.8
-            }
-          }}
-          onClick={() => window.open('https://campusvirtual.io', '_blank')}
-        >
-          <RoomIcon sx={{ color: muiTheme.palette.text.primary, fontSize: 28, mr: 1, filter: `drop-shadow(0 1px 4px ${muiTheme.palette.primary.main})` }} />
-          <Typography variant="h6" sx={{ color: muiTheme.palette.text.primary, fontWeight: 700, letterSpacing: 1, textShadow: `0 2px 8px ${muiTheme.palette.primary.main}` }}>
-            CampusVirtual
-          </Typography>
-        </Box>
 
         {/* Top-right Language Switcher */}
         <Box sx={{ position: 'fixed', top: 24, right: 32, zIndex: 2 }}>
@@ -164,6 +141,30 @@ const LandingPage: React.FC = () => {
           <Typography variant="subtitle1" sx={{ color: muiTheme.palette.text.primary, fontWeight: 600, mb: 2, textAlign: 'center', letterSpacing: 1 }}>
             {t('landing.suggested', 'Suggested Starting Points')}
           </Typography>
+          <Button
+              variant="contained"
+              color="success"
+              startIcon={<PlayArrowIcon />}
+              onClick={() => navigate('/tour')}
+              sx={{
+                background: muiTheme.palette.success.main,
+                color: muiTheme.palette.text.primary,
+                borderRadius: '999px',
+                px: 4,
+                py: 1.5,
+                mb: 2,
+                fontWeight: 700,
+                fontSize: '1.1rem',
+                textTransform: 'none',
+                boxShadow: '0 2px 8px 0 rgba(67,160,71,0.12)',
+                '&:hover': {
+                  background: '#388e3c',
+                  color: muiTheme.palette.text.primary,
+                },
+              }}
+            >
+              {t('landing.start', 'Start')}
+            </Button>
           <Grid container spacing={2} justifyContent="center" wrap="wrap">
             {loading ? (
               <Grid item xs={12} sx={{ textAlign: 'center' }}>
@@ -215,30 +216,7 @@ const LandingPage: React.FC = () => {
             ))}
           </Grid>
           {/* Start and Random buttons */}
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} mt={5} width="100%" justifyContent="center">
-            <Button
-              variant="contained"
-              color="success"
-              startIcon={<PlayArrowIcon />}
-              onClick={() => navigate('/tour')}
-              sx={{
-                background: muiTheme.palette.success.main,
-                color: muiTheme.palette.text.primary,
-                borderRadius: '999px',
-                px: 4,
-                py: 1.5,
-                fontWeight: 700,
-                fontSize: '1.1rem',
-                textTransform: 'none',
-                boxShadow: '0 2px 8px 0 rgba(67,160,71,0.12)',
-                '&:hover': {
-                  background: '#388e3c',
-                  color: muiTheme.palette.text.primary,
-                },
-              }}
-            >
-              {t('landing.start', 'Start')}
-            </Button>
+
             <Button
               variant="contained"
               color="secondary"
@@ -263,7 +241,6 @@ const LandingPage: React.FC = () => {
             >
               {randomLoading ? t('ui.loading', 'Loading...') : t('landing.random', 'Random')}
             </Button>
-          </Stack>
         </Box>
       </Box>
     </ThemeProvider>

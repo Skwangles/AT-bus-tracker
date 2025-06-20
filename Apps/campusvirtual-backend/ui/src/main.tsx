@@ -4,9 +4,11 @@ import './css/index.css'
 import './css/App.css'
 import App from './App'
 import './i18n/i18n'  // Import i18n configuration
+import { CssBaseline } from '@mui/material'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
+    <CssBaseline />
     <App />
   </React.StrictMode>
 )

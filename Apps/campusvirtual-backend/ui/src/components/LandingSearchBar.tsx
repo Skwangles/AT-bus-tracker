@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Autocomplete, TextField } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { Label } from '../types';
-import { getLabelLongName } from '../utils/labelUtils';
+import { getLabelLongName, getLabelDisplayName } from '../utils/labelUtils';
 
 interface LandingSearchBarProps {
   labels: Label[];
@@ -24,9 +24,30 @@ const LandingSearchBar: React.FC<LandingSearchBarProps> = ({ labels, placeholder
       options={labels}
       getOptionLabel={getLabelLongName}
       filterOptions={(options, { inputValue }) =>
-        options.filter(option =>
-          getLabelLongName(option).toLowerCase().includes(inputValue.toLowerCase())
-        )
+        options.filter(option => {
+          const value = inputValue.toLowerCase();
+          const formattedLabel = getLabelLongName(option);
+          const displayName = getLabelDisplayName(option);
+          
+          // Check if the current option matches
+          const currentOptionMatches = 
+            formattedLabel.toLowerCase().includes(value) ||
+            displayName.toLowerCase().includes(value) ||
+            option.parents.some(parent => parent.toLowerCase().includes(value));
+          
+          // Check if any children match
+          const childrenMatch = option.children && option.children.some(child => {
+            const childFormattedLabel = getLabelLongName(child);
+            const childDisplayName = getLabelDisplayName(child);
+            return (
+              childFormattedLabel.toLowerCase().includes(value) ||
+              childDisplayName.toLowerCase().includes(value) ||
+              child.parents.some(parent => parent.toLowerCase().includes(value))
+            );
+          });
+          
+          return currentOptionMatches || childrenMatch;
+        })
       }
       onChange={handleSelect}
       inputValue={inputValue}

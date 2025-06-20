@@ -5,13 +5,15 @@
     "list": "Liste",
     "instructions": "Instruktioner",
     "close": "Luk",
-    "backToHome": "Tilbage til Start",
     "elevator": "Elevator"
   },
   "location": {
     "outdoors": "Udendørs",
     "level": "Etage {{level}}",
-    "unreachable": "{{location}} er ikke en tilgængelig placering."
+    "unreachable": "{{location}} er ikke en tilgængelig placering.",
+    "elevator": {
+      "error": "Kunne ikke hente elevatorplaceringer."
+    }
   },
   "project": {
     "name": "CampusVirtual"
@@ -20,6 +22,14 @@
     "loading": "Indlæser...",
     "error": "Der opstod en fejl",
     "retry": "Prøv igen",
+    "logo": {
+      "alt": "CampusVirtual Logo"
+    },
+    "menu": {
+      "backToHome": "Tilbage til Start",
+      "reportProblem": "Rapporter et Problem",
+      "poweredBy": "Drevet af campusVirtual.io"
+    },
     "map": {
       "open": "Åbn kort",
       "close": "Luk kort"
@@ -27,59 +37,58 @@
     "instructions": {
       "show": "Vis instruktioner",
       "close": "Luk instruktioner"
+    },
+    "elevator": {
+      "cancel": "Annuller"
     }
   },
   "search": {
-    "placeholder": "Søg efter en placering...",
+    "placeholder": "Søg et sted...",
     "ariaLabel": "Søg efter en placering",
     "clear": "Ryd søgning",
     "buttons": {
       "guide": "Guide",
-      "clearPath": "Ryd rute",
-      "goTo": "Gå til",
-      "ariaLabels": {
-        "highlight": "Fremhæv rute til placering",
-        "goto": "Gå til placering"
-      }
+      "clearPath": "Ryd sti",
+      "goTo": "Gå til"
     }
   },
   "errors": {
     "fetchData": "Fejl ved hentning af data:",
-    "invalidLabel": "Ugyldigt mærke: {{label}}"
+    "invalidLabel": "Ugyldig etiket: {{label}}"
   },
   "instructions": {
     "title": "Sådan navigerer du",
     "navigation": {
       "mobile": {
-        "look": "Træk eller swipe for at kigge rundt"
+        "look": "Træk eller swipe for at se dig omkring"
       },
       "desktop": {
         "move": "for at bevæge dig",
-        "look": "for at kigge rundt",
-        "drag": "Træk for at kigge rundt"
+        "look": "for at se dig omkring",
+        "drag": "Træk for at se dig omkring"
       },
-      "jump": "Klik på røde kugler for at hoppe til nye placeringer",
+      "jump": "Klik på røde kugler for at hoppe til nye steder",
       "location": "Din nuværende placering vises lige under søgefeltet øverst"
     },
     "search": {
-      "title": "Søgning",
-      "useSearch": "Brug søgefeltet øverst til at finde placeringer",
+      "title": "Søg",
+      "useSearch": "Brug søgefeltet øverst for at finde steder",
       "destination": "Gul roterende firkant markerer din destination",
-      "path": "Blå sti fører dig til din destination"
+      "path": "Blå sti guider dig til din destination"
     },
     "map": {
       "title": "Kort",
-      "open": "Åbn kortet med knappen i øverste venstre hjørne",
+      "open": "Åbn kortet med knappen øverst til venstre",
       "legend": {
         "position": "Din position",
-        "nextRegion": "Næste område",
+        "nextRegion": "Næste region",
         "viewingPoint": "Udsigtspunkt",
         "highlightedPath": "Fremhævet sti"
       }
     },
     "help": {
       "title": "Hjælp",
-      "toggle": "Klik på knappen Instruktioner i nederste højre hjørne for at åbne eller lukke dette hjælpevindue"
+      "toggle": "Klik på knappen Instruktioner nederst til højre for at åbne eller lukke dette hjælpevindue"
     }
   },
   "homepage": {
@@ -96,17 +105,17 @@
   "landing": {
     "welcome": "Velkommen! Sådan kommer du i gang:",
     "howTo": {
-      "search": "Søg efter en placering",
+      "search": "Søg et sted",
       "hotspots": "Klik på hotspots for at udforske",
-      "move": "Brug piletasterne eller WASD for at bevæge dig"
+      "move": "Brug pile eller WASD for at bevæge dig"
     },
     "suggested": "Foreslåede startpunkter",
     "noSuggestions": "Ingen forslag tilgængelige.",
     "start": "Start",
     "random": "Tilfældig",
     "outdoorsDescription": "Start din rundtur fra campusindgangen",
-    "level1Description": "Begynd fra stueetagen",
-    "level2Description": "Start fra anden sal",
-    "level3Description": "Begynd fra øverste etage"
+    "level1Description": "Start fra stueetagen",
+    "level2Description": "Start fra anden etage",
+    "level3Description": "Start fra øverste etage"
   }
 } 

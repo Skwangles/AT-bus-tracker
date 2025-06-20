@@ -1,0 +1,119 @@
+{
+  "navigation": {
+    "instructions": "Instruções",
+    "close": "Fechar",
+    "elevator": "Elevador"
+  },
+  "location": {
+    "outdoors": "Exterior",
+    "level": "Nível {{level}}",
+    "unreachable": "{{location}} não é um local acessível.",
+    "elevator": {
+      "error": "Não foi possível buscar os locais dos elevadores."
+    }
+  },
+  "project": {
+    "name": "CampusVirtual"
+  },
+  "ui": {
+    "loading": "Carregando...",
+    "close": "Fechar",
+    "error": "Ocorreu um erro",
+    "retry": "Tentar novamente",
+    "logo": {
+      "alt": "Logotipo da CampusVirtual"
+    },
+    "menu": {
+      "backToHome": "Voltar para a Página Inicial",
+      "reportProblem": "Relatar um Problema",
+      "poweredBy": "Desenvolvido por campusVirtual.io"
+    },
+    "map": {
+      "open": "Abrir mapa",
+      "close": "Fechar mapa"
+    },
+    "instructions": {
+      "show": "Mostrar instruções",
+      "close": "Fechar instruções"
+    },
+    "elevator": {
+      "cancel": "Cancelar"
+    }
+  },
+  "search": {
+    "placeholder": "Pesquisar um local...",
+    "ariaLabel": "Pesquisar um local",
+    "clear": "Limpar pesquisa",
+    "buttons": {
+      "guide": "Guiar",
+      "clearPath": "Limpar caminho",
+      "goTo": "Ir para"
+    }
+  },
+  "errors": {
+    "fetchData": "Erro ao buscar dados:",
+    "invalidLabel": "Rótulo inválido: {{label}}"
+  },
+  "instructions": {
+    "title": "Como navegar",
+    "navigation": {
+      "mobile": {
+        "look": "Arraste ou deslize para olhar ao redor"
+      },
+      "desktop": {
+        "move": "para se mover",
+        "look": "para olhar ao redor",
+        "drag": "Arraste para olhar ao redor"
+      },
+      "jump": "Clique nos orbes vermelhos para saltar para novos locais",
+      "location": "Sua localização atual é mostrada logo abaixo da barra de pesquisa no topo"
+    },
+    "search": {
+      "title": "Pesquisa",
+      "useSearch": "Use a barra de pesquisa no topo para encontrar locais",
+      "destination": "O quadrado amarelo giratório marca seu destino",
+      "path": "O caminho azul guia você até seu destino"
+    },
+    "map": {
+      "title": "Mapa",
+      "open": "Abra o mapa com o botão no canto superior esquerdo",
+      "legend": {
+        "position": "Sua posição",
+        "nextRegion": "Próxima região",
+        "viewingPoint": "Ponto de observação",
+        "highlightedPath": "Caminho destacado"
+      }
+    },
+    "help": {
+      "title": "Ajuda",
+      "toggle": "Clique no botão de Instruções no canto inferior direito para abrir ou fechar esta janela de ajuda"
+    }
+  },
+  "homepage": {
+    "howToUseTitle": "Como usar",
+    "howToUseText": "Bem-vindo ao CampusVirtual! Comece seu tour virtual selecionando um dos locais de partida sugeridos abaixo ou use a caixa de pesquisa para encontrar um local específico. Use o mouse para olhar ao redor e as teclas de seta ou WASD para navegar pelo campus. Clique nos hotspots para saber mais sobre as diferentes áreas.",
+    "searchPlaceholder": "Pesquisar um local...",
+    "noLocations": "Nenhum local disponível.",
+    "fetchError": "Não foi possível buscar os locais.",
+    "outdoorsDescription": "Comece seu tour pela entrada do campus",
+    "level1Description": "Comece pelo térreo",
+    "level2Description": "Comece pelo segundo andar",
+    "level3Description": "Comece pelo último andar"
+  },
+  "landing": {
+    "welcome": "Bem-vindo! Veja como começar:",
+    "howTo": {
+      "search": "Pesquisar um local",
+      "hotspots": "Clique nos hotspots para explorar",
+      "move": "Use as setas ou WASD para se mover"
+    },
+    "suggested": "Pontos de partida sugeridos",
+    "noSuggestions": "Nenhuma sugestão disponível.",
+    "start": "Começar",
+    "random": "Aleatório",
+    "outdoorsDescription": "Comece seu tour pela entrada do campus",
+    "level1Description": "Comece pelo térreo",
+    "level2Description": "Comece pelo segundo andar",
+    "level3Description": "Comece pelo último andar"
+  }
+} 

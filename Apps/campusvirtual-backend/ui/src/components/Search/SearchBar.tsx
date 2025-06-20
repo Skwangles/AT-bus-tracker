@@ -1,18 +1,18 @@
 import React, {
   useState,
   ChangeEvent,
-  MouseEvent,
-  useRef,
   useEffect,
 } from "react";
 import "../../css/SearchBar.css";
-import { X } from "react-feather";
-import DropDownContainer from "./DropDownContainer";
-import SearchBarButtons from "./SearchBarButtons";
 import { toast } from "react-toastify";
 import { getLabelLongName, getLabelDisplayName } from "../../utils/labelUtils";
 import { Label } from "../../types";
 import { useTranslation } from "react-i18next";
+import { Button, ButtonGroup, TextField, InputAdornment, IconButton, Paper, Box } from "@mui/material";
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
+import NearMeOutlinedIcon from '@mui/icons-material/NearMeOutlined';
+import ClearIcon from '@mui/icons-material/Clear';
+import DropDownContainer from "./DropDownContainer";
 
 // Define the type for the props
 interface SearchBarProps {
@@ -21,6 +21,7 @@ interface SearchBarProps {
   jumpToCallback: (selected: string) => void;
   highlightCallback: (selected: string) => void;
   isPathfindingMode?: boolean;
+  onClose: () => void;
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({
@@ -29,39 +30,40 @@ const SearchBar: React.FC<SearchBarProps> = ({
   jumpToCallback,
   highlightCallback,
   isPathfindingMode,
+  onClose,
 }) => {
   const { t } = useTranslation('common');
   const [query, setQuery] = useState<string>("");
   const [suggestions, setSuggestions] = useState<Label[]>([]);
-  const [isFocused, setIsFocused] = useState<boolean>(false);
   const [recentSearches, setRecentSearches] = useState<Label[]>(() => {
     const saved = localStorage.getItem("recentSearches");
     return saved ? JSON.parse(saved) : [];
   });
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node) &&
-        !inputRef.current?.contains(event.target as Node)
-      ) {
-        setIsFocused(false);
+    // Populate initial suggestions when the component mounts
+    setSuggestions(
+      searchableLabels.sort((a, b) => getLabelLongName(a).localeCompare(getLabelLongName(b)))
+    );
+  }, [searchableLabels]);
+
+  useEffect(() => {
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside as any);
+    document.addEventListener("keydown", handleEsc, false);
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside as any);
+      document.removeEventListener("keydown", handleEsc, false);
     };
-  }, []);
+  }, [onClose]);
 
   const addToRecent = (location: Label) => {
     const updated = [
       location,
-      ...recentSearches.filter((item) => item !== location),
+      ...recentSearches.filter((item) => item.query !== location.query),
     ].slice(0, 3);
     setRecentSearches(updated);
     localStorage.setItem("recentSearches", JSON.stringify(updated));
@@ -74,11 +76,25 @@ const SearchBar: React.FC<SearchBarProps> = ({
       const filteredSuggestions = searchableLabels.filter((item) => {
         const formattedLabel = getLabelLongName(item);
         const displayName = getLabelDisplayName(item);
-        return (
+        
+        // Check if the current item matches
+        const currentItemMatches = 
           formattedLabel.toLowerCase().includes(value) ||
           displayName.toLowerCase().includes(value) ||
-          item.parents.some(parent => parent.toLowerCase().includes(value))
-        );
+          item.parents.some(parent => parent.toLowerCase().includes(value));
+        
+        // Check if any children match
+        const childrenMatch = item.children && item.children.some(child => {
+          const childFormattedLabel = getLabelLongName(child);
+          const childDisplayName = getLabelDisplayName(child);
+          return (
+            childFormattedLabel.toLowerCase().includes(value) ||
+            childDisplayName.toLowerCase().includes(value) ||
+            child.parents.some(parent => parent.toLowerCase().includes(value))
+          );
+        });
+        
+        return currentItemMatches || childrenMatch;
       });
       setSuggestions(
         filteredSuggestions.sort((a, b) => getLabelLongName(a).localeCompare(getLabelLongName(b)))
@@ -90,22 +106,16 @@ const SearchBar: React.FC<SearchBarProps> = ({
     }
   };
 
-  const handleSuggestionClick = (suggestion: Label, hide = true) => {
+  const handleSuggestionClick = (suggestion: Label) => {
     setQuery(getLabelLongName(suggestion));
-    if (hide) {
-      inputRef.current?.focus();
-      setIsFocused(false);
-    }
   };
 
   const handleAction = (label: string, action: "highlight" | "jump") => {
     if (isPathfindingMode && label === "" && action === "highlight") {
-      // Clear path edge case
       highlightCallback("");
       return;
     }
 
-    // Find the label object based on formatted name or short name
     let labelObj = searchableLabels.find((v: Label) =>
       getLabelLongName(v).toLowerCase().includes(label.toLowerCase())
     );
@@ -115,19 +125,11 @@ const SearchBar: React.FC<SearchBarProps> = ({
       );
     }
 
-    // Validate Label
     if (!labelObj || !labelObj.query || !labelObj.label) {
       toast.error(t('errors.invalidLabel', { label }));
-      console.error(
-        "Label is invalid: " +
-          label +
-          " Could not find labelObj:" +
-          JSON.stringify(labelObj)
-      );
       return;
     }
 
-    // Apply action to found label
     addToRecent(labelObj);
     if (action === "highlight") {
       highlightCallback(labelObj.query);
@@ -135,7 +137,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
       jumpToCallback(labelObj.query);
     }
     setQuery(getLabelLongName(labelObj));
-    setIsFocused(false);
+    onClose();
   };
 
   const clearSearch = () => {
@@ -145,63 +147,82 @@ const SearchBar: React.FC<SearchBarProps> = ({
     );
   };
 
+  const isQueryInLabels = searchableLabels.some(
+    (val) =>
+      getLabelLongName(val).toLowerCase() ===
+      query.toLowerCase()
+  );
+
   return (
-    <div className="search-container">
-      <div className="flex flex-col w-full">
-        <div className="input-wrapper">
-          <input
-            ref={inputRef}
-            type="text"
+    <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1000, paddingTop: '8px' }}>
+      <Paper elevation={0} sx={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid #E5F3F3', display: 'flex', flexDirection: 'column', maxHeight: '70vh' }}>
+        {/* Non-scrollable part */}
+        <Box sx={{ p: 1, bgcolor: 'rgba(255,255,255,0.9)', backdropFilter: 'blur(8px)', flexShrink: 0 }}>
+          <TextField
+            fullWidth
+            variant="outlined"
+            placeholder={t('search.placeholder')}
             value={query}
             onChange={handleChange}
-            onKeyUp={(e) => {
-              if (e.key === "Enter") {
-                handleAction(query, "jump");
-              }
+            autoFocus
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: '12px',
+                bgcolor: '#F8FDFD',
+              },
+              '& .MuiOutlinedInput-notchedOutline': {
+                borderColor: '#D0EFEF',
+              },
             }}
-            placeholder={t('search.placeholder')}
-            className="w-full px-3 py-2 text-sm border-2 border-gray-200 rounded-lg shadow-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 text-gray-900"
-            onFocus={() => {
-              setIsFocused(true);
-              if (!query)
-                setSuggestions(
-                  searchableLabels.sort((a, b) =>
-                    getLabelLongName(a).localeCompare(getLabelLongName(b))
-                  )
-                );
+            InputProps={{
+              endAdornment: query ? (
+                <InputAdornment position="end">
+                  <IconButton onClick={clearSearch} edge="end">
+                    <ClearIcon />
+                  </IconButton>
+                </InputAdornment>
+              ) : null,
             }}
-            aria-label={t('search.ariaLabel')}
           />
-          {query && (
-            <button
-              className="clear-button"
-              onClick={clearSearch}
-              aria-label={t('search.clear')}
-            >
-              <X size={16} aria-hidden="true" />
-            </button>
-          )}
-        </div>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
+            <ButtonGroup variant="text" aria-label="action button group">
+              <Button
+                onClick={() => handleAction(query, 'highlight')}
+                disabled={!query || (!isQueryInLabels && !isPathfindingMode)}
+                startIcon={isPathfindingMode ? <ClearIcon /> : <VisibilityOutlinedIcon />}
+                size="small"
+                sx={{
+                  color: '#1B1B1E',
+                }}
+              >
+                {isPathfindingMode ? t('search.buttons.clearPath') : t('search.buttons.guide')}
+              </Button>
+              <Button
+                onClick={() => handleAction(query, 'jump')}
+                disabled={!query || !isQueryInLabels}
+                startIcon={<NearMeOutlinedIcon />}
+                size="small"
+                sx={{
+                  color: '#1B1B1E',
+                }}
+              >
+                {t('search.buttons.goTo')}
+              </Button>
+            </ButtonGroup>
+          </Box>
+        </Box>
 
-        <SearchBarButtons
-          currentPoint={currentPoint}
-          query={query}
-          isPathfindingMode={isPathfindingMode}
-          handleAction={handleAction}
-          labels={searchableLabels}
-        />
-      </div>
-
-      {isFocused && (
-        <DropDownContainer
-          setIsFocused={setIsFocused}
-          dropdownRef={dropdownRef}
-          recentSearches={recentSearches}
-          query={query}
-          suggestions={suggestions}
-          handleSuggestionClick={handleSuggestionClick}
-        />
-      )}
+        {/* Scrollable part */}
+        <Box sx={{ overflowY: 'auto', flexGrow: 1 }}>
+          <DropDownContainer
+            recentSearches={recentSearches}
+            query={query}
+            suggestions={suggestions}
+            handleSuggestionClick={handleSuggestionClick}
+            currentLocationGroup={currentPoint.location}
+          />
+        </Box>
+      </Paper>
     </div>
   );
 };

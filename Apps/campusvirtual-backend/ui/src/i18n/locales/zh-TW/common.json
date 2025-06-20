@@ -3,14 +3,13 @@
     "search": "搜尋",
     "map": "地圖",
     "list": "列表",
-    "instructions": "使用說明",
+    "instructions": "說明",
     "close": "關閉",
-    "backToHome": "返回首頁",
     "elevator": "電梯"
   },
   "location": {
-    "outdoors": "室外",
-    "level": "{{level}}層",
+    "outdoors": "戶外",
+    "level": "第{{level}}層",
     "unreachable": "{{location}} 不是可到達的位置。"
   },
   "project": {
@@ -20,13 +19,24 @@
     "loading": "載入中...",
     "error": "發生錯誤",
     "retry": "重試",
+    "logo": {
+      "alt": "CampusVirtual 標誌"
+    },
+    "menu": {
+      "backToHome": "返回首頁",
+      "reportProblem": "回報問題",
+      "poweredBy": "由 campusVirtual.io 提供支援"
+    },
     "map": {
       "open": "開啟地圖",
       "close": "關閉地圖"
     },
     "instructions": {
-      "show": "顯示使用說明",
-      "close": "關閉使用說明"
+      "show": "顯示說明",
+      "close": "關閉說明"
+    },
+    "elevator": {
+      "cancel": "取消"
     }
   },
   "search": {
@@ -34,8 +44,8 @@
     "ariaLabel": "搜尋位置",
     "clear": "清除搜尋",
     "buttons": {
-      "guide": "導航",
-      "clearPath": "清除路線",
+      "guide": "引導",
+      "clearPath": "清除路徑",
       "goTo": "前往",
       "ariaLabels": {
         "highlight": "高亮顯示到該位置的路線",
@@ -45,21 +55,21 @@
   },
   "errors": {
     "fetchData": "獲取數據時出錯：",
-    "invalidLabel": "無效的標籤：{{label}}"
+    "invalidLabel": "無效標籤：{{label}}"
   },
   "instructions": {
-    "title": "如何導航",
+    "title": "導航方法",
     "navigation": {
       "mobile": {
-        "look": "拖動或滑動以環顧四周"
+        "look": "拖曳或滑動以環顧四周"
       },
       "desktop": {
         "move": "移動",
         "look": "環顧四周",
-        "drag": "拖動以環顧四周"
+        "drag": "拖曳以環顧四周"
       },
       "jump": "點擊紅色球體跳轉到新位置",
-      "location": "您當前位置顯示在頂部搜尋欄下方"
+      "location": "您目前的位置顯示在頂部搜尋欄下方"
     },
     "search": {
       "title": "搜尋",
@@ -69,17 +79,17 @@
     },
     "map": {
       "title": "地圖",
-      "open": "點擊左上角按鈕開啟地圖",
+      "open": "使用左上角按鈕開啟地圖",
       "legend": {
         "position": "您的位置",
-        "nextRegion": "下一個區域",
-        "viewingPoint": "觀察點",
+        "nextRegion": "下一區域",
+        "viewingPoint": "視點",
         "highlightedPath": "高亮路徑"
       }
     },
     "help": {
       "title": "幫助",
-      "toggle": "點擊右下角的說明按鈕開啟或關閉此幫助視窗"
+      "toggle": "點擊右下角說明按鈕開啟或關閉此幫助視窗"
     }
   },
   "homepage": {
@@ -94,17 +104,17 @@
     "level3Description": "從頂樓開始"
   },
   "landing": {
-    "welcome": "歡迎！以下是使用指南：",
+    "welcome": "歡迎！以下是開始的方法：",
     "howTo": {
       "search": "搜尋位置",
       "hotspots": "點擊熱點進行探索",
-      "move": "使用方向鍵或 WASD 移動"
+      "move": "使用箭頭或WASD移動"
     },
-    "suggested": "建議的起始點",
-    "noSuggestions": "暫無建議。",
+    "suggested": "推薦起點",
+    "noSuggestions": "暫無推薦。",
     "start": "開始",
     "random": "隨機",
-    "outdoorsDescription": "從校園入口開始您的旅程",
+    "outdoorsDescription": "從校園入口開始您的導覽",
     "level1Description": "從一樓開始",
     "level2Description": "從二樓開始",
     "level3Description": "從頂樓開始"
