@@ -142,7 +142,15 @@ def export_changes():
         print("Wrote:", cursor.rowcount)
         cursor.executemany("DELETE FROM " + table_name_prefix + "node_locations WHERE keyframe_id = ?;", delete_nodes)
         print("Wrote:", cursor.rowcount)
-        cursor.executemany("DELETE FROM " + table_name_prefix + "user_defined_labels WHERE keyframe_id = ?;", delete_nodes)
+        
+        # Delete from other_nodes table
+        cursor.executemany("DELETE FROM " + table_name_prefix + "other_nodes WHERE ref_id = ?;", delete_nodes)
+        print("Wrote other_nodes:", cursor.rowcount)
+        
+        # Delete from elevator_edges table (this will be handled by CASCADE, but we'll do it explicitly for safety)
+        cursor.execute("DELETE FROM " + table_name_prefix + "elevator_edges WHERE id0 IN (SELECT id FROM " + table_name_prefix + "other_nodes WHERE ref_id IN (" + ",".join("?" * len(delete_nodes)) + ")) OR id1 IN (SELECT id FROM " + table_name_prefix + "other_nodes WHERE ref_id IN (" + ",".join("?" * len(delete_nodes)) + "));", delete_nodes + delete_nodes)
+        print("Wrote elevator_edges:", cursor.rowcount)
+        
         print("Wrote:", cursor.rowcount)
         cursor.executemany("DELETE FROM " + table_name_prefix+ "nodes WHERE keyframe_id = ?;", delete_nodes)
         print("Wrote:", cursor.rowcount)
@@ -329,8 +337,9 @@ def render(nodes_list, other_nodes_list=None, edges=None):
             plotter.add_mesh(sphere, color=node_color, pickable=True)
             # Add a small label showing the node type
             type_names = {0: "N", 1: "E", 2: "I", 3: "R"}  # Normal, Elevator, Info, Room
-            type_label = type_names.get(node.node_type, "?")
-            plotter.add_point_labels(node.position, [type_label], font_size=8, point_size=8)
+            if node.node_type != 0:
+                type_label = type_names.get(node.node_type, "?")
+                plotter.add_point_labels(node.position, [type_label], font_size=8, point_size=8)
         
     # Add legend
     legend_entries = [
