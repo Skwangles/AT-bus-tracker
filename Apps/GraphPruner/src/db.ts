@@ -28,7 +28,7 @@ export async function readDB(
   params: (string | number)[] = [],
   isSingle: boolean = false
 ): Promise<any | any[]> {
-  // console.debug("[Write] query:", query, "params:", params, "isSingle:", isSingle)
+  console.debug("[Write] query:", query, "params:", params, "isSingle:", isSingle)
   if (isSingle) {
     return sqliteDb.prepare(query).get(params);
   }

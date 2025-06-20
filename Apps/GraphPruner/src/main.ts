@@ -168,10 +168,12 @@ async function createAWorkingCopy() {
     cliProgress.Presets.shades_classic
   );
 
-  progBar.start(6, 0);
+  progBar.start(8, 0);
 
   await writeDB(`DROP TABLE IF EXISTS ${config.table_prefix}edges;`);
   await writeDB(`DROP TABLE IF EXISTS ${config.table_prefix}node_locations;`);
+  await writeDB(`DROP TABLE IF EXISTS ${config.table_prefix}other_nodes;`);
+  await writeDB(`DROP TABLE IF EXISTS ${config.table_prefix}elevator_edges;`);
   await writeDB(`DROP TABLE IF EXISTS ${config.table_prefix}user_defined_labels;`);
   await writeDB(`DROP TABLE IF EXISTS ${config.table_prefix}floorplan_points;`);
   await writeDB(`DROP TABLE IF EXISTS ${config.table_prefix}floorplan_images;`);
@@ -193,14 +195,30 @@ async function createAWorkingCopy() {
   progBar.increment(1, { msg: "Created working nodes table" });
 
   await writeDB(`
-        CREATE TABLE ${config.table_prefix}user_defined_labels (
-            keyframe_id INTEGER NOT NULL,
-            label TEXT,
-            zone TEXT DEFAULT NULL,
-            FOREIGN KEY (keyframe_id) REFERENCES ${config.table_prefix}nodes(keyframe_id) ON DELETE CASCADE,
-            PRIMARY KEY (label, keyframe_id)
+        CREATE TABLE ${config.table_prefix}other_nodes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ref_id INTEGER NOT NULL,
+            label TEXT NOT NULL,
+            description TEXT,
+            type INTEGER NOT NULL,
+            x_trans REAL NOT NULL,
+            y_trans REAL NOT NULL,
+            z_trans REAL NOT NULL,
+            FOREIGN KEY (ref_id) REFERENCES ${config.table_prefix}nodes(keyframe_id) ON DELETE CASCADE
         );`);
-  progBar.increment(1, { msg: "Created working user_defined_labels table" });
+  progBar.increment(1, { msg: "Created working other_nodes table" });
+
+  await writeDB(`
+        CREATE TABLE ${config.table_prefix}elevator_edges (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            shaft_id TEXT NOT NULL,
+            id0 INTEGER NOT NULL,
+            id1 INTEGER NOT NULL,
+            FOREIGN KEY (id0) REFERENCES ${config.table_prefix}other_nodes(id) ON DELETE CASCADE,
+            FOREIGN KEY (id1) REFERENCES ${config.table_prefix}other_nodes(id) ON DELETE CASCADE,
+            UNIQUE(id0, id1)
+        );`);
+  progBar.increment(1, { msg: "Created working elevator_edges table" });
 
   await writeDB(`
         CREATE TABLE ${config.table_prefix}edges (
@@ -233,9 +251,19 @@ async function createAWorkingCopy() {
     `INSERT INTO ${config.table_prefix}node_locations SELECT * FROM node_locations;`
   );
   await writeDB(`INSERT INTO ${config.table_prefix}edges SELECT * FROM edges;`);
-  await writeDB(
-    `INSERT INTO ${config.table_prefix}user_defined_labels SELECT * FROM user_defined_labels;`
-  );
+  
+  // Copy other_nodes if it exists, otherwise create from user_defined_labels
+  const otherNodesExists = await readDB(`SELECT name FROM sqlite_master WHERE type='table' AND name='other_nodes'`, [], true);
+  if (otherNodesExists) {
+    await writeDB(`INSERT INTO ${config.table_prefix}other_nodes SELECT * FROM other_nodes;`);
+    await writeDB(`INSERT INTO ${config.table_prefix}elevator_edges SELECT * FROM elevator_edges;`);
+  } else {
+    // Fallback: copy from user_defined_labels
+    await writeDB(
+      `INSERT INTO ${config.table_prefix}user_defined_labels SELECT * FROM user_defined_labels;`
+    );
+  }
+  
   progBar.increment(1, { msg: "INSERT INTO tables completed" });
   progBar.stop();
 }

@@ -19,6 +19,8 @@ export const DFLT_SQLITE_DB_PATH =
 export const DFLT_USE_PRECALCULATED_IMAGE_SHARPNESS = true
 export const DFLT_PREPROCESSED_IMG_SHARPNESS_JSON = "sharpness.json";
 
+export type ThreeNumbersArray = [number, number, number];
+
 export enum EdgeType {
   Covisibility = -1,
   Normal,

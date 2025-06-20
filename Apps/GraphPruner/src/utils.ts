@@ -14,6 +14,7 @@ import {
   DFLT_Y_DIST_THRESHOLD,
   DFLT_KEYFRAME_IMG_EXTENSION,
   Config,
+  ThreeNumbersArray,
 } from "./consts";
 
 /**
@@ -42,7 +43,7 @@ export async function getNumberOfNodes() {
 }
 
 /**
- * Get node information, including if it has any user_defined_labels
+ * Get node information, including if it has any labels from other_nodes
  * @param config
  * @param keyframeId
  * @param use_trans
@@ -63,13 +64,17 @@ export async function getNodeInfo(
     throw new Error("Could not find keyframe of ID: " + keyframeId);
   }
 
+  // Check for labels in other_nodes table first, fallback to user_defined_labels
   const countOfLabels = await readDB(
-    `SELECT COUNT(*) as total FROM ${config.table_prefix}user_defined_labels WHERE keyframe_id = ?`,
+    `SELECT COUNT(*) as total FROM ${config.table_prefix}other_nodes WHERE ref_id = ?`,
     [keyframeId],
     true
   );
+  
+  let labelCount = Number(countOfLabels.total ?? 0);
+  
   const node_info = result;
-  node_info["label_count"] = Number(countOfLabels.total ?? -1);
+  node_info["label_count"] = labelCount;
 
   if (use_trans) {
     const ret: ThreeNumbersArray = [

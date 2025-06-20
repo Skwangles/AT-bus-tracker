@@ -1,4 +1,4 @@
-import { Config, NodeInfo } from "./consts";
+import { Config, NodeInfo, ThreeNumbersArray } from "./consts";
 import {
   calculateImageSharpness,
   calculateXZDistance,
