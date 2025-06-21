@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
 import theme from './theme';
 import VirtualTour from './components/VirtualTour';
-import ErrorLanding from './components/ErrorLanding';
-import LandingPage from './components/LandingPage';
+import ErrorLanding from './components/LandingPage/ErrorLanding';
+import LandingPage from './components/LandingPage/LandingPage';
 import { checkWebGLSupport, checkServerConnectivity } from './utils/errorChecks';
 
 const App: React.FC = () => {
@@ -61,7 +60,7 @@ const App: React.FC = () => {
 
   return (
     <ThemeProvider theme={theme}>
-      <CssBaseline />
+      
       <Router>
         {isChecking ? (
           <div style={{ 

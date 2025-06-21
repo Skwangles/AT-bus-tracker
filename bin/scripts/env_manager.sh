@@ -69,7 +69,7 @@ function copy_env_to_node_projects {
     # List of Node.js project directories
     local node_projects=(
         "Apps/authoring-backend"
-        "Apps/campusvirtual-backend"
+        "Apps/sitexplorer-backend"
         "Apps/ImageSplitter"
         "Apps/GraphPruner"
         "Apps/map_data_init"

@@ -6,7 +6,7 @@ import Typography from '@mui/material/Typography';
 import Link from '@mui/material/Link';
 import HomeIcon from '@mui/icons-material/Home';
 import ReportProblemIcon from '@mui/icons-material/ReportProblem';
-import { LanguageSwitcher } from './LanguageSwitcher';
+import { LanguageSwitcher } from './LandingPage/LanguageSwitcher';
 import { REPORT_PROBLEM_FORM_URL } from '../consts';
 import { useTranslation } from 'react-i18next';
 import { Info } from 'react-feather';
@@ -50,9 +50,9 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose, onInfoClic
           borderTopRightRadius: 16,
         }}
       >
-        <img src={LOGO_URL} alt={t('ui.logo.alt', 'CampusVirtual Logo')} style={{ height: 56, marginBottom: 8 }} />
+        <img src={LOGO_URL} alt={t('ui.logo.alt', 'Sitexplorer Logo')} style={{ height: 56, marginBottom: 8 }} />
         <Typography variant="h6" sx={{ color: '#1B1B1E', fontWeight: 700 }}>
-          CampusVirtual
+          Sitexplorer
         </Typography>
       </Box>
 
@@ -138,7 +138,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose, onInfoClic
       >
         {/* Powered by link */}
         <Link
-          href="https://campusvirtual.io"
+          href="https://sitexplorer.io"
           target="_blank"
           rel="noopener noreferrer"
           sx={{
@@ -151,7 +151,7 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose, onInfoClic
           }}
         >
           <Typography variant="body2" sx={{ color: 'inherit', fontWeight: 'inherit' }}>
-            {t('ui.menu.poweredBy', 'Powered by campusVirtual.io')}
+            {t('ui.menu.poweredBy', 'Powered by Sitexplorer.io')}
           </Typography>
         </Link>
       </Box>

@@ -1,4 +1,4 @@
-#include "campus_virtual_socket_publisher/publisher.h"
+#include "sitexplorer_socket_publisher/publisher.h"
 
 #include "stella_vslam/system.h"
 #include "stella_vslam/config.h"

@@ -24,6 +24,6 @@ if [[ -z "$CV_HOME_DIR" ]]; then
 fi
 
 echo "Starting the front-end"
-cd "$CV_HOME_DIR"/Apps/campusvirtual-backend || error_exit "Failed to change directory"
+cd "$CV_HOME_DIR"/Apps/sitexplorer-backend || error_exit "Failed to change directory"
 npm run build || error_exit "Failed to build the project"
 npm run start || error_exit "Failed to start the project"

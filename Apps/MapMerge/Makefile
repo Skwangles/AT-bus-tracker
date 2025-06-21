@@ -20,7 +20,7 @@ $(OUT): $(SRC)
 	$(CXX) $(CXXFLAGS) -o $(OUT) $(SRC) -O2 -lboost_system -lboost_program_options -lboost_filesystem -I /usr/include/eigen3 -lsqlite3 -lfmt
 
 install: $(OUT)
-	@echo "Installing runCampusVirtual to $(INSTALL_DIR)"
+	@echo "Installing runSitexplorer to $(INSTALL_DIR)"
 	install -m 755 $(OUT) $(INSTALL_DIR)
 
 # Clean up build files

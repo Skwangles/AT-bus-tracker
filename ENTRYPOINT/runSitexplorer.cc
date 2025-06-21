@@ -8,7 +8,7 @@
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
 
-fs::path path_to_stella = fs::path("Apps/SLAM/CampusVirtualInterface/build/");
+fs::path path_to_stella = fs::path("Apps/SLAM/SitexplorerInterface/build/");
 fs::path path_to_fbow = fs::path("Apps/SLAM/FBoW/orb_vocab.fbow");
 fs::path path_to_config = fs::path("Config/");
 
@@ -24,7 +24,7 @@ int main(int argc, char** argv) {
         ("convertToSQLite", "Convert SLAM map to SQLite3 DB (optional)")
         ("in", po::value<std::string>(), "Input map (*.db) - Optional for normal mode")
         ("out", po::value<std::string>(), "Output map (*.db)")
-        ("export_path", po::value<std::string>(), "Export path (*.db) for CampusVirtual DB")
+        ("export_path", po::value<std::string>(), "Export path (*.db) for Sitexplorer DB")
         ("video_dir", po::value<std::string>(), "Media directory - videos")
         ("map_dir", po::value<std::string>(), "Map directory - maps") 
         ("videos", po::value<std::string>(), "Comma-separated ordered videos")

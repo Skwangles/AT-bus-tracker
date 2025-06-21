@@ -1,4 +1,4 @@
-export const API_PREFIX = "http://localhost:3001";
+export const API_PREFIX = "http://192.168.1.50:3001";
 
 export const FLOOR_ORDERING_STRATEGY = "tga"; // tga for <floor>.<room>  (or 'waikato' for <block>.<floor>.<room> stratgey)
 export const COORDS_TO_METRES = 1; // metres per coordinate - the backend should apply their version automatically, but this is a manual adjustment
@@ -27,7 +27,7 @@ export const MAP_LINE_HIGHLIGHT_COLOUR = "blue";
 
 export const addQuotationMarks = false;
 export const MAX_MAP_HEIGHT_PERCENT = 0.7;
-export const PROJECT_NAME = "CampusVirtual";
+export const PROJECT_NAME = 'Sitexplorer';
 
 export const OUTDOORS_LOCATION = "outdoors";
 export const WAIKATO_UNI_LEVELS_ORDER = [

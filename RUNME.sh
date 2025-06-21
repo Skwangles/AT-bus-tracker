@@ -39,9 +39,9 @@ if [ "$CV_BUILD_LIBS" == true ]; then
   check_command "Building dependencies"
 fi
 
-echo "Building CampusVirtual Files"
-./BUILD_CAMPUS_VIRTUAL.sh
-check_command "Building CampusVirtual"
+echo "Building Sitexplorer Files"
+./BUILD_SITEXPLORER.sh
+check_command "Building Sitexplorer"
 
 # Run features based on configuration
 if [ "$CV_STITCH_INSV" == true ]; then

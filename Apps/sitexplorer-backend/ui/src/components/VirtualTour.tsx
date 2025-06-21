@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react'
 import { Canvas as ThreeCanvas } from '@react-three/fiber'
-import { API_PREFIX, showMap, PROJECT_NAME } from '../consts'
+import { API_PREFIX, showMap } from '../consts'
 import axios from 'axios'
 import CameraRotationControls from './Camera/RotationController'
 import Map from './Misc/Map'
@@ -19,12 +19,12 @@ import {
   updateHistory,
   updateParams,
 } from '../utils/updateUrl'
-import { HotspotObj, Label, PointData, MoveDirectionType, LabelType } from '../types'
+import { HotspotObj, Label, PointData, MoveDirectionType } from '../types'
+import { getLabelLongName } from '../utils/labelUtils'
 import Instructions from './Misc/Instructions'
 import * as THREE from 'three'
 import { useThree } from '@react-three/fiber'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router-dom'
 import { ThemeProvider } from '@mui/material/styles'
 import theme from '../theme'
 import MenuIcon from '@mui/icons-material/Menu'
@@ -51,7 +51,6 @@ const CameraPositionGetter: React.FC<CameraPositionGetterProps> = ({ setCameraRe
 const VirtualTourContent: React.FC = () => {
   refetchParams();
   const { t } = useTranslation('common');
-  const navigate = useNavigate();
   
   // State declarations
   const [currentId, setCurrentId] = useState<string>(initIdFromParams())
@@ -76,9 +75,6 @@ const VirtualTourContent: React.FC = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768)
   const cameraRef = useRef<THREE.Camera | null>(null)
   const camRotation = useRef(initFromParams())
-  const [isElevatorModalOpen, setIsElevatorModalOpen] = useState(false)
-  const [elevatorChildren, setElevatorChildren] = useState<Label[]>([])
-  const [currentLabels, setCurrentLabels] = useState<string[]>([])
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const cameraControlsRef = useRef<{ handleMove: (direction: MoveDirectionType) => void; handleRotate: (direction: 'left' | 'right') => void; stopRotate: () => void; } | null>(null);
@@ -113,19 +109,7 @@ const VirtualTourContent: React.FC = () => {
 
   // Callbacks
   const handleSuggestionClick = useCallback((suggestion: Label, hide: boolean = false) => {
-    if (suggestion.type === LabelType.Elevator) {
-      axios.get<Label[]>(`${API_PREFIX}/api/v1/locationgroup/${suggestion.pointId}/elevatorChildren`)
-        .then(response => {
-          setElevatorChildren(response.data);
-          setIsElevatorModalOpen(true);
-        })
-        .catch(error => {
-          console.error("Error fetching elevator children:", error);
-          toast.warn(t('location.elevator.error'));
-        });
-    } else {
-      setCurrentId(suggestion.pointId.toString());
-    }
+    setCurrentId(suggestion.pointId.toString());
 
     if (hide) {
       setIsSearchOpen(false);
@@ -152,7 +136,7 @@ const VirtualTourContent: React.FC = () => {
           const defaultIdResult = await axios.get(`${API_PREFIX}/api/v1/point/first`)
           const defaultId = defaultIdResult.data
           setCurrentId(defaultId)
-          updateHistory(currentLocationGroup, PROJECT_NAME, defaultId)
+          updateHistory(currentLocationGroup, 'Sitexplorer', defaultId)
         }
       } catch (error) {
         console.error('Error fetching data:', error)
@@ -165,7 +149,7 @@ const VirtualTourContent: React.FC = () => {
 
   useEffect(() => {
     console.log("Setting current location group to:", currentPoint?.location)
-    updateHistory(currentLocationGroup, PROJECT_NAME, currentId)
+    updateHistory(currentLocationGroup, 'Sitexplorer', currentId)
   }, [currentId, currentLocationGroup])
 
   useEffect(() => {
@@ -187,20 +171,6 @@ const VirtualTourContent: React.FC = () => {
       calculateHighlightedPath
     )
   }, [currentId, highlightedPath, ])
-
-  useEffect(() => {
-    const fetchElevatorChildren = async () => {
-      try {
-        const response = await axios.get<Label[]>(`${API_PREFIX}/api/v1/locationgroup/${currentId}/elevatorChildren`)
-        setElevatorChildren(response.data)
-        setCurrentLabels(response.data.map(label => label.label))
-      } catch (error) {
-        console.error('Error fetching elevator children:', error)
-      }
-    }
-
-    fetchElevatorChildren()
-  }, [currentId])
 
   return (
     <ThemeProvider theme={theme}>
@@ -307,9 +277,12 @@ const VirtualTourContent: React.FC = () => {
               currentPoint={currentPoint}
               searchableLabels={allSearchableLocations}
               jumpToCallback={(selected) => {
-                const label = allSearchableLocations.find(l => l.query === selected);
+                const label = allSearchableLocations.find(l => l.query === selected || getLabelLongName(l) === selected);
                 if (label) {
                   handleSuggestionClick(label, true)
+                } else {
+                  console.error("Could not find label for query:", selected);
+                  toast.error(t('location.navigate.error', 'Could not navigate to location.'));
                 }
               }}
               highlightCallback={calculateHighlightedPath}
@@ -365,45 +338,6 @@ const VirtualTourContent: React.FC = () => {
           theme="light"
           transition={Bounce}
         />
-
-        {/* Elevator Modal */}
-        {isElevatorModalOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[2000]">
-            <div className="bg-white p-8 rounded-lg min-w-[260px] max-h-[80vh] overflow-y-auto">
-              <h2 className="text-2xl font-bold mb-4 text-center">{t('navigation.elevator')}</h2>
-              <ul className="mb-4">
-                {elevatorChildren.map(label => {
-                  const isCurrent = currentLabels.includes(label.label);
-                  const key = label.pointId;
-                  const navId = label.pointId;
-                  return (
-                    <li key={key} className="mb-2">
-                      <button
-                        className={`w-full flex items-center gap-2 px-4 py-2 rounded ${isCurrent ? 'bg-red-100 text-red-600 font-bold' : 'bg-gray-100 text-gray-900'} hover:bg-blue-100 transition-colors`}
-                        onClick={() => {
-                          if (!isCurrent) {
-                            navigate(`/tour?id=${encodeURIComponent(navId)}`);
-                            setIsElevatorModalOpen(false);
-                          }
-                        }}
-                        disabled={isCurrent}
-                      >
-                        {isCurrent && <span className="material-icons text-red-600">person</span>}
-                        <span>{label.label}</span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-              <button
-                className="mt-2 w-full bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400 transition-colors"
-                onClick={() => setIsElevatorModalOpen(false)}
-              >
-                {t('ui.elevator.cancel', 'Cancel')}
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* Look and move controls */}
        <MovementControls 

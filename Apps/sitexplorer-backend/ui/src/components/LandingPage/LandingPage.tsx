@@ -6,11 +6,11 @@ import MouseIcon from '@mui/icons-material/Mouse';
 import DirectionsWalkIcon from '@mui/icons-material/DirectionsWalk';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import CasinoIcon from '@mui/icons-material/Casino';
-import backgroundImg from '../assets/landingpage.png';
-import taurangaLogo from '../assets/tauranga.png';
-import theme from '../theme';
+import backgroundImg from '../../assets/landingpage.png';
+import taurangaLogo from '../../assets/tauranga.png';
+import theme from '../../theme';
 import { useNavigate } from 'react-router-dom';
-import { API_PREFIX } from '../consts';
+import { API_PREFIX } from '../../consts';
 import { useTranslation } from 'react-i18next';
 import { LanguageSwitcher } from './LanguageSwitcher';
 

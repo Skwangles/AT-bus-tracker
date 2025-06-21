@@ -43,5 +43,5 @@ IN_MAP_OPTION=""
 EPOCH_OPTION=""
 [[ -n "$CV_VSLAM_EPOCH_START" ]] && EPOCH_OPTION="--ts $CV_VSLAM_EPOCH_START"
 
-runCampusVirtual $CV_VSLAM_MAP_HEADLESS \'$CV_HOME_DIR\' \'$VIDEOS\' --out \'$MAP\' $IN_MAP_OPTION --video_dir \'$CV_VIDEO_DIR\' --map_dir \'$CV_VSLAM_MAP_DIR\' --json_dir \'$CV_JSON_DIR\' --picture_dir \'$CV_KEYFRAME_IMG_DIR\' $EPOCH_OPTION
+runSitexplorer $CV_VSLAM_MAP_HEADLESS \'$CV_HOME_DIR\' \'$VIDEOS\' --out \'$MAP\' $IN_MAP_OPTION --video_dir \'$CV_VIDEO_DIR\' --map_dir \'$CV_VSLAM_MAP_DIR\' --json_dir \'$CV_JSON_DIR\' --picture_dir \'$CV_KEYFRAME_IMG_DIR\' $EPOCH_OPTION
 check_command "Mapping videos with VSLAM"

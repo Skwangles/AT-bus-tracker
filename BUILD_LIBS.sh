@@ -12,6 +12,8 @@ fi
 # Exit on error
 set -e
 
+echo "Building Libraries"
+
 # Function to check command success
 check_command() {
   if [ $? -ne 0 ]; then
@@ -36,8 +38,9 @@ NON_MODIFIABLE_LIBS_DIR="$CV_HOME_DIR"/libs/tmp
 mkdir -p $LIBS_DIR
 mkdir -p $NON_MODIFIABLE_LIBS_DIR 
 
-git submodule init
-git submodule update
+echo "Initialising submodules"
+
+git submodule update --init --recursive
 
 # Stella libs - https://stella-cv.readthedocs.io/en/latest/installation.html
 sudo apt update -y
@@ -181,7 +184,7 @@ sudo make install
 ############### BUILD STELLA VSLAM ###############
 
 echo "--"
-echo "Compiling CampusVirtual Libs"
+echo "Compiling Sitexplorer Libs"
 
 # Install stella_vslam core library
 cd $LIBS_DIR
@@ -189,7 +192,7 @@ if [ ! -d stella_vslam ] ; then
     git clone --recursive https://github.com/Skwangles/stella_vslam.git
 fi
 cd stella_vslam
-git checkout campusvirtual
+git checkout sitexplorer
 mkdir build -p && cd build
 cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
 make -j4
@@ -203,7 +206,7 @@ if [ ! -d iridescence_viewer ] ; then
     git clone --recursive https://github.com/Skwangles/iridescence_viewer.git
 fi
 cd iridescence_viewer
-git checkout campusvirtual
+git checkout sitexplorer
 mkdir -p build
 cd build
 cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_STANDARD_REQUIRED=ON ..
@@ -214,14 +217,14 @@ sudo make install
 
 # When building with support for SocketViewer
 cd $LIBS_DIR
-if [ ! -d campus_virtual_socket_publisher ] ; then
-    git clone --recursive https://github.com/Skwangles/campus_virtual_socket_publisher.git # Custom socket_publisher which doesn't send current frame, only the map - forked from https://github.com/stella-cv/socket_publisher.git
+if [ ! -d sitexplorer_socket_publisher ] ; then
+    git clone --recursive https://github.com/Skwangles/sitexplorer_socket_publisher.git # Custom socket_publisher which doesn't send current frame, only the map - forked from https://github.com/stella-cv/socket_publisher.git
 fi
-mkdir -p campus_virtual_socket_publisher/build
-cd campus_virtual_socket_publisher/build
+mkdir -p sitexplorer_socket_publisher/build
+cd sitexplorer_socket_publisher/build
 cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo ..
 make -j
-check_command "Building CampusVirtual Socket Publisher"
+check_command "Building Sitexplorer Socket Publisher"
 sudo make install
 
 

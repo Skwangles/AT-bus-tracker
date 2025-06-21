@@ -46,8 +46,9 @@ enum ReservedTypeIndex {
 
 async function getLocationGroups(){
   const locationGroups = await readDB(`
-    SELECT l.location
+    SELECT l.location, l.keyframe_id as pointId, n.x_trans as x, n.y_trans as y, n.z_trans as z
     FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l
+    JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n ON l.keyframe_id = n.keyframe_id
     WHERE l.location IS NOT NULL
     AND l.location <> ''
   `) as LocationResult[];
@@ -57,7 +58,7 @@ async function getLocationGroups(){
 
 async function getUserDefinedLabels(){
   const userDefinedLabels = await readDB(`
-    SELECT otn.ref_id as keyframe_id, otn.label, l.location, n.x_trans as x, n.y_trans as y, n.z_trans as z
+    SELECT DISTINCT otn.ref_id as pointId, otn.label, l.location, n.x_trans as x, n.y_trans as y, n.z_trans as z
     FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes otn
     JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l ON otn.ref_id = l.keyframe_id
     JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n ON otn.ref_id = n.keyframe_id
@@ -175,6 +176,7 @@ export async function getAllSearchableLabels(req: Request, res: Response) {
 
     // Get all special labels with their locations and coordinates
     const userDefinedLabels = await getUserDefinedLabels();
+    console.log("User defined labels:", userDefinedLabels);
 
     const labelMap = new Map<string, Label>();
     const elevatorShaftMap = new Map<string, Label[]>();

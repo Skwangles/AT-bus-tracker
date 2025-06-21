@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Autocomplete, TextField } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { Label } from '../types';
-import { getLabelLongName, getLabelDisplayName } from '../utils/labelUtils';
+import { Label } from '../../types';
+import { getLabelLongName, getLabelDisplayName } from '../../utils/labelUtils';
 
 interface LandingSearchBarProps {
   labels: Label[];

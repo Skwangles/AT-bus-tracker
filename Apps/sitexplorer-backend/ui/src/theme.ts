@@ -21,7 +21,7 @@ const theme = createTheme({
     },
   },
   shape: {
-    borderRadius: 16,
+    borderRadius: 5,
   },
   typography: {
     fontFamily: 'Inter, Arial, sans-serif',

@@ -40,13 +40,13 @@ fi
 
 # Install custom socket_viewer which acts like Google Street View - forked from https://github.com/stella-cv/socket_viewer.git
 # cd PgSocketViewer && sudo npm install && cd ..
-# Make sure to run this in a separate terminal before running the CampusVirtualInterface with `node app.js`
+# Make sure to run this in a separate terminal before running the SitexplorerInterface with `node app.js`
 
 cd "$CV_HOME_DIR"/Apps
 pwd
 
 # Installs MediaSDKTest tool for stitching videos
-# sudo dpkg -i CampusVirtual-FileProcessing/libMediaSDK-dev_2.0-3_amd64_ubuntu18.04.deb
+# sudo dpkg -i Sitexplorer-FileProcessing/libMediaSDK-dev_2.0-3_amd64_ubuntu18.04.deb
 # Note: This SDK is only provided with purchase of a camera: https://www.insta360.com/sdk/home -- You must install it yourself
 
 sudo ldconfig # update lookup library paths again - IMPORTANT if 'libxx.so' not found, note: libxx.so.7 <- 7 is the version number of the package
@@ -61,12 +61,12 @@ make
 sudo make install
 
 
-echo "Building VSLAM CampusVirtual interface"
-mkdir -p "$CV_HOME_DIR"/Apps/SLAM/CampusVirtualInterface/build
-cd "$CV_HOME_DIR"/Apps/SLAM/CampusVirtualInterface/build 
+echo "Building VSLAM Sitexplorer interface"
+mkdir -p "$CV_HOME_DIR"/Apps/SLAM/SitexplorerInterface/build
+cd "$CV_HOME_DIR"/Apps/SLAM/SitexplorerInterface/build 
 cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_STACK_TRACE_LOGGER=ON ..
 make -j4
-check_command "Building VSLAM CampusVirtual interface"
+check_command "Building VSLAM Sitexplorer interface"
 sudo make install
 
 echo "Building MapMerger"
@@ -82,7 +82,7 @@ check_command "Building CLI interfaces"
 sudo make install
 
 
-cd "$CV_HOME_DIR"/Apps/CampusVirtual-FileProcessing
+cd "$CV_HOME_DIR"/Apps/Sitexplorer-FileProcessing
 make
-check_command "Building CampusVirtual-FileProcessing"
+check_command "Building Sitexplorer-FileProcessing"
 sudo make install

@@ -53,3 +53,5 @@ if [ -z "$CV_HOME_DIR" ]; then
   read -p "Press enter to continue"
   exit 1
 fi
+
+echo "Completed Source Setup"

@@ -1,13 +1,13 @@
 #!/bin/bash
 
-SESH="campusvirtual_session"
+SESH="sitexplorer_session"
 
 # tmux has-session -t $SESH 2>/dev/null
 
 # if [$? != 0]; then
   tmux new-session -d -s $SESH -n "viewer"
 
-  tmux send-keys -t $SESH:viewer "cd $CV_HOME_DIR/Apps/campusvirtual-backend" C-m
+  tmux send-keys -t $SESH:viewer "cd $CV_HOME_DIR/Apps/sitexplorer-backend" C-m
   tmux send-keys -t $SESH:viewer "npm run build" C-m
   tmux send-keys -t $SESH:viewer "npm run start" C-m
 

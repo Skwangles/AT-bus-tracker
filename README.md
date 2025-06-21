@@ -1,6 +1,6 @@
-![CampusVirtual: Large-scale Low-cost Panoramic Virtual Tours](logo/CampusVirtualLogo.png)
+![Sitexplorer: Large-scale Low-cost Panoramic Virtual Tours](logo/SitexplorerLogo.png)
 
-# CampusVirtual
+# Sitexplorer
 
 A comprehensive system for creating and managing large-scale panoramic virtual tours. The system processes equirectangular videos (stitched from Insta360 INSV files), tracks camera movement using VSLAM, and creates an interactive 3D navigation experience.
 
@@ -8,7 +8,7 @@ A comprehensive system for creating and managing large-scale panoramic virtual t
 
 1. Clone the repository recursively:
    ```bash
-   git clone --recursive https://github.com/Skwangles/CampusVirtual.git
+   git clone --recursive https://github.com/Skwangles/Sitexplorer.git
    ```
    > **Important**: The `--recursive` flag is required as the project uses submodules. Some submodules are private and may need to be cloned manually.
 
@@ -160,7 +160,7 @@ The authoring interface (`<url>/authoring`) allows:
 
 ### Performance Tuning
 
-- Adjust `coords_to_metres` in `campusvirtual-backend/ui/src/consts.ts` for better point spacing
+- Adjust `coords_to_metres` in `sitexplorer-backend/ui/src/consts.ts` for better point spacing
 - Configure graph pruning parameters for optimal navigation
 - Tune VSLAM parameters for better tracking
 

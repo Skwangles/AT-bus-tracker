@@ -27,5 +27,5 @@ echo $CV_EXPORT_IN_MAP_NAME
 echo "VSLAM Map:" ${1:-$CV_EXPORT_IN_MAP_NAME}
 echo "Exported DB:" ${2:-$CV_EXPORT_DB_NAME}
 
-runCampusVirtual true $CV_HOME_DIR --in ${1:-$CV_EXPORT_IN_MAP_NAME} --export_path ${2:-$CV_DB_DIR$CV_EXPORT_DB_NAME} --map_dir $CV_VSLAM_MAP_DIR --convertToSQLite
+runSitexplorer true $CV_HOME_DIR --in ${1:-$CV_EXPORT_IN_MAP_NAME} --export_path ${2:-$CV_DB_DIR$CV_EXPORT_DB_NAME} --map_dir $CV_VSLAM_MAP_DIR --convertToSQLite
 check_command "Exporting VSLAM map to SQLite"

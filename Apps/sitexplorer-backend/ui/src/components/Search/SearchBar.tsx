@@ -110,9 +110,38 @@ const SearchBar: React.FC<SearchBarProps> = ({
     setQuery(getLabelLongName(suggestion));
   };
 
-  const handleAction = (label: string, action: "highlight" | "jump") => {
-    if (isPathfindingMode && label === "" && action === "highlight") {
-      highlightCallback("");
+  const handleClearPath = () => {
+    console.log("Clearing path");
+    highlightCallback("");
+    setQuery("");
+    onClose();
+  };
+
+  const handleJump = (label: string) => {
+    let labelObj = searchableLabels.find((v: Label) =>
+      getLabelLongName(v).toLowerCase().includes(label.toLowerCase())
+    );
+    if (!labelObj) {
+      labelObj = searchableLabels.find(
+        (v: Label) => v.label.toLowerCase() === label.toLowerCase()
+      );
+    }
+    console.log("Jumping:", labelObj);
+
+    if (!labelObj || !labelObj.query || !labelObj.label) {
+      toast.error(t('errors.invalidLabel', { label }));
+      return;
+    }
+    jumpToCallback(labelObj.query);
+    setQuery(getLabelLongName(labelObj));
+    addToRecent(labelObj);
+    onClose();
+  };
+
+  const handleGuide = (label: string) => {
+
+    if (isPathfindingMode) {
+      handleClearPath();
       return;
     }
 
@@ -125,18 +154,15 @@ const SearchBar: React.FC<SearchBarProps> = ({
       );
     }
 
+    console.log("Guiding:", labelObj);
+
     if (!labelObj || !labelObj.query || !labelObj.label) {
       toast.error(t('errors.invalidLabel', { label }));
       return;
     }
-
-    addToRecent(labelObj);
-    if (action === "highlight") {
-      highlightCallback(labelObj.query);
-    } else {
-      jumpToCallback(labelObj.query);
-    }
+    highlightCallback(labelObj.query);
     setQuery(getLabelLongName(labelObj));
+    addToRecent(labelObj);
     onClose();
   };
 
@@ -187,7 +213,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
             <ButtonGroup variant="text" aria-label="action button group">
               <Button
-                onClick={() => handleAction(query, 'highlight')}
+                onClick={() => handleGuide(query)}
                 disabled={!query || (!isQueryInLabels && !isPathfindingMode)}
                 startIcon={isPathfindingMode ? <ClearIcon /> : <VisibilityOutlinedIcon />}
                 size="small"
@@ -198,7 +224,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
                 {isPathfindingMode ? t('search.buttons.clearPath') : t('search.buttons.guide')}
               </Button>
               <Button
-                onClick={() => handleAction(query, 'jump')}
+                onClick={() => handleJump(query)}
                 disabled={!query || !isQueryInLabels}
                 startIcon={<NearMeOutlinedIcon />}
                 size="small"

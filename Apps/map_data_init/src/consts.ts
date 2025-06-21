@@ -16,7 +16,7 @@ export enum EdgeType {
 }
 
 export const SQLITE_DB_NAME = process.env.CV_INIT_DB_NAME ?? "tga-building.db"
-export const SQLITE_DB_DIR = process.env.CV_DB_DIR ?? "/home/davidb/research/code-managed/CampusVirtual-TGA-MEDIA/TGA - Out/MAPS/"
+export const SQLITE_DB_DIR = process.env.CV_DB_DIR ?? "/home/davidb/research/code-managed/Sitexplorer-TGA-MEDIA/TGA - Out/MAPS/"
 
 export const USE_TABLE_PREFIX: boolean = process.env.CV_INIT_USE_TABLE_PREFIX === 'true'; // false = unrefined, true = refined (e.g. use prefix to work out the DB filename to use/load)
 export const SKIP_IF_MAP_ALREADY_CONFIGED: boolean = process.env.CV_INIT_DONT_OVERWRITE_MAP_POINTS === 'true';

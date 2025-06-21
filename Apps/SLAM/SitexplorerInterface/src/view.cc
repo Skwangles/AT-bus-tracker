@@ -36,8 +36,8 @@ int send_map_to_socket(const std::shared_ptr<stella_vslam::system>& slam,
 
     // create a viewer object
     // and pass the frame_publisher and the map_publisher
-    // std::shared_ptr<campus_virtual_socket_publisher::publisher> publisher;
-    // publisher = std::make_shared<campus_virtual_socket_publisher::publisher>(
+    // std::shared_ptr<sitexplorer_socket_publisher::publisher> publisher;
+    // publisher = std::make_shared<sitexplorer_socket_publisher::publisher>(
     // stella_vslam::util::yaml_optional_ref(cfg->yaml_node_, "SocketPublisher"),
     // slam,
     // slam->get_frame_publisher(),

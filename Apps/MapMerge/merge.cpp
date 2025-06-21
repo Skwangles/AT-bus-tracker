@@ -641,7 +641,7 @@ int main(int argc, char** argv) {
     desc.add_options()
         ("help,h", "produce help message")
         ("first,f,1", po::value<std::string>()->required(), "First map to merge")
-        ("zone1,z1", po::value<std::string>()->default_value(""), "(Optional) Sets the Zone name of DB 1 - Will overwrite all zone name, so only use on raw SLAM_TO_SQLITE outputs of runCampusVirtual")
+        ("zone1,z1", po::value<std::string>()->default_value(""), "(Optional) Sets the Zone name of DB 1 - Will overwrite all zone name, so only use on raw SLAM_TO_SQLITE outputs of runSitexplorer")
         ("zone2,z2", po::value<std::string>()->required(), "Name of Zone to assign db 2 to - sets all NULL zones to this, so if DB 1 has NULLs these will be given this name")
         ("second,s,2", po::value<std::string>()->required(), "Second map to merge")
         ("out,o", po::value<std::string>()->required(), "Output map name")
