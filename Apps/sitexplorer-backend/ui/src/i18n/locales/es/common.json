@@ -1,0 +1,122 @@
+{
+  "navigation": {
+    "instructions": "Instrucciones",
+    "close": "Cerrar",
+    "elevator": "Ascensor"
+  },
+  "location": {
+    "outdoors": "Exterior",
+    "level": "Nivel {{level}}",
+    "unreachable": "{{location}} no es una ubicación accesible.",
+    "elevator": {
+      "error": "No se pudieron obtener las ubicaciones de los ascensores."
+    },
+    "navigate": {
+      "error": "No se pudo navegar a la ubicación."
+    }
+  },
+  "project": {
+    "name": "Sitexplorer"
+  },
+  "ui": {
+    "loading": "Cargando...",
+    "close": "Cerrar",
+    "error": "Ha ocurrido un error",
+    "retry": "Reintentar",
+    "logo": {
+      "alt": "Logo Sitexplorer"
+    },
+    "menu": {
+      "backToHome": "Volver al Inicio",
+      "reportProblem": "Reportar un Problema",
+      "poweredBy": "Desarrollado por campusVirtual.io"
+    },
+    "map": {
+      "open": "Abrir mapa",
+      "close": "Cerrar mapa"
+    },
+    "instructions": {
+      "show": "Mostrar instrucciones",
+      "close": "Cerrar instrucciones"
+    },
+    "elevator": {
+      "cancel": "Cancelar"
+    }
+  },
+  "search": {
+    "placeholder": "Buscar una ubicación...",
+    "ariaLabel": "Buscar una ubicación",
+    "clear": "Limpiar búsqueda",
+    "buttons": {
+      "guide": "Guiar",
+      "clearPath": "Limpiar ruta",
+      "goTo": "Ir a"
+    }
+  },
+  "errors": {
+    "fetchData": "Error al obtener los datos:",
+    "invalidLabel": "La etiqueta no es válida: {{label}}"
+  },
+  "instructions": {
+    "title": "Cómo Navegar",
+    "navigation": {
+      "mobile": {
+        "look": "Arrastra o desliza para mirar alrededor"
+      },
+      "desktop": {
+        "move": "para moverte",
+        "look": "para mirar alrededor",
+        "drag": "Arrastra para mirar alrededor"
+      },
+      "jump": "Haz clic en orbes rojos para saltar a nuevas ubicaciones",
+      "location": "Tu ubicación actual se muestra justo debajo de la barra de búsqueda en la parte superior"
+    },
+    "search": {
+      "title": "Búsqueda",
+      "useSearch": "Usa la barra de búsqueda en la parte superior para encontrar ubicaciones",
+      "destination": "El cuadrado amarillo giratorio marca tu destino",
+      "path": "El camino azul te guía a tu destino"
+    },
+    "map": {
+      "title": "Mapa",
+      "open": "Abre el mapa con el botón en la esquina superior izquierda",
+      "legend": {
+        "position": "Tu posición",
+        "nextRegion": "Próxima región",
+        "viewingPoint": "Punto de vista",
+        "highlightedPath": "Camino resaltado"
+      }
+    },
+    "help": {
+      "title": "Ayuda",
+      "toggle": "Haz clic en el botón Instrucciones en la esquina inferior derecha para abrir o cerrar esta ventana de ayuda"
+    }
+  },
+  "homepage": {
+    "howToUseTitle": "Cómo usarlo",
+    "howToUseText": "¡Bienvenido a Sitexplorer! Comienza tu recorrido virtual seleccionando una de las ubicaciones de inicio sugeridas a continuación o usa el cuadro de búsqueda para encontrar una ubicación específica. Usa el mouse para mirar alrededor y las teclas de flecha o WASD para navegar por el campus. Haz clic en los puntos de acceso para obtener más información sobre las diferentes áreas.",
+    "searchPlaceholder": "Buscar una ubicación...",
+    "noLocations": "No hay ubicaciones disponibles.",
+    "fetchError": "No se pudieron obtener las ubicaciones.",
+    "outdoorsDescription": "Comienza tu recorrido desde la entrada del campus",
+    "level1Description": "Comienza desde la planta baja",
+    "level2Description": "Comienza desde el segundo piso",
+    "level3Description": "Comienza desde el último piso"
+  },
+  "landing": {
+    "welcome": "¡Bienvenido! Aquí te explicamos cómo empezar:",
+    "howTo": {
+      "search": "Buscar una ubicación",
+      "hotspots": "Haz clic en puntos de interés para explorar",
+      "move": "Usa flechas o WASD para moverte"
+    },
+    "suggested": "Puntos de Partida Sugeridos",
+    "noSuggestions": "No hay sugerencias disponibles.",
+    "start": "Comenzar",
+    "random": "Aleatorio",
+    "outdoorsDescription": "Comienza tu recorrido desde la entrada del campus",
+    "level1Description": "Comienza desde la planta baja",
+    "level2Description": "Comienza desde el segundo piso",
+    "level3Description": "Comienza desde el piso superior"
+  }
+} 

@@ -1,0 +1,122 @@
+{
+  "navigation": {
+    "instructions": "Instructions",
+    "close": "Fermer",
+    "elevator": "Ascenseur"
+  },
+  "location": {
+    "outdoors": "Extérieur",
+    "level": "Niveau {{level}}",
+    "unreachable": "{{location}} n'est pas un lieu accessible.",
+    "elevator": {
+      "error": "Impossible de récupérer les emplacements des ascenseurs."
+    },
+    "navigate": {
+      "error": "Impossible de naviguer vers l'emplacement."
+    }
+  },
+  "project": {
+    "name": "Sitexplorer"
+  },
+  "ui": {
+    "loading": "Chargement...",
+    "close": "Fermer",
+    "error": "Une erreur est survenue",
+    "retry": "Réessayer",
+    "logo": {
+      "alt": "Logo de Sitexplorer"
+    },
+    "menu": {
+      "backToHome": "Retour à l'accueil",
+      "reportProblem": "Signaler un problème",
+      "poweredBy": "Propulsé par campusVirtual.io"
+    },
+    "map": {
+      "open": "Ouvrir la carte",
+      "close": "Fermer la carte"
+    },
+    "instructions": {
+      "show": "Afficher les instructions",
+      "close": "Fermer les instructions"
+    },
+    "elevator": {
+      "cancel": "Annuler"
+    }
+  },
+  "search": {
+    "placeholder": "Rechercher un lieu...",
+    "ariaLabel": "Rechercher un lieu",
+    "clear": "Effacer la recherche",
+    "buttons": {
+      "guide": "Guider",
+      "clearPath": "Effacer le chemin",
+      "goTo": "Aller à"
+    }
+  },
+  "errors": {
+    "fetchData": "Erreur lors de la récupération des données :",
+    "invalidLabel": "Étiquette non valide : {{label}}"
+  },
+  "instructions": {
+    "title": "Comment naviguer",
+    "navigation": {
+      "mobile": {
+        "look": "Faites glisser ou balayez pour regarder autour"
+      },
+      "desktop": {
+        "move": "pour vous déplacer",
+        "look": "pour regarder autour",
+        "drag": "Faites glisser pour regarder autour"
+      },
+      "jump": "Cliquez sur les orbes rouges pour sauter vers de nouveaux lieux",
+      "location": "Votre emplacement actuel est indiqué juste en dessous de la barre de recherche en haut"
+    },
+    "search": {
+      "title": "Recherche",
+      "useSearch": "Utilisez la barre de recherche en haut pour trouver des lieux",
+      "destination": "Le carré jaune en rotation marque votre destination",
+      "path": "Le chemin bleu vous guide vers votre destination"
+    },
+    "map": {
+      "title": "Carte",
+      "open": "Ouvrez la carte avec le bouton en haut à gauche",
+      "legend": {
+        "position": "Votre position",
+        "nextRegion": "Région suivante",
+        "viewingPoint": "Point de vue",
+        "highlightedPath": "Chemin en surbrillance"
+      }
+    },
+    "help": {
+      "title": "Aide",
+      "toggle": "Cliquez sur le bouton Instructions en bas à droite pour ouvrir ou fermer cette fenêtre d'aide"
+    }
+  },
+  "homepage": {
+    "howToUseTitle": "Comment utiliser",
+    "howToUseText": "Bienvenue sur Sitexplorer ! Commencez votre visite virtuelle en sélectionnant l'un des points de départ suggérés ci-dessous ou utilisez le champ de recherche pour trouver un lieu spécifique. Utilisez la souris pour regarder autour de vous et les touches fléchées ou WASD pour naviguer sur le campus. Cliquez sur les points d'accès pour en savoir plus sur les différentes zones.",
+    "searchPlaceholder": "Rechercher un lieu...",
+    "noLocations": "Aucun lieu disponible.",
+    "fetchError": "Impossible de récupérer les lieux.",
+    "outdoorsDescription": "Commencez votre visite depuis l'entrée du campus",
+    "level1Description": "Commencez par le rez-de-chaussée",
+    "level2Description": "Commencez par le deuxième étage",
+    "level3Description": "Commencez par le dernier étage"
+  },
+  "landing": {
+    "welcome": "Bienvenue ! Voici comment commencer :",
+    "howTo": {
+      "search": "Rechercher un lieu",
+      "hotspots": "Cliquez sur les points d'accès pour explorer",
+      "move": "Utilisez les flèches ou ZQSD pour vous déplacer"
+    },
+    "suggested": "Points de départ suggérés",
+    "noSuggestions": "Aucune suggestion disponible.",
+    "start": "Commencer",
+    "random": "Aléatoire",
+    "outdoorsDescription": "Commencez votre visite depuis l'entrée du campus",
+    "level1Description": "Commencez par le rez-de-chaussée",
+    "level2Description": "Commencez par le deuxième étage",
+    "level3Description": "Commencez par le dernier étage"
+  }
+} 

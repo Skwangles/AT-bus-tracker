@@ -1,0 +1,122 @@
+{
+  "navigation": {
+    "instructions": "Istruzioni",
+    "close": "Chiudi",
+    "elevator": "Ascensore"
+  },
+  "location": {
+    "outdoors": "Esterno",
+    "level": "Livello {{level}}",
+    "unreachable": "{{location}} non è una posizione raggiungibile.",
+    "elevator": {
+      "error": "Impossibile recuperare le posizioni degli ascensori."
+    },
+    "navigate": {
+      "error": "Impossibile navigare alla posizione."
+    }
+  },
+  "project": {
+    "name": "Sitexplorer"
+  },
+  "ui": {
+    "loading": "Caricamento...",
+    "close": "Chiudi",
+    "error": "Si è verificato un errore",
+    "retry": "Riprova",
+    "logo": {
+      "alt": "Logo Sitexplorer"
+    },
+    "menu": {
+      "backToHome": "Torna alla Home",
+      "reportProblem": "Segnala un problema",
+      "poweredBy": "Realizzato da campusVirtual.io"
+    },
+    "map": {
+      "open": "Apri mappa",
+      "close": "Chiudi mappa"
+    },
+    "instructions": {
+      "show": "Mostra istruzioni",
+      "close": "Chiudi istruzioni"
+    },
+    "elevator": {
+      "cancel": "Annulla"
+    }
+  },
+  "search": {
+    "placeholder": "Cerca una posizione...",
+    "ariaLabel": "Cerca una posizione",
+    "clear": "Cancella ricerca",
+    "buttons": {
+      "guide": "Guida",
+      "clearPath": "Cancella percorso",
+      "goTo": "Vai a"
+    }
+  },
+  "errors": {
+    "fetchData": "Errore nel recupero dei dati:",
+    "invalidLabel": "Etichetta non valida: {{label}}"
+  },
+  "instructions": {
+    "title": "Come navigare",
+    "navigation": {
+      "mobile": {
+        "look": "Trascina o scorri per guardarti intorno"
+      },
+      "desktop": {
+        "move": "per muoverti",
+        "look": "per guardarti intorno",
+        "drag": "Trascina per guardarti intorno"
+      },
+      "jump": "Clicca sulle sfere rosse per saltare in nuove posizioni",
+      "location": "La tua posizione attuale è mostrata appena sotto la barra di ricerca in alto"
+    },
+    "search": {
+      "title": "Ricerca",
+      "useSearch": "Usa la barra di ricerca in alto per trovare le posizioni",
+      "destination": "Il quadrato giallo rotante indica la tua destinazione",
+      "path": "Il percorso blu ti guida alla tua destinazione"
+    },
+    "map": {
+      "title": "Mappa",
+      "open": "Apri la mappa con il pulsante in alto a sinistra",
+      "legend": {
+        "position": "La tua posizione",
+        "nextRegion": "Regione successiva",
+        "viewingPoint": "Punto di osservazione",
+        "highlightedPath": "Percorso evidenziato"
+      }
+    },
+    "help": {
+      "title": "Aiuto",
+      "toggle": "Clicca sul pulsante Istruzioni in basso a destra per aprire o chiudere questa finestra di aiuto"
+    }
+  },
+  "homepage": {
+    "howToUseTitle": "Come si usa",
+    "howToUseText": "Benvenuto su Sitexplorer! Inizia il tuo tour virtuale selezionando una delle posizioni di partenza suggerite di seguito o usa la casella di ricerca per trovare una posizione specifica. Usa il mouse per guardarti intorno e i tasti freccia o WASD per navigare nel campus. Clicca sugli hotspot per saperne di più sulle diverse aree.",
+    "searchPlaceholder": "Cerca una posizione...",
+    "noLocations": "Nessuna posizione disponibile.",
+    "fetchError": "Impossibile recuperare le posizioni.",
+    "outdoorsDescription": "Inizia il tuo tour dall'ingresso del campus",
+    "level1Description": "Inizia dal piano terra",
+    "level2Description": "Inizia dal secondo piano",
+    "level3Description": "Inizia dall'ultimo piano"
+  },
+  "landing": {
+    "welcome": "Benvenuto! Ecco come iniziare:",
+    "howTo": {
+      "search": "Cerca una posizione",
+      "hotspots": "Clicca sugli hotspot per esplorare",
+      "move": "Usa le frecce o WASD per muoverti"
+    },
+    "suggested": "Punti di partenza suggeriti",
+    "noSuggestions": "Nessun suggerimento disponibile.",
+    "start": "Inizia",
+    "random": "Casuale",
+    "outdoorsDescription": "Inizia il tuo tour dall'ingresso del campus",
+    "level1Description": "Inizia dal piano terra",
+    "level2Description": "Inizia dal secondo piano",
+    "level3Description": "Inizia dall'ultimo piano"
+  }
+} 

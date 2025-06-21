@@ -1,0 +1,122 @@
+{
+  "navigation": {
+    "instructions": "Instruktioner",
+    "close": "Stäng",
+    "elevator": "Hiss"
+  },
+  "location": {
+    "outdoors": "Utomhus",
+    "level": "Våning {{level}}",
+    "unreachable": "{{location}} är inte en tillgänglig plats.",
+    "elevator": {
+      "error": "Kunde inte hämta hissplatser."
+    },
+    "navigate": {
+      "error": "Kunde inte navigera till platsen."
+    }
+  },
+  "project": {
+    "name": "Sitexplorer"
+  },
+  "ui": {
+    "loading": "Laddar...",
+    "close": "Stäng",
+    "error": "Ett fel har uppstått",
+    "retry": "Försök igen",
+    "logo": {
+      "alt": "Sitexplorer Logo"
+    },
+    "menu": {
+      "backToHome": "Tillbaka till Start",
+      "reportProblem": "Rapportera ett Problem",
+      "poweredBy": "Drivs av campusVirtual.io"
+    },
+    "map": {
+      "open": "Öppna karta",
+      "close": "Stäng karta"
+    },
+    "instructions": {
+      "show": "Visa instruktioner",
+      "close": "Stäng instruktioner"
+    },
+    "elevator": {
+      "cancel": "Avbryt"
+    }
+  },
+  "search": {
+    "placeholder": "Sök en plats...",
+    "ariaLabel": "Sök en plats",
+    "clear": "Rensa sökning",
+    "buttons": {
+      "guide": "Vägleda",
+      "clearPath": "Rensa väg",
+      "goTo": "Gå till"
+    }
+  },
+  "errors": {
+    "fetchData": "Fel vid hämtning av data:",
+    "invalidLabel": "Ogiltig etikett: {{label}}"
+  },
+  "instructions": {
+    "title": "Hur man navigerar",
+    "navigation": {
+      "mobile": {
+        "look": "Dra eller svep för att titta runt"
+      },
+      "desktop": {
+        "move": "för att röra dig",
+        "look": "för att titta runt",
+        "drag": "Dra för att titta runt"
+      },
+      "jump": "Klicka på röda kulor för att hoppa till nya platser",
+      "location": "Din nuvarande plats visas direkt under sökfältet högst upp"
+    },
+    "search": {
+      "title": "Sökning",
+      "useSearch": "Använd sökfältet högst upp för att hitta platser",
+      "destination": "Gul roterande kvadrat markerar din destination",
+      "path": "Blå väg leder dig till din destination"
+    },
+    "map": {
+      "title": "Karta",
+      "open": "Öppna kartan med knappen uppe till vänster",
+      "legend": {
+        "position": "Din position",
+        "nextRegion": "Nästa region",
+        "viewingPoint": "Utsiktspunkt",
+        "highlightedPath": "Markerad väg"
+      }
+    },
+    "help": {
+      "title": "Hjälp",
+      "toggle": "Klicka på knappen Instruktioner nere till höger för att öppna eller stänga detta hjälpfönster"
+    }
+  },
+  "homepage": {
+    "howToUseTitle": "Hur man använder",
+    "howToUseText": "Välkommen till Sitexplorer! Börja din virtuella rundtur genom att välja en av våra föreslagna startplatser nedan, eller använd sökrutan för att hitta en specifik plats. Använd musen för att titta runt och piltangenterna eller WASD för att navigera genom campus. Klicka på hotspots för att lära dig mer om olika områden.",
+    "searchPlaceholder": "Sök en plats...",
+    "noLocations": "Inga platser tillgängliga.",
+    "fetchError": "Kunde inte hämta platser.",
+    "outdoorsDescription": "Börja din rundtur från campusentrén",
+    "level1Description": "Börja från bottenvåningen",
+    "level2Description": "Börja från andra våningen",
+    "level3Description": "Börja från översta våningen"
+  },
+  "landing": {
+    "welcome": "Välkommen! Så här börjar du:",
+    "howTo": {
+      "search": "Sök en plats",
+      "hotspots": "Klicka på hotspots för att utforska",
+      "move": "Använd pilar eller WASD för att röra dig"
+    },
+    "suggested": "Föreslagna startpunkter",
+    "noSuggestions": "Inga förslag tillgängliga.",
+    "start": "Starta",
+    "random": "Slumpmässig",
+    "outdoorsDescription": "Börja din rundtur från campusentrén",
+    "level1Description": "Börja från bottenvåningen",
+    "level2Description": "Börja från andra våningen",
+    "level3Description": "Börja från översta våningen"
+  }
+} 

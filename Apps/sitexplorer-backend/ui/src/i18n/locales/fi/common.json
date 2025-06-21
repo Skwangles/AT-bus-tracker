@@ -1,0 +1,128 @@
+{
+  "navigation": {
+    "search": "Etsi",
+    "map": "Kartta",
+    "list": "Lista",
+    "instructions": "Ohjeet",
+    "close": "Sulje",
+    "elevator": "Hissi"
+  },
+  "location": {
+    "outdoors": "Ulkona",
+    "level": "Kerros {{level}}",
+    "unreachable": "{{location}} ei ole saavutettavissa oleva paikka.",
+    "elevator": {
+      "error": "Hissien sijainteja ei voitu hakea."
+    },
+    "navigate": {
+      "error": "Ei voitu navigoida paikkaan."
+    }
+  },
+  "project": {
+    "name": "Sitexplorer"
+  },
+  "ui": {
+    "loading": "Ladataan...",
+    "error": "Tapahtui virhe",
+    "retry": "Yritä uudelleen",
+    "logo": {
+      "alt": "Sitexplorer Logo"
+    },
+    "menu": {
+      "backToHome": "Takaisin Alkuun",
+      "reportProblem": "Ilmoita Ongelma",
+      "poweredBy": "Toteutettu campusVirtual.io:llä"
+    },
+    "map": {
+      "open": "Avaa kartta",
+      "close": "Sulje kartta"
+    },
+    "instructions": {
+      "show": "Näytä ohjeet",
+      "close": "Sulje ohjeet"
+    },
+    "elevator": {
+      "cancel": "Peruuta"
+    }
+  },
+  "search": {
+    "placeholder": "Etsi paikka...",
+    "ariaLabel": "Etsi paikka",
+    "clear": "Tyhjennä haku",
+    "buttons": {
+      "guide": "Ohjaa",
+      "clearPath": "Tyhjennä reitti",
+      "goTo": "Mene",
+      "ariaLabels": {
+        "highlight": "Korosta reitti paikkaan",
+        "goto": "Mene paikkaan"
+      }
+    }
+  },
+  "errors": {
+    "fetchData": "Virhe tietojen haussa:",
+    "invalidLabel": "Virheellinen tunniste: {{label}}"
+  },
+  "instructions": {
+    "title": "Miten navigoida",
+    "navigation": {
+      "mobile": {
+        "look": "Vedä tai pyyhkäise katsoaksesi ympärillesi"
+      },
+      "desktop": {
+        "move": "liikkumiseen",
+        "look": "katsoaksesi ympärillesi",
+        "drag": "Vedä katsoaksesi ympärillesi"
+      },
+      "jump": "Klikkaa punaisia palloja hypätäksesi uusiin paikkoihin",
+      "location": "Nykyinen sijaintisi näkyy hakupalkin alapuolella ylhäällä"
+    },
+    "search": {
+      "title": "Haku",
+      "useSearch": "Käytä ylhäällä olevaa hakupalkkia paikkojen löytämiseen",
+      "destination": "Keltainen pyörivä neliö merkitsee määränpääsi",
+      "path": "Sininen reitti ohjaa sinut määränpääsi"
+    },
+    "map": {
+      "title": "Kartta",
+      "open": "Avaa kartta vasemmassa yläkulmassa olevalla painikkeella",
+      "legend": {
+        "position": "Sijaintisi",
+        "nextRegion": "Seuraava alue",
+        "viewingPoint": "Katselupiste",
+        "highlightedPath": "Korostettu reitti"
+      }
+    },
+    "help": {
+      "title": "Ohje",
+      "toggle": "Klikkaa Ohjeet-painiketta oikeassa alakulmassa avataksesi tai sulkeaksesi tämän ohjeikkunan"
+    }
+  },
+  "homepage": {
+    "howToUseTitle": "Miten käyttää",
+    "howToUseText": "Tervetuloa Sitexploreriin! Aloita virtuaalikierros valitsemalla yksi ehdotetuista lähtöpaikoista alla tai käytä hakukenttää löytääksesi tietyn paikan. Käytä hiirtä katsoaksesi ympärillesi ja nuolinäppäimiä tai WASD:tä navigoidaksesi kampuksella. Klikkaa kiinnostuskohteita oppiaksesi lisää eri alueista.",
+    "searchPlaceholder": "Etsi paikka...",
+    "noLocations": "Ei paikkoja saatavilla.",
+    "fetchError": "Paikkoja ei voitu hakea.",
+    "outdoorsDescription": "Aloita kierros kampukselle sisäänkäynniltä",
+    "level1Description": "Aloita pohjakerroksesta",
+    "level2Description": "Aloita toisesta kerroksesta",
+    "level3Description": "Aloita ylimmästä kerroksesta"
+  },
+  "landing": {
+    "welcome": "Tervetuloa! Näin aloitat:",
+    "howTo": {
+      "search": "Etsi paikka",
+      "hotspots": "Klikkaa kiinnostuskohteita tutkiaksesi",
+      "move": "Käytä nuolia tai WASD:tä liikkumiseen"
+    },
+    "suggested": "Ehdotetut lähtökohdat",
+    "noSuggestions": "Ei ehdotuksia saatavilla.",
+    "start": "Aloita",
+    "random": "Satunnainen",
+    "outdoorsDescription": "Aloita kierros kampukselle sisäänkäynniltä",
+    "level1Description": "Aloita pohjakerroksesta",
+    "level2Description": "Aloita toisesta kerroksesta",
+    "level3Description": "Aloita ylimmästä kerroksesta"
+  }
+} 

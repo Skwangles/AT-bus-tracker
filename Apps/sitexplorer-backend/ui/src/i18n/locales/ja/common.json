@@ -1,0 +1,125 @@
+{
+  "navigation": {
+    "search": "検索",
+    "map": "マップ",
+    "list": "リスト",
+    "instructions": "説明",
+    "close": "閉じる",
+    "elevator": "エレベーター"
+  },
+  "location": {
+    "outdoors": "屋外",
+    "level": "レベル {{level}}",
+    "unreachable": "{{location}} は到達可能な場所ではありません。",
+    "elevator": {
+      "error": "エレベーターの場所を取得できませんでした。"
+    },
+    "navigate": {
+      "error": "場所に移動できませんでした。"
+    }
+  },
+  "project": {
+    "name": "Sitexplorer"
+  },
+  "ui": {
+    "loading": "読み込み中...",
+    "close": "閉じる",
+    "error": "エラーが発生しました",
+    "retry": "再試行",
+    "logo": {
+      "alt": "Sitexplorer ロゴ"
+    },
+    "menu": {
+      "backToHome": "ホームに戻る",
+      "reportProblem": "問題を報告",
+      "poweredBy": "Powered by campusVirtual.io"
+    },
+    "map": {
+      "open": "地図を開く",
+      "close": "地図を閉じる"
+    },
+    "instructions": {
+      "show": "説明を表示",
+      "close": "説明を閉じる"
+    },
+    "elevator": {
+      "cancel": "キャンセル"
+    }
+  },
+  "search": {
+    "placeholder": "場所を検索...",
+    "ariaLabel": "場所を検索",
+    "clear": "検索をクリア",
+    "buttons": {
+      "guide": "ガイド",
+      "clearPath": "パスをクリア",
+      "goTo": "移動"
+    }
+  },
+  "errors": {
+    "fetchData": "データの取得中にエラーが発生しました:",
+    "invalidLabel": "無効なラベル: {{label}}"
+  },
+  "instructions": {
+    "title": "ナビゲーション方法",
+    "navigation": {
+      "mobile": {
+        "look": "ドラッグまたはスワイプして周りを見回す"
+      },
+      "desktop": {
+        "move": "移動するには",
+        "look": "周りを見回すには",
+        "drag": "ドラッグして周りを見回す"
+      },
+      "jump": "赤いオーブをクリックして新しい場所にジャンプする",
+      "location": "現在の場所は上部の検索バーのすぐ下に表示されます"
+    },
+    "search": {
+      "title": "検索",
+      "useSearch": "上部の検索バーを使用して場所を検索します",
+      "destination": "黄色の回転する正方形が目的地を示します",
+      "path": "青いパスが目的地まで案内します"
+    },
+    "map": {
+      "title": "地図",
+      "open": "左上のボタンで地図を開きます",
+      "legend": {
+        "position": "あなたの位置",
+        "nextRegion": "次の地域",
+        "viewingPoint": "視点",
+        "highlightedPath": "ハイライトされたパス"
+      }
+    },
+    "help": {
+      "title": "ヘルプ",
+      "toggle": "右下の説明ボタンをクリックして、このヘルプウィンドウを開閉します"
+    }
+  },
+  "homepage": {
+    "howToUseTitle": "使用方法",
+    "howToUseText": "Sitexplorer へようこそ！以下の提案された開始場所のいずれかを選択するか、検索ボックスを使用して特定の場所を見つけることで、バーチャルツアーを開始します。マウスを使用して周りを見回し、矢印キーまたは WASD を使用してキャンパスをナビゲートします。ホットスポットをクリックして、さまざまなエリアについて詳しく学びます。",
+    "searchPlaceholder": "場所を検索...",
+    "noLocations": "利用可能な場所はありません。",
+    "fetchError": "場所を取得できませんでした。",
+    "outdoorsDescription": "キャンパスの入り口からツアーを開始します",
+    "level1Description": "1階から開始します",
+    "level2Description": "2階から開始します",
+    "level3Description": "最上階から開始します"
+  },
+  "landing": {
+    "welcome": "ようこそ！開始方法はこちらです：",
+    "howTo": {
+      "search": "場所を検索",
+      "hotspots": "ホットスポットをクリックして探索",
+      "move": "矢印または WASD を使用して移動"
+    },
+    "suggested": "提案された開始点",
+    "noSuggestions": "提案はありません。",
+    "start": "開始",
+    "random": "ランダム",
+    "outdoorsDescription": "キャンパスの入り口からツアーを開始します",
+    "level1Description": "1階から開始します",
+    "level2Description": "2階から開始します",
+    "level3Description": "最上階から開始します"
+  }
+} 
