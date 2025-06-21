@@ -1,12 +1,12 @@
 [submodule "Apps/Sitexplorer-FileProcessing"]
 		path = Apps/Sitexplorer-FileProcessing
-		url = https://github.com/Skwangles/CampusVirtual-FileProcessing.git
+		url = https://github.com/Skwangles/Sitexplorer-FileProcessing.git
 [submodule "Apps/SLAM/SitexplorerInterface/3rd/filesystem"]
 	path = Apps/SLAM/SitexplorerInterface/3rd/filesystem
 	url = https://github.com/gulrak/filesystem.git
 [submodule "Apps/PgViewer"]
 	path = Apps/PgViewer
-	url = https://github.com/Skwangles/CampusVirtual-SocketViewer.git
+	url = https://github.com/Skwangles/Sitexplorer-SocketViewer.git
 [submodule "Apps/blur360-images"]
 	path = Apps/blur360-images
 	url = https://github.com/Skwangles/blur360.git
