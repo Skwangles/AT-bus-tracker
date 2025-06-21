@@ -1,8 +1,8 @@
-[submodule "Apps/CampusVirtual-FileProcessing"]
-	path = Apps/CampusVirtual-FileProcessing
-	url = https://github.com/Skwangles/CampusVirtual-FileProcessing.git
-[submodule "Apps/SLAM/CampusVirtualInterface/3rd/filesystem"]
-	path = Apps/SLAM/CampusVirtualInterface/3rd/filesystem
+[submodule "Apps/Sitexplorer-FileProcessing"]
+		path = Apps/Sitexplorer-FileProcessing
+		url = https://github.com/Skwangles/CampusVirtual-FileProcessing.git
+[submodule "Apps/SLAM/SitexplorerInterface/3rd/filesystem"]
+	path = Apps/SLAM/SitexplorerInterface/3rd/filesystem
 	url = https://github.com/gulrak/filesystem.git
 [submodule "Apps/PgViewer"]
 	path = Apps/PgViewer
