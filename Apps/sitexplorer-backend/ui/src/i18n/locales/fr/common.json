@@ -1,8 +1,6 @@
 {
-  "navigation": {
-    "instructions": "Instructions",
-    "close": "Fermer",
-    "elevator": "Ascenseur"
+  "pathfinding": {
+    "clear": "Effacer le chemin"
   },
   "location": {
     "outdoors": "Extérieur",
@@ -24,12 +22,13 @@
     "error": "Une erreur est survenue",
     "retry": "Réessayer",
     "logo": {
-      "alt": "Logo de Sitexplorer"
+      "alt": "Logo Sitexplorer"
     },
     "menu": {
       "backToHome": "Retour à l'accueil",
+      "info": "Informations",
       "reportProblem": "Signaler un problème",
-      "poweredBy": "Propulsé par campusVirtual.io"
+      "poweredBy": "Propulsé par Sitexplorer.io"
     },
     "map": {
       "open": "Ouvrir la carte",
@@ -44,7 +43,7 @@
     }
   },
   "search": {
-    "placeholder": "Rechercher un lieu...",
+    "placeholder": "Rechercher un emplacement...",
     "ariaLabel": "Rechercher un lieu",
     "clear": "Effacer la recherche",
     "buttons": {
@@ -55,26 +54,26 @@
   },
   "errors": {
     "fetchData": "Erreur lors de la récupération des données :",
-    "invalidLabel": "Étiquette non valide : {{label}}"
+    "invalidLabel": "L'étiquette n'est pas valide : {{label}}"
   },
   "instructions": {
     "title": "Comment naviguer",
     "navigation": {
       "mobile": {
-        "look": "Faites glisser ou balayez pour regarder autour"
+        "look": "Faites glisser ou balayez pour regarder autour de vous"
       },
       "desktop": {
         "move": "pour vous déplacer",
-        "look": "pour regarder autour",
-        "drag": "Faites glisser pour regarder autour"
+        "look": "pour regarder autour de vous",
+        "drag": "Faites glisser pour regarder autour de vous"
       },
       "jump": "Cliquez sur les orbes rouges pour sauter vers de nouveaux lieux",
       "location": "Votre emplacement actuel est indiqué juste en dessous de la barre de recherche en haut"
     },
     "search": {
       "title": "Recherche",
-      "useSearch": "Utilisez la barre de recherche en haut pour trouver des lieux",
-      "destination": "Le carré jaune en rotation marque votre destination",
+      "useSearch": "Utilisez la barre de recherche en haut pour trouver des emplacements",
+      "destination": "Le carré jaune rotatif marque votre destination",
       "path": "Le chemin bleu vous guide vers votre destination"
     },
     "map": {
@@ -84,7 +83,7 @@
         "position": "Votre position",
         "nextRegion": "Région suivante",
         "viewingPoint": "Point de vue",
-        "highlightedPath": "Chemin en surbrillance"
+        "highlightedPath": "Chemin mis en surbrillance"
       }
     },
     "help": {
@@ -118,5 +117,28 @@
     "level1Description": "Commencez par le rez-de-chaussée",
     "level2Description": "Commencez par le deuxième étage",
     "level3Description": "Commencez par le dernier étage"
+  },
+  "arrival": {
+    "title": "Vous êtes arrivé à",
+    "subtitle": "Destination atteinte !"
+  },
+  "error": {
+    "server": {
+      "title": "Impossible de se connecter au serveur Sitexplorer",
+      "description": "Nous n'avons pas pu établir une connexion avec le serveur. Cela peut être dû à :",
+      "reason1": "Le serveur peut être hors ligne ou en maintenance",
+      "reason2": "Votre connexion Internet peut être instable",
+      "reason3": "L'adresse du serveur peut être incorrecte",
+      "retry": "Réessayer la connexion"
+    },
+    "webgl": {
+      "title": "WebGL non pris en charge",
+      "description": "Votre navigateur ne prend pas en charge WebGL, qui est nécessaire pour exécuter cette application. Cela peut être dû à :",
+      "reason1": "Votre navigateur peut être obsolète",
+      "reason2": "WebGL peut être désactivé dans les paramètres de votre navigateur",
+      "reason3": "Votre carte graphique peut ne pas prendre en charge WebGL",
+      "reload": "Recharger la page",
+      "check": "Vérifier la prise en charge WebGL"
+    }
   }
 } 

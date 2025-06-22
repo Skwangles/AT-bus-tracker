@@ -1,8 +1,6 @@
 {
-  "navigation": {
-    "instructions": "Instructions",
-    "close": "Close",
-    "elevator": "Elevator"
+  "pathfinding": {
+    "clear": "Clear Path"
   },
   "location": {
     "outdoors": "Outdoors",
@@ -28,8 +26,9 @@
     },
     "menu": {
       "backToHome": "Back to Home",
+      "info": "Info",
       "reportProblem": "Report a Problem",
-      "poweredBy": "Powered by campusVirtual.io"
+      "poweredBy": "Powered by Sitexplorer.io"
     },
     "logo": {
       "alt": "Sitexplorer Logo"
@@ -99,5 +98,28 @@
     "level1Description": "Begin from the ground floor",
     "level2Description": "Start from the second floor",
     "level3Description": "Begin from the top floor"
+  },
+  "arrival": {
+    "title": "You have arrived at",
+    "subtitle": "Destination reached!"
+  },
+  "error": {
+    "server": {
+      "title": "Unable to Connect to Sitexplorer's Server",
+      "description": "We couldn't establish a connection to the server. This might be due to:",
+      "reason1": "The server might be offline or under maintenance",
+      "reason2": "Your internet connection might be unstable",
+      "reason3": "The server address might be incorrect",
+      "retry": "Retry Connection"
+    },
+    "webgl": {
+      "title": "WebGL Not Supported",
+      "description": "Your browser doesn't support WebGL, which is required to run this application. This might be due to:",
+      "reason1": "Your browser might be outdated",
+      "reason2": "WebGL might be disabled in your browser settings",
+      "reason3": "Your graphics card might not support WebGL",
+      "reload": "Reload Page",
+      "check": "Check WebGL Support"
+    }
   }
 } 

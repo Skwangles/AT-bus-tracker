@@ -15,7 +15,7 @@
       "error": "Kunne ikke hente heisplasseringer."
     },
     "navigate": {
-      "error": "Kunne ikke navigere til stedet."
+      "error": "Kunne ikke navigere til plassering."
     }
   },
   "project": {
@@ -27,12 +27,13 @@
     "error": "En feil har oppstått",
     "retry": "Prøv igjen",
     "logo": {
-      "alt": "Sitexplorer-logo"
+      "alt": "Sitexplorer Logo"
     },
     "menu": {
       "backToHome": "Tilbake til Hjem",
-      "reportProblem": "Rapporter et problem",
-      "poweredBy": "Drevet av campusVirtual.io"
+      "info": "Info",
+      "reportProblem": "Rapporter et Problem",
+      "poweredBy": "Drevet av Sitexplorer.io"
     },
     "map": {
       "open": "Åpne kart",
@@ -47,7 +48,7 @@
     }
   },
   "search": {
-    "placeholder": "Søk etter et sted...",
+    "placeholder": "Søk etter en plassering...",
     "ariaLabel": "Søk etter et sted",
     "clear": "Tøm søk",
     "buttons": {
@@ -58,17 +59,17 @@
   },
   "errors": {
     "fetchData": "Feil ved henting av data:",
-    "invalidLabel": "Ugyldig etikett: {{label}}"
+    "invalidLabel": "Etikett er ugyldig: {{label}}"
   },
   "instructions": {
-    "title": "Hvordan navigere",
+    "title": "Slik navigerer du",
     "navigation": {
       "mobile": {
         "look": "Dra eller sveip for å se deg rundt"
       },
       "desktop": {
-        "move": "for å bevege deg",
-        "look": "for å se deg rundt",
+        "move": "å bevege deg",
+        "look": "å se deg rundt",
         "drag": "Dra for å se deg rundt"
       },
       "jump": "Klikk på røde kuler for å hoppe til nye steder",
@@ -76,9 +77,9 @@
     },
     "search": {
       "title": "Søk",
-      "useSearch": "Bruk søkefeltet øverst for å finne steder",
-      "destination": "Det roterende gule kvadratet markerer destinasjonen din",
-      "path": "Den blå stien guider deg til destinasjonen din"
+      "useSearch": "Bruk søkefeltet øverst for å finne plasseringer",
+      "destination": "Gul roterende firkant markerer destinasjonen din",
+      "path": "Blå sti fører deg til destinasjonen din"
     },
     "map": {
       "title": "Kart",
@@ -86,8 +87,8 @@
       "legend": {
         "position": "Din posisjon",
         "nextRegion": "Neste region",
-        "viewingPoint": "Utsiktspunkt",
-        "highlightedPath": "Uthevet sti"
+        "viewingPoint": "Betraktningspunkt",
+        "highlightedPath": "Fremhevet sti"
       }
     },
     "help": {
@@ -114,12 +115,31 @@
       "move": "Bruk piler eller WASD for å bevege deg"
     },
     "suggested": "Foreslåtte startpunkter",
-    "noSuggestions": "Ingen forslag tilgjengelig.",
+    "noSuggestions": "Ingen forslag tilgjengelige.",
     "start": "Start",
-    "random": "Tilfeldig",
-    "outdoorsDescription": "Start turen fra campusinngangen",
-    "level1Description": "Start fra første etasje",
-    "level2Description": "Start fra andre etasje",
-    "level3Description": "Start fra øverste etasje"
+    "random": "Tilfeldig"
+  },
+  "arrival": {
+    "title": "Du har ankommet til",
+    "subtitle": "Destinasjon nådd!"
+  },
+  "error": {
+    "server": {
+      "title": "Kan ikke koble til Sitexplorer's Server",
+      "description": "Vi kunne ikke etablere en tilkobling til serveren. Dette kan skyldes:",
+      "reason1": "Serveren kan være offline eller under vedlikehold",
+      "reason2": "Internettforbindelsen din kan være ustabil",
+      "reason3": "Serveradressen kan være feil",
+      "retry": "Prøv tilkobling igjen"
+    },
+    "webgl": {
+      "title": "WebGL Støttes Ikke",
+      "description": "Nettleseren din støtter ikke WebGL, som er påkrevd for å kjøre denne applikasjonen. Dette kan skyldes:",
+      "reason1": "Nettleseren din kan være utdatert",
+      "reason2": "WebGL kan være deaktivert i nettleserinnstillingene dine",
+      "reason3": "Skjermkortet ditt støtter kanskje ikke WebGL",
+      "reload": "Last inn side på nytt",
+      "check": "Sjekk WebGL-støtte"
+    }
   }
 } 

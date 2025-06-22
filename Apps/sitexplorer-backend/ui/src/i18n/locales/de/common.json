@@ -27,9 +27,10 @@
       "alt": "Sitexplorer Logo"
     },
     "menu": {
-      "backToHome": "Zurück zur Startseite",
+      "backToHome": "Zurück zum Start",
+      "info": "Info",
       "reportProblem": "Problem melden",
-      "poweredBy": "Unterstützt von campusVirtual.io"
+      "poweredBy": "Unterstützt von Sitexplorer.io"
     },
     "map": {
       "open": "Karte öffnen",
@@ -44,7 +45,7 @@
     }
   },
   "search": {
-    "placeholder": "Nach einem Ort suchen...",
+    "placeholder": "Standort suchen...",
     "ariaLabel": "Nach einem Ort suchen",
     "clear": "Suche löschen",
     "buttons": {
@@ -55,7 +56,7 @@
   },
   "errors": {
     "fetchData": "Fehler beim Abrufen der Daten:",
-    "invalidLabel": "Ungültiges Label: {{label}}"
+    "invalidLabel": "Etikett ist ungültig: {{label}}"
   },
   "instructions": {
     "title": "So navigieren Sie",
@@ -73,9 +74,9 @@
     },
     "search": {
       "title": "Suche",
-      "useSearch": "Verwenden Sie die Suchleiste oben, um Orte zu finden",
-      "destination": "Gelbes rotierendes Quadrat markiert Ihr Ziel",
-      "path": "Blauer Pfad führt Sie zu Ihrem Ziel"
+      "useSearch": "Verwenden Sie die Suchleiste oben, um Standorte zu finden",
+      "destination": "Das gelbe rotierende Quadrat markiert Ihr Ziel",
+      "path": "Der blaue Pfad führt Sie zu Ihrem Ziel"
     },
     "map": {
       "title": "Karte",
@@ -83,7 +84,7 @@
       "legend": {
         "position": "Ihre Position",
         "nextRegion": "Nächste Region",
-        "viewingPoint": "Blickpunkt",
+        "viewingPoint": "Betrachtungspunkt",
         "highlightedPath": "Hervorgehobener Pfad"
       }
     },
@@ -104,19 +105,42 @@
     "level3Description": "Beginnen Sie vom obersten Stock"
   },
   "landing": {
-    "welcome": "Willkommen! So beginnen Sie:",
+    "welcome": "Willkommen! So können Sie beginnen:",
     "howTo": {
       "search": "Nach einem Ort suchen",
       "hotspots": "Klicken Sie auf Hotspots zum Erkunden",
       "move": "Verwenden Sie Pfeile oder WASD zum Bewegen"
     },
-    "suggested": "Vorgeschlagene Startpunkte",
+    "suggested": "Empfohlene Startpunkte",
     "noSuggestions": "Keine Vorschläge verfügbar.",
-    "start": "Starten",
+    "start": "Start",
     "random": "Zufällig",
     "outdoorsDescription": "Beginnen Sie Ihre Tour vom Campus-Eingang",
     "level1Description": "Beginnen Sie vom Erdgeschoss",
     "level2Description": "Beginnen Sie vom zweiten Stock",
     "level3Description": "Beginnen Sie vom obersten Stock"
+  },
+  "arrival": {
+    "title": "Sie sind angekommen bei",
+    "subtitle": "Ziel erreicht!"
+  },
+  "error": {
+    "server": {
+      "title": "Kann keine Verbindung zum Sitexplorer-Server herstellen",
+      "description": "Wir konnten keine Verbindung zum Server herstellen. Dies könnte daran liegen:",
+      "reason1": "Der Server könnte offline oder in Wartung sein",
+      "reason2": "Ihre Internetverbindung könnte instabil sein",
+      "reason3": "Die Serveradresse könnte falsch sein",
+      "retry": "Verbindung erneut versuchen"
+    },
+    "webgl": {
+      "title": "WebGL wird nicht unterstützt",
+      "description": "Ihr Browser unterstützt WebGL nicht, das für die Ausführung dieser Anwendung erforderlich ist. Dies könnte daran liegen:",
+      "reason1": "Ihr Browser könnte veraltet sein",
+      "reason2": "WebGL könnte in Ihren Browsereinstellungen deaktiviert sein",
+      "reason3": "Ihre Grafikkarte unterstützt möglicherweise WebGL nicht",
+      "reload": "Seite neu laden",
+      "check": "WebGL-Unterstützung prüfen"
+    }
   }
 } 

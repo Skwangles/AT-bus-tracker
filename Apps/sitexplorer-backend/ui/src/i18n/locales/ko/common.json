@@ -1,11 +1,6 @@
 {
-  "navigation": {
-    "search": "검색",
-    "map": "지도",
-    "list": "목록",
-    "instructions": "설명",
-    "close": "닫기",
-    "elevator": "엘리베이터"
+  "pathfinding": {
+    "clear": "경로 지우기"
   },
   "location": {
     "outdoors": "야외",
@@ -30,8 +25,9 @@
     },
     "menu": {
       "backToHome": "홈으로 돌아가기",
+      "info": "정보",
       "reportProblem": "문제 신고",
-      "poweredBy": "campusVirtual.io 제공"
+      "poweredBy": "Sitexplorer.io에서 제공"
     },
     "map": {
       "open": "지도 열기",
@@ -57,31 +53,31 @@
   },
   "errors": {
     "fetchData": "데이터 가져오기 오류:",
-    "invalidLabel": "잘못된 라벨: {{label}}"
+    "invalidLabel": "라벨이 유효하지 않습니다: {{label}}"
   },
   "instructions": {
     "title": "탐색 방법",
     "navigation": {
       "mobile": {
-        "look": "드래그하거나 스와이프하여 주변 둘러보기"
+        "look": "드래그하거나 스와이프하여 주변을 둘러보세요"
       },
       "desktop": {
-        "move": "이동하기",
-        "look": "주변 둘러보기",
-        "drag": "드래그하여 주변 둘러보기"
+        "move": "이동하려면",
+        "look": "주변을 둘러보려면",
+        "drag": "드래그하여 주변을 둘러보세요"
       },
       "jump": "빨간 구체를 클릭하여 새로운 위치로 점프",
       "location": "현재 위치는 상단 검색창 바로 아래에 표시됩니다"
     },
     "search": {
       "title": "검색",
-      "useSearch": "상단 검색창을 사용하여 위치 찾기",
-      "destination": "노란색 회전하는 사각형이 목적지를 표시합니다",
-      "path": "파란색 경로가 목적지까지 안내합니다"
+      "useSearch": "상단의 검색창을 사용하여 위치를 찾으세요",
+      "destination": "노란색 회전 사각형이 목적지를 표시합니다",
+      "path": "파란색 경로가 목적지로 안내합니다"
     },
     "map": {
       "title": "지도",
-      "open": "왼쪽 상단 버튼으로 지도 열기",
+      "open": "왼쪽 상단의 버튼을 사용하여 지도를 엽니다",
       "legend": {
         "position": "현재 위치",
         "nextRegion": "다음 지역",
@@ -91,7 +87,7 @@
     },
     "help": {
       "title": "도움말",
-      "toggle": "오른쪽 하단의 설명 버튼을 클릭하여 이 도움말 창을 열거나 닫기"
+      "toggle": "오른쪽 하단의 지침 버튼을 클릭하여 이 도움말 창을 열거나 닫으세요"
     }
   },
   "homepage": {
@@ -112,13 +108,36 @@
       "hotspots": "핫스팟을 클릭하여 탐색",
       "move": "화살표 또는 WASD를 사용하여 이동"
     },
-    "suggested": "제안된 시작점",
-    "noSuggestions": "제안사항이 없습니다.",
+    "suggested": "추천 시작점",
+    "noSuggestions": "사용 가능한 제안이 없습니다.",
     "start": "시작",
     "random": "무작위",
     "outdoorsDescription": "캠퍼스 입구에서 투어 시작",
     "level1Description": "1층에서 시작",
     "level2Description": "2층에서 시작",
     "level3Description": "최상층에서 시작"
+  },
+  "arrival": {
+    "title": "도착했습니다",
+    "subtitle": "목적지에 도착했습니다!"
+  },
+  "error": {
+    "server": {
+      "title": "Sitexplorer 서버에 연결할 수 없습니다",
+      "description": "서버와의 연결을 설정할 수 없습니다. 이는 다음 때문일 수 있습니다:",
+      "reason1": "서버가 오프라인이거나 유지보수 중일 수 있습니다",
+      "reason2": "인터넷 연결이 불안정할 수 있습니다",
+      "reason3": "서버 주소가 잘못되었을 수 있습니다",
+      "retry": "연결 재시도"
+    },
+    "webgl": {
+      "title": "WebGL이 지원되지 않습니다",
+      "description": "브라우저가 이 애플리케이션을 실행하는 데 필요한 WebGL을 지원하지 않습니다. 이는 다음 때문일 수 있습니다:",
+      "reason1": "브라우저가 오래되었을 수 있습니다",
+      "reason2": "브라우저 설정에서 WebGL이 비활성화되어 있을 수 있습니다",
+      "reason3": "그래픽 카드가 WebGL을 지원하지 않을 수 있습니다",
+      "reload": "페이지 새로고침",
+      "check": "WebGL 지원 확인"
+    }
   }
 } 

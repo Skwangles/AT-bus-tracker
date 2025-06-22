@@ -5,21 +5,16 @@ import { useState } from 'react';
 
 const languages = [
   { code: 'en', name: 'English' },
-  { code: 'de', name: 'Deutsch' },
-  { code: 'fr', name: 'Français' },
   { code: 'es', name: 'Español' },
-  { code: 'it', name: 'Italiano' },
-  { code: 'pt', name: 'Português' },
-  { code: 'nl', name: 'Nederlands' },
-  { code: 'sv', name: 'Svenska' },
-  { code: 'no', name: 'Norsk' },
-  { code: 'da', name: 'Dansk' },
-  { code: 'fi', name: 'Suomi' },
-  { code: 'ru', name: 'Русский' },
-  { code: 'ja', name: '日本語' },
-  { code: 'ko', name: '한국어' },
   { code: 'zh-CN', name: '简体中文' },
   { code: 'zh-TW', name: '繁體中文' },
+  { code: 'da', name: 'Dansk' },
+  { code: 'ru', name: 'Русский' },
+  { code: 'ko', name: '한국어' },
+  { code: 'ja', name: '日本語' },
+  { code: 'fr', name: 'Français' },
+  { code: 'de', name: 'Deutsch' },
+  { code: 'no', name: 'Norsk' },
 ];
 
 export function LanguageSwitcher() {

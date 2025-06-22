@@ -1,11 +1,6 @@
 {
-  "navigation": {
-    "search": "検索",
-    "map": "マップ",
-    "list": "リスト",
-    "instructions": "説明",
-    "close": "閉じる",
-    "elevator": "エレベーター"
+  "pathfinding": {
+    "clear": "パスをクリア"
   },
   "location": {
     "outdoors": "屋外",
@@ -31,8 +26,9 @@
     },
     "menu": {
       "backToHome": "ホームに戻る",
+      "info": "情報",
       "reportProblem": "問題を報告",
-      "poweredBy": "Powered by campusVirtual.io"
+      "poweredBy": "Sitexplorer.io 提供"
     },
     "map": {
       "open": "地図を開く",
@@ -58,7 +54,7 @@
   },
   "errors": {
     "fetchData": "データの取得中にエラーが発生しました:",
-    "invalidLabel": "無効なラベル: {{label}}"
+    "invalidLabel": "ラベルが無効です：{{label}}"
   },
   "instructions": {
     "title": "ナビゲーション方法",
@@ -76,15 +72,15 @@
     },
     "search": {
       "title": "検索",
-      "useSearch": "上部の検索バーを使用して場所を検索します",
-      "destination": "黄色の回転する正方形が目的地を示します",
+      "useSearch": "上部の検索バーを使用して場所を見つける",
+      "destination": "黄色の回転する四角が目的地を示します",
       "path": "青いパスが目的地まで案内します"
     },
     "map": {
-      "title": "地図",
-      "open": "左上のボタンで地図を開きます",
+      "title": "マップ",
+      "open": "左上のボタンでマップを開く",
       "legend": {
-        "position": "あなたの位置",
+        "position": "現在位置",
         "nextRegion": "次の地域",
         "viewingPoint": "視点",
         "highlightedPath": "ハイライトされたパス"
@@ -92,7 +88,7 @@
     },
     "help": {
       "title": "ヘルプ",
-      "toggle": "右下の説明ボタンをクリックして、このヘルプウィンドウを開閉します"
+      "toggle": "右下の説明ボタンをクリックしてこのヘルプウィンドウを開閉する"
     }
   },
   "homepage": {
@@ -107,19 +103,42 @@
     "level3Description": "最上階から開始します"
   },
   "landing": {
-    "welcome": "ようこそ！開始方法はこちらです：",
+    "welcome": "ようこそ！始め方は以下の通りです：",
     "howTo": {
       "search": "場所を検索",
       "hotspots": "ホットスポットをクリックして探索",
       "move": "矢印または WASD を使用して移動"
     },
-    "suggested": "提案された開始点",
-    "noSuggestions": "提案はありません。",
+    "suggested": "推奨開始地点",
+    "noSuggestions": "利用可能な提案がありません。",
     "start": "開始",
     "random": "ランダム",
     "outdoorsDescription": "キャンパスの入り口からツアーを開始します",
     "level1Description": "1階から開始します",
     "level2Description": "2階から開始します",
     "level3Description": "最上階から開始します"
+  },
+  "arrival": {
+    "title": "到着しました",
+    "subtitle": "目的地に到着しました！"
+  },
+  "error": {
+    "server": {
+      "title": "Sitexplorer サーバーに接続できません",
+      "description": "サーバーとの接続を確立できませんでした。これは以下の理由が考えられます：",
+      "reason1": "サーバーがオフラインまたはメンテナンス中である可能性があります",
+      "reason2": "インターネット接続が不安定である可能性があります",
+      "reason3": "サーバーアドレスが間違っている可能性があります",
+      "retry": "接続を再試行"
+    },
+    "webgl": {
+      "title": "WebGL がサポートされていません",
+      "description": "お使いのブラウザはこのアプリケーションを実行するために必要な WebGL をサポートしていません。これは以下の理由が考えられます：",
+      "reason1": "ブラウザが古い可能性があります",
+      "reason2": "ブラウザ設定で WebGL が無効になっている可能性があります",
+      "reason3": "グラフィックカードが WebGL をサポートしていない可能性があります",
+      "reload": "ページを再読み込み",
+      "check": "WebGL サポートを確認"
+    }
   }
 } 

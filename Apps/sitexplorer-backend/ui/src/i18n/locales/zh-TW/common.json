@@ -30,8 +30,9 @@
     },
     "menu": {
       "backToHome": "返回首頁",
+      "info": "資訊",
       "reportProblem": "回報問題",
-      "poweredBy": "由 campusVirtual.io 提供支援"
+      "poweredBy": "由 Sitexplorer.io 提供支援"
     },
     "map": {
       "open": "開啟地圖",
@@ -61,41 +62,41 @@
   },
   "errors": {
     "fetchData": "獲取數據時出錯：",
-    "invalidLabel": "無效標籤：{{label}}"
+    "invalidLabel": "標籤無效：{{label}}"
   },
   "instructions": {
-    "title": "導航方法",
+    "title": "如何導航",
     "navigation": {
       "mobile": {
-        "look": "拖曳或滑動以環顧四周"
+        "look": "拖拽或滑動來環顧四周"
       },
       "desktop": {
         "move": "移動",
         "look": "環顧四周",
-        "drag": "拖曳以環顧四周"
+        "drag": "拖拽來環顧四周"
       },
       "jump": "點擊紅色球體跳轉到新位置",
       "location": "您目前的位置顯示在頂部搜尋欄下方"
     },
     "search": {
       "title": "搜尋",
-      "useSearch": "使用頂部搜尋欄查找位置",
+      "useSearch": "使用頂部的搜尋欄尋找位置",
       "destination": "黃色旋轉方塊標記您的目的地",
       "path": "藍色路徑引導您到達目的地"
     },
     "map": {
       "title": "地圖",
-      "open": "使用左上角按鈕開啟地圖",
+      "open": "點擊左上角的按鈕開啟地圖",
       "legend": {
         "position": "您的位置",
-        "nextRegion": "下一區域",
-        "viewingPoint": "視點",
+        "nextRegion": "下一個區域",
+        "viewingPoint": "觀察點",
         "highlightedPath": "高亮路徑"
       }
     },
     "help": {
-      "title": "幫助",
-      "toggle": "點擊右下角說明按鈕開啟或關閉此幫助視窗"
+      "title": "說明",
+      "toggle": "點擊右下角的說明按鈕開啟或關閉此說明視窗"
     }
   },
   "homepage": {
@@ -110,19 +111,42 @@
     "level3Description": "從頂樓開始"
   },
   "landing": {
-    "welcome": "歡迎！以下是開始的方法：",
+    "welcome": "歡迎！以下是開始使用的方法：",
     "howTo": {
       "search": "搜尋位置",
       "hotspots": "點擊熱點進行探索",
       "move": "使用箭頭或WASD移動"
     },
-    "suggested": "推薦起點",
-    "noSuggestions": "暫無推薦。",
+    "suggested": "建議的起始點",
+    "noSuggestions": "暫無建議。",
     "start": "開始",
     "random": "隨機",
     "outdoorsDescription": "從校園入口開始您的導覽",
     "level1Description": "從一樓開始",
     "level2Description": "從二樓開始",
     "level3Description": "從頂樓開始"
+  },
+  "arrival": {
+    "title": "您已到達",
+    "subtitle": "目的地已到達！"
+  },
+  "error": {
+    "server": {
+      "title": "無法連接到 Sitexplorer 伺服器",
+      "description": "我們無法建立與伺服器的連線。這可能是由於：",
+      "reason1": "伺服器可能離線或正在維護",
+      "reason2": "您的網路連線可能不穩定",
+      "reason3": "伺服器位址可能不正確",
+      "retry": "重試連線"
+    },
+    "webgl": {
+      "title": "不支援 WebGL",
+      "description": "您的瀏覽器不支援 WebGL，這是執行此應用程式所必需的。這可能是由於：",
+      "reason1": "您的瀏覽器可能已過時",
+      "reason2": "WebGL 可能在瀏覽器設定中被停用",
+      "reason3": "您的顯示卡可能不支援 WebGL",
+      "reload": "重新載入頁面",
+      "check": "檢查 WebGL 支援"
+    }
   }
 } 

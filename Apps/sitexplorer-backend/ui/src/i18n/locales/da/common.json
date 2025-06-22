@@ -1,11 +1,6 @@
 {
-  "navigation": {
-    "search": "Søg",
-    "map": "Kort",
-    "list": "Liste",
-    "instructions": "Instruktioner",
-    "close": "Luk",
-    "elevator": "Elevator"
+  "pathfinding": {
+    "clear": "Ryd Sti"
   },
   "location": {
     "outdoors": "Udendørs",
@@ -15,7 +10,7 @@
       "error": "Kunne ikke hente elevatorplaceringer."
     },
     "navigate": {
-      "error": "Kunne ikke navigere til placeringen."
+      "error": "Kunne ikke navigere til placering."
     }
   },
   "project": {
@@ -29,9 +24,10 @@
       "alt": "Sitexplorer Logo"
     },
     "menu": {
-      "backToHome": "Tilbage til Start",
+      "backToHome": "Tilbage til Hjem",
+      "info": "Info",
       "reportProblem": "Rapporter et Problem",
-      "poweredBy": "Drevet af campusVirtual.io"
+      "poweredBy": "Drevet af Sitexplorer.io"
     },
     "map": {
       "open": "Åbn kort",
@@ -46,38 +42,38 @@
     }
   },
   "search": {
-    "placeholder": "Søg et sted...",
+    "placeholder": "Søg efter en placering...",
     "ariaLabel": "Søg efter en placering",
     "clear": "Ryd søgning",
     "buttons": {
       "guide": "Guide",
-      "clearPath": "Ryd sti",
-      "goTo": "Gå til"
+      "clearPath": "Ryd Sti",
+      "goTo": "Gå Til"
     }
   },
   "errors": {
     "fetchData": "Fejl ved hentning af data:",
-    "invalidLabel": "Ugyldig etiket: {{label}}"
+    "invalidLabel": "Etiket er ugyldig: {{label}}"
   },
   "instructions": {
-    "title": "Sådan navigerer du",
+    "title": "Sådan Navigerer Du",
     "navigation": {
       "mobile": {
-        "look": "Træk eller swipe for at se dig omkring"
+        "look": "Træk eller swipe for at kigge rundt"
       },
       "desktop": {
-        "move": "for at bevæge dig",
-        "look": "for at se dig omkring",
-        "drag": "Træk for at se dig omkring"
+        "move": "at bevæge dig",
+        "look": "at kigge rundt",
+        "drag": "Træk for at kigge rundt"
       },
       "jump": "Klik på røde kugler for at hoppe til nye steder",
       "location": "Din nuværende placering vises lige under søgefeltet øverst"
     },
     "search": {
-      "title": "Søg",
-      "useSearch": "Brug søgefeltet øverst for at finde steder",
+      "title": "Søgning",
+      "useSearch": "Brug søgefeltet øverst til at finde placeringer",
       "destination": "Gul roterende firkant markerer din destination",
-      "path": "Blå sti guider dig til din destination"
+      "path": "Blå sti fører dig til din destination"
     },
     "map": {
       "title": "Kort",
@@ -85,13 +81,13 @@
       "legend": {
         "position": "Din position",
         "nextRegion": "Næste region",
-        "viewingPoint": "Udsigtspunkt",
+        "viewingPoint": "Betragtningspunkt",
         "highlightedPath": "Fremhævet sti"
       }
     },
     "help": {
       "title": "Hjælp",
-      "toggle": "Klik på knappen Instruktioner nederst til højre for at åbne eller lukke dette hjælpevindue"
+      "toggle": "Klik på Instruktioner-knappen nederst til højre for at åbne eller lukke dette hjælpevindue"
     }
   },
   "homepage": {
@@ -112,7 +108,7 @@
       "hotspots": "Klik på hotspots for at udforske",
       "move": "Brug pile eller WASD for at bevæge dig"
     },
-    "suggested": "Foreslåede startpunkter",
+    "suggested": "Foreslåede Startpunkter",
     "noSuggestions": "Ingen forslag tilgængelige.",
     "start": "Start",
     "random": "Tilfældig",
@@ -120,5 +116,28 @@
     "level1Description": "Start fra stueetagen",
     "level2Description": "Start fra anden etage",
     "level3Description": "Start fra øverste etage"
+  },
+  "arrival": {
+    "title": "Du er ankommet til",
+    "subtitle": "Destination nået!"
+  },
+  "error": {
+    "server": {
+      "title": "Kan ikke forbinde til Sitexplorer's Server",
+      "description": "Vi kunne ikke etablere en forbindelse til serveren. Dette kan skyldes:",
+      "reason1": "Serveren kan være offline eller under vedligeholdelse",
+      "reason2": "Din internetforbindelse kan være ustabil",
+      "reason3": "Serveradressen kan være forkert",
+      "retry": "Prøv Forbindelse Igen"
+    },
+    "webgl": {
+      "title": "WebGL Understøttes Ikke",
+      "description": "Din browser understøtter ikke WebGL, som er påkrævet til at køre denne applikation. Dette kan skyldes:",
+      "reason1": "Din browser kan være forældet",
+      "reason2": "WebGL kan være deaktiveret i din browserindstillinger",
+      "reason3": "Dit grafikkort understøtter måske ikke WebGL",
+      "reload": "Genindlæs Side",
+      "check": "Tjek WebGL Understøttelse"
+    }
   }
 } 

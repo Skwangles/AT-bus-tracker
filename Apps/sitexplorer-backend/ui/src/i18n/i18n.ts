@@ -8,6 +8,12 @@ import esCommon from './locales/es/common.json';
 import zhCNCommon from './locales/zh-CN/common.json';
 import zhTWCommon from './locales/zh-TW/common.json';
 import daCommon from './locales/da/common.json';
+import ruCommon from './locales/ru/common.json';
+import koCommon from './locales/ko/common.json';
+import jaCommon from './locales/ja/common.json';
+import frCommon from './locales/fr/common.json';
+import deCommon from './locales/de/common.json';
+import noCommon from './locales/no/common.json';
 
 i18n
   .use(LanguageDetector)
@@ -28,6 +34,24 @@ i18n
       },
       da: {
         common: daCommon,
+      },
+      ru: {
+        common: ruCommon,
+      },
+      ko: {
+        common: koCommon,
+      },
+      ja: {
+        common: jaCommon,
+      },
+      fr: {
+        common: frCommon,
+      },
+      de: {
+        common: deCommon,
+      },
+      no: {
+        common: noCommon,
       }
     },
     fallbackLng: 'en',

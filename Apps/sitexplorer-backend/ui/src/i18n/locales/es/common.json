@@ -28,8 +28,9 @@
     },
     "menu": {
       "backToHome": "Volver al Inicio",
+      "info": "Información",
       "reportProblem": "Reportar un Problema",
-      "poweredBy": "Desarrollado por campusVirtual.io"
+      "poweredBy": "Desarrollado por Sitexplorer.io"
     },
     "map": {
       "open": "Abrir mapa",
@@ -118,5 +119,28 @@
     "level1Description": "Comienza desde la planta baja",
     "level2Description": "Comienza desde el segundo piso",
     "level3Description": "Comienza desde el piso superior"
+  },
+  "arrival": {
+    "title": "Has llegado a",
+    "subtitle": "¡Destino alcanzado!"
+  },
+  "error": {
+    "server": {
+      "title": "No se puede conectar al servidor de Sitexplorer",
+      "description": "No pudimos establecer una conexión con el servidor. Esto podría deberse a:",
+      "reason1": "El servidor podría estar fuera de línea o en mantenimiento",
+      "reason2": "Tu conexión a internet podría ser inestable",
+      "reason3": "La dirección del servidor podría ser incorrecta",
+      "retry": "Reintentar Conexión"
+    },
+    "webgl": {
+      "title": "WebGL No Soportado",
+      "description": "Tu navegador no soporta WebGL, que es necesario para ejecutar esta aplicación. Esto podría deberse a:",
+      "reason1": "Tu navegador podría estar desactualizado",
+      "reason2": "WebGL podría estar deshabilitado en la configuración de tu navegador",
+      "reason3": "Tu tarjeta gráfica podría no soportar WebGL",
+      "reload": "Recargar Página",
+      "check": "Verificar Soporte WebGL"
+    }
   }
 } 
