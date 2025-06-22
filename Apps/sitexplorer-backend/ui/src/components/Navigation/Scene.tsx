@@ -1,12 +1,13 @@
 import * as THREE from "three";
 import { useEffect, useState, useRef } from "react";
-import { API_PREFIX, HIDE_POINTS_DURING_HIGHLIGHT } from "../../consts";
+import { API_PREFIX, HIDE_POINTS_DURING_HIGHLIGHT, HOTSPOT_Y_ADJUSTMENT_DOWN_TO_FLOOR_LEVEL } from "../../consts";
 import { HotspotObj, ThreeNumbersArray } from "../../types";
-import Hotspot from "./Hotspots";
 import { toast } from "react-toastify";
 import { getPointAsImageNumber } from "../../utils/utils";
 import { useFrame, useThree } from "@react-three/fiber";
 import { lerp } from "three/src/math/MathUtils.js";
+import Hotspots from "./Hotspots";
+import Panosphere from "./Panosphere";
 
 interface SphereWithHotspotsProps {
   position: React.MutableRefObject<THREE.Vector3>;
@@ -39,6 +40,8 @@ const Scene: React.FC<SphereWithHotspotsProps> = ({
   setIsLoading,
   highlightedOrbs,
 }) => {
+
+  const [hotspotComponents, setHotspotComponents] = useState<React.ReactNode[]>([]);
   const [currentTexture, setCurrentTexture] = useState<THREE.Texture>(
     new THREE.Texture()
   );
@@ -61,6 +64,7 @@ const Scene: React.FC<SphereWithHotspotsProps> = ({
     isPathfindingMode: boolean,
     highlightedOrbs: number[]
   ) => {
+    console.log("Calculating shown hotspots");
     return hotspots
       .map((hotspot) => ({
         ...hotspot,
@@ -103,9 +107,7 @@ const Scene: React.FC<SphereWithHotspotsProps> = ({
     return null;
   };
 
-  ///
-  /// Point image has updated
-  ///
+  
   useEffect(() => {
     console.log("**********Transition start***********");
     setIsTransitioning(true);
@@ -127,13 +129,13 @@ const Scene: React.FC<SphereWithHotspotsProps> = ({
       const timeout = setTimeout(async () => {
         const newTexture = await loadTextureAtResolution(name, textureUrl);
         if (newTexture) {
+          console.log("Setting current texture to: ", name, " - ", newTexture);
           setCurrentTexture(newTexture);
           setIsTransitioning(false);
           showPrevious.current = false;
 
           if (delay === 0) {
-            console.log("*******Transition end*******");
-            // hide loading icon?
+            console.log("*******Transition end (First image has loaded)*******");
           }
         }
       }, delay);
@@ -146,17 +148,13 @@ const Scene: React.FC<SphereWithHotspotsProps> = ({
     };
   }, [textureUrl]);
 
-  // useEffect(() => {
-  //   setIsLoading(isImgLoading);
-  // }, [isImgLoading, setIsLoading]);
-
-  // Update the points on screen when the first image is loaded or when the pathfinding mode changes
-  // Use a state, so it times with the
   useEffect(() => {
     if (isTransitioning) return;
 
     loadedImageRotation.current = imageRotation.current;
     loadedPosition.current = position.current;
+
+    console.log("Setting cameras - Point: ", position.current, " from : ", camera.position);
     camera.position.set(
       position.current.x,
       position.current.y,
@@ -166,72 +164,19 @@ const Scene: React.FC<SphereWithHotspotsProps> = ({
 
   useEffect(() => {
     if (!isTransitioning) {
-      setShownHotspots(
-        calculateShownHotspots(hotspots, isPathfindingMode, highlightedOrbs)
+      const newShownHotspots = calculateShownHotspots(
+        hotspots,
+        isPathfindingMode,
+        highlightedOrbs
       );
-    }
-  }, [isTransitioning, isPathfindingMode, highlightedOrbs]);
-
-  useFrame(() => {
-    if (
-      previousImgMeshRef.current &&
-      currentImgMeshRef.current &&
-      !showPrevious.current
-    ) {
-      previousImgMeshRef.current.opacity = lerp(
-        previousImgMeshRef.current.opacity,
-        0,
-        0.25
-      );
-      // currentImgMeshRef.current.opacity = 1;
-    } else if (
-      previousImgMeshRef.current &&
-      currentImgMeshRef.current &&
-      showPrevious.current
-    ) {
-      previousImgMeshRef.current.opacity = 1;
-    }
-  });
-
-  return (
-    <group>
-      {/* Previous sphere for smooth transition */}
-      {previousTexture && (
-        <mesh
-          rotation={previousImageRotation.current}
-          position={loadedPosition.current}
-          scale={[-1, 1, 1]}
-        >
-          <sphereGeometry args={[995, 64, 64]} />
-          <meshBasicMaterial
-            ref={previousImgMeshRef}
-            map={previousTexture}
-            side={THREE.BackSide}
-            transparent
-          />
-        </mesh>
-      )}
-
-      {/* Current sphere */}
-      <mesh
-        rotation={loadedImageRotation.current}
-        position={loadedPosition.current}
-        scale={[-1, 1, 1]}
-      >
-        <sphereGeometry args={[1000, 64, 64]} />
-        <meshBasicMaterial
-          ref={currentImgMeshRef}
-          map={currentTexture}
-          side={THREE.BackSide}
-          transparent
-        />
-      </mesh>
-
-      {/* Hotspots */}
-      {shownHotspots.map((hotspot, index) => (
-        <Hotspot
+      console.log("New shown hotspots: ", newShownHotspots.length);
+      setShownHotspots(newShownHotspots);
+      const components = newShownHotspots.map((hotspot, index) => {
+        console.log("Rendering iundividual hotspot");
+        return (
+        <Hotspots
           key={index}
-          position={hotspot.position}
+          position={[hotspot.position[0], hotspot.position[1] - HOTSPOT_Y_ADJUSTMENT_DOWN_TO_FLOOR_LEVEL, hotspot.position[2]]}
           rotation={hotspot.rotation}
           image_identifier={getPointAsImageNumber(hotspot)}
           onClick={() => onHotspotClick(hotspot)}
@@ -239,7 +184,35 @@ const Scene: React.FC<SphereWithHotspotsProps> = ({
           isHighlighted={hotspot.isHighlighted}
           isEnd={hotspot.isEnd}
         />
-      ))}
+      )})
+      setHotspotComponents(components);
+    }
+  }, [isTransitioning, isPathfindingMode, highlightedOrbs]);
+
+  
+  console.log(
+    "Rendering scene - Number of hotspots: ",
+    shownHotspots.length,
+    "isTransitioning: ",
+    isTransitioning,
+    "Hotspots: ",
+    shownHotspots
+  );
+
+  return (
+    <group>
+      <Panosphere
+        showPrevious={showPrevious}
+        loadedImageRotation={loadedImageRotation}
+        loadedPosition={loadedPosition}
+        currentImgMeshRef={currentImgMeshRef}
+        currentTexture={currentTexture}
+        previousTexture={previousTexture}
+        previousImageRotation={previousImageRotation}
+        previousImgMeshRef={previousImgMeshRef}
+      />
+
+      {hotspotComponents}
     </group>
   );
 };

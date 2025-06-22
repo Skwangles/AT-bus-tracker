@@ -80,7 +80,7 @@ const VirtualTourContent: React.FC = () => {
   const cameraControlsRef = useRef<{ handleMove: (direction: MoveDirectionType) => void; handleRotate: (direction: 'left' | 'right') => void; stopRotate: () => void; } | null>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const searchToggleRef = useRef<HTMLDivElement>(null);
-
+  
   // Effects
   useEffect(() => {
     const handleResize = () => {
@@ -148,11 +148,11 @@ const VirtualTourContent: React.FC = () => {
   }, [])
 
   useEffect(() => {
-    console.log("Setting current location group to:", currentPoint?.location)
+    console.log("Updating history - currentId: ", currentId, " currentLocationGroup: ", currentLocationGroup)
     updateHistory(currentLocationGroup, 'Sitexplorer', currentId)
   }, [currentId, currentLocationGroup])
 
-  useEffect(() => {
+  useEffect(() => { // TODO: This is never called
     console.log("Setting cam rotation to:", camRotation.current)
     updateParams(camRotation, setDebounceExpiry, debounceExpiry)
   }, [camRotation.current, debounceExpiry])
@@ -162,7 +162,7 @@ const VirtualTourContent: React.FC = () => {
     setCurrentLocationGroup(currentPoint?.location || '')
   }, [currentPoint])
 
-  useEffect(() => {
+  useEffect(() => { //TODO: Infinite loop?
     moveForwardOnPath(
       highlightedPath.length > 0,
       highlightedPath,

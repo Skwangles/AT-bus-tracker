@@ -1,16 +1,14 @@
 import * as THREE from "three";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   HOTSPOT_COLOUR,
   HOTSPOT_HIGHLIGHTED,
   HOTSPOT_HOVERED,
   HOTSPOT_OUTLINE,
   HOTSPOT_Y_ADJUSTMENT_DOWN_TO_FLOOR_LEVEL,
-  SPHERE_SIZE,
-  USE_GLB_MARKER_OBJECT,
+  SPHERE_SIZE
 } from "../../consts";
-import Model from "./Model";
-import { useFrame } from "@react-three/fiber";
+import { render, useFrame } from "@react-three/fiber";
 import { ThreeNumbersArray } from "../../types";
 
 // Utility function to detect mobile devices
@@ -42,7 +40,7 @@ const Hotspot: React.FC<HotspotProps> = ({
   const endMarkerOutlineSize = endMarkerSize * 1.09;
   const outlineSize = sphereSize * 1.09;
 
-  position[1] -= HOTSPOT_Y_ADJUSTMENT_DOWN_TO_FLOOR_LEVEL;
+  // position[1] -= HOTSPOT_Y_ADJUSTMENT_DOWN_TO_FLOOR_LEVEL;
 
   const endRef = useRef<any>(null);
   const outlineEndRef = useRef<any>(null);
@@ -62,10 +60,8 @@ const Hotspot: React.FC<HotspotProps> = ({
       outlineEndRef.current.rotation.x += delta;
     }
   });
-
-  if (USE_GLB_MARKER_OBJECT && isEnd) {
-    return <Model position={position} onClick={onClick} />;
-  }
+  
+  console.log("Hotspot rendered:", position, rotation);
 
   return (
     <>

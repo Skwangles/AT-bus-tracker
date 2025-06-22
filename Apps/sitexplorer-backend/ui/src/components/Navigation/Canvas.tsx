@@ -51,6 +51,12 @@ const Canvas: React.FC<CanvasProps> = ({
     setCurrentId(hotspot.id);
   };
 
+  console.log(
+    "RenderingCanvas - Number of hotspots: ",
+    hotspots.length,
+    "hotspots: ",
+    hotspots
+  );
   return currentImage ? (
     <Scene
       position={currentPosition}
