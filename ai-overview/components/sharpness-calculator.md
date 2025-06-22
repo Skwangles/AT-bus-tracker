@@ -1,7 +1,7 @@
 # Sharpness Calculator Component
 
 ## Overview
-The Sharpness Calculator is a specialized component in the CampusVirtual system that analyzes image quality by calculating sharpness metrics. This tool helps ensure high-quality virtual tour experiences by identifying and filtering out blurry or low-quality images.
+The Sharpness Calculator is a specialized component in the Sitexplorer system that analyzes image quality by calculating sharpness metrics. This tool helps ensure high-quality virtual tour experiences by identifying and filtering out blurry or low-quality images.
 
 ## Architecture
 

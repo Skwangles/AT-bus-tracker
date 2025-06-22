@@ -1,7 +1,7 @@
 # Image Splitter Component
 
 ## Overview
-The Image Splitter is a utility component in the CampusVirtual system that processes equirectangular images by splitting them into smaller, more manageable tiles. This component is crucial for optimizing memory usage and improving performance in the virtual tour system.
+The Image Splitter is a utility component in the Sitexplorer system that processes equirectangular images by splitting them into smaller, more manageable tiles. This component is crucial for optimizing memory usage and improving performance in the virtual tour system.
 
 ## Architecture
 

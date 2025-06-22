@@ -1,7 +1,7 @@
 # SLAM Component
 
 ## Overview
-The SLAM (Simultaneous Localization and Mapping) component is a critical part of the CampusVirtual system that handles camera pose tracking and map building from equirectangular videos. It uses a modified version of Stella VSLAM for accurate pose estimation and feature tracking.
+The SLAM (Simultaneous Localization and Mapping) component is a critical part of the Sitexplorer system that handles camera pose tracking and map building from equirectangular videos. It uses a modified version of Stella VSLAM for accurate pose estimation and feature tracking.
 
 ## Architecture
 
@@ -74,7 +74,7 @@ graph TB
 - Data compression
 
 ### 4. Integration
-- CampusVirtual interface
+- Sitexplorer interface
 - Database export
 - Real-time feedback
 - Error handling
@@ -131,7 +131,7 @@ slam:
 ```
 SLAM/
 ├── FBoW/              # Feature Bag of Words
-├── CampusVirtualInterface/  # Integration layer
+├── SitexplorerInterface/  # Integration layer
 └── src/
     ├── tracking/      # Pose tracking
     ├── mapping/       # Map building
@@ -154,7 +154,7 @@ SLAM/
 
 ## Integration
 
-### CampusVirtual Interface
+### Sitexplorer Interface
 - Data format conversion
 - Real-time updates
 - Error reporting

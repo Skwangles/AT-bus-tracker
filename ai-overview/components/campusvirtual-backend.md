@@ -1,7 +1,7 @@
-# CampusVirtual Backend
+# Sitexplorer Backend
 
 ## Overview
-The CampusVirtual Backend is the core server component of the CampusVirtual system, providing the main API endpoints, database interactions, and business logic for the virtual tour platform.
+The Sitexplorer Backend is the core server component of the Sitexplorer system, providing the main API endpoints, database interactions, and business logic for the virtual tour platform.
 
 ## Architecture
 
@@ -165,7 +165,7 @@ CMD ["npm", "start"]
 ```env
 DB_HOST=localhost
 DB_PORT=5432
-DB_NAME=campusvirtual
+DB_NAME=sitexplorer
 DB_USER=postgres
 DB_PASSWORD=secret
 PORT=3000

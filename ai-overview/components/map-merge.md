@@ -1,7 +1,7 @@
 # Map Merge Component
 
 ## Overview
-The Map Merge component is a specialized tool in the CampusVirtual system that combines multiple SLAM maps into a single unified map. It handles map alignment, loop closure, and graph optimization to create a seamless navigation experience across different recording sessions.
+The Map Merge component is a specialized tool in the Sitexplorer system that combines multiple SLAM maps into a single unified map. It handles map alignment, loop closure, and graph optimization to create a seamless navigation experience across different recording sessions.
 
 ## Architecture
 

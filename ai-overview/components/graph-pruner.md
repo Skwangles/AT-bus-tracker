@@ -1,7 +1,7 @@
 # Graph Pruner Component
 
 ## Overview
-The Graph Pruner is a specialized component of the CampusVirtual system that optimizes navigation graphs by removing redundant nodes and edges while maintaining essential connectivity. It helps improve performance and reduce memory usage in large-scale virtual tours.
+The Graph Pruner is a specialized component of the Sitexplorer system that optimizes navigation graphs by removing redundant nodes and edges while maintaining essential connectivity. It helps improve performance and reduce memory usage in large-scale virtual tours.
 
 ## Architecture
 

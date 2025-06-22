@@ -1,7 +1,7 @@
-# CampusVirtual File Processing Component
+# Sitexplorer File Processing Component
 
 ## Overview
-The CampusVirtual File Processing component is a C++-based utility that handles the processing and transformation of various file types used in the virtual tour system. It provides functionality for image processing, metadata extraction, and file format conversion, ensuring compatibility with the CampusVirtual platform.
+The Sitexplorer File Processing component is a C++-based utility that handles the processing and transformation of various file types used in the virtual tour system. It provides functionality for image processing, metadata extraction, and file format conversion, ensuring compatibility with the Sitexplorer platform.
 
 ## Architecture
 

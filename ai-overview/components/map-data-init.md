@@ -1,7 +1,7 @@
 # Map Data Initialization Component
 
 ## Overview
-The Map Data Initialization component is a crucial part of the CampusVirtual system that handles the initial setup and configuration of map data. It prepares the database structure, initializes necessary tables, and sets up the initial data required for the virtual tour system.
+The Map Data Initialization component is a crucial part of the Sitexplorer system that handles the initial setup and configuration of map data. It prepares the database structure, initializes necessary tables, and sets up the initial data required for the virtual tour system.
 
 ## Architecture
 

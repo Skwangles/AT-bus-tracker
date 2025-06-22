@@ -1,7 +1,7 @@
 # SQLite Viewer Component
 
 ## Overview
-The SQLite Viewer is a utility component in the CampusVirtual system that provides a graphical interface for viewing and analyzing SQLite databases. It helps developers and administrators inspect and debug database contents, particularly useful for examining SLAM maps and navigation graphs.
+The SQLite Viewer is a utility component in the Sitexplorer system that provides a graphical interface for viewing and analyzing SQLite databases. It helps developers and administrators inspect and debug database contents, particularly useful for examining SLAM maps and navigation graphs.
 
 ## Architecture
 

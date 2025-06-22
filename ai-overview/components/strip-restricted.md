@@ -1,7 +1,7 @@
 # Strip Restricted Component
 
 ## Overview
-The Strip Restricted component is a utility tool in the CampusVirtual system that removes restricted or sensitive nodes from the navigation graph. It helps maintain privacy and security by filtering out areas that should not be accessible in the virtual tour.
+The Strip Restricted component is a utility tool in the Sitexplorer system that removes restricted or sensitive nodes from the navigation graph. It helps maintain privacy and security by filtering out areas that should not be accessible in the virtual tour.
 
 ## Architecture
 
