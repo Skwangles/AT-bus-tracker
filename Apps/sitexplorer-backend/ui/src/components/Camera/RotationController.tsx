@@ -10,12 +10,14 @@ interface CameraRotationControlsProps {
   hotspots: HotspotObj[];
   setCurrentId: (id: string) => void;
   camRotation: React.MutableRefObject<RotationData>;
+  isPathfindingMode?: boolean;
+  highlightedPath?: number[];
 }
 
 const CameraRotationControls = forwardRef<
   { handleMove: (direction: MoveDirectionType) => void; handleRotate: (direction: 'left' | 'right') => void; stopRotate: () => void },
   CameraRotationControlsProps
->(({ hotspots, setCurrentId, camRotation }, ref) => {
+>(({ hotspots, setCurrentId, camRotation, isPathfindingMode, highlightedPath }, ref) => {
   const { camera, gl } = useThree();
   const hotspotsRef = useRef(hotspots);
   const [isCanvasFocused, setIsCanvasFocused] = useState(false);
@@ -82,11 +84,24 @@ const CameraRotationControls = forwardRef<
     camera: THREE.Camera,
     hotspots: HotspotObj[]
   ) => {
-    const id = moveDirection(direction, camera, hotspots);
+    // Filter hotspots based on pathfinding mode
+    let filteredHotspots = hotspots;
+    if (isPathfindingMode && highlightedPath && highlightedPath.length > 0) {
+      // Only allow movement to hotspots that are in the highlighted path
+      filteredHotspots = hotspots.filter(hotspot => 
+        highlightedPath.includes(Number(hotspot.id))
+      );
+    }
+    
+    const id = moveDirection(direction, camera, filteredHotspots);
     if (id) {
       setCurrentId(id);
     } else {
-      toast.warn("No point found in the given direction");
+      if (isPathfindingMode && highlightedPath && highlightedPath.length > 0) {
+        toast.warn("No point found in the given direction along the highlighted path");
+      } else {
+        toast.warn("No point found in the given direction");
+      }
     }
   };
 

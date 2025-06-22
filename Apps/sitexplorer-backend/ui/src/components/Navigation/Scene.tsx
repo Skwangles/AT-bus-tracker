@@ -4,8 +4,7 @@ import { API_PREFIX, HIDE_POINTS_DURING_HIGHLIGHT, HOTSPOT_Y_ADJUSTMENT_DOWN_TO_
 import { HotspotObj, ThreeNumbersArray } from "../../types";
 import { toast } from "react-toastify";
 import { getPointAsImageNumber } from "../../utils/utils";
-import { useFrame, useThree } from "@react-three/fiber";
-import { lerp } from "three/src/math/MathUtils.js";
+import { useThree } from "@react-three/fiber";
 import Hotspots from "./Hotspots";
 import Panosphere from "./Panosphere";
 

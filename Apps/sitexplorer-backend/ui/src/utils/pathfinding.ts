@@ -4,7 +4,7 @@ import { API_PREFIX } from "../consts"
 import * as THREE from "three"
 import { HotspotObj } from "../types"
 
-export const moveForwardOnPath = (pathfindMode, highlightedPath, currentId, setHighlightedPath, calculateHighlightedPath) => {
+export const moveForwardOnPath = (pathfindMode, highlightedPath, currentId, setHighlightedPath, calculateHighlightedPath, destinationName, onArrival) => {
   if (pathfindMode && highlightedPath.includes(Number(currentId))) {
     // Remove points earlier on in the path than the current point
     const indexOfCurrentId = highlightedPath.indexOf(Number(currentId))
@@ -12,17 +12,29 @@ export const moveForwardOnPath = (pathfindMode, highlightedPath, currentId, setH
       // If already at the start of the path, do nothing
       return
     }
+    
+    // Check if we've reached the end of the path
+    if (indexOfCurrentId === highlightedPath.length - 1) {
+      // We've reached the destination! Clear the path and show arrival animation
+      setHighlightedPath([])
+      if (onArrival && destinationName) {
+        onArrival(destinationName)
+      }
+      return
+    }
+    
     const newPath = highlightedPath.slice(indexOfCurrentId)
     setHighlightedPath(newPath)
   }
 }
 
-export const buildCalcPath = (currentId, setHighlightedPath, camera, hotspots: HotspotObj[]) => {
+export const buildCalcPath = (currentId, setHighlightedPath, camera, hotspots: HotspotObj[], setDestinationName) => {
   // console.log("Building calculate path function")
   return async (selectedLocation: string) => {
     if (!selectedLocation || selectedLocation.length === 0) {
       // Clear the path/show all points
       setHighlightedPath([])
+      setDestinationName('')
       return
     }
 
@@ -35,6 +47,7 @@ export const buildCalcPath = (currentId, setHighlightedPath, camera, hotspots: H
       } else {
         const path = response.data.path
         setHighlightedPath(path)
+        setDestinationName(selectedLocation)
         toast.success(
           `Path to ${selectedLocation} is now highlighted, follow the blue dots...`
         )

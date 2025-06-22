@@ -7,7 +7,6 @@ import Map from './Misc/Map'
 import SearchBar from './Search/SearchBar'
 import { ToastContainer, Bounce, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.min.css'
-import { Map as FeatherMap, X } from 'react-feather'
 import Canvas from './Navigation/Canvas'
 import { buildCalcPath, moveForwardOnPath } from '../utils/pathfinding'
 import {
@@ -23,7 +22,6 @@ import { HotspotObj, Label, PointData, MoveDirectionType } from '../types'
 import { getLabelLongName } from '../utils/labelUtils'
 import Instructions from './Misc/Instructions'
 import * as THREE from 'three'
-import { useThree } from '@react-three/fiber'
 import { useTranslation } from 'react-i18next'
 import { ThemeProvider } from '@mui/material/styles'
 import theme from '../theme'
@@ -31,22 +29,9 @@ import MenuIcon from '@mui/icons-material/Menu'
 import MobileDrawer from './SideDrawer'
 import CurrentLocation from './Search/CurrentLocation'
 import MovementControls from './MovementControls'
-import Fab from '@mui/material/Fab'
-
-// Helper component to get camera reference
-interface CameraPositionGetterProps {
-  setCameraRef: (camera: THREE.Camera) => void
-}
-
-const CameraPositionGetter: React.FC<CameraPositionGetterProps> = ({ setCameraRef }) => {
-  const { camera } = useThree()
-
-  useEffect(() => {
-    setCameraRef(camera)
-  }, [camera, setCameraRef])
-
-  return null
-}
+import FloatingActionButtons from './Misc/FloatingActionButtons'
+import { Clear as ClearIcon } from '@mui/icons-material'
+import ArrivalAnimation from './Misc/ArrivalAnimation'
 
 const VirtualTourContent: React.FC = () => {
   refetchParams();
@@ -80,7 +65,12 @@ const VirtualTourContent: React.FC = () => {
   const cameraControlsRef = useRef<{ handleMove: (direction: MoveDirectionType) => void; handleRotate: (direction: 'left' | 'right') => void; stopRotate: () => void; } | null>(null);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const searchToggleRef = useRef<HTMLDivElement>(null);
+  const isClearingPathRef = useRef(false);
   
+  // Arrival animation state
+  const [showArrivalAnimation, setShowArrivalAnimation] = useState(false);
+  const [destinationName, setDestinationName] = useState('');
+
   // Effects
   useEffect(() => {
     const handleResize = () => {
@@ -116,9 +106,27 @@ const VirtualTourContent: React.FC = () => {
     }
   }, [t]);
 
+  const handleClearPath = useCallback(() => {
+    isClearingPathRef.current = true;
+    setHighlightedPath([]);
+    setDestinationName('');
+    setTimeout(() => {
+      isClearingPathRef.current = false;
+    }, 100);
+  }, []);
+
+  const handleArrival = useCallback((destination: string) => {
+    setDestinationName(destination);
+    setShowArrivalAnimation(true);
+  }, []);
+
+  const handleArrivalAnimationComplete = useCallback(() => {
+    setShowArrivalAnimation(false);
+    setDestinationName('');
+  }, []);
 
   const calculateHighlightedPath = useCallback(
-    buildCalcPath(currentId, setHighlightedPath, cameraRef.current, hotspots),
+    buildCalcPath(currentId, setHighlightedPath, cameraRef.current, hotspots, setDestinationName),
     [currentId]
   )
 
@@ -162,15 +170,19 @@ const VirtualTourContent: React.FC = () => {
     setCurrentLocationGroup(currentPoint?.location || '')
   }, [currentPoint])
 
-  useEffect(() => { //TODO: Infinite loop?
+  useEffect(() => {
+    if (isClearingPathRef.current) return;
+    
     moveForwardOnPath(
       highlightedPath.length > 0,
       highlightedPath,
       currentId,
       setHighlightedPath,
-      calculateHighlightedPath
+      calculateHighlightedPath,
+      destinationName,
+      handleArrival
     )
-  }, [currentId, highlightedPath, ])
+  }, [currentId, highlightedPath, destinationName, handleArrival])
 
   return (
     <ThemeProvider theme={theme}>
@@ -203,12 +215,13 @@ const VirtualTourContent: React.FC = () => {
           >
             <ambientLight intensity={0.6} />
             <directionalLight castShadow />
-            <CameraPositionGetter setCameraRef={(camera) => { cameraRef.current = camera }} />
             <CameraRotationControls
               ref={cameraControlsRef}
               setCurrentId={setCurrentId}
               hotspots={hotspots}
               camRotation={camRotation}
+              isPathfindingMode={highlightedPath.length > 0}
+              highlightedPath={highlightedPath}
             />
             <Canvas
               currentId={currentId}
@@ -224,7 +237,6 @@ const VirtualTourContent: React.FC = () => {
           </ThreeCanvas>
         </div>
 
-        {showMap && isMapOpen && (
           <Map
             floorName={currentLocationGroup}
             setID={setCurrentId}
@@ -237,7 +249,6 @@ const VirtualTourContent: React.FC = () => {
             setHasImage={setHasImage}
             isPathfindingMode={highlightedPath.length > 0}
           />
-        )}
 
         <div className="fixed top-0 left-0 right-0 z-[999] p-4 flex items-center justify-between">
           {/* Spacer to balance the menu button on the right */}
@@ -262,6 +273,34 @@ const VirtualTourContent: React.FC = () => {
             <MenuIcon style={{ fontSize: 32 }} />
           </button>
         </div>
+
+        {/* Clear Pathfinding Button */}
+        {highlightedPath.length > 0 && (
+          <div 
+            className="fixed z-[997] flex justify-center"
+            style={{
+              top: '80px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              marginTop: '10px',
+            }}
+          >
+            <button
+              className="px-4 py-2 rounded-full shadow-lg text-sm font-medium transition-all duration-200 hover:shadow-xl flex items-center gap-2"
+              style={{ 
+                background: '#F87171',
+                color: 'white', 
+                border: 'none',
+                backdropFilter: 'blur(10px)',
+              }}
+              onClick={handleClearPath}
+              aria-label="Clear pathfinding"
+            >
+              <ClearIcon sx={{ fontSize: 20 }} />
+              {t('pathfinding.clear', 'Clear Path')}
+            </button>
+          </div>
+        )}
 
         {isSearchOpen && (
           <div 
@@ -291,33 +330,22 @@ const VirtualTourContent: React.FC = () => {
           </div>
         )}
 
-        {/* Map Floating Action Button (FAB) */}
-        {showMap && (
-          <Fab
-            color="primary"
-            aria-label="map"
-            style={{
-              position: 'fixed',
-              bottom: isMobile ? '80px' : '20px',
-              right: '20px',
-              zIndex: 1000,
-              backgroundColor: hasImage ? 'white' : '#e0e0e0',
-              color: hasImage ? 'black' : '#9e9e9e',
-              opacity: hasImage ? 1 : 0.7,
-            }}
-            onClick={() => {
-              if (!hasImage) return;
-              if (isMobile) {
-                setIsMapOpen(true);
-              } else {
-                setIsMapOpen(!isMapOpen);
-              }
-            }}
-            disabled={!hasImage}
-          >
-            {isMapOpen && !isMobile ? <X /> : <FeatherMap />}
-          </Fab>
-        )}
+        {/* Floating Action Buttons */}
+        <FloatingActionButtons
+          showMap={showMap}
+          hasImage={hasImage}
+          isMapOpen={isMapOpen}
+          isMobile={isMobile}
+          onMapClick={() => {
+            if (!hasImage) return;
+            if (isMobile) {
+              setIsMapOpen(true);
+            } else {
+              setIsMapOpen(!isMapOpen);
+            }
+          }}
+          onSearchClick={() => setIsSearchOpen(!isSearchOpen)}
+        />
 
         {/* Instructions Component */}
         <Instructions
@@ -344,6 +372,13 @@ const VirtualTourContent: React.FC = () => {
             onMove={(direction) => cameraControlsRef.current?.handleMove(direction)}
             onRotate={(direction) => cameraControlsRef.current?.handleRotate(direction)}
             onStopRotate={() => cameraControlsRef.current?.stopRotate()}
+        />
+
+        {/* Arrival Animation */}
+        <ArrivalAnimation
+          isVisible={showArrivalAnimation}
+          destinationName={destinationName}
+          onAnimationComplete={handleArrivalAnimationComplete}
         />
       </div>
     </ThemeProvider>
