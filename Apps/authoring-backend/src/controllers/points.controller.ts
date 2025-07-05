@@ -210,3 +210,167 @@ export async function getRandomPointId(req: Request, res: Response) {
     res.status(500).json({ message: "Error fetching random point" });
   }
 }
+
+/**
+ * Get nearby points within a distance threshold for clustering analysis
+ */
+export async function getNearbyPoints(req: Request, res: Response) {
+  const { id } = req.params;
+  const { distance_threshold = 5.0, location } = req.query; // Default 5 meters
+
+  try {
+    const pointId = Number(id);
+    if (isNaN(pointId)) {
+      return res.status(400).json({ message: 'Invalid point ID' });
+    }
+
+    // Get the reference point
+    const referencePoint = await readDB(
+      `SELECT keyframe_id, x_trans, y_trans, z_trans 
+       FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes 
+       WHERE keyframe_id = ?`,
+      [pointId],
+      true
+    );
+
+    if (!referencePoint) {
+      return res.status(404).json({ message: 'Reference point not found' });
+    }
+
+    // Build location filter
+    let locationFilter = '';
+    let locationParams: any[] = [];
+    if (location) {
+      locationFilter = `
+        AND EXISTS (
+          SELECT 1 FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations nl 
+          WHERE nl.keyframe_id = n.keyframe_id AND nl.location = ?
+        )
+      `;
+      locationParams = [location];
+    }
+
+    // Find nearby points
+    const nearbyPointsQuery = `
+      SELECT n.keyframe_id, n.x_trans, n.y_trans, n.z_trans, n.ts,
+             fp.x, fp.y, fp.type,
+             SQRT(
+               POWER(n.x_trans - ?, 2) + 
+               POWER(n.y_trans - ?, 2) + 
+               POWER(n.z_trans - ?, 2)
+             ) as distance
+      FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n
+      LEFT JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_points fp 
+        ON n.keyframe_id = fp.keyframe_id
+      WHERE n.keyframe_id != ? 
+        AND SQRT(
+          POWER(n.x_trans - ?, 2) + 
+          POWER(n.y_trans - ?, 2) + 
+          POWER(n.z_trans - ?, 2)
+        ) <= ?
+        ${locationFilter}
+      ORDER BY distance
+    `;
+
+    const nearbyPoints = await readDB(nearbyPointsQuery, [
+      referencePoint.x_trans, referencePoint.y_trans, referencePoint.z_trans,
+      pointId,
+      referencePoint.x_trans, referencePoint.y_trans, referencePoint.z_trans,
+      Number(distance_threshold),
+      ...locationParams
+    ]);
+
+    res.status(200).json({
+      reference_point: referencePoint,
+      nearby_points: nearbyPoints,
+      count: nearbyPoints.length,
+      distance_threshold: Number(distance_threshold)
+    });
+  } catch (error) {
+    logger.error('Error fetching nearby points:', error);
+    res.status(500).json({ message: 'Error fetching nearby points' });
+  }
+}
+
+/**
+ * Get clustering statistics for a location
+ */
+export async function getClusteringStats(req: Request, res: Response) {
+  const { location } = req.params;
+  const { distance_threshold = 2.0 } = req.query;
+
+  try {
+    // Get all points for this location
+    const pointsQuery = `
+      SELECT n.keyframe_id, n.x_trans, n.y_trans, n.z_trans, fp.type
+      FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n
+      JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations nl ON n.keyframe_id = nl.keyframe_id
+      LEFT JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_points fp ON n.keyframe_id = fp.keyframe_id
+      WHERE nl.location = ?
+      ORDER BY n.keyframe_id
+    `;
+    
+    const points = await readDB(pointsQuery, [location]);
+
+    // Simple clustering analysis
+    const clusters: Array<{
+      center: { x: number; y: number; z: number };
+      points: Array<{ keyframe_id: number; type: number; distance: number }>;
+      size: number;
+    }> = [];
+
+    for (const point of points) {
+      let addedToCluster = false;
+      
+      for (const cluster of clusters) {
+        const distance = Math.sqrt(
+          Math.pow(point.x_trans - cluster.center.x, 2) +
+          Math.pow(point.y_trans - cluster.center.y, 2) +
+          Math.pow(point.z_trans - cluster.center.z, 2)
+        );
+        
+        if (distance <= Number(distance_threshold)) {
+          cluster.points.push({
+            keyframe_id: point.keyframe_id,
+            type: point.type || 0,
+            distance: distance
+          });
+          cluster.size = cluster.points.length;
+          addedToCluster = true;
+          break;
+        }
+      }
+      
+      if (!addedToCluster) {
+        clusters.push({
+          center: { x: point.x_trans, y: point.y_trans, z: point.z_trans },
+          points: [{
+            keyframe_id: point.keyframe_id,
+            type: point.type || 0,
+            distance: 0
+          }],
+          size: 1
+        });
+      }
+    }
+
+    // Calculate statistics
+    const totalPoints = points.length;
+    const totalClusters = clusters.length;
+    const clustersWithMultiplePoints = clusters.filter(c => c.size > 1);
+    const potentialSavings = clustersWithMultiplePoints.reduce((sum, cluster) => sum + (cluster.size - 1), 0);
+
+    res.status(200).json({
+      location: location,
+      total_points: totalPoints,
+      total_clusters: totalClusters,
+      clusters_with_multiple_points: clustersWithMultiplePoints.length,
+      potential_points_to_hide: potentialSavings,
+      clustering_efficiency: totalPoints > 0 ? ((totalPoints - potentialSavings) / totalPoints * 100).toFixed(2) + '%' : '0%',
+      clusters: clusters
+    });
+  } catch (error) {
+    logger.error('Error calculating clustering stats:', error);
+    res.status(500).json({ message: 'Error calculating clustering stats' });
+  }
+}

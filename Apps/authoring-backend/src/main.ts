@@ -8,6 +8,7 @@ import mapRoutes from './routes/map.routes'
 import labelRoutes from './routes/labels.routes'
 import pointRoutes from './routes/points.routes'
 import locationGroupRoutes from './routes/locationGroups.routes'
+import mapPointsRoutes from './routes/mapPoints.routes'
 
 import readline from 'readline'
 import logger from './logger'
@@ -27,16 +28,13 @@ app.get('/', function (req, res) {
   res.sendFile(path.join(__dirname, '../authoring/dist', 'index.html'))
 })
 
-app.get('/immersive', function (req, res) {
-  res.sendFile(path.join(__dirname, '../immersive/dist', 'index.html'))
-})
-
 app.use(mapRoutes)
 app.use(imageRoutes)
 app.use(authoringRoutes)
 app.use(labelRoutes)
 app.use(pointRoutes)
 app.use(locationGroupRoutes)
+app.use(mapPointsRoutes)
 
 
 let exitReader = null;

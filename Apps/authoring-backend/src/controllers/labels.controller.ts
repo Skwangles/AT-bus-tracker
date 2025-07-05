@@ -19,7 +19,6 @@ export const getLabels = async (req: Request, res: Response) => {
   
     res.status(200).json({
       otherNodes: otherNodesLabels,
-      legacy: legacyLabels
     });
   } catch (error) {
     console.error('Error fetching labels:', error);
@@ -179,6 +178,55 @@ export const updateLabel = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error updating label:', error);
     res.status(500).json({ message: 'Error updating label' });
+  }
+};
+
+// Controller to update label position
+export const updateLabelPosition = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { label, x_trans, y_trans, z_trans } = req.body;
+
+  try {
+    // Update position in other_nodes table
+    const updateQuery = `
+      UPDATE ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes 
+      SET x_trans = ?, y_trans = ?, z_trans = ? 
+      WHERE ref_id = ? AND label = ?
+    `;
+    const result = await writeDB(updateQuery, [x_trans, y_trans, z_trans, id, label]);
+    
+    if (result > 0) {
+      res.status(200).json({ 
+        message: 'Label position updated successfully',
+        position: { x: x_trans, y: y_trans, z: z_trans }
+      });
+    } else {
+      res.status(404).json({ message: 'Label not found' });
+    }
+  } catch (error) {
+    console.error('Error updating label position:', error);
+    res.status(500).json({ message: 'Error updating label position' });
+  }
+};
+
+// Controller to get available label types
+export const getLabelTypes = async (req: Request, res: Response) => {
+  try {
+    const labelTypes = [
+      { id: 0, name: 'Normal', description: 'Standard label' },
+      { id: 1, name: 'Elevator', description: 'Elevator access point' },
+      { id: 2, name: 'Toilet', description: 'Restroom facility' },
+      { id: 3, name: 'Stairs', description: 'Stairwell access' },
+      { id: 4, name: 'Exit', description: 'Building exit' },
+      { id: 5, name: 'Entrance', description: 'Building entrance' },
+      { id: 6, name: 'Room', description: 'Room or office' },
+      { id: 7, name: 'Service', description: 'Service area' }
+    ];
+    
+    res.status(200).json(labelTypes);
+  } catch (error) {
+    console.error('Error fetching label types:', error);
+    res.status(500).json({ message: 'Error fetching label types' });
   }
 };
 

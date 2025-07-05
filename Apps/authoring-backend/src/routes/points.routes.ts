@@ -1,5 +1,14 @@
 import { Router } from "express";
-import { createNewPoint, findNeigboursFromPointId, getFirstPointId, getPointInfoFromId, pathfindFromPointId, getRandomPointId } from "../controllers/points.controller";
+import { 
+  createNewPoint, 
+  findNeigboursFromPointId, 
+  getFirstPointId, 
+  getPointInfoFromId, 
+  pathfindFromPointId, 
+  getRandomPointId,
+  getNearbyPoints,
+  getClusteringStats
+} from "../controllers/points.controller";
 
 const app = Router();
 
@@ -16,5 +25,9 @@ app.post('/api/v1/point', createNewPoint)
 
 // Add random point endpoint
 app.get('/api/v1/point/random', getRandomPointId);
+
+// Add clustering-related endpoints
+app.get('/api/v1/point/:id/nearby', getNearbyPoints as any);
+app.get('/api/v1/points/clustering/:location', getClusteringStats as any);
 
 export default app;
