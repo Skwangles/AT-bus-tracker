@@ -49,6 +49,10 @@
       "guide": "Guide",
       "clearPath": "Ryd Sti",
       "goTo": "Gå Til"
+    },
+    "tooltips": {
+      "enterLocation": "Indtast et stedsnavn for at søge",
+      "selectValidLocation": "Vælg et gyldigt sted fra forslagene"
     }
   },
   "errors": {

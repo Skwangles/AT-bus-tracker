@@ -42,30 +42,24 @@ export const setOnPopstateEvent = (setCurrentId, camRotation) => {
   };
 };
 
-const DEBOUNCE_LENGTH_MS = 500;
-
-export const updateParams = (
-  camRotation: React.MutableRefObject<RotationData>,
-  setDebounceExpiry: React.Dispatch<React.SetStateAction<number>>,
-  debounceExpiry: number
-) => {
+export const updateParams = (camRotation: React.MutableRefObject<RotationData>) => {
   refetchParams();
   params.set("yaw", Number(camRotation.current["yaw"]).toFixed(4));
   params.set("pitch", Number(camRotation.current["pitch"]).toFixed(4));
-  const now = Date.now();
-  if (now > debounceExpiry) {
-    // Firefox & safari see security issue if this is called too fast
-    setDebounceExpiry(now + DEBOUNCE_LENGTH_MS);
-    history.replaceState({}, "", "?" + params.toString());
-  }
+  history.replaceState({}, "", "?" + params.toString());
 };
 
 export function updateHistory(locationGroup, PROJECT_NAME, currentId) {
   refetchParams();
-  document.title = locationGroup
+  params.set("id", currentId);
+
+  const newTitle = locationGroup
     ? `${PROJECT_NAME} - ${locationGroup}`
     : PROJECT_NAME;
-  params.set("id", currentId);
+  if (document.title !== newTitle) {
+    document.title = newTitle;
+  }
+
   history.pushState({}, "", "?" + params.toString());
 }
 

@@ -1,4 +1,4 @@
-export const API_PREFIX = "";
+export const API_PREFIX = "http://edwin.skwangles.com:38000";
 
 export const FLOOR_ORDERING_STRATEGY = "tga"; // tga for <floor>.<room>  (or 'waikato' for <block>.<floor>.<room> stratgey)
 export const COORDS_TO_METRES = 1; // metres per coordinate - the backend should apply their version automatically, but this is a manual adjustment
@@ -46,5 +46,6 @@ export const HOTSPOT_COLOUR = "#E1251B";
 export const HOTSPOT_OUTLINE = "#FFFFFF";
 export const HOTSPOT_HIGHLIGHTED = "#0F0FF0";
 export const HOTSPOT_HOVERED = "#2196F3"; // MUI primary blue color for better selection indication
+export const HOTSPOT_VISITED = "#9E9E9E"; // Gray color for visited path points
 
 export const REPORT_PROBLEM_FORM_URL = 'https://forms.google.com/your-form-id';

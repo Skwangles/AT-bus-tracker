@@ -52,6 +52,10 @@
       "guide": "Führen",
       "clearPath": "Pfad löschen",
       "goTo": "Gehe zu"
+    },
+    "tooltips": {
+      "enterLocation": "Suchen Sie nach einem Ort, um die Navigationsschaltflächen zu verwenden",
+      "selectValidLocation": "Wählen Sie einen gültigen Ort aus den Vorschlägen"
     }
   },
   "errors": {

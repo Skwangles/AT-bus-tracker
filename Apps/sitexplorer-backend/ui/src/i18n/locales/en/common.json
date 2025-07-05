@@ -1,6 +1,8 @@
 {
   "pathfinding": {
-    "clear": "Clear Path"
+    "clear": "Clear Path",
+    "error": "Could not calculate a path, please try again later",
+    "success": "Path to {{location}} is now highlighted, follow the blue dots..."
   },
   "location": {
     "outdoors": "Outdoors",
@@ -43,6 +45,10 @@
       "guide": "Guide",
       "clearPath": "Clear Path",
       "goTo": "Go To"
+    },
+    "tooltips": {
+      "enterLocation": "Search for a location to use navigation buttons",
+      "selectValidLocation": "Select a valid location from the suggestions"
     }
   },
   "errors": {

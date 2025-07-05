@@ -13,13 +13,15 @@ import { Info } from 'react-feather';
 
 const LOGO_URL = '/logo.svg';
 
-interface MobileDrawerProps {
+interface SideDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   onInfoClick: () => void;
+  restrictToPath: boolean;
+  onRestrictToPathChange: (value: boolean) => void;
 }
 
-const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose, onInfoClick }) => {
+const SideDrawer: React.FC<SideDrawerProps> = ({ isOpen, onClose, onInfoClick, restrictToPath, onRestrictToPathChange }) => {
   const { t } = useTranslation('common');
 
   return (
@@ -159,4 +161,4 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose, onInfoClic
   );
 };
 
-export default MobileDrawer; 
+export default SideDrawer; 

@@ -2,13 +2,14 @@ import React, {
   useState,
   ChangeEvent,
   useEffect,
+  useRef,
 } from "react";
 import "../../css/SearchBar.css";
 import { toast } from "react-toastify";
 import { getLabelLongName, getLabelDisplayName } from "../../utils/labelUtils";
 import { Label } from "../../types";
 import { useTranslation } from "react-i18next";
-import { Button, ButtonGroup, TextField, InputAdornment, IconButton, Paper, Box } from "@mui/material";
+import { Button, ButtonGroup, TextField, InputAdornment, IconButton, Paper, Box, Tooltip } from "@mui/material";
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import NearMeOutlinedIcon from '@mui/icons-material/NearMeOutlined';
 import ClearIcon from '@mui/icons-material/Clear';
@@ -19,7 +20,7 @@ interface SearchBarProps {
   currentPoint: { location: string };
   searchableLabels: Label[];
   jumpToCallback: (selected: string) => void;
-  highlightCallback: (selected: string) => void;
+  highlightCallback: (selected: string, displayLabel: string) => void;
   isPathfindingMode?: boolean;
   onClose: () => void;
 }
@@ -33,6 +34,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
   onClose,
 }) => {
   const { t } = useTranslation('common');
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
   const [query, setQuery] = useState<string>("");
   const [suggestions, setSuggestions] = useState<Label[]>([]);
   const [recentSearches, setRecentSearches] = useState<Label[]>(() => {
@@ -112,7 +114,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
 
   const handleClearPath = () => {
     console.log("Clearing path");
-    highlightCallback("");
+    highlightCallback("", "");
     setQuery("");
     onClose();
   };
@@ -160,7 +162,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
       toast.error(t('errors.invalidLabel', { label }));
       return;
     }
-    highlightCallback(labelObj.query);
+    highlightCallback(labelObj.query, getLabelLongName(labelObj));
     setQuery(getLabelLongName(labelObj));
     addToRecent(labelObj);
     onClose();
@@ -179,6 +181,9 @@ const SearchBar: React.FC<SearchBarProps> = ({
       query.toLowerCase()
   );
 
+  const isGuideButtonDisabled = !query || (!isQueryInLabels && !isPathfindingMode);
+  const isJumpButtonDisabled = !query || !isQueryInLabels;
+
   return (
     <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1000, paddingTop: '8px' }}>
       <Paper elevation={0} sx={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid #E5F3F3', display: 'flex', flexDirection: 'column', maxHeight: '70vh' }}>
@@ -190,6 +195,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
             placeholder={t('search.placeholder')}
             value={query}
             onChange={handleChange}
+            inputRef={searchInputRef}
             autoFocus
             sx={{
               '& .MuiOutlinedInput-root': {
@@ -200,40 +206,77 @@ const SearchBar: React.FC<SearchBarProps> = ({
                 borderColor: '#D0EFEF',
               },
             }}
-            InputProps={{
-              endAdornment: query ? (
-                <InputAdornment position="end">
-                  <IconButton onClick={clearSearch} edge="end">
-                    <ClearIcon />
-                  </IconButton>
-                </InputAdornment>
-              ) : null,
+            slotProps={{
+              input: {
+                endAdornment: query ? (
+                  <InputAdornment position="end">
+                    <IconButton onClick={clearSearch} edge="end">
+                      <ClearIcon />
+                    </IconButton>
+                  </InputAdornment>
+                ) : null,
+              },
             }}
           />
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
             <ButtonGroup variant="text" aria-label="action button group">
-              <Button
-                onClick={() => handleGuide(query)}
-                disabled={!query || (!isQueryInLabels && !isPathfindingMode)}
-                startIcon={isPathfindingMode ? <ClearIcon /> : <VisibilityOutlinedIcon />}
-                size="small"
-                sx={{
-                  color: '#1B1B1E',
-                }}
+              <Tooltip 
+                title={
+                  !query 
+                    ? t('search.tooltips.enterLocation') 
+                    : !isQueryInLabels && !isPathfindingMode 
+                      ? t('search.tooltips.selectValidLocation') 
+                      : ''
+                }
+                placement="top"
               >
-                {isPathfindingMode ? t('search.buttons.clearPath') : t('search.buttons.guide')}
-              </Button>
-              <Button
-                onClick={() => handleJump(query)}
-                disabled={!query || !isQueryInLabels}
-                startIcon={<NearMeOutlinedIcon />}
-                size="small"
-                sx={{
-                  color: '#1B1B1E',
-                }}
+                <span> {/* Wrapper needed for disabled buttons */}
+                  <Button
+                    onClick={() => isGuideButtonDisabled ? searchInputRef?.current?.focus() : handleGuide(query)}
+                    startIcon={isPathfindingMode ? <ClearIcon /> : <VisibilityOutlinedIcon />}
+                    size="small"
+                    sx={{
+                      color: isGuideButtonDisabled ? '#9e9e9e' : '#1B1B1E',
+                      opacity: isGuideButtonDisabled ? 0.6 : 1,
+                      cursor: isGuideButtonDisabled ? 'pointer' : 'default',
+                      '&:hover': {
+                        backgroundColor: isGuideButtonDisabled ? 'rgba(0, 0, 0, 0.04)' : 'rgba(0, 0, 0, 0.08)',
+                      },
+                    }}
+                  >
+                    {isPathfindingMode ? t('search.buttons.clearPath') : t('search.buttons.guide')}
+                  </Button>
+                </span>
+              </Tooltip>
+              
+              <Tooltip 
+                title={
+                  !query 
+                    ? t('search.tooltips.enterLocation') 
+                    : !isQueryInLabels 
+                      ? t('search.tooltips.selectValidLocation') 
+                      : ''
+                }
+                placement="top"
               >
-                {t('search.buttons.goTo')}
-              </Button>
+                <span>
+                  <Button
+                    onClick={() => isJumpButtonDisabled ? searchInputRef?.current?.focus() : handleJump(query)}
+                    startIcon={<NearMeOutlinedIcon />}
+                    size="small"
+                    sx={{
+                      color: isJumpButtonDisabled ? '#9e9e9e' : '#1B1B1E',
+                      opacity: isJumpButtonDisabled ? 0.6 : 1,
+                      cursor: isJumpButtonDisabled ? 'pointer' : 'default',
+                      '&:hover': {
+                        backgroundColor: isJumpButtonDisabled ? 'rgba(0, 0, 0, 0.04)' : 'rgba(0, 0, 0, 0.08)',
+                      },
+                    }}
+                  >
+                    {t('search.buttons.goTo')}
+                  </Button>
+                </span>
+              </Tooltip>
             </ButtonGroup>
           </Box>
         </Box>

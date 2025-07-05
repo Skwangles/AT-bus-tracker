@@ -171,7 +171,7 @@ const Scene: React.FC<SphereWithHotspotsProps> = ({
       console.log("New shown hotspots: ", newShownHotspots.length);
       setShownHotspots(newShownHotspots);
       const components = newShownHotspots.map((hotspot, index) => {
-        console.log("Rendering iundividual hotspot");
+        console.log("Rendering individual hotspot");
         return (
         <Hotspots
           key={index}

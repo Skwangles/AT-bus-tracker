@@ -5,6 +5,7 @@ import { HotspotObj, MoveDirectionType, RotationData } from "../../types";
 import * as THREE from "three";
 import { moveDirection } from "../../utils/moveDirection";
 import { toast } from "react-toastify";
+import { updateParams } from "../../utils/updateUrl";
 
 interface CameraRotationControlsProps {
   hotspots: HotspotObj[];
@@ -255,10 +256,12 @@ const CameraRotationControls = forwardRef<
 
     const handleMouseUp = () => {
       controlsRef.current.isMouseDown = false;
+      updateParams(camRotation)
     };
 
     const handleMouseLeave = () => {
       controlsRef.current.isMouseDown = false;
+      updateParams(camRotation)
     };
 
     const handleTouchStart = (event) => {
@@ -328,6 +331,7 @@ const CameraRotationControls = forwardRef<
 
     const handleTouchEnd = () => {
       controlsRef.current.isMouseDown = false;
+      updateParams(camRotation)
     };
 
     // Add click outside handler to unfocus canvas

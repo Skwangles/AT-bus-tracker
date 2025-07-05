@@ -1,4 +1,7 @@
+import axios from 'axios';
 import { Label, LabelType } from '../types';
+import { nullIdValue } from './updateUrl';
+import { API_PREFIX } from '../consts';
 
 export function toTitleCase(str: string): string {
   if (!str) return '';
@@ -51,3 +54,23 @@ export function getLabelColor(label: Label): string {
       return 'text.primary'; // MUI primary text color
   }
 }
+
+
+
+export async function fetchLabelsData(setAllSearchableLocations: any, currentId: string, setCurrentId: any, updateHistory: any, currentLocationGroup: string) {
+      try {
+        // Fetch labels
+        const labelsResult = await axios.get<Label[]>(`${API_PREFIX}/api/v1/locationgroup/labels`)
+        setAllSearchableLocations(labelsResult.data)
+
+        // If ID is -1, fetch first point ID from backend
+        if (nullIdValue(currentId)) {
+          const defaultIdResult = await axios.get(`${API_PREFIX}/api/v1/point/first`)
+          const defaultId = defaultIdResult.data
+          setCurrentId(defaultId)
+          updateHistory(currentLocationGroup, 'Sitexplorer', defaultId)
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error)
+      }
+    }

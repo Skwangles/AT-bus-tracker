@@ -20,7 +20,12 @@ async function initDB() {
 export async function readDB(query: string, params: (string | number)[] = [], isSingle: boolean = false): Promise<any | any[]> {
   logger.verbose(`[readDB] SQL: ${query} params: ${params} isSingle:${isSingle}`)
   const preparedQuery = sqliteDb.prepare(query)
-  return isSingle ? await preparedQuery.get(params) as any : await preparedQuery.all(params) as any[]
+  try {
+    return isSingle ? await preparedQuery.get(params) as any : await preparedQuery.all(params) as any[]
+  } catch (error) {
+    console.error("Error executing query: ", query, params)
+    throw error
+  }
 }
 
 initDB()
