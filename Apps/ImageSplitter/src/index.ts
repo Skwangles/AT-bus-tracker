@@ -1,8 +1,9 @@
 import path from 'path'
 import dotenv from 'dotenv'
 import fs from 'fs'
-import { DFLT_BATCH_SIZE, DFLT_FACE_BLUR, DFLT_IMG_EXT, DFLT_INPUT_DIR, DFLT_OUTPUT_DIR, DFLT_SQLITE_DB_PATH, DFLT_TABLE_PREFIX, DFLT_TS_DP } from './consts';
+import { DFLT_BATCH_SIZE, DFLT_FACE_BLUR, DFLT_IMG_EXT, DFLT_INPUT_DIR, DFLT_OUTPUT_DIR, DFLT_SQLITE_DB_PATH, DFLT_TABLE_PREFIX, DFLT_TS_DP, DFLT_R2_ENDPOINT, DFLT_R2_BUCKET, DFLT_R2_REGION } from './consts';
 import { closeDb, initDB, readDB } from './db';
+import { R2Client, R2Config } from './r2-client';
 import yargs from 'yargs'
 import { hideBin } from 'yargs/helpers'
 import blurFacesInEquirectangular from './blur-faces';
@@ -23,6 +24,14 @@ if (args.h) {
       --dp=${DFLT_TS_DP}
       --prefix=${DFLT_TABLE_PREFIX}
       --blur=${DFLT_FACE_BLUR}
+      
+      R2 Configuration:
+      --use_r2=false
+      --r2_endpoint=${DFLT_R2_ENDPOINT}
+      --r2_bucket=${DFLT_R2_BUCKET}
+      --r2_region=${DFLT_R2_REGION}
+      --r2_access_key_id=your-access-key-id
+      --r2_secret_access_key=your-secret-access-key
       `)
   process.exit(0)
 }
@@ -35,10 +44,38 @@ const img_ext = args.img_ext ?? process.env.CV_KEYFRAME_IMG_EXTENSION ?? DFLT_IM
 const batch_size = Number(args.batch ?? process.env.CV_EXTRACT_BATCH_SIZE ?? DFLT_BATCH_SIZE)
 const ts_dp = Number(args.dp ?? process.env.CV_KEYFRAME_IMG_NAME_DP ?? DFLT_TS_DP)
 const blur = args.blur ?? process.env.CV_EXTRACT_FACE_BLUR ? process.env.CV_EXTRACT_FACE_BLUR == 'true' : DFLT_FACE_BLUR
-console.info("Using Args: DB:", sqlite_db_path, 'Input:', input_pic_dir, "Output:", output_pic_dir, "Img Extension:", img_ext, "Table Prefix:", table_prefix, "Batch size:", batch_size)
 
-const processHasCompletedFileFilePath = path.join(output_pic_dir, "complete.txt")
+// R2 Configuration
+const useR2 = args.use_r2 ?? process.env.CV_USE_R2 === 'true' ?? false
+const r2Endpoint = args.r2_endpoint ?? process.env.CV_R2_ENDPOINT ?? DFLT_R2_ENDPOINT
+const r2Bucket = args.r2_bucket ?? process.env.CV_R2_BUCKET ?? DFLT_R2_BUCKET
+const r2Region = args.r2_region ?? process.env.CV_R2_REGION ?? DFLT_R2_REGION
+const r2AccessKeyId = args.r2_access_key_id ?? process.env.CV_R2_ACCESS_KEY_ID
+const r2SecretAccessKey = args.r2_secret_access_key ?? process.env.CV_R2_SECRET_ACCESS_KEY
 
+console.info("Using Args: DB:", sqlite_db_path, 'Input:', input_pic_dir, "Output:", output_pic_dir, "Img Extension:", img_ext, "Table Prefix:", table_prefix, "Batch size:", batch_size, "Use R2:", useR2)
+
+// Initialize R2 client if enabled
+let r2Client: R2Client | null = null
+if (useR2) {
+  if (!r2AccessKeyId || !r2SecretAccessKey) {
+    console.error("R2 is enabled but access key ID and secret access key are required")
+    process.exit(1)
+  }
+  
+  const r2Config: R2Config = {
+    endpoint: r2Endpoint,
+    bucket: r2Bucket,
+    region: r2Region,
+    accessKeyId: r2AccessKeyId,
+    secretAccessKey: r2SecretAccessKey,
+  }
+  
+  r2Client = new R2Client(r2Config)
+  console.info("R2 client initialized with endpoint:", r2Endpoint, "bucket:", r2Bucket)
+}
+
+const processHasCompletedFileFilePath = useR2 ? "complete.txt" : path.join(output_pic_dir, "complete.txt")
 
 async function copyFileIfExists(file: string | number, input_pic_dir: string, output_pic_dir: string, img_ext: string) {
   const filePath = path.join(input_pic_dir, Number(file).toFixed(ts_dp) + img_ext);
@@ -48,7 +85,6 @@ async function copyFileIfExists(file: string | number, input_pic_dir: string, ou
     await fs.promises.copyFile(filePath, outputPath);
   }
 }
-
 
 async function processImages() {
   const time = new Date();
@@ -60,28 +96,67 @@ async function processImages() {
 
     await Promise.all(batch.map(async (row) => {
       const inputImagePath = path.join(input_pic_dir, Number(row.ts).toFixed(ts_dp) + img_ext);
-      const outputImagePath = path.join(output_pic_dir, Number(row.ts).toFixed(ts_dp) + img_ext);
       console.log("Parsing ", inputImagePath)
 
       if (fs.existsSync(inputImagePath)) {
         console.log("File exists - blurring: ", blur)
-        if (blur) await blurFacesInEquirectangular(inputImagePath, outputImagePath);
-        else await copyFileIfExists(Number(row.ts).toFixed(ts_dp), input_pic_dir, output_pic_dir, img_ext)
+        
+        if (useR2 && r2Client) {
+          // Upload to R2
+          if (blur) {
+            // Create temporary file for blurred image
+            const tempOutputPath = path.join(output_pic_dir, Number(row.ts).toFixed(ts_dp) + img_ext);
+            await blurFacesInEquirectangular(inputImagePath, tempOutputPath);
+            await r2Client.uploadImageResolutions(tempOutputPath, Number(row.ts).toFixed(ts_dp), img_ext);
+            // Clean up temporary file
+            fs.unlinkSync(tempOutputPath);
+          } else {
+            await r2Client.uploadImageResolutions(inputImagePath, Number(row.ts).toFixed(ts_dp), img_ext);
+          }
+        } else {
+          // Local file operations
+          const outputImagePath = path.join(output_pic_dir, Number(row.ts).toFixed(ts_dp) + img_ext);
+          if (blur) await blurFacesInEquirectangular(inputImagePath, outputImagePath);
+          else await copyFileIfExists(Number(row.ts).toFixed(ts_dp), input_pic_dir, output_pic_dir, img_ext)
+        }
       }
       else {
         console.error("File doesn't exist")
       }
     }));
   }
-  fs.writeFileSync(processHasCompletedFileFilePath, "Completed run started at:" + time.toLocaleTimeString() + " and ended at:" + new Date().toLocaleTimeString())
+  
+  const completionMessage = "Completed run started at:" + time.toLocaleTimeString() + " and ended at:" + new Date().toLocaleTimeString()
+  if (useR2 && r2Client) {
+    // Upload completion file to R2
+    const tempCompletionFile = "complete.txt"
+    fs.writeFileSync(tempCompletionFile, completionMessage)
+    await r2Client.uploadFileIfNotExists(tempCompletionFile, "complete.txt")
+    fs.unlinkSync(tempCompletionFile)
+  } else {
+    fs.writeFileSync(processHasCompletedFileFilePath, completionMessage)
+  }
 }
 
-
 // If the process is being rerun, we don't want the user confused whether this is a new run completed or the old one stuck around
-if (fs.existsSync(processHasCompletedFileFilePath)) {
-  fs.rmSync(processHasCompletedFileFilePath)
+async function checkAndCleanupCompletionFile() {
+  if (useR2 && r2Client) {
+    // For R2, we'll check if completion file exists and delete it if it does
+    try {
+      const exists = await r2Client.fileExists("complete.txt")
+      if (exists) {
+        console.log("Previous completion file found in R2, starting fresh run")
+      }
+    } catch (error) {
+      console.log("No previous completion file found in R2")
+    }
+  } else if (fs.existsSync(processHasCompletedFileFilePath)) {
+    fs.rmSync(processHasCompletedFileFilePath)
+  }
 }
 
 console.info("Init DB")
 initDB(sqlite_db_path)
-processImages().then(closeDb).catch(console.error);
+checkAndCleanupCompletionFile().then(() => {
+  processImages().then(closeDb).catch(console.error);
+}).catch(console.error);
