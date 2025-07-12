@@ -1,0 +1,35 @@
+{
+    "naming_conventions": {
+        "variables": "camelCase",
+        "functions": "camelCase",
+        "classes": "PascalCase",
+        "interfaces": "PascalCase",
+        "file_names": "kebab-case",
+        "database_tables": "snake_case"
+    },
+    "code_structure": {
+        "encapsulation": "Ensure that classes and modules encapsulate related functionality. Use private fields and methods where appropriate.",
+        "modularity": "Break down the application into smaller, reusable components and modules."
+    },
+    "documentation": {
+        "comments": "Use clear, concise comments in British English to describe the purpose of complex logic and classes.",
+        "docstrings": "Utilise JSDoc/TSDoc (or typescript types) for documenting functions and classes. Include parameter and return type descriptions."
+    },
+    "accessibility": {
+        "aria_labels": "Use ARIA labels to enhance accessibility for screen readers - don't add aria labels where the element is self-explanatory",
+        "keyboard_navigation": "Ensure all interactive elements are accessible via keyboard navigation - don't add keyboard navigation where an element is not interactive or doesn't contain information",
+        "colour_contrast": "Maintain a high colour contrast ratio for text and background."
+    },
+    "user_experience": {
+        "multi_lingual_support": "Implement i18n for multi-lingual support, allowing easy translation of UI text.",
+        "responsive_design": "Ensure the front-end is responsive, providing a seamless experience across different devices.",
+        "loading_indicators": "Use loading indicators to inform users of background processes."
+    },
+    "typescript": {
+        "strict_typing": "Enable strict typing in TypeScript to catch potential errors early."
+    },
+    "best_practices": {
+        "testing": "Write unit tests for critical components and functions to ensure reliability and robustness.",
+        "version_control": "Use Git for version control, with meaningful commit messages in British English."
+    }
+}
