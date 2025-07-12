@@ -49,5 +49,5 @@ fi
 cd "$CV_HOME_DIR/Apps/ImageSplitter" || error_exit "Failed to change directory to $CV_HOME_DIR/Apps/ImageSplitter"
 npm install || error_exit "npm install failed"
 npm run build || error_exit "npm run build failed"
-npm run start -- --input_dir="$INPUT_DIR" --output_dir="$OUTPUT_DIR" --db="$INPUT_DB" --prefix="$TABLE_PREFIX" || error_exit "npm run start failed"
+npm run start -- --input_dir="$INPUT_DIR" --output_dir="$OUTPUT_DIR" --db="$INPUT_DB" --prefix="$TABLE_PREFIX" --use_r2=true || error_exit "npm run start failed"
 cd "$ORIGINAL_DIR" || error_exit "Failed to change back to original directory"
