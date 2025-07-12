@@ -16,14 +16,13 @@ A Node.js application that processes images from a SQLite database, with support
 
 When using R2, each image is automatically processed and uploaded in 4 different resolutions:
 
-| Quality | Resolution | Filename Format |
+| Quality | JPG quality | Filename Format |
 |---------|------------|-----------------|
-| preview | 64 x 32 | `{timestamp}-preview.{extension}` |
-| lowest | 256 x 128 | `{timestamp}-lowest.{extension}` |
-| medium | 1024 x 512 | `{timestamp}-medium.{extension}` |
-| ultra | 4096 x 2048 | `{timestamp}-ultra.{extension}` |
+| preview | 5 | `{timestamp}-preview.jpg` |
+| lowest | 20| `{timestamp}-lowest.jpg` |
+|...| up to 100 | -name.jpg |
 
-All images are converted to JPEG format with appropriate quality settings (60% for preview, 85% for others).
+All images are converted to JPEG format with appropriate quality settings
 
 ## Installation
 
