@@ -17,7 +17,7 @@
     "start_server": true
   },
   "paths": {
-    "home_dir": "/home/skwangles/Documents/Honours/CampusVirtual",
+    "home_dir": "/home/skwangles/Documents/Honours/Sitexplorer",
     "video_dir": "/media/skwangles/KINGSTON/MEDIA/TGA/video/",
     "keyframe_img_dir": "/media/skwangles/KINGSTON/MEDIA/TGA/blurred_pictures/",
     "db_dir": "/media/skwangles/KINGSTON/MEDIA/TGA/MAPS/",
@@ -84,7 +84,11 @@
     "server_floorplan_img_dir": "/media/skwangles/KINGSTON/MEDIA/TGA/floorplans",
     "authoring_floorplan_img_dir": "/media/skwangles/KINGSTON/MEDIA/TGA/floorplans",
     "server_keyframe_img_extension": ".png",
-    "authoring_keyframe_img_extension": ".png"
+    "authoring_keyframe_img_extension": ".png",
+    "use_r2": false,
+    "r2_endpoint": "https://your-account-id.r2.cloudflarestorage.com",
+    "r2_bucket": "your-bucket-name",
+    "r2_region": "auto"
   },
   "env_file": ".env.tga"
 } 

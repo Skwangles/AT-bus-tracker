@@ -23,5 +23,11 @@
     "vslam_map_dir": "${CV_VSLAM_MAP_DIR}",
     "json_dir": "${CV_JSON_DIR}"
   },
+  "config": {
+    "use_r2": false,
+    "r2_endpoint": "https://your-account-id.r2.cloudflarestorage.com",
+    "r2_bucket": "your-bucket-name",
+    "r2_region": "auto"
+  },
   "env_file": ".env.production"
 } 

@@ -14,14 +14,18 @@ export interface R2Config {
   secretAccessKey: string;
 }
 
+export const Resolution = {width: 4096, height: 2048}
+
 /**
  * Resolution levels for image processing
  */
 export const RESOLUTION_LEVELS = {
-  preview: { width: 64, height: 32 },
-  lowest: { width: 256, height: 128 },
-  medium: { width: 1024, height: 512 },
-  ultra: { width: 4096, height: 2048 },
+  preview: { quality: 5, resolution: Resolution},
+  lowest: { quality: 10, resolution: Resolution},
+  low: { quality: 20, resolution: Resolution},
+  medium: { quality: 60, resolution: Resolution},
+  high: { quality: 80, resolution: Resolution},
+  ultra: { quality: 100, resolution: Resolution},
 } as const;
 
 export type ResolutionLevel = keyof typeof RESOLUTION_LEVELS;
@@ -81,8 +85,8 @@ export class R2Client {
     try {
       const uploadPromises: Promise<void>[] = [];
 
-      for (const [quality, dimensions] of Object.entries(RESOLUTION_LEVELS)) {
-        const remoteKey = `${timestamp}-${quality}${imageExtension}`;
+      for (const [quality, settings] of Object.entries(RESOLUTION_LEVELS)) {
+        const remoteKey = `${timestamp}-${quality}.jpg`;
         
         // Check if file already exists
         const exists = await this.fileExists(remoteKey);
@@ -92,7 +96,7 @@ export class R2Client {
         }
 
         // Create resized image buffer
-        const resizedBuffer = await this.createResizedImage(localFilePath, dimensions, quality);
+        const resizedBuffer = await this.createResizedImage(localFilePath, settings.resolution, settings.quality);
         
         // Upload the resized image
         const uploadPromise = this.uploadBuffer(resizedBuffer, remoteKey, this.getContentType(localFilePath));
@@ -118,7 +122,7 @@ export class R2Client {
   private async createResizedImage(
     localFilePath: string, 
     dimensions: { width: number; height: number }, 
-    quality: string
+    quality: number
   ): Promise<Buffer> {
     const { width, height } = dimensions;
     
@@ -127,7 +131,7 @@ export class R2Client {
         fit: "fill",
         withoutEnlargement: true,
       })
-      .jpeg({ quality: quality === "preview" ? 60 : 85 })
+      .jpeg({ quality: quality })
       .toBuffer();
   }
 
@@ -167,9 +171,11 @@ export class R2Client {
         Key: remoteKey,
       });
       await this.client.send(command);
+      console.log("File exists in R2", remoteKey)
       return true;
     } catch (error: any) {
       if (error.name === 'NotFound' || error.$metadata?.httpStatusCode === 404) {
+        console.log("File does not exist in R2", remoteKey)
         return false;
       }
       throw error;

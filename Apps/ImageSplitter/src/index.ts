@@ -53,11 +53,12 @@ const r2Region = args.r2_region ?? process.env.CV_R2_REGION ?? DFLT_R2_REGION
 const r2AccessKeyId = args.r2_access_key_id ?? process.env.CV_R2_ACCESS_KEY_ID
 const r2SecretAccessKey = args.r2_secret_access_key ?? process.env.CV_R2_SECRET_ACCESS_KEY
 
-console.info("Using Args: DB:", sqlite_db_path, 'Input:', input_pic_dir, "Output:", output_pic_dir, "Img Extension:", img_ext, "Table Prefix:", table_prefix, "Batch size:", batch_size, "Use R2:", useR2)
+console.info("Using Args: DB:", sqlite_db_path, '\nInput:', input_pic_dir, '\nOutput:', output_pic_dir, '\nImg Extension:', img_ext, '\nTable Prefix:', table_prefix, '\nBatch size:', batch_size, '\nUse R2:', useR2, '\nR2 Endpoint:', r2Endpoint, '\nR2 Bucket:', r2Bucket, '\nR2 Region:', r2Region, '\nR2 Access Key ID:', r2AccessKeyId)
 
 // Initialize R2 client if enabled
 let r2Client: R2Client | null = null
 if (useR2) {
+  console.info("Using R2")
   if (!r2AccessKeyId || !r2SecretAccessKey) {
     console.error("R2 is enabled but access key ID and secret access key are required")
     process.exit(1)
