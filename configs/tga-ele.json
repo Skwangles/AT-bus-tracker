@@ -13,8 +13,8 @@
     "init_data": false,
     "start_authoring": false,
     "strip_restricted_nodes": false,
-    "extract_used_images": true,
-    "start_server": false
+    "extract_used_images": false,
+    "start_server": true
   },
   "paths": {
     "home_dir": "/home/skwangles/Documents/Honours/Sitexplorer",
