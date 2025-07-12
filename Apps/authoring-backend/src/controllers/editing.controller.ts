@@ -54,12 +54,36 @@ export async function addLabelToMapPoint(req: Request, res: Response) {
     res.status(400).send("Invalid Arguments").end();
     return;
   }
+  
+  // Get node coordinates for positioning the label
+  const nodeQuery = `SELECT x_trans, y_trans, z_trans FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes WHERE keyframe_id = ?`;
+  const nodeResult = await readDB(nodeQuery, [id], true);
+  
+  if (!nodeResult) {
+    res.status(404).send("Node not found").end();
+    return;
+  }
+
+  // Check if label already exists for this node
+  const existingLabelQuery = `
+    SELECT id FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes 
+    WHERE ref_id = ? AND label = ?
+  `;
+  const existingLabel = await readDB(existingLabelQuery, [id, label], true);
+  
+  if (existingLabel) {
+    res.status(409).send("Label already exists for this node").end();
+    return;
+  }
+
+  // Insert into other_nodes table
   const changes = await writeDB(
-    `INSERT OR IGNORE INTO ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""
-    }user_defined_labels (keyframe_id, label) VALUES (?, ?) WHERE 
-    EXISTS (SELECT keyframe_id FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes WHERE keyframe_id = ?)`,
-    [id, label, id]
+    `INSERT INTO ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes 
+     (ref_id, label, description, type, x_trans, y_trans, z_trans) 
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [id, label, label, 0, nodeResult.x_trans, nodeResult.y_trans * 1.05, nodeResult.z_trans]
   );
+  
   res
     .status(changes > 0 ? 200 : 409)
     .send(

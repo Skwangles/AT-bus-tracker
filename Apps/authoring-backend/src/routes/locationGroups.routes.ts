@@ -3,9 +3,8 @@ import { getAllSearchableLabels, getPointWithLocationGroupOrLabelName } from "..
 
 const app = Router();
 
-app.get('/api/v1/floors', getAllSearchableLabels)
+app.get('/labels', getAllSearchableLabels)
 
-app.get('/api/v1/floor/:floor/point/', getPointWithLocationGroupOrLabelName)
-
+app.get('/:locationgroup/point/', getPointWithLocationGroupOrLabelName)
 
 export default app;

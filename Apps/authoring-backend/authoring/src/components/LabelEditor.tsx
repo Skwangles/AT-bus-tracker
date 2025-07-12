@@ -7,8 +7,15 @@ type LabelComponentProps = {
   id: number // The keyframe ID
 }
 
+type Label = {
+  id: number;
+  label: string;
+  description: string;
+  type: number;
+}
+
 const LabelComponent: React.FC<LabelComponentProps> = ({ id }) => {
-  const [labels, setLabels] = useState<{ id: string; label: string }[]>([]) // Array to store the labels
+  const [labels, setLabels] = useState<Label[]>([]) // Array to store the labels
   const [newLabel, setNewLabel] = useState<string>('') // For the new label input
   const [editingLabel, setEditingLabel] = useState<string | null>(null) // For the label being edited
   const [editedLabelText, setEditedLabelText] = useState<string>('') // Text input for editing label
@@ -18,7 +25,7 @@ const LabelComponent: React.FC<LabelComponentProps> = ({ id }) => {
     const fetchLabels = async () => {
       try {
         const response = await axios.get(`${API_PREFIX}/api/v1/labels/${id}`)
-        setLabels(response.data)
+        setLabels(response.data.otherNodes || [])
       } catch (error) {
         console.error('Error fetching labels:', error)
       }
@@ -34,10 +41,9 @@ const LabelComponent: React.FC<LabelComponentProps> = ({ id }) => {
         await axios.post(`${API_PREFIX}/api/v1/labels/${id}`, {
           label: newLabel,
         })
-        setLabels((prevLabels) => [
-          ...prevLabels,
-          { id: String(id), label: newLabel },
-        ]) // Add the label to the list
+        // Refresh labels after adding
+        const response = await axios.get(`${API_PREFIX}/api/v1/labels/${id}`)
+        setLabels(response.data.otherNodes || [])
         setNewLabel('') // Reset input field
       } catch (error) {
         console.error('Error adding label:', error)
@@ -92,7 +98,7 @@ const LabelComponent: React.FC<LabelComponentProps> = ({ id }) => {
       <h3>Labels for Keyframe ID: {id}</h3>
       <ul>
         {labels.map((label) => (
-          <li key={label.label}>
+          <li key={label.id}>
             {editingLabel === label.label ? (
               <>
                 <input
@@ -105,7 +111,11 @@ const LabelComponent: React.FC<LabelComponentProps> = ({ id }) => {
               </>
             ) : (
               <>
-                <i>{label.label}</i>
+                <strong>{label.label}</strong>
+                {label.description && label.description !== label.label && (
+                  <span className="text-gray-600 ml-2">({label.description})</span>
+                )}
+                <span className="text-sm text-gray-500 ml-2">Type: {label.type}</span>
                 <button
                   className="mx-2"
                   onClick={() => startEditing(label.label)}

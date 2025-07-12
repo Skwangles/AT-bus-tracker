@@ -9,7 +9,7 @@ export const getLabels = async (req: Request, res: Response) => {
   try {
     // Get labels from other_nodes table first
     const otherNodesQuery = `
-      SELECT label, description, type, x_trans, y_trans, z_trans 
+      SELECT id, label, description, type, x_trans, y_trans, z_trans 
       FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes 
       WHERE ref_id = ? 
       ORDER BY type, label

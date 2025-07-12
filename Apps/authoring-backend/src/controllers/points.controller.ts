@@ -28,7 +28,7 @@ export async function pathfindFromPointId(req: Request, res: Response) {
   }
 
   // Check label first, as these are manually annotated (and supposedly special) points
-  let locationResults = await readDB(`SELECT s.keyframe_id FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}user_defined_labels s WHERE s.label = ? LIMIT 1;`, [locationCode], true);
+  let locationResults = await readDB(`SELECT otn.ref_id as keyframe_id FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes otn WHERE otn.label = ? LIMIT 1;`, [locationCode], true);
   let isLabel = true;
   if (!locationResults) {
     isLabel = false
@@ -94,10 +94,14 @@ export async function getPointInfoFromId(req: Request, res: Response) {
 
   // Fetch associated labels
   const labelRows = await readDB(
-    `SELECT label FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}user_defined_labels WHERE keyframe_id = ?;`,
+    `SELECT label, description, type FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes WHERE ref_id = ?;`,
     [id]
   );
-  const labels = Array.isArray(labelRows) ? labelRows.map((row: any) => row.label) : [];
+  const labels = Array.isArray(labelRows) ? labelRows.map((row: any) => ({
+    label: row.label,
+    description: row.description,
+    type: row.type
+  })) : [];
 
   if (pointData && 'pose' in pointData) {
     res.json({
@@ -165,12 +169,12 @@ export async function createNewPoint(req: Request, res: Response) {
       [keyframeId, location]
     );
 
-    // 3. Insert into user_defined_labels table if label is provided
+    // 3. Insert into other_nodes table if label is provided
     if (label) {
       await writeDB(
-        `INSERT INTO ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}user_defined_labels 
-         (keyframe_id, label) VALUES (?, ?)`,
-        [keyframeId, label]
+        `INSERT INTO ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes 
+         (ref_id, label, description, type, x_trans, y_trans, z_trans) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [keyframeId, label, label, 0, 0, 0, 0]
       );
     }
 

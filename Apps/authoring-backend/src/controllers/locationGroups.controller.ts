@@ -40,8 +40,8 @@ export async function getAllSearchableLabels(req: Request, res: Response) {
     }
   })
 
-  const labels = await readDB(`SELECT label, l.location FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}user_defined_labels s 
-    JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l ON l.keyframe_id = s.keyframe_id
+  const labels = await readDB(`SELECT label, l.location FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes s 
+    JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l ON l.keyframe_id = s.ref_id
     WHERE s.label is not NULL AND s.label <> '' AND s.label <> '${ReservedTypeIndex[ReservedTypeIndex.Anchor]}'`)
 
   // Parse special labels types
@@ -112,11 +112,11 @@ export async function getPointWithLocationGroupOrLabelName(req: Request, res: Re
   }
 
   // Get FIRST node which has that location/label
-  const nodeWithUserDefinedLabel = await readDB(`SELECT n.keyframe_id, s.label FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}user_defined_labels s ON s.keyframe_id = n.keyframe_id WHERE s.label = ? LIMIT 1`, [name], true)
+  const nodeWithOtherNodeLabel = await readDB(`SELECT n.keyframe_id, s.label FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes s ON s.ref_id = n.keyframe_id WHERE s.label = ? LIMIT 1`, [name], true)
 
-  if (nodeWithUserDefinedLabel) {
-    logger.debug(`[getPointWithLocationGroupOrLabelName] Found a label: ${nodeWithUserDefinedLabel}`)
-    res.json(nodeWithUserDefinedLabel)
+  if (nodeWithOtherNodeLabel) {
+    logger.debug(`[getPointWithLocationGroupOrLabelName] Found a label: ${nodeWithOtherNodeLabel}`)
+    res.json(nodeWithOtherNodeLabel)
     return
   }
 

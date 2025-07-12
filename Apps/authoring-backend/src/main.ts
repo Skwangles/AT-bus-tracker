@@ -8,7 +8,6 @@ import mapRoutes from './routes/map.routes'
 import labelRoutes from './routes/labels.routes'
 import pointRoutes from './routes/points.routes'
 import locationGroupRoutes from './routes/locationGroups.routes'
-import mapPointsRoutes from './routes/mapPoints.routes'
 
 import readline from 'readline'
 import logger from './logger'
@@ -28,19 +27,16 @@ app.get('/', function (req, res) {
   res.sendFile(path.join(__dirname, '../authoring/dist', 'index.html'))
 })
 
-app.use(mapRoutes)
-app.use(imageRoutes)
-app.use(authoringRoutes)
-app.use(labelRoutes)
-app.use(pointRoutes)
-app.use(locationGroupRoutes)
-app.use(mapPointsRoutes)
-
+app.use("/api/v1/maps", mapRoutes)
+app.use("/api/v1/images", imageRoutes)
+app.use("/api/v1/authoring", authoringRoutes)
+app.use("/api/v1/labels", labelRoutes)
+app.use("/api/v1/point", pointRoutes)
+app.use("/api/v1/locationGroup", locationGroupRoutes)
 
 let exitReader = null;
 if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {
   exitReader = readline.createInterface({ input: process.stdin, output: process.stdout })
-
 }
 
 console.log("Configured the server endpoints, starting server...")
