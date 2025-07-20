@@ -166,32 +166,198 @@ async function getBorderNodes(location: string): Promise<Array<{ keyframe_id: nu
     throw new Error("Invalid Location")
   }
 
-  // const borderNodesResult = await readDB(`
-  //   WITH border_nodes AS (
-  //   SELECT keyframe_id1 as keyframe_id, l2.location, n.x_trans, n.z_trans FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}edges e 
-  //                   JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l 
-  //                   ON e.keyframe_id0 = l.keyframe_id 
-  //                   JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l2 ON e.keyframe_id1 = l2.keyframe_id
-  //                   JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n ON n.keyframe_id = e.keyframe_id1
-  //                   WHERE l.location = ? AND l2.location <> ?
-  //       )
+  // Step 1: Get all border nodes (nodes not in current location but connected to it)
+  const borderNodesResult = await readDB(`
+    SELECT DISTINCT 
+      e.keyframe_id1 as keyframe_id, 
+      l2.location, 
+      n.x_trans, 
+      n.z_trans 
+    FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}edges e 
+    JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l 
+      ON e.keyframe_id0 = l.keyframe_id 
+    JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l2 
+      ON e.keyframe_id1 = l2.keyframe_id
+    JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n 
+      ON n.keyframe_id = e.keyframe_id1
+    WHERE l.location = ? AND l2.location <> ?
+  `, [location, location])
 
-  //     SELECT DISTINCT n.keyframe_id as keyframe_id, bn2.keyframe_id as id2, n.location, n.x_trans, n.z_trans
-  //     FROM border_nodes n 
-  //     JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}edges e ON n.keyframe_id = e.keyframe_id0 
-  //     JOIN border_nodes bn2 ON e.keyframe_id1 = bn2.keyframe_id
-  //     WHERE bn2.location == n.location AND bn2.keyframe_id IS NOT NULL AND n.keyframe_id < bn2.keyframe_id ;
-  //   `, [location, location])
+  if (borderNodesResult.length === 0) {
+    return []
+  }
 
-  return await readDB(`SELECT keyframe_id1 as keyframe_id, l2.location, n.x_trans, n.z_trans FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}edges e 
-                    JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l 
-                    ON e.keyframe_id0 = l.keyframe_id 
-                    JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l2 ON e.keyframe_id1 = l2.keyframe_id
-                    JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n ON n.keyframe_id = e.keyframe_id1
-                    WHERE l.location = ? AND l2.location <> ?;
-                    `, [location, location])
+  // Step 2: Handle staircase nodes specially
+  const processedNodes = await processStaircaseNodes(borderNodesResult, location)
 
-  // const result = await getGroupsFromPoints(borderNodesResult)
-  // logger.verbose(`Border Node groups Found: ${result.length} for location: ${location}`)
-  // return result
+  // Step 3: Cluster border nodes to reduce redundancy
+  const clusteredNodes = await clusterBorderNodes(processedNodes)
+
+  logger.verbose(`[getBorderNodes] Found ${borderNodesResult.length} border nodes, processed to ${clusteredNodes.length} clusters for location: ${location}`)
+  return clusteredNodes
+}
+
+/**
+ * Process staircase nodes by replacing them with their destination nodes
+ * @param borderNodes - Array of border nodes
+ * @param currentLocation - Current location being processed
+ * @returns Processed border nodes with staircase nodes replaced
+ */
+async function processStaircaseNodes(
+  borderNodes: Array<{ keyframe_id: number, location: string, x_trans: number, z_trans: number }>,
+  currentLocation: string
+): Promise<Array<{ keyframe_id: number, location: string, x_trans: number, z_trans: number }>> {
+  const processedNodes: Array<{ keyframe_id: number, location: string, x_trans: number, z_trans: number }> = []
+  
+  for (const node of borderNodes) {
+    // Check if this is a staircase node
+    if (node.location.startsWith('staircase -')) {
+      try {
+        // Find all distinct locations that this staircase connects to
+        const connectedLocations = await readDB(`
+          SELECT DISTINCT l.location
+          FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}edges e
+          JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l 
+            ON e.keyframe_id1 = l.keyframe_id
+          WHERE e.keyframe_id0 = ? AND l.location <> ? AND l.location <> ?
+        `, [node.keyframe_id, currentLocation, node.location])
+
+        // Find the first node in a non-staircase location that connects to this staircase
+        for (const connectedLocation of connectedLocations) {
+          if (!connectedLocation.location.endsWith('- staircase') && connectedLocation.location !== currentLocation) {
+            const destinationNode = await readDB(`
+              SELECT n.keyframe_id, l.location, n.x_trans, n.z_trans
+              FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}edges e
+              JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l 
+                ON e.keyframe_id1 = l.keyframe_id
+              JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n 
+                ON n.keyframe_id = e.keyframe_id1
+              WHERE e.keyframe_id0 = ? AND l.location = ?
+              LIMIT 1
+            `, [node.keyframe_id, connectedLocation.location])
+
+            if (destinationNode.length > 0) {
+              // Replace staircase node with destination node
+              processedNodes.push(destinationNode[0])
+              logger.verbose(`[processStaircaseNodes] Replaced staircase node ${node.keyframe_id} with destination node ${destinationNode[0].keyframe_id} in location ${destinationNode[0].location}`)
+              break // Only use the first valid destination
+            }
+          }
+        }
+      } catch (error) {
+        logger.warn(`[processStaircaseNodes] Error processing staircase node ${node.keyframe_id}: ${error}`)
+        // Fall back to using the original node
+        processedNodes.push(node)
+      }
+    } else {
+      // Non-staircase node, keep as is
+      processedNodes.push(node)
+    }
+  }
+
+  return processedNodes
+}
+
+/**
+ * Cluster border nodes to reduce redundancy by grouping nodes within 2 steps of each other
+ * @param borderNodes - Array of border nodes to cluster
+ * @returns Clustered border nodes with one representative per cluster
+ */
+async function clusterBorderNodes(
+  borderNodes: Array<{ keyframe_id: number, location: string, x_trans: number, z_trans: number }>
+): Promise<Array<{ keyframe_id: number, location: string, x_trans: number, z_trans: number }>> {
+  if (borderNodes.length === 0) {
+    return []
+  }
+
+  // Create a map of node connections for efficient lookup
+  const nodeConnections = new Map<number, Set<number>>()
+  
+  // Build connection graph for border nodes
+  for (const node of borderNodes) {
+    const connections = await readDB(`
+      SELECT DISTINCT e.keyframe_id1 as connected_id
+      FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}edges e
+      WHERE e.keyframe_id0 = ?
+      UNION
+      SELECT DISTINCT e.keyframe_id0 as connected_id
+      FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}edges e
+      WHERE e.keyframe_id1 = ?
+    `, [node.keyframe_id, node.keyframe_id])
+
+    const connectedIds = new Set<number>(connections.map((conn: { connected_id: number }) => conn.connected_id))
+    nodeConnections.set(node.keyframe_id, connectedIds)
+  }
+
+  // Find clusters using depth-first search with depth limit of 2
+  const visited = new Set<number>()
+  const clusters: Array<Set<number>> = []
+
+  for (const node of borderNodes) {
+    if (!visited.has(node.keyframe_id)) {
+      const cluster = new Set<number>()
+      findCluster(node.keyframe_id, nodeConnections, visited, cluster, 0, 2)
+      if (cluster.size > 0) {
+        clusters.push(cluster)
+      }
+    }
+  }
+
+  // Select one representative node from each cluster
+  const representativeNodes: Array<{ keyframe_id: number, location: string, x_trans: number, z_trans: number }> = []
+  
+  for (const cluster of clusters) {
+    // Find the node in this cluster that has the most connections to the original location
+    // This helps select a more representative node
+    let bestNode: { keyframe_id: number, location: string, x_trans: number, z_trans: number } | null = null
+    let maxConnections = -1
+
+    for (const nodeId of cluster) {
+      const node = borderNodes.find(n => n.keyframe_id === nodeId)
+      if (node) {
+        const connections = nodeConnections.get(nodeId) || new Set()
+        if (connections.size > maxConnections) {
+          maxConnections = connections.size
+          bestNode = node
+        }
+      }
+    }
+
+    if (bestNode) {
+      representativeNodes.push(bestNode)
+      logger.verbose(`[clusterBorderNodes] Selected representative node ${bestNode.keyframe_id} from cluster of ${cluster.size} nodes`)
+    }
+  }
+
+  return representativeNodes
+}
+
+/**
+ * Recursively find all nodes in a cluster within the specified depth
+ * @param nodeId - Current node ID
+ * @param nodeConnections - Map of node connections
+ * @param visited - Set of visited nodes
+ * @param cluster - Current cluster being built
+ * @param currentDepth - Current depth in the search
+ * @param maxDepth - Maximum depth to search
+ */
+function findCluster(
+  nodeId: number,
+  nodeConnections: Map<number, Set<number>>,
+  visited: Set<number>,
+  cluster: Set<number>,
+  currentDepth: number,
+  maxDepth: number
+): void {
+  if (currentDepth > maxDepth || visited.has(nodeId)) {
+    return
+  }
+
+  visited.add(nodeId)
+  cluster.add(nodeId)
+
+  const connections = nodeConnections.get(nodeId) || new Set()
+  for (const connectedId of connections) {
+    findCluster(connectedId, nodeConnections, visited, cluster, currentDepth + 1, maxDepth)
+  }
 }
