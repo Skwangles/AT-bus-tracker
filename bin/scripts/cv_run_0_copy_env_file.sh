@@ -27,7 +27,6 @@ fi
 
 
 
-cp $CV_ENV_PATH Apps/sitexplorer-backend/.env || error_exit "Failed to copy .env to Apps/sitexplorer-backend/"
 cp $CV_ENV_PATH Apps/authoring-backend/.env || error_exit "Failed to copy .env to Apps/authoring-backend/"
 cp $CV_ENV_PATH Apps/GraphPruner/.env || error_exit "Failed to copy .env to Apps/GraphPruner/"
 cp $CV_ENV_PATH Apps/map_data_init/.env || error_exit "Failed to copy .env to Apps/map_data_init/"
