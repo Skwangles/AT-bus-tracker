@@ -13,7 +13,7 @@
     "init_data": false,
     "start_authoring": false,
     "strip_restricted_nodes": false,
-    "extract_used_images": false,
+    "extract_used_images": true,
     "start_server": true
   },
   "paths": {
