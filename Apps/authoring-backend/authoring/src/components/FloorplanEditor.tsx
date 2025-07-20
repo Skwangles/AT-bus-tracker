@@ -2,11 +2,11 @@ import React, { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import { Stage, Layer, Image as KonvaImage, Circle, Line } from 'react-konva'
 import FileUpload from './FileUpload'
-import PointControls from './PointControls'
+import NodeInspector from './NodeInspector'
+import SelectionBox from './SelectionBox'
 import { API_PREFIX, Edge, Node } from '../consts'
 import { findPathWithDijkstra } from '../logic/pathfinding'
 import { clamp } from '../logic/utils'
-import Buttons from './Buttons'
 
 export interface FloorplanEditorProps {
   floorplan: string
@@ -21,6 +21,8 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
   const [stageHeight, setStageHeight] = useState<number>(800)
   const [selectedPoints, setSelectedPoints] = useState<Set<string>>(new Set())
   const [lastSelectedPoint, setLastSelectedPoint] = useState<Node | null>(null)
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
+  const [showNodeInspector, setShowNodeInspector] = useState(false)
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const layer = useRef<any>(null)
@@ -33,7 +35,7 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
   const handleMultiplePointUpdate = async (points: any[]) => {
     try {
       await axios
-        .post(`${API_PREFIX}/api/v1/maps/${floorplan}/updatemultiple`, {
+        .post(`${API_PREFIX}/api/v1/authoring/maps/${floorplan}/updatemultiple`, {
           points: points.map(point => ({
             keyframe_id: point.keyframe_id,
             x: point.x,
@@ -64,10 +66,9 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
       if (
         !response.data ||
         !response.data.nodes ||
-        !response.data.edges ||
-        !response.data.has_image
+        !response.data.edges
       ) {
-        console.error('No data returned from floorplan', floorplan)
+        console.error('No data returned from floorplan', floorplan, response.data, response)
         return
       }
       const img = new Image()
@@ -99,6 +100,8 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
 
   useEffect(() => {
     setSelectedPoints(new Set())
+    setSelectedNodeId(null)
+    setShowNodeInspector(false)
     fetchFloorplanData()
   }, [floorplan])
 
@@ -108,7 +111,6 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
   }
 
   const handleDragMove = (e: any) => {
-    console.log(dragStartPos)
     if (!dragStartPos) return
 
     const { x: x, y: y }: { x: number; y: number } = e.target.position()
@@ -142,7 +144,7 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
 
     if (isCtrlPressed) {
       setSelectedPoints((prev) => {
-        const newSelected = prev
+        const newSelected = new Set(prev)
         if (newSelected.has(id)) {
           newSelected.delete(id)
         } else {
@@ -162,13 +164,16 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
         true
       )
       setSelectedPoints((prev) => {
+        const newSelected = new Set(prev)
         for (const id of selectedIds) {
-          prev.add(id)
+          newSelected.add(id)
         }
-        return prev
+        return newSelected
       })
     } else {
       setSelectedPoints(new Set([id]))
+      setSelectedNodeId(id)
+      setShowNodeInspector(true)
     }
     setLastSelectedPoint(foundNode || null)
   }
@@ -183,90 +188,207 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
     setDragStartPos(null)
   }
 
+  const handleSelectionChange = (selectedIds: Set<string>) => {
+    setSelectedPoints(selectedIds)
+    if (selectedIds.size === 1) {
+      const id = Array.from(selectedIds)[0]
+      setSelectedNodeId(id)
+      setShowNodeInspector(true)
+    } else {
+      setSelectedNodeId(null)
+      setShowNodeInspector(false)
+    }
+  }
+
   const getNodeCoords = (id: string) => {
     const node = nodes.find((n) => n.id === id)
     if (!node) return { x: 0, y: 0 }
     return { x: node.x, y: node.y }
   }
 
-  const updateMap = (newNodes: Node[]) => {
-    setNodes(newNodes)
-    handleMultiplePointUpdate(newNodes)
+  const handleNodeUpdate = () => {
+    fetchFloorplanData()
+  }
+
+  const handleImageUploadSuccess = () => {
+    fetchFloorplanData()
+  }
+
+  const getNodeColor = (node: Node) => {
+    if (selectedPoints.has(node.id)) {
+      return '#ff0000'
+    }
+    
+    // Color based on node type
+    const nodeTypes = {
+      0: '#00ff00', // Normal - Green
+      1: '#28a745', // Elevator - Dark Green
+      2: '#ffc107', // Toilet - Yellow
+      3: '#17a2b8', // Info - Cyan
+      4: '#6f42c1', // Stair - Purple
+      5: '#dc3545'  // Exit - Red
+    }
+    
+    return nodeTypes[node.type as keyof typeof nodeTypes] || '#00ff00'
+  }
+
+  const getNodeRadius = (node: Node) => {
+    if (selectedPoints.has(node.id)) {
+      return 8
+    }
+    return 5
   }
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <FileUpload currentFloor={floorplan} isImageSelected={hasImage} />
-        {lastSelectedPoint && (
-          <PointControls
-            id={lastSelectedPoint.id}
-            point={lastSelectedPoint}
-            location={floorplan}
-            reloadPoints={fetchFloorplanData}
+    <div className="floorplan-editor">
+      <div className="editor-header">
+        <div className="header-left">
+          <h2>{floorplan}</h2>
+          <div className="stats">
+            <span>{nodes.length} points</span>
+            <span>{edges.length} connections</span>
+          </div>
+        </div>
+        <div className="header-right">
+          <FileUpload 
+            currentFloor={floorplan} 
+            isImageSelected={hasImage}
+            onUploadSuccess={handleImageUploadSuccess}
           />
+        </div>
+      </div>
+
+      <div className="editor-content">
+        <div className="canvas-container">
+          <SelectionBox onSelectionChange={handleSelectionChange}>
+            <Stage
+              width={stageWidth}
+              height={stageHeight}
+              onMouseDown={handleMouseDown}
+              onMouseUp={handleMouseUp}
+            >
+              <Layer ref={layer}>
+                {hasImage && image && (
+                  <KonvaImage
+                    image={image}
+                    width={stageWidth}
+                    height={stageHeight}
+                  />
+                )}
+                {edges.map((edge, i) => {
+                  const start = getNodeCoords(edge.id0)
+                  const end = getNodeCoords(edge.id1)
+                  return (
+                    <Line
+                      key={i}
+                      points={[
+                        start.x * stageWidth,
+                        start.y * stageHeight,
+                        end.x * stageWidth,
+                        end.y * stageHeight,
+                      ]}
+                      stroke="#000"
+                      strokeWidth={1}
+                    />
+                  )
+                })}
+                {nodes.map((node) => (
+                  <Circle
+                    key={node.id}
+                    name={node.id}
+                    data-point-id={node.id}
+                    x={node.x * stageWidth}
+                    y={node.y * stageHeight}
+                    radius={getNodeRadius(node)}
+                    fill={getNodeColor(node)}
+                    stroke={selectedPoints.has(node.id) ? '#000' : 'transparent'}
+                    strokeWidth={2}
+                    draggable
+                    onDragStart={handleDragStart}
+                    onDragMove={handleDragMove}
+                    onDragEnd={handleMouseUp}
+                  />
+                ))}
+              </Layer>
+            </Stage>
+          </SelectionBox>
+        </div>
+
+        {showNodeInspector && selectedNodeId && (
+          <div className="inspector-panel">
+            <NodeInspector
+              nodeId={selectedNodeId}
+              onNodeUpdate={handleNodeUpdate}
+            />
+          </div>
         )}
       </div>
-      <div
-        style={{
-          border: '1px solid #ccc',
-          margin: '20px 0',
-          padding: '10px',
-        }}
-      >
-        <Stage
-          width={stageWidth}
-          height={stageHeight}
-          onMouseDown={handleMouseDown}
-          onMouseUp={handleMouseUp}
-        >
-          <Layer ref={layer}>
-            {hasImage && image && (
-              <KonvaImage
-                image={image}
-                width={stageWidth}
-                height={stageHeight}
-              />
-            )}
-            {edges.map((edge, i) => {
-              const start = getNodeCoords(edge.id0)
-              const end = getNodeCoords(edge.id1)
-              return (
-                <Line
-                  key={i}
-                  points={[
-                    start.x * stageWidth,
-                    start.y * stageHeight,
-                    end.x * stageWidth,
-                    end.y * stageHeight,
-                  ]}
-                  stroke="#000"
-                  strokeWidth={1}
-                />
-              )
-            })}
-            {nodes.map((node) => (
-              <Circle
-                key={node.id}
-                name={node.id}
-                x={node.x * stageWidth}
-                y={node.y * stageHeight}
-                radius={5}
-                fill={selectedPoints.has(node.id) ? '#ff0000' : '#00ff00'}
-                draggable
-                onDragStart={handleDragStart}
-                onDragMove={handleDragMove}
-                onDragEnd={handleMouseUp}
-              />
-            ))}
-          </Layer>
-        </Stage>
-      </div>
-      <Buttons
-        nodes={nodes}
-        selectedPoints={selectedPoints}
-        updateMap={updateMap}
-      />
+
+      <style>{`
+        .floorplan-editor {
+          display: flex;
+          flex-direction: column;
+          height: 100%;
+          background: #f5f5f5;
+        }
+
+        .editor-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 16px;
+          background: white;
+          border-bottom: 1px solid #ddd;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header-left h2 {
+          margin: 0 0 8px 0;
+          color: #333;
+          font-size: 24px;
+        }
+
+        .stats {
+          display: flex;
+          gap: 16px;
+          color: #666;
+          font-size: 14px;
+        }
+
+        .editor-content {
+          flex: 1;
+          display: flex;
+          overflow: hidden;
+        }
+
+        .canvas-container {
+          flex: 1;
+          position: relative;
+          background: white;
+          border: 1px solid #ddd;
+          margin: 16px;
+          border-radius: 8px;
+          overflow: hidden;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .inspector-panel {
+          width: 500px;
+          margin: 16px 16px 16px 0;
+          overflow-y: auto;
+        }
+
+        @media (max-width: 1200px) {
+          .editor-content {
+            flex-direction: column;
+          }
+
+          .inspector-panel {
+            width: auto;
+            margin: 0 16px 16px 16px;
+          }
+        }
+      `}</style>
     </div>
   )
 }

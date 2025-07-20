@@ -172,35 +172,170 @@ export async function disconnectTwoPoints(req: Request, res: Response) {
   }
 
   const result = await disconnectNodes(Number(id1), Number(id2));
+
   res
     .status(result ? 201 : 409)
     .send(
       result
-        ? "Points connected"
-        : "Error occurred - The points may already be disconnected, or are border points!"
+        ? "Points disconnected"
+        : "Error occurred - The points may not be connected!"
     );
 }
 
 export async function updateFloorplanImage(req: Request, res: Response) {
+  const startTime = Date.now()
+  const requestId = Math.random().toString(36).substring(2, 15)
+  
+  logger.info(`[updateFloorplanImage:${requestId}] Starting image upload request`, {
+    location: req.params.name,
+    contentType: req.headers['content-type'],
+    contentLength: req.headers['content-length'],
+    userAgent: req.headers['user-agent'],
+    timestamp: new Date().toISOString()
+  })
+
   try {
-    const { name } = req.params;
-    const file = req.file;
-    if (!file) {
-      logger.error(`[updateFloorplanImage] no image provided for name: ${name}`)
-      res.status(400).send("No file uploaded.");
+    const { name } = req.params
+    const file = req.file
+
+    // Validate location parameter
+    if (!name || name.trim().length === 0) {
+      logger.error(`[updateFloorplanImage:${requestId}] Invalid location name provided`, {
+        location: name,
+        error: 'Empty or missing location name'
+      })
+      res.status(400).send("Invalid location name provided.")
       return
     }
 
-    // Save the image path to the database
-    const filePath = file.filename;
-    await writeDB(
-      `UPDATE ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_images SET path = ? WHERE location = ?`,
-      [filePath, name]
-    );
+    // Validate file presence
+    if (!file) {
+      logger.error(`[updateFloorplanImage:${requestId}] No file provided in upload`, {
+        location: name,
+        files: req.files,
+        body: Object.keys(req.body || {})
+      })
+      res.status(400).send("No file uploaded.")
+      return
+    }
 
-    res.send("File uploaded and path updated successfully.");
+    // Log file details
+    logger.info(`[updateFloorplanImage:${requestId}] File received`, {
+      location: name,
+      fileName: file.originalname,
+      fileSize: file.size,
+      mimeType: file.mimetype,
+      encoding: file.encoding,
+      destination: file.destination,
+      filename: file.filename,
+      path: file.path
+    })
+
+    // Validate file type
+    const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
+    if (!allowedMimeTypes.includes(file.mimetype)) {
+      logger.error(`[updateFloorplanImage:${requestId}] Invalid file type`, {
+        location: name,
+        fileName: file.originalname,
+        mimeType: file.mimetype,
+        allowedTypes: allowedMimeTypes
+      })
+      res.status(415).send("Invalid file type. Only image files are allowed.")
+      return
+    }
+
+    // Validate file size (10MB limit)
+    const maxFileSize = 10 * 1024 * 1024 // 10MB
+    if (file.size > maxFileSize) {
+      logger.error(`[updateFloorplanImage:${requestId}] File too large`, {
+        location: name,
+        fileName: file.originalname,
+        fileSize: file.size,
+        maxFileSize: maxFileSize,
+        sizeInMB: (file.size / 1024 / 1024).toFixed(2)
+      })
+      res.status(413).send("File too large. Maximum size is 10MB.")
+      return
+    }
+
+    // Check if floorplan_images table exists and has the location
+    try {
+      const existingLocation = await readDB(
+        `SELECT location FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_images WHERE location = ?`,
+        [name],
+        true
+      )
+
+      if (!existingLocation) {
+        logger.warn(`[updateFloorplanImage:${requestId}] Location not found in floorplan_images table, creating entry`, {
+          location: name,
+          fileName: file.originalname
+        })
+
+        // Create new entry in floorplan_images table
+        await writeDB(
+          `INSERT INTO ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_images (location, path) VALUES (?, ?)`,
+          [name, file.filename]
+        )
+        
+        logger.info(`[updateFloorplanImage:${requestId}] Created new floorplan_images entry`, {
+          location: name,
+          path: file.filename
+        })
+      } else {
+        logger.info(`[updateFloorplanImage:${requestId}] Updating existing floorplan_images entry`, {
+          location: name,
+          oldPath: existingLocation.path,
+          newPath: file.filename
+        })
+
+        // Update existing entry
+        await writeDB(
+          `UPDATE ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_images SET path = ? WHERE location = ?`,
+          [file.filename, name]
+        )
+      }
+
+      const processingTime = Date.now() - startTime
+      
+      logger.info(`[updateFloorplanImage:${requestId}] Upload completed successfully`, {
+        location: name,
+        fileName: file.originalname,
+        fileSize: file.size,
+        processingTime: `${processingTime}ms`,
+        filePath: file.filename,
+        fullPath: file.path
+      })
+
+      res.status(200).json({
+        message: "File uploaded and path updated successfully.",
+        location: name,
+        fileName: file.originalname,
+        fileSize: file.size,
+        processingTime: processingTime
+      })
+
+    } catch (dbError) {
+      logger.error(`[updateFloorplanImage:${requestId}] Database error`, {
+        location: name,
+        fileName: file.originalname,
+        error: dbError,
+        errorMessage: dbError instanceof Error ? dbError.message : 'Unknown database error'
+      })
+      res.status(500).send("Database error occurred while updating image path.")
+    }
+
   } catch (error) {
-    logger.error(`[updateFloorplanImage] Error handling file upload: ${error}`);
-    res.status(500).send("Could not upload image");
+    const processingTime = Date.now() - startTime
+    
+    logger.error(`[updateFloorplanImage:${requestId}] Unexpected error handling file upload`, {
+      location: req.params.name,
+      error: error,
+      errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      processingTime: `${processingTime}ms`
+    })
+    
+    res.status(500).send("Could not upload image due to an unexpected error.")
   }
 }

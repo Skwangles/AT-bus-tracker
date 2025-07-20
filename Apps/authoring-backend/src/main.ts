@@ -32,7 +32,8 @@ app.use("/api/v1/images", imageRoutes)
 app.use("/api/v1/authoring", authoringRoutes)
 app.use("/api/v1/labels", labelRoutes)
 app.use("/api/v1/point", pointRoutes)
-app.use("/api/v1/locationGroup", locationGroupRoutes)
+app.use("/api/v1/location-groups", locationGroupRoutes)
+app.use("/api/v1/other-nodes", pointRoutes) // Reuse pointRoutes for other-nodes operations
 
 let exitReader = null;
 if (process.env.NODE_ENV !== 'production' && process.env.NODE_ENV !== 'test') {

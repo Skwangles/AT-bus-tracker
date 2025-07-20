@@ -361,20 +361,224 @@ export async function getClusteringStats(req: Request, res: Response) {
     // Calculate statistics
     const totalPoints = points.length;
     const totalClusters = clusters.length;
-    const clustersWithMultiplePoints = clusters.filter(c => c.size > 1);
-    const potentialSavings = clustersWithMultiplePoints.reduce((sum, cluster) => sum + (cluster.size - 1), 0);
+    const avgClusterSize = totalClusters > 0 ? totalPoints / totalClusters : 0;
+    const maxClusterSize = Math.max(...clusters.map(c => c.size), 0);
 
     res.status(200).json({
-      location: location,
+      location,
       total_points: totalPoints,
       total_clusters: totalClusters,
-      clusters_with_multiple_points: clustersWithMultiplePoints.length,
-      potential_points_to_hide: potentialSavings,
-      clustering_efficiency: totalPoints > 0 ? ((totalPoints - potentialSavings) / totalPoints * 100).toFixed(2) + '%' : '0%',
+      average_cluster_size: avgClusterSize,
+      max_cluster_size: maxClusterSize,
       clusters: clusters
     });
   } catch (error) {
     logger.error('Error calculating clustering stats:', error);
-    res.status(500).json({ message: 'Error calculating clustering stats' });
+    res.status(500).json({ message: 'Error calculating clustering statistics' });
+  }
+}
+
+/**
+ * Get image for a specific point
+ */
+export async function getPointImage(req: Request, res: Response) {
+  const pointId = Number(req.params.id);
+  
+  if (isNaN(pointId)) {
+    logger.warn(`[getPointImage] Invalid point ID: ${pointId}`);
+    res.status(400).json({ message: 'Invalid point ID' });
+    return;
+  }
+
+  try {
+    // Get the timestamp for this point
+    const pointResult = await readDB(
+      `SELECT ts FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes WHERE keyframe_id = ?`,
+      [pointId],
+      true
+    );
+
+    if (!pointResult) {
+      res.status(404).json({ message: 'Point not found' });
+      return;
+    }
+
+    // Try to find an image with this timestamp
+    // This is a simplified implementation - you might need to adjust based on your image storage
+    const imagePath = `/path/to/images/${pointResult.ts}.jpg`; // Adjust based on your image storage
+    
+    // For now, return a placeholder or error
+    res.status(404).json({ message: 'Image not available for this point' });
+  } catch (error) {
+    logger.error(`[getPointImage] Error: ${error}`);
+    res.status(500).json({ message: 'Error fetching point image' });
+  }
+}
+
+/**
+ * Get labels for a specific point
+ */
+export async function getPointLabels(req: Request, res: Response) {
+  const pointId = Number(req.params.id);
+  
+  if (isNaN(pointId)) {
+    logger.warn(`[getPointLabels] Invalid point ID: ${pointId}`);
+    res.status(400).json({ message: 'Invalid point ID' });
+    return;
+  }
+
+  try {
+    const otherNodes = await readDB(
+      `SELECT id, ref_id, label, description, type, x_trans, y_trans, z_trans 
+       FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes 
+       WHERE ref_id = ? 
+       ORDER BY type, label`,
+      [pointId]
+    );
+
+    res.status(200).json({
+      otherNodes: otherNodes
+    });
+  } catch (error) {
+    logger.error(`[getPointLabels] Error: ${error}`);
+    res.status(500).json({ message: 'Error fetching point labels' });
+  }
+}
+
+/**
+ * Add a label to a specific point
+ */
+export async function addPointLabel(req: Request, res: Response) {
+  const pointId = Number(req.params.id);
+  const { 
+    label, 
+    type = 0, 
+    description = '', 
+    x_offset = 0, 
+    y_offset = 0.05, 
+    z_offset = 0 
+  } = req.body;
+
+  if (isNaN(pointId)) {
+    logger.warn(`[addPointLabel] Invalid point ID: ${pointId}`);
+    res.status(400).json({ message: 'Invalid point ID' });
+    return;
+  }
+
+  try {
+    // Get node coordinates for positioning
+    const nodeResult = await readDB(
+      `SELECT x_trans, y_trans, z_trans FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes WHERE keyframe_id = ?`,
+      [pointId],
+      true
+    );
+    
+    if (!nodeResult) {
+      res.status(404).json({ message: 'Node not found' });
+      return;
+    }
+
+    // Calculate position (5% higher than original node by default)
+    const finalX = nodeResult.x_trans + x_offset;
+    const finalY = nodeResult.y_trans * 1.05 + y_offset;
+    const finalZ = nodeResult.z_trans + z_offset;
+
+    // Check if label already exists
+    const existingLabel = await readDB(
+      `SELECT id FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes 
+       WHERE ref_id = ? AND label = ?`,
+      [pointId, label],
+      true
+    );
+    
+    if (existingLabel) {
+      res.status(409).json({ 
+        message: 'Label already exists for this node',
+        existing_id: existingLabel.id 
+      });
+      return;
+    }
+    
+    // Insert into other_nodes table
+    await writeDB(
+      `INSERT INTO ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes 
+       (ref_id, label, description, type, x_trans, y_trans, z_trans) 
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [pointId, label, description, type, finalX, finalY, finalZ]
+    );
+    
+    res.status(201).json({ 
+      message: 'Label added successfully',
+      point_id: pointId,
+      label: label
+    });
+  } catch (error) {
+    logger.error(`[addPointLabel] Error: ${error}`);
+    res.status(500).json({ message: 'Error adding label' });
+  }
+}
+
+/**
+ * Update a label for a specific point
+ */
+export async function updatePointLabel(req: Request, res: Response) {
+  const pointId = Number(req.params.id);
+  const { old_label, new_label, type = 0, description = '' } = req.body;
+
+  if (isNaN(pointId)) {
+    logger.warn(`[updatePointLabel] Invalid point ID: ${pointId}`);
+    res.status(400).json({ message: 'Invalid point ID' });
+    return;
+  }
+
+  try {
+    await writeDB(
+      `UPDATE ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes 
+       SET label = ?, description = ?, type = ? 
+       WHERE ref_id = ? AND label = ?`,
+      [new_label, description, type, pointId, old_label]
+    );
+    
+    res.status(200).json({ 
+      message: 'Label updated successfully',
+      point_id: pointId,
+      old_label: old_label,
+      new_label: new_label
+    });
+  } catch (error) {
+    logger.error(`[updatePointLabel] Error: ${error}`);
+    res.status(500).json({ message: 'Error updating label' });
+  }
+}
+
+/**
+ * Delete an other_node entry
+ */
+export async function deleteOtherNode(req: Request, res: Response) {
+  const otherNodeId = Number(req.params.id);
+
+  if (isNaN(otherNodeId)) {
+    logger.warn(`[deleteOtherNode] Invalid other node ID: ${otherNodeId}`);
+    res.status(400).json({ message: 'Invalid other node ID' });
+    return;
+  }
+
+  try {
+    const result = await writeDB(
+      `DELETE FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes WHERE id = ?`,
+      [otherNodeId]
+    );
+    
+    if (result > 0) {
+      res.status(200).json({ 
+        message: 'Other node deleted successfully',
+        deleted_id: otherNodeId
+      });
+    } else {
+      res.status(404).json({ message: 'Other node not found' });
+    }
+  } catch (error) {
+    logger.error(`[deleteOtherNode] Error: ${error}`);
+    res.status(500).json({ message: 'Error deleting other node' });
   }
 }

@@ -7,7 +7,12 @@ import {
   pathfindFromPointId, 
   getRandomPointId,
   getNearbyPoints,
-  getClusteringStats
+  getClusteringStats,
+  getPointImage,
+  getPointLabels,
+  addPointLabel,
+  updatePointLabel,
+  deleteOtherNode
 } from "../controllers/points.controller";
 
 const app = Router();
@@ -22,5 +27,12 @@ app.get('/:id/path/:location', pathfindFromPointId);
 app.post('/api/v1/point', createNewPoint)
 app.get('/api/v1/point/:id/nearby', getNearbyPoints as any);
 app.get('/api/v1/points/clustering/:location', getClusteringStats as any);
+
+// New endpoints for NodeInspector
+app.get('/:id/image', getPointImage);
+app.get('/:id/labels', getPointLabels);
+app.post('/:id/labels', addPointLabel);
+app.put('/:id/labels', updatePointLabel);
+app.delete('/other-nodes/:id', deleteOtherNode);
 
 export default app;

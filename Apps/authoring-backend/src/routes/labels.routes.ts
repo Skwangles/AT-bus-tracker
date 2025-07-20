@@ -4,21 +4,21 @@ import { getLabels, addLabel, deleteLabel, updateLabel, updateLabelPosition, get
 const router = Router();
 
 // Route to fetch all labels for a specific keyframe_id
-router.get('/api/v1/labels/:id', getLabels as any);
+router.get('/:id', getLabels as any);
 
 // Route to add a new label for a specific keyframe_id
-router.post('/api/v1/labels/:id', addLabel as any);
+router.post('/:id', addLabel as any);
 
 // Route to update a label
-router.put('/api/v1/labels/:id', updateLabel as any);
+router.put('/:id', updateLabel as any);
 
 // Route to update label position
-router.patch('/api/v1/labels/:id/position', updateLabelPosition as any);
+router.patch('/:id/position', updateLabelPosition as any);
 
 // Route to delete a label for a specific keyframe_id
-router.delete('/api/v1/labels/:id', deleteLabel as any);
+router.delete('/:id', deleteLabel as any);
 
 // Route to get available label types
-router.get('/api/v1/labels/types', getLabelTypes as any);
+router.get('/types', getLabelTypes as any);
 
 export default router;

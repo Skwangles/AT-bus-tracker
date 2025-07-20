@@ -36,7 +36,7 @@ const PointControls = ({
     if (isNaN(id2)) return
 
     const result = await axios.post(
-      `${API_PREFIX}/api/v1/point/${id}/connect/${id2}`
+      `${API_PREFIX}/api/v1/authoring/point/${id}/connect/${id2}`
     )
     if (result.status == 201) {
       window.alert(`Successfully connected ID: ${id} to ID 2: ${id2}`)
@@ -54,7 +54,7 @@ const PointControls = ({
     if (isNaN(id2)) return
 
     const result = await axios.delete(
-      `${API_PREFIX}/api/v1/point/${id}/connect/${id2}`
+      `${API_PREFIX}/api/v1/authoring/point/${id}/connect/${id2}`
     )
     if (result.status == 201) {
       window.alert(`Successfully disconnected ID: ${id} to ID 2: ${id2}`)
@@ -69,7 +69,7 @@ const PointControls = ({
   }
 
   const deletePoint = async () => {
-    const result = await axios.delete(`${API_PREFIX}/api/v1/point/${id}/delete`)
+    const result = await axios.delete(`${API_PREFIX}/api/v1/authoring/point/${id}/delete`)
     if (result.status == 200) {
       window.alert('Sucessfully removed!')
       reloadPoints()
@@ -82,7 +82,7 @@ const PointControls = ({
 
   const hidePoint = async () => {
     const result = await axios.delete(
-      `${API_PREFIX}/api/v1/point/${id}/visually-delete/${location}`
+      `${API_PREFIX}/api/v1/authoring/point/${id}/visually-delete/${location}`
     )
     if (result.status == 200) {
       window.alert('Sucessfully removed!')
@@ -121,7 +121,7 @@ const PointControls = ({
       </div>
       <br />
 
-      <img width={400} height={200} src={`${API_PREFIX}/api/v1/image/${id}`} />
+      <img width={400} height={200} src={`${API_PREFIX}/api/v1/images/${id}`} />
 
       <button style={{ margin: '5px' }} onClick={deletePoint}>
         Delete Point

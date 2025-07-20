@@ -32,10 +32,23 @@ export async function getAllLocationGroups(req: Request, res: Response) {
 }
 
 export async function getLocationGroupImageByName(req: Request, res: Response) {
-
+  const requestId = Math.random().toString(36).substring(2, 15)
   const name = String(req.params.name);
+
+  logger.info(`[getLocationGroupImageByName:${requestId}] Image request received`, {
+    location: name,
+    userAgent: req.headers['user-agent'],
+    referer: req.headers['referer'],
+    timestamp: new Date().toISOString()
+  })
+
   if (name == null || name == "" || name.length > REASONABLE_MAX_STRING_SIZE) {
-    logger.error(`[GetLocGroupImgByName] Invalid name passed: ${name}`)
+    logger.error(`[getLocationGroupImageByName:${requestId}] Invalid name passed`, {
+      location: name,
+      nameLength: name?.length,
+      maxLength: REASONABLE_MAX_STRING_SIZE,
+      error: 'Invalid location name'
+    })
     res.status(400).send("Invalid Arguments")
     return
   }
