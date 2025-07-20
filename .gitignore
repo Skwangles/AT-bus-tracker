@@ -35,3 +35,5 @@ cv_merge_maps
 combined.log
 exceptions.log
 error.log
+
+.devdbrc
