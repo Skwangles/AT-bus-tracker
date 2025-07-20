@@ -23,7 +23,8 @@
     "db_dir": "/media/skwangles/KINGSTON/MEDIA/TGA/MAPS/",
     "vslam_map_dir": "/media/skwangles/KINGSTON/MEDIA/TGA/MAPS/",
     "json_dir": "/media/skwangles/KINGSTON/MEDIA/TGA/JSON/",
-    "floorplan_dir": "/media/skwangles/KINGSTON/MEDIA/TGA/floorplans"
+    "floorplan_dir": "/media/skwangles/KINGSTON/MEDIA/TGA/floorplans",
+    "export_dir": "/home/skwangles/Documents/Honours/Sitexplorer/backup-env"
   },
   "config": {
     "keyframe_img_name_dp": 5,
