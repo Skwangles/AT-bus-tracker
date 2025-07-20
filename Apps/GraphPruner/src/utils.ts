@@ -64,7 +64,7 @@ export async function getNodeInfo(
     throw new Error("Could not find keyframe of ID: " + keyframeId);
   }
 
-  // Check for labels in other_nodes table first, fallback to user_defined_labels
+  // Check for labels in other_nodes table first
   const countOfLabels = await readDB(
     `SELECT COUNT(*) as total FROM ${config.table_prefix}other_nodes WHERE ref_id = ?`,
     [keyframeId],
