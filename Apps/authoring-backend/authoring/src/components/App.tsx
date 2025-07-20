@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import LocationGroupSelector from './LocationGroupSelector'
 import FloorplanEditor from './FloorplanEditor'
+import Legend from './Legend'
 
 const App: React.FC = () => {
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null)
@@ -21,6 +22,7 @@ const App: React.FC = () => {
           onLocationSelect={handleLocationSelect}
           onLocationCreate={handleLocationCreate}
         />
+        {selectedLocation && <Legend />}
       </div>
       
       <div className="main-content">

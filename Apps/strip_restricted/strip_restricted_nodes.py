@@ -59,12 +59,6 @@ def delete_filtered_nodes(prefix, db_cursor, remove_list, keep_id_list, keep_lab
         FROM {prefix}other_nodes
         WHERE {prefix}nodes.keyframe_id = {prefix}other_nodes.ref_id
           AND {prefix}other_nodes.label IN ({keep_label_str})
-    )
-    AND NOT EXISTS (
-        SELECT 1
-        FROM {prefix}user_defined_labels
-        WHERE {prefix}nodes.keyframe_id = {prefix}user_defined_labels.keyframe_id
-          AND {prefix}user_defined_labels.label IN ({keep_label_str})
     );
     """
     print("Running query:", query)
@@ -102,19 +96,6 @@ def delete_filtered_nodes(prefix, db_cursor, remove_list, keep_id_list, keep_lab
     db_cursor.execute(query)
     print("Deleting orphaned elevator_edges: ", db_cursor.rowcount)
 
-    # Then, delete any orphaned labels (labels for nodes that no longer exist)
-    query = f"""
-    DELETE FROM {prefix}user_defined_labels
-    WHERE NOT EXISTS (
-        SELECT 1
-        FROM {prefix}nodes
-        WHERE {prefix}user_defined_labels.keyframe_id = {prefix}nodes.keyframe_id
-    );
-    """
-    print("Running query:", query)
-    db_cursor.execute(query)
-    print("Deleting orphaned labels: ", db_cursor.rowcount)
-
     # Delete orphaned node_locations
     query = f"""
     DELETE FROM {prefix}node_locations
@@ -130,7 +111,7 @@ def delete_filtered_nodes(prefix, db_cursor, remove_list, keep_id_list, keep_lab
 
     if del_non_prefix and prefix != "": 
         print("Deleting all tables not matching the table prefix")
-        print("Removing tables: nodes, edges, node_locations, other_nodes, elevator_edges, user_defined_labels, floorplan_points, floorplan_images")
+        print("Removing tables: nodes, edges, node_locations, other_nodes, elevator_edges, floorplan_points, floorplan_images")
         response = input("Are you sure? (Y/n):")
         while (response.lower() != '' and response.lower() != 'y' and response.lower() != 'n'):
             print("Invalid input, choose y or n")
@@ -141,7 +122,6 @@ def delete_filtered_nodes(prefix, db_cursor, remove_list, keep_id_list, keep_lab
             db_cursor.execute("DROP TABLE IF EXISTS node_locations;")
             db_cursor.execute("DROP TABLE IF EXISTS other_nodes;")
             db_cursor.execute("DROP TABLE IF EXISTS elevator_edges;")
-            db_cursor.execute("DROP TABLE IF EXISTS user_defined_labels;")
             db_cursor.execute("DROP TABLE IF EXISTS floorplan_points;")
             db_cursor.execute("DROP TABLE IF EXISTS floorplan_images;")
 

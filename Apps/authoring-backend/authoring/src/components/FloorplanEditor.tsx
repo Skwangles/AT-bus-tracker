@@ -1,12 +1,23 @@
 import React, { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
-import { Stage, Layer, Image as KonvaImage, Circle, Line } from 'react-konva'
+import { Stage, Layer, Image as KonvaImage, Circle, Line, Rect } from 'react-konva'
 import FileUpload from './FileUpload'
 import NodeInspector from './NodeInspector'
-import SelectionBox from './SelectionBox'
+import Toolbar from './Toolbar'
 import { API_PREFIX, Edge, Node } from '../consts'
 import { findPathWithDijkstra } from '../logic/pathfinding'
 import { clamp } from '../logic/utils'
+import {
+  calculateCentroid,
+  scalePoints,
+  scalePointsX,
+  scalePointsY,
+  rotatePoints,
+  translatePoints,
+  flipPointsHorizontal,
+  flipPointsVertical,
+  applyTransformation
+} from '../logic/transformations'
 
 export interface FloorplanEditorProps {
   floorplan: string
@@ -19,10 +30,16 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
   const [image, setImage] = useState<HTMLImageElement | null>(null)
   const [stageWidth, setStageWidth] = useState<number>(800)
   const [stageHeight, setStageHeight] = useState<number>(800)
+  const canvasContainerRef = useRef<HTMLDivElement>(null)
   const [selectedPoints, setSelectedPoints] = useState<Set<string>>(new Set())
   const [lastSelectedPoint, setLastSelectedPoint] = useState<Node | null>(null)
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
   const [showNodeInspector, setShowNodeInspector] = useState(false)
+
+  // Selection box state
+  const [isSelecting, setIsSelecting] = useState(false)
+  const [selectionStart, setSelectionStart] = useState<{ x: number; y: number } | null>(null)
+  const [selectionEnd, setSelectionEnd] = useState<{ x: number; y: number } | null>(null)
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const layer = useRef<any>(null)
@@ -43,7 +60,7 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
             type: point.type
           }))
         });
-      fetchFloorplanData();
+      // fetchFloorplanData(); // Don't update the floorplan data after each point update
     } catch (error) {
       console.error('Error updating multiple points:', error);
     }
@@ -80,6 +97,24 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
         setImage(img)
         setStageWidth(img.width)
         setStageHeight(img.height)
+        
+        // Calculate scale to fit the image within the container
+        setTimeout(() => {
+          if (canvasContainerRef.current) {
+            const container = canvasContainerRef.current
+            const containerWidth = container.clientWidth - 32 // Account for margins and padding
+            const containerHeight = container.clientHeight - 32
+            
+            // Calculate scale to fit the image within the container
+            const scaleX = containerWidth / img.width
+            const scaleY = containerHeight / img.height
+            const newScale = Math.min(scaleX, scaleY, 1) // Don't scale up, only down
+            
+            // Update stage dimensions to match the scaled size
+            setStageWidth(img.width * newScale)
+            setStageHeight(img.height * newScale)
+          }
+        }, 100)
       }
       setEdges(
         response.data.edges.map((edge) => ({
@@ -105,6 +140,27 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
     fetchFloorplanData()
   }, [floorplan])
 
+  // Handle window resize to recalculate scale
+  useEffect(() => {
+    const handleResize = () => {
+      if (image && canvasContainerRef.current) {
+        const container = canvasContainerRef.current
+        const containerWidth = container.clientWidth - 32
+        const containerHeight = container.clientHeight - 32
+        
+        const scaleX = containerWidth / image.width
+        const scaleY = containerHeight / image.height
+        const newScale = Math.min(scaleX, scaleY, 1)
+        
+        setStageWidth(image.width * newScale)
+        setStageHeight(image.height * newScale)
+      }
+    }
+
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [image])
+
   const handleDragStart = (e: any) => {
     const { x, y } = e.target.position()
     setDragStartPos({ x, y })
@@ -117,8 +173,8 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
     const dx = Number(x - dragStartPos.x)
     const dy = Number(y - dragStartPos.y)
 
-    const width: number = e.target.getStage().width()
-    const height: number = e.target.getStage().height()
+    const width: number = stageWidth
+    const height: number = stageHeight
 
     setNodes((prevNodes) =>
       prevNodes.map((node) => {
@@ -136,68 +192,115 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
     setDragStartPos({ x, y })
   }
 
-  const handleMouseDown = (e: any) => {
-    const id = e.target.name()
-    const foundNode = nodes.find((node) => String(node.id) === String(id))
-    const isCtrlPressed = e.evt.ctrlKey
-    const isShiftPressed = e.evt.shiftKey
+  // New Konva-based selection handlers
+  const handleStageMouseDown = (e: any) => {
+    // If clicking on a node, handle node selection
+    if (e.target.name()) {
+      const id = e.target.name()
+      const foundNode = nodes.find((node) => String(node.id) === String(id))
+      const isCtrlPressed = e.evt.ctrlKey
+      const isShiftPressed = e.evt.shiftKey
 
-    if (isCtrlPressed) {
-      setSelectedPoints((prev) => {
-        const newSelected = new Set(prev)
-        if (newSelected.has(id)) {
-          newSelected.delete(id)
-        } else {
-          newSelected.add(id)
-        }
-        return newSelected
-      })
-    } else if (isShiftPressed && lastSelectedPoint) {
-      const method = 1 // Change to vary dijkstra method - only 1 currently implemented
-
-      const selectedIds = findPathWithDijkstra(
-        nodes,
-        edges,
-        lastSelectedPoint.id,
-        id,
-        method,
-        true
-      )
-      setSelectedPoints((prev) => {
-        const newSelected = new Set(prev)
-        for (const id of selectedIds) {
-          newSelected.add(id)
-        }
-        return newSelected
-      })
+      if (isCtrlPressed) {
+        setSelectedPoints((prev) => {
+          const newSelected = new Set(prev)
+          if (newSelected.has(id)) {
+            newSelected.delete(id)
+          } else {
+            newSelected.add(id)
+          }
+          return newSelected
+        })
+      } else if (isShiftPressed && lastSelectedPoint) {
+        const method = 1
+        const selectedIds = findPathWithDijkstra(
+          nodes,
+          edges,
+          lastSelectedPoint.id,
+          id,
+          method,
+          true
+        )
+        setSelectedPoints((prev) => {
+          const newSelected = new Set(prev)
+          for (const id of selectedIds) {
+            newSelected.add(id)
+          }
+          return newSelected
+        })
+      } else {
+        setSelectedPoints(new Set([id]))
+        setSelectedNodeId(id)
+        setShowNodeInspector(true)
+      }
+      setLastSelectedPoint(foundNode || null)
     } else {
-      setSelectedPoints(new Set([id]))
-      setSelectedNodeId(id)
-      setShowNodeInspector(true)
+      // Start selection box
+      const pos = e.target.getStage().getPointerPosition()
+      setIsSelecting(true)
+      setSelectionStart(pos)
+      setSelectionEnd(pos)
+      
+      // Clear selection if not holding Ctrl
+      if (!e.evt.ctrlKey) {
+        setSelectedPoints(new Set())
+        setSelectedNodeId(null)
+        setShowNodeInspector(false)
+      }
     }
-    setLastSelectedPoint(foundNode || null)
   }
 
-  const handleMouseUp = () => {
-    if (selectedPoints.size > 0) {
+  const handleStageMouseMove = (e: any) => {
+    if (!isSelecting) return
+    
+    const pos = e.target.getStage().getPointerPosition()
+    setSelectionEnd(pos)
+  }
+
+  const handleStageMouseUp = () => {
+    if (isSelecting) {
+      // Complete selection box
+      if (selectionStart && selectionEnd) {
+        const selectedIds = new Set<string>()
+        
+        nodes.forEach(node => {
+          const nodeX = node.x * stageWidth
+          const nodeY = node.y * stageHeight
+          
+          const left = Math.min(selectionStart.x, selectionEnd.x)
+          const right = Math.max(selectionStart.x, selectionEnd.x)
+          const top = Math.min(selectionStart.y, selectionEnd.y)
+          const bottom = Math.max(selectionStart.y, selectionEnd.y)
+          
+          if (nodeX >= left && nodeX <= right && nodeY >= top && nodeY <= bottom) {
+            selectedIds.add(node.id)
+          }
+        })
+        
+        setSelectedPoints(selectedIds)
+        if (selectedIds.size === 1) {
+          const id = Array.from(selectedIds)[0]
+          setSelectedNodeId(id)
+          setShowNodeInspector(true)
+        } else {
+          setSelectedNodeId(null)
+          setShowNodeInspector(false)
+        }
+      }
+      
+      setIsSelecting(false)
+      setSelectionStart(null)
+      setSelectionEnd(null)
+    }
+    
+    // Handle drag updates
+    if (dragStartPos && selectedPoints.size > 0) {
       const selectedNodes = nodes.filter((node) =>
         selectedPoints.has(node.id)
       )
       handleMultiplePointUpdate(selectedNodes)
     }
     setDragStartPos(null)
-  }
-
-  const handleSelectionChange = (selectedIds: Set<string>) => {
-    setSelectedPoints(selectedIds)
-    if (selectedIds.size === 1) {
-      const id = Array.from(selectedIds)[0]
-      setSelectedNodeId(id)
-      setShowNodeInspector(true)
-    } else {
-      setSelectedNodeId(null)
-      setShowNodeInspector(false)
-    }
   }
 
   const getNodeCoords = (id: string) => {
@@ -214,9 +317,221 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
     fetchFloorplanData()
   }
 
+  // Transformation handlers
+  const handleScaleAll = (factor: number) => {
+    if (nodes.length === 0) return
+    
+    const centroid = calculateCentroid(nodes)
+    const transformedNodes = applyTransformation(nodes, (points) =>
+      scalePoints(points, factor, centroid.x, centroid.y)
+    )
+    
+    setNodes(transformedNodes)
+    handleMultiplePointUpdate(transformedNodes)
+  }
+
+  const handleScaleSelected = (factor: number) => {
+    if (selectedPoints.size === 0) return
+    
+    const selectedNodes = nodes.filter(node => selectedPoints.has(node.id))
+    const centroid = calculateCentroid(selectedNodes)
+    
+    const transformedNodes = nodes.map(node => {
+      if (selectedPoints.has(node.id)) {
+        const scaled = scalePoints([node], factor, centroid.x, centroid.y)[0]
+        return applyTransformation([scaled], points => points)[0]
+      }
+      return node
+    })
+    
+    setNodes(transformedNodes)
+    handleMultiplePointUpdate(transformedNodes)
+  }
+
+  const handleScaleXAll = (factor: number) => {
+    if (nodes.length === 0) return
+    
+    const centroid = calculateCentroid(nodes)
+    const transformedNodes = applyTransformation(nodes, (points) =>
+      scalePointsX(points, factor, centroid.x)
+    )
+    
+    setNodes(transformedNodes)
+    handleMultiplePointUpdate(transformedNodes)
+  }
+
+  const handleScaleXSelected = (factor: number) => {
+    if (selectedPoints.size === 0) return
+    
+    const selectedNodes = nodes.filter(node => selectedPoints.has(node.id))
+    const centroid = calculateCentroid(selectedNodes)
+    
+    const transformedNodes = nodes.map(node => {
+      if (selectedPoints.has(node.id)) {
+        const scaled = scalePointsX([node], factor, centroid.x)[0]
+        return applyTransformation([scaled], points => points)[0]
+      }
+      return node
+    })
+    
+    setNodes(transformedNodes)
+    handleMultiplePointUpdate(transformedNodes)
+  }
+
+  const handleScaleYAll = (factor: number) => {
+    if (nodes.length === 0) return
+    
+    const centroid = calculateCentroid(nodes)
+    const transformedNodes = applyTransformation(nodes, (points) =>
+      scalePointsY(points, factor, centroid.y)
+    )
+    
+    setNodes(transformedNodes)
+    handleMultiplePointUpdate(transformedNodes)
+  }
+
+  const handleScaleYSelected = (factor: number) => {
+    if (selectedPoints.size === 0) return
+    
+    const selectedNodes = nodes.filter(node => selectedPoints.has(node.id))
+    const centroid = calculateCentroid(selectedNodes)
+    
+    const transformedNodes = nodes.map(node => {
+      if (selectedPoints.has(node.id)) {
+        const scaled = scalePointsY([node], factor, centroid.y)[0]
+        return applyTransformation([scaled], points => points)[0]
+      }
+      return node
+    })
+    
+    setNodes(transformedNodes)
+    handleMultiplePointUpdate(transformedNodes)
+  }
+
+  const handleRotateAll = (angle: number) => {
+    if (nodes.length === 0) return
+    
+    const centroid = calculateCentroid(nodes)
+    const transformedNodes = applyTransformation(nodes, (points) =>
+      rotatePoints(points, angle, centroid.x, centroid.y)
+    )
+    
+    setNodes(transformedNodes)
+    handleMultiplePointUpdate(transformedNodes)
+  }
+
+  const handleRotateSelected = (angle: number) => {
+    if (selectedPoints.size === 0) return
+    
+    const selectedNodes = nodes.filter(node => selectedPoints.has(node.id))
+    const centroid = calculateCentroid(selectedNodes)
+    
+    const transformedNodes = nodes.map(node => {
+      if (selectedPoints.has(node.id)) {
+        const rotated = rotatePoints([node], angle, centroid.x, centroid.y)[0]
+        return applyTransformation([rotated], points => points)[0]
+      }
+      return node
+    })
+    
+    setNodes(transformedNodes)
+    handleMultiplePointUpdate(transformedNodes)
+  }
+
+  const handleMoveAll = (dx: number, dy: number) => {
+    if (nodes.length === 0) return
+    
+    const transformedNodes = applyTransformation(nodes, (points) =>
+      translatePoints(points, dx, dy)
+    )
+    
+    setNodes(transformedNodes)
+    handleMultiplePointUpdate(transformedNodes)
+  }
+
+  const handleMoveSelected = (dx: number, dy: number) => {
+    if (selectedPoints.size === 0) return
+    
+    const transformedNodes = nodes.map(node => {
+      if (selectedPoints.has(node.id)) {
+        const moved = translatePoints([node], dx, dy)[0]
+        return applyTransformation([moved], points => points)[0]
+      }
+      return node
+    })
+    
+    setNodes(transformedNodes)
+    handleMultiplePointUpdate(transformedNodes)
+  }
+
+  const handleFlipAllHorizontal = () => {
+    if (nodes.length === 0) return
+    
+    const centroid = calculateCentroid(nodes)
+    const transformedNodes = applyTransformation(nodes, (points) =>
+      flipPointsHorizontal(points, centroid.x)
+    )
+    
+    setNodes(transformedNodes)
+    handleMultiplePointUpdate(transformedNodes)
+  }
+
+  const handleFlipSelectedHorizontal = () => {
+    if (selectedPoints.size === 0) return
+    
+    const selectedNodes = nodes.filter(node => selectedPoints.has(node.id))
+    const centroid = calculateCentroid(selectedNodes)
+    
+    const transformedNodes = nodes.map(node => {
+      if (selectedPoints.has(node.id)) {
+        const flipped = flipPointsHorizontal([node], centroid.x)[0]
+        return applyTransformation([flipped], points => points)[0]
+      }
+      return node
+    })
+    
+    setNodes(transformedNodes)
+    handleMultiplePointUpdate(transformedNodes)
+  }
+
+  const handleFlipAllVertical = () => {
+    if (nodes.length === 0) return
+    
+    const centroid = calculateCentroid(nodes)
+    const transformedNodes = applyTransformation(nodes, (points) =>
+      flipPointsVertical(points, centroid.y)
+    )
+    
+    setNodes(transformedNodes)
+    handleMultiplePointUpdate(transformedNodes)
+  }
+
+  const handleFlipSelectedVertical = () => {
+    if (selectedPoints.size === 0) return
+    
+    const selectedNodes = nodes.filter(node => selectedPoints.has(node.id))
+    const centroid = calculateCentroid(selectedNodes)
+    
+    const transformedNodes = nodes.map(node => {
+      if (selectedPoints.has(node.id)) {
+        const flipped = flipPointsVertical([node], centroid.y)[0]
+        return applyTransformation([flipped], points => points)[0]
+      }
+      return node
+    })
+    
+    setNodes(transformedNodes)
+    handleMultiplePointUpdate(transformedNodes)
+  }
+
   const getNodeColor = (node: Node) => {
     if (selectedPoints.has(node.id)) {
       return '#ff0000'
+    }
+    
+    // If node has labels, show it in a special colour regardless of type
+    if (node.labelCount && node.labelCount > 0) {
+      return '#9c27b0' // Purple for nodes with labels
     }
     
     // Color based on node type
@@ -226,7 +541,8 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
       2: '#ffc107', // Toilet - Yellow
       3: '#17a2b8', // Info - Cyan
       4: '#6f42c1', // Stair - Purple
-      5: '#dc3545'  // Exit - Red
+      5: '#dc3545', // Exit - Red
+      50: '#ff6b35' // Border nodes - Orange
     }
     
     return nodeTypes[node.type as keyof typeof nodeTypes] || '#00ff00'
@@ -259,69 +575,106 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
       </div>
 
       <div className="editor-content">
-        <div className="canvas-container">
-          <SelectionBox onSelectionChange={handleSelectionChange}>
-            <Stage
-              width={stageWidth}
-              height={stageHeight}
-              onMouseDown={handleMouseDown}
-              onMouseUp={handleMouseUp}
-            >
-              <Layer ref={layer}>
-                {hasImage && image && (
-                  <KonvaImage
-                    image={image}
-                    width={stageWidth}
-                    height={stageHeight}
+        <div className="canvas-container" ref={canvasContainerRef}>
+          <Stage
+            width={stageWidth}
+            height={stageHeight}
+            onMouseDown={handleStageMouseDown}
+            onMouseMove={handleStageMouseMove}
+            onMouseUp={handleStageMouseUp}
+          >
+            <Layer ref={layer}>
+              {hasImage && image && (
+                <KonvaImage
+                  image={image}
+                  width={stageWidth}
+                  height={stageHeight}
+                />
+              )}
+              {edges.map((edge, i) => {
+                const start = getNodeCoords(edge.id0)
+                const end = getNodeCoords(edge.id1)
+                return (
+                  <Line
+                    key={i}
+                    points={[
+                      start.x * stageWidth,
+                      start.y * stageHeight,
+                      end.x * stageWidth,
+                      end.y * stageHeight,
+                    ]}
+                    stroke="#000"
+                    strokeWidth={1}
                   />
-                )}
-                {edges.map((edge, i) => {
-                  const start = getNodeCoords(edge.id0)
-                  const end = getNodeCoords(edge.id1)
-                  return (
-                    <Line
-                      key={i}
-                      points={[
-                        start.x * stageWidth,
-                        start.y * stageHeight,
-                        end.x * stageWidth,
-                        end.y * stageHeight,
-                      ]}
-                      stroke="#000"
-                      strokeWidth={1}
-                    />
-                  )
-                })}
-                {nodes.map((node) => (
-                  <Circle
-                    key={node.id}
-                    name={node.id}
-                    data-point-id={node.id}
-                    x={node.x * stageWidth}
-                    y={node.y * stageHeight}
-                    radius={getNodeRadius(node)}
-                    fill={getNodeColor(node)}
-                    stroke={selectedPoints.has(node.id) ? '#000' : 'transparent'}
-                    strokeWidth={2}
-                    draggable
-                    onDragStart={handleDragStart}
-                    onDragMove={handleDragMove}
-                    onDragEnd={handleMouseUp}
-                  />
-                ))}
-              </Layer>
-            </Stage>
-          </SelectionBox>
+                )
+              })}
+              {nodes.map((node) => (
+                <Circle
+                  key={node.id}
+                  name={node.id}
+                  x={node.x * stageWidth}
+                  y={node.y * stageHeight}
+                  radius={getNodeRadius(node)}
+                  fill={getNodeColor(node)}
+                  stroke={selectedPoints.has(node.id) ? '#000' : 'transparent'}
+                  strokeWidth={2}
+                  draggable
+                  onDragStart={handleDragStart}
+                  onDragMove={handleDragMove}
+                  onDragEnd={handleStageMouseUp}
+                />
+              ))}
+              
+              {/* Selection Box */}
+              {isSelecting && selectionStart && selectionEnd && (
+                <Rect
+                  x={Math.min(selectionStart.x, selectionEnd.x)}
+                  y={Math.min(selectionStart.y, selectionEnd.y)}
+                  width={Math.abs(selectionEnd.x - selectionStart.x)}
+                  height={Math.abs(selectionEnd.y - selectionStart.y)}
+                  stroke="#007bff"
+                  strokeWidth={2}
+                  dash={[5, 5]}
+                  fill="rgba(0, 123, 255, 0.1)"
+                />
+              )}
+            </Layer>
+          </Stage>
         </div>
 
-        {showNodeInspector && selectedNodeId && (
-          <div className="inspector-panel">
-            <NodeInspector
-              nodeId={selectedNodeId}
-              onNodeUpdate={handleNodeUpdate}
+        <div className="side-panels">
+          <div className="toolbar-container">
+            <Toolbar
+              onScaleAll={handleScaleAll}
+              onScaleSelected={handleScaleSelected}
+              onScaleXAll={handleScaleXAll}
+              onScaleXSelected={handleScaleXSelected}
+              onScaleYAll={handleScaleYAll}
+              onScaleYSelected={handleScaleYSelected}
+              onRotateAll={handleRotateAll}
+              onRotateSelected={handleRotateSelected}
+              onMoveAll={handleMoveAll}
+              onMoveSelected={handleMoveSelected}
+              onFlipAllHorizontal={handleFlipAllHorizontal}
+              onFlipSelectedHorizontal={handleFlipSelectedHorizontal}
+              onFlipAllVertical={handleFlipAllVertical}
+              onFlipSelectedVertical={handleFlipSelectedVertical}
+              hasSelection={selectedPoints.size > 0}
+              selectedPoints={selectedPoints}
+              floorplan={floorplan}
+              onDataRefresh={fetchFloorplanData}
             />
           </div>
-        )}
+
+          {showNodeInspector && selectedNodeId && (
+            <div className="inspector-panel">
+              <NodeInspector
+                nodeId={selectedNodeId}
+                onNodeUpdate={handleNodeUpdate}
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       <style>{`
@@ -359,6 +712,7 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
           flex: 1;
           display: flex;
           overflow: hidden;
+          min-height: 0;
         }
 
         .canvas-container {
@@ -368,14 +722,32 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
           border: 1px solid #ddd;
           margin: 16px;
           border-radius: 8px;
-          overflow: hidden;
+          overflow: auto;
           box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          min-height: 0;
+        }
+
+        .side-panels {
+          display: flex;
+          flex-direction: column;
+          width: 400px;
+          min-width: 400px;
+          overflow-y: auto;
+          padding: 16px;
+          height: 100%;
+        }
+
+        .toolbar-container {
+          flex: 1;
+          min-height: 0;
+          overflow-y: auto;
         }
 
         .inspector-panel {
-          width: 500px;
-          margin: 16px 16px 16px 0;
+          flex: 1;
+          min-height: 0;
           overflow-y: auto;
+          width: 100%;
         }
 
         @media (max-width: 1200px) {
@@ -383,9 +755,28 @@ const FloorplanEditor: React.FC<FloorplanEditorProps> = ({ floorplan }) => {
             flex-direction: column;
           }
 
+          .side-panels {
+            width: auto;
+            min-width: auto;
+            flex-direction: row;
+            overflow-x: auto;
+          }
+
+          .inspector-panel {
+            width: 400px;
+            min-width: 400px;
+            margin: 0 16px 16px 16px;
+          }
+        }
+
+        @media (max-width: 768px) {
+          .side-panels {
+            flex-direction: column;
+          }
+
           .inspector-panel {
             width: auto;
-            margin: 0 16px 16px 16px;
+            min-width: auto;
           }
         }
       `}</style>

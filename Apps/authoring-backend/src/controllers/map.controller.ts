@@ -14,7 +14,23 @@ export async function getMapPoints(req: Request, res: Response) {
   }
 
   // Includes keyframes bordering the floor (add 'AND type < 50' to exclude)
-  const points = await readDB(`SELECT n.keyframe_id, n.x_trans, n.y_trans, n.z_trans, l.location, COUNT(s.label) as label_count FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n LEFT JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l ON l.keyframe_id = n.keyframe_id LEFT JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes s ON s.ref_id = n.keyframe_id WHERE l.location = ? GROUP BY n.keyframe_id`, [name]);
+  const points = await readDB(`
+    SELECT 
+      f.keyframe_id, 
+      f.x, 
+      f.y, 
+      f.type,
+      COALESCE(label_counts.label_count, 0) as labelCount
+    FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_points f 
+    LEFT JOIN (
+      SELECT 
+        ref_id as keyframe_id,
+        COUNT(*) as label_count
+      FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes 
+      GROUP BY ref_id
+    ) label_counts ON f.keyframe_id = label_counts.keyframe_id
+    WHERE f.location = ?
+  `, [name]);
   const image = await readDB(`SELECT path FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_images WHERE location = ? LIMIT 1;`, [name])
 
   const edges = await readDB(`SELECT  e.keyframe_id0, e.keyframe_id1 FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}edges e JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_points f ON e.keyframe_id0 = f.keyframe_id JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_points f2 ON e.keyframe_id1 = f2.keyframe_id WHERE f.location = ? AND f2.location = ?`, [name, name])

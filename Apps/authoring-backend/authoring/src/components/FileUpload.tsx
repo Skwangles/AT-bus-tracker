@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react'
+import React, { useState, useRef, useCallback, useEffect } from 'react'
 import { API_PREFIX } from '../consts'
 import axios from 'axios'
 
@@ -22,7 +22,15 @@ const FileUpload: React.FC<FileUploadProps> = ({
   const [uploadStatus, setUploadStatus] = useState<UploadStatus>({ type: 'idle', message: '' })
   const [isDragOver, setIsDragOver] = useState(false)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [isCollapsed, setIsCollapsed] = useState(isImageSelected)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Auto-collapse when image is uploaded (only when transitioning from no image to having image)
+  useEffect(() => {
+    if (isImageSelected && !isCollapsed) {
+      setIsCollapsed(true)
+    }
+  }, [isImageSelected])
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -122,23 +130,36 @@ const FileUpload: React.FC<FileUploadProps> = ({
     <div className="file-upload-container">
       <div className="upload-header">
         <h4>Floorplan Image</h4>
-        <div className="status-indicator">
-          <span className={`status-dot ${isImageSelected ? 'has-image' : 'no-image'}`}>
-            {isImageSelected ? '📷' : '❌'}
-          </span>
-          <span className="status-text">
-            {isImageSelected ? 'Image uploaded' : 'No image'}
-          </span>
+        <div className="header-controls">
+          <div className="status-indicator">
+            <span className={`status-dot ${isImageSelected ? 'has-image' : 'no-image'}`}>
+              {isImageSelected ? '📷' : '❌'}
+            </span>
+            <span className="status-text">
+              {isImageSelected ? 'Image uploaded' : 'No image'}
+            </span>
+          </div>
+          {isImageSelected && (
+            <button
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="collapse-btn"
+              title={isCollapsed ? 'Expand' : 'Collapse'}
+            >
+              {isCollapsed ? '▼' : '▲'}
+            </button>
+          )}
         </div>
       </div>
 
-      <div
-        className={`upload-area ${isDragOver ? 'drag-over' : ''} ${selectedFile ? 'has-file' : ''}`}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        onClick={handleClick}
-      >
+      {(!isCollapsed || !isImageSelected) && (
+        <div className="upload-content">
+          <div
+            className={`upload-area ${isDragOver ? 'drag-over' : ''} ${selectedFile ? 'has-file' : ''}`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onClick={handleClick}
+          >
         <input
           ref={fileInputRef}
           type="file"
@@ -202,9 +223,24 @@ const FileUpload: React.FC<FileUploadProps> = ({
             className="cancel-btn"
           >
             Cancel
-      </button>
+          </button>
         )}
       </div>
+        </div>
+      )}
+
+      {isCollapsed && isImageSelected && (
+        <div className="collapsed-info">
+          <span className="collapsed-text">📷 Image uploaded</span>
+          <button
+            onClick={() => setIsCollapsed(false)}
+            className="expand-btn"
+            title="Expand to replace image"
+          >
+            Replace
+          </button>
+        </div>
+      )}
 
       <style>{`
         .file-upload-container {
@@ -229,11 +265,69 @@ const FileUpload: React.FC<FileUploadProps> = ({
           font-size: 16px;
         }
 
+        .header-controls {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
         .status-indicator {
           display: flex;
           align-items: center;
           gap: 4px;
           font-size: 14px;
+        }
+
+        .collapse-btn {
+          background: none;
+          border: none;
+          cursor: pointer;
+          font-size: 16px;
+          color: #666;
+          padding: 4px;
+          border-radius: 4px;
+          transition: all 0.2s ease;
+        }
+
+        .collapse-btn:hover {
+          background: #f0f0f0;
+          color: #333;
+        }
+
+        .upload-content {
+          transition: all 0.3s ease;
+          overflow: hidden;
+        }
+
+        .collapsed-info {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 8px 12px;
+          background: #f8f9fa;
+          border-radius: 4px;
+          margin-top: 8px;
+        }
+
+        .collapsed-text {
+          font-size: 14px;
+          color: #28a745;
+          font-weight: 500;
+        }
+
+        .expand-btn {
+          padding: 4px 8px;
+          background: #007bff;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 12px;
+          transition: all 0.2s ease;
+        }
+
+        .expand-btn:hover {
+          background: #0056b3;
         }
 
         .status-dot {

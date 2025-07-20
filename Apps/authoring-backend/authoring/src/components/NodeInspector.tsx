@@ -49,7 +49,9 @@ const NodeInspector: React.FC<NodeInspectorProps> = ({ nodeId, onNodeUpdate }) =
     2: { name: 'Toilet', color: '#ffc107', icon: '🚻' },
     3: { name: 'Info', color: '#17a2b8', icon: 'ℹ️' },
     4: { name: 'Stair', color: '#6f42c1', icon: '🪜' },
-    5: { name: 'Exit', color: '#dc3545', icon: '🚪' }
+    5: { name: 'Exit', color: '#dc3545', icon: '🚪' },
+    50: { name: 'Border', color: '#ff6b35', icon: '🔗' },
+    'labeled': { name: 'Labeled', color: '#9c27b0', icon: '🏷️' }
   }
 
   const fetchNodeInfo = async () => {
@@ -181,7 +183,14 @@ const NodeInspector: React.FC<NodeInspectorProps> = ({ nodeId, onNodeUpdate }) =
   return (
     <div className="node-inspector">
       <div className="inspector-header">
-        <h3>Node {nodeId}</h3>
+        <div className="header-left">
+          <h3>Node {nodeId}</h3>
+          {otherNodes.length > 0 && (
+            <span className="label-indicator">
+              🏷️ {otherNodes.length} label{otherNodes.length !== 1 ? 's' : ''}
+            </span>
+          )}
+        </div>
         <button
           onClick={() => setShowCreateForm(!showCreateForm)}
           className="add-label-btn"
@@ -301,7 +310,7 @@ const NodeInspector: React.FC<NodeInspectorProps> = ({ nodeId, onNodeUpdate }) =
           border: 1px solid #ddd;
           border-radius: 8px;
           padding: 16px;
-          max-width: 500px;
+          width: 100%;
           max-height: 80vh;
           overflow-y: auto;
           box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -322,10 +331,22 @@ const NodeInspector: React.FC<NodeInspectorProps> = ({ nodeId, onNodeUpdate }) =
           border-bottom: 1px solid #eee;
         }
 
+        .header-left {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+
         .inspector-header h3 {
           margin: 0;
           color: #333;
           font-size: 18px;
+        }
+
+        .label-indicator {
+          font-size: 12px;
+          color: #9c27b0;
+          font-weight: 500;
         }
 
         .add-label-btn {
@@ -353,20 +374,34 @@ const NodeInspector: React.FC<NodeInspectorProps> = ({ nodeId, onNodeUpdate }) =
         }
 
         .info-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
+          display: flex;
+          flex-direction: column;
           gap: 8px;
         }
 
         .info-item {
           display: flex;
           justify-content: space-between;
-          padding: 4px 0;
+          align-items: center;
+          padding: 8px 0;
+          border-bottom: 1px solid #f0f0f0;
+        }
+
+        .info-item:last-child {
+          border-bottom: none;
         }
 
         .info-item label {
           font-weight: 500;
           color: #666;
+          min-width: 80px;
+          flex-shrink: 0;
+        }
+
+        .info-item span {
+          text-align: right;
+          color: #333;
+          word-break: break-word;
         }
 
         .image-container {

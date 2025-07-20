@@ -8,23 +8,33 @@ import { replaceNode, connectNodes, disconnectNodes } from "../logic/utils";
 export async function updateMultipleMapPoints(req: Request, res: Response) {
   const { name } = req.params;
   const { points } = req.body;
+  let failed = false;
+  let count = 0;
   for (const point of points) {
     await writeDB(
       `UPDATE ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_points SET x = ?, y = ? WHERE keyframe_id = ? AND location = ?;`,
-      [point.x, point.y, point.id, name]
+      [point.x, point.y, point.keyframe_id, name]
     )
       .then((changes: number) => {
-        if (changes == 0) {
-          res.status(404).send("Could not find point to update");
-          return;
+        if (changes > 0) {
+          count++;
         }
       })
-      .catch(() => {
+      .catch((e) => {
         res.status(404).send("Error updating point");
+        console.error("Error updating point:", e);
+        failed = true;
         return;
       });
+      if (failed) {
+        // Headers have already been sent, so we need to return
+        console.error("Error updating point");
+        return;
+      }
   }
-  res.sendStatus(200);
+
+  console.log("updateMultipleMapPoints: Successfully updated", count, "points");
+  res.sendStatus(200).end();
 }
 
 export async function updateMapPoint(req: Request, res: Response) {

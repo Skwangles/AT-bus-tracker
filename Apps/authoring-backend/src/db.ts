@@ -14,7 +14,7 @@ function initDB() {
 }
 
 export async function writeDB(query: string, params: any[] = []): Promise<number> {
-  // logger.verbose(`[writeDB] SQL: ${query} params: ${params}`)
+  logger.verbose(`[writeDB] SQL: ${query} params: ${params}`)
   try {
     return (await writableSqliteDb.prepare(query).run(params)).changes ?? 0
   } catch (error) {
