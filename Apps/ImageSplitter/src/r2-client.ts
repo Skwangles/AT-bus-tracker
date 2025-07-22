@@ -14,18 +14,18 @@ export interface R2Config {
   secretAccessKey: string;
 }
 
-export const Resolution = {width: 4096, height: 2048}
+export const Resolution = {width: 5760, height: 2880}
 
 /**
  * Resolution levels for image processing
  */
 export const RESOLUTION_LEVELS = {
-  preview: { quality: 5, resolution: Resolution},
-  lowest: { quality: 10, resolution: Resolution},
-  low: { quality: 20, resolution: Resolution},
-  medium: { quality: 60, resolution: Resolution},
-  high: { quality: 80, resolution: Resolution},
-  ultra: { quality: 100, resolution: Resolution},
+  preview: { quality: 60, resolution: {width: 960, height: 480}},
+  lowest: { quality: 60, resolution: {width: 1920, height: 960}},
+  low: { quality: 60, resolution: {width: 2880, height: 1440}},
+  medium: { quality: 60, resolution: {width: 3840, height: 1920}},
+  high: { quality: 70, resolution: {width: 5760, height: 2880}},
+  ultra: { quality: 100, resolution: {width: 5760, height: 2880}},
 } as const;
 
 export type ResolutionLevel = keyof typeof RESOLUTION_LEVELS;
