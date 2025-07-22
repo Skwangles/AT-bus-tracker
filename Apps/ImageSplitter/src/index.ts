@@ -1,12 +1,13 @@
 import path from 'path'
 import dotenv from 'dotenv'
 import fs from 'fs'
-import { DFLT_BATCH_SIZE, DFLT_FACE_BLUR, DFLT_IMG_EXT, DFLT_INPUT_DIR, DFLT_OUTPUT_DIR, DFLT_SQLITE_DB_PATH, DFLT_TABLE_PREFIX, DFLT_TS_DP, DFLT_R2_ENDPOINT, DFLT_R2_BUCKET, DFLT_R2_REGION } from './consts';
+import { DFLT_BATCH_SIZE, DFLT_FACE_BLUR, DFLT_IMG_EXT, DFLT_INPUT_DIR, DFLT_OUTPUT_DIR, DFLT_SQLITE_DB_PATH, DFLT_TABLE_PREFIX, DFLT_TS_DP, DFLT_R2_ENDPOINT, DFLT_R2_BUCKET, DFLT_R2_REGION, DFLT_HISTOGRAM_JSON_PATH } from './consts';
 import { closeDb, initDB, readDB } from './db';
 import { R2Client, R2Config } from './r2-client';
 import yargs from 'yargs'
 import { hideBin } from 'yargs/helpers'
 import blurFacesInEquirectangular from './blur-faces';
+import { readHistogramData, processImageWithHistogramEqualisation } from './histogram-equalisation';
 
 dotenv.config()
 
@@ -24,6 +25,7 @@ if (args.h) {
       --dp=${DFLT_TS_DP}
       --prefix=${DFLT_TABLE_PREFIX}
       --blur=${DFLT_FACE_BLUR}
+      --histogram_json=${DFLT_HISTOGRAM_JSON_PATH}
       
       R2 Configuration:
       --use_r2=false
@@ -44,6 +46,7 @@ const img_ext = args.img_ext ?? process.env.CV_KEYFRAME_IMG_EXTENSION ?? DFLT_IM
 const batch_size = Number(args.batch ?? process.env.CV_EXTRACT_BATCH_SIZE ?? DFLT_BATCH_SIZE)
 const ts_dp = Number(args.dp ?? process.env.CV_KEYFRAME_IMG_NAME_DP ?? DFLT_TS_DP)
 const blur = args.blur ?? process.env.CV_EXTRACT_FACE_BLUR ? process.env.CV_EXTRACT_FACE_BLUR == 'true' : DFLT_FACE_BLUR
+const histogram_json_path = args.histogram_json ?? process.env.CV_PRECALCULATE_HISTOGRAM_JSON_PATH ?? DFLT_HISTOGRAM_JSON_PATH
 
 // R2 Configuration
 const useR2 = args.use_r2 ?? process.env.CV_USE_R2 === 'true' ?? false
@@ -53,7 +56,10 @@ const r2Region = args.r2_region ?? process.env.CV_R2_REGION ?? DFLT_R2_REGION
 const r2AccessKeyId = args.r2_access_key_id ?? process.env.CV_R2_ACCESS_KEY_ID
 const r2SecretAccessKey = args.r2_secret_access_key ?? process.env.CV_R2_SECRET_ACCESS_KEY
 
-console.info("Using Args: DB:", sqlite_db_path, '\nInput:', input_pic_dir, '\nOutput:', output_pic_dir, '\nImg Extension:', img_ext, '\nTable Prefix:', table_prefix, '\nBatch size:', batch_size, '\nUse R2:', useR2, '\nR2 Endpoint:', r2Endpoint, '\nR2 Bucket:', r2Bucket, '\nR2 Region:', r2Region, '\nR2 Access Key ID:', r2AccessKeyId)
+console.info("Using Args: DB:", sqlite_db_path, '\nInput:', input_pic_dir, '\nOutput:', output_pic_dir, '\nImg Extension:', img_ext, '\nTable Prefix:', table_prefix, '\nBatch size:', batch_size, '\nHistogram JSON:', histogram_json_path, '\nUse R2:', useR2, '\nR2 Endpoint:', r2Endpoint, '\nR2 Bucket:', r2Bucket, '\nR2 Region:', r2Region, '\nR2 Access Key ID:', r2AccessKeyId)
+
+// Read histogram data for equalisation
+const histogramData = readHistogramData(histogram_json_path)
 
 // Initialize R2 client if enabled
 let r2Client: R2Client | null = null
@@ -100,25 +106,45 @@ async function processImages() {
       console.log("Parsing ", inputImagePath)
 
       if (fs.existsSync(inputImagePath)) {
-        console.log("File exists - blurring: ", blur)
+        console.log("File exists - blurring: ", blur, "histogram equalisation:", !!histogramData)
         
         if (useR2 && r2Client) {
           // Upload to R2
-          if (blur) {
-            // Create temporary file for blurred image
-            const tempOutputPath = path.join(output_pic_dir, Number(row.ts).toFixed(ts_dp) + img_ext);
-            await blurFacesInEquirectangular(inputImagePath, tempOutputPath);
-            await r2Client.uploadImageResolutions(tempOutputPath, Number(row.ts).toFixed(ts_dp), img_ext);
+          if (blur || histogramData) {
+            // Create temporary file for processed image
+            const uploadPath = path.join(output_pic_dir, Number(row.ts).toFixed(ts_dp) + img_ext);
+            const tempOutputPath = path.join(output_pic_dir, Number(row.ts).toFixed(ts_dp) + "-histo" + img_ext);
+            
+            if (histogramData) {
+              await processImageWithHistogramEqualisation(inputImagePath, tempOutputPath, histogramData);
+            }
+
+            if (blur) {
+              await blurFacesInEquirectangular(histogramData ? tempOutputPath : inputImagePath, uploadPath);
+            } else {
+              await processImageWithHistogramEqualisation(histogramData ? tempOutputPath : inputImagePath, uploadPath, histogramData);
+            }
+            
+            await r2Client.uploadImageResolutions(uploadPath, Number(row.ts).toFixed(ts_dp), img_ext);
             // Clean up temporary file
-            fs.unlinkSync(tempOutputPath);
+            fs.unlinkSync(uploadPath);
           } else {
             await r2Client.uploadImageResolutions(inputImagePath, Number(row.ts).toFixed(ts_dp), img_ext);
           }
         } else {
           // Local file operations
           const outputImagePath = path.join(output_pic_dir, Number(row.ts).toFixed(ts_dp) + img_ext);
-          if (blur) await blurFacesInEquirectangular(inputImagePath, outputImagePath);
-          else await copyFileIfExists(Number(row.ts).toFixed(ts_dp), input_pic_dir, output_pic_dir, img_ext)
+          if (blur || histogramData) {
+            const tempOutputPath = path.join(output_pic_dir, Number(row.ts).toFixed(ts_dp) + "-histo" + img_ext);
+            if (histogramData) {
+              await processImageWithHistogramEqualisation(inputImagePath, tempOutputPath, histogramData);
+            }
+            if (blur) {
+              await blurFacesInEquirectangular(histogramData ? tempOutputPath : inputImagePath, outputImagePath);
+            } else {
+              await copyFileIfExists(histogramData ? tempOutputPath : inputImagePath, input_pic_dir, output_pic_dir, img_ext);
+            }
+          }
         }
       }
       else {
