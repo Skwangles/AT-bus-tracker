@@ -3,10 +3,32 @@ import cv2
 import numpy as np
 import json
 from typing import List, Dict
+import concurrent.futures
+import threading
+
+def _compute_histogram(image_path: str, counter: threading.Lock, progress: dict, total: int) -> np.ndarray:
+    """
+    Compute the histogram for a single image file and print progress.
+    Args:
+        image_path (str): Path to the image file.
+        counter (threading.Lock): Lock for thread-safe progress update.
+        progress (dict): Dictionary holding the current count.
+        total (int): Total number of images.
+    Returns:
+        np.ndarray: Histogram array of length 256, or None if image is invalid.
+    """
+    img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+    with counter:
+        progress['count'] += 1
+        print(f"Processed {progress['count']} of {total} images")
+    if img is not None:
+        hist = cv2.calcHist([img], [0], None, [256], [0, 256])
+        return hist.flatten()
+    return None
 
 def compute_global_histogram_and_cdf(image_files: List[str]) -> Dict[str, object]:
     """
-    Compute the average histogram and cumulative distribution function (CDF) for a list of images.
+    Compute the average histogram and cumulative distribution function (CDF) for a list of images, in parallel, with progress logging.
     Args:
         image_files (List[str]): List of image file paths.
     Returns:
@@ -14,12 +36,15 @@ def compute_global_histogram_and_cdf(image_files: List[str]) -> Dict[str, object
     """
     hist_sum = np.zeros(256)
     valid_images = 0
-    for i, path in enumerate(image_files):
-        print(f"Processing image {i + 1} of {len(image_files)}")
-        img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
-        if img is not None:
-            hist = cv2.calcHist([img], [0], None, [256], [0, 256])
-            hist_sum += hist.flatten()
+    total = len(image_files)
+    counter = threading.Lock()
+    progress = {'count': 0}
+    # Use ThreadPoolExecutor for parallel histogram computation with progress
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        results = list(executor.map(lambda path: _compute_histogram(path, counter, progress, total), image_files))
+    for hist in results:
+        if hist is not None:
+            hist_sum += hist
             valid_images += 1
     if valid_images == 0:
         raise ValueError("No valid images found for histogram calculation.")
