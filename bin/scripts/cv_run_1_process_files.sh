@@ -1,4 +1,5 @@
 #!/bin/bash
+
 echo "STITCHING INSV FILES INTO EQUIRECTANGULAR"
 
 function error_exit {
@@ -36,4 +37,18 @@ echo "Resolution: $RESOLUTION"
 # Call the stitching function
 cv_stitch_insv "$INSV_PATH" "$OUTPUT_VIDEO_DIR" "$RESOLUTION"
 check_command "Stitching INSV files into equirectangular"
+
+# Optionally export global histogram/CDF for keyframe images using config variables
+if [ "$CV_PRECALCULATE_EXPORT_HISTOGRAM" = "true" ]; then
+  # CV_PRECALCULATE_IMAGE_DIR and CV_PRECALCULATE_HISTOGRAM_JSON_PATH must be set
+  if [ -z "$CV_PRECALCULATE_IMAGE_DIR" ]; then
+    error_exit "CV_PRECALCULATE_IMAGE_DIR is not set for histogram export"
+  fi
+  if [ -z "$CV_PRECALCULATE_HISTOGRAM_JSON_PATH" ]; then
+    error_exit "CV_PRECALCULATE_HISTOGRAM_JSON_PATH is not set for histogram export"
+  fi
+  echo "Exporting global histogram/CDF for images in $CV_PRECALCULATE_IMAGE_DIR to $CV_PRECALCULATE_HISTOGRAM_JSON_PATH"
+  python3 "$CV_HOME_DIR/Apps/SharpnessCalculator/main.py" histogram "$CV_PRECALCULATE_IMAGE_DIR" "$CV_PRECALCULATE_HISTOGRAM_JSON_PATH"
+  check_command "Exporting histogram/CDF JSON"
+fi
 
