@@ -1,47 +1,45 @@
 import os
 import json
-import argparse
 import numpy as np
 from PIL import Image, ImageFilter
 import concurrent.futures
 
-
-# Function to calculate the sharpness of an image
 def calculate_sharpness(image_path):
+    """
+    Calculate the sharpness of an image using the variance of the Laplacian (edge intensity).
+    Args:
+        image_path (str): Path to the image file.
+    Returns:
+        tuple: (image_path, sharpness value or None if error)
+    """
     try:
         print("Processing: ", image_path)
-        # Open the image file
         with Image.open(image_path) as img:
-            # Convert to grayscale
             grayscale_img = img.convert("L")
-            # Apply a Laplacian filter to get edge intensity
             laplacian = grayscale_img.filter(ImageFilter.FIND_EDGES)
-            # Convert to numpy array to calculate variance (sharpness)
             laplacian_array = np.array(laplacian)
             sharpness = laplacian_array.var()
         return (image_path, sharpness)
     except Exception as e:
-        # In case of any error (e.g., corrupt image), return a default value
         return (image_path, None)
 
-
-# Function to process a directory and calculate sharpness for all images
 def process_images(directory):
-    # Get all image files in the directory
+    """
+    Process all images in a directory and calculate their sharpness.
+    Args:
+        directory (str): Directory containing image files.
+    Returns:
+        dict: Mapping from image filename to sharpness value or 'Error'.
+    """
     image_files = [
         os.path.join(directory, f)
         for f in os.listdir(directory)
         if f.lower().endswith(("png", "jpg", "jpeg", "bmp", "gif"))
     ]
-
-    # Use ThreadPoolExecutor for parallel processing
     sharpness_results = {}
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        # Map the function to all image files
         print("Starting sharpness calculation on:", len(image_files))
         results = executor.map(calculate_sharpness, image_files)
-        
-        # Collect results into a dictionary
         for image_path, sharpness in list(results):
             if sharpness is not None:
                 sharpness_results[os.path.basename(image_path)] = sharpness
@@ -50,48 +48,14 @@ def process_images(directory):
     print("Finished")
     return sharpness_results
 
-
-# Save the sharpness results to a JSON file
 def save_sharpness_results(results, output_file):
+    """
+    Save the sharpness results to a JSON file.
+    Args:
+        results (dict): Mapping from image filename to sharpness value or 'Error'.
+        output_file (str): Path to output JSON file.
+    """
     if os.path.isfile(output_file):
         os.remove(output_file)
     with open(output_file, "w") as f:
         json.dump(results, f, indent=4)
-
-
-# Main function to parse arguments and run the program
-def main():
-    # Set up argument parsing
-    parser = argparse.ArgumentParser(
-        description="Calculate the sharpness of images in a directory."
-    )
-    parser.add_argument(
-        "search_directory", type=str, help="Directory to search for image files"
-    )
-    parser.add_argument(
-        "output_file",
-        type=str,
-        help="Output file path to save the results in JSON format",
-    )
-
-    # Parse arguments
-    args = parser.parse_args()
-
-    if not os.path.isdir(args.search_directory):
-        print("Image directory does not exist")
-
-    if os.path.isfile(args.output_file):
-        user_in = input("Output file already exists - recompute?: (y/N)")
-        if (user_in != 'y' and user_in != 'Y'):
-            return
-    
-    # Process images and calculate sharpness
-    sharpness_results = process_images(args.search_directory)
-
-    # Save the results to the specified output file
-    save_sharpness_results(sharpness_results, args.output_file)
-    print(f"Sharpness values saved to {args.output_file}")
-
-
-if __name__ == "__main__":
-    main()
