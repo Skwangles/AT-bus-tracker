@@ -20,7 +20,7 @@ R2_REGION = os.getenv('CV_R2_REGION', 'auto')
 
 # Resolution levels for image processing
 RESOLUTION_LEVELS = {
-    'preview': {'resolution': {'width': 960, 'height': 480}},
+    'preview': {'resolution': {'width': 480, 'height': 240}},
     'low': {'resolution': {'width': 1920, 'height': 960}},
     'high': {'resolution': {'width': 3840, 'height': 1920}},
     'ultra': {'resolution': {'width': 5760, 'height': 2880}},
@@ -48,19 +48,78 @@ def blur_faces(image: np.ndarray) -> np.ndarray:
         image[y:y+h, x:x+w] = blurred_face
     return image
 
+def lift_shadows(image: np.ndarray, shadow_amount: float = 40.0) -> np.ndarray:
+    """
+    Simple shadow lifting - brightens dark areas without affecting highlights.
+    """
+    # Convert to float for processing
+    img_float = image.astype(np.float32) / 255.0
+    
+    # Create luminance to identify shadow areas
+    if len(img_float.shape) == 3:
+        luminance = 0.299 * img_float[:,:,2] + 0.587 * img_float[:,:,1] + 0.114 * img_float[:,:,0]
+    else:
+        luminance = img_float
+    
+    # Create shadow mask (darker areas = higher values)
+    shadow_mask = (1.0 - luminance) ** 2  # Quadratic falloff for natural transition
+    
+    # Apply gentle lift only to shadows
+    shadow_lift = shadow_amount / 100.0
+    
+    if len(img_float.shape) == 3:
+        lifted = img_float + (shadow_mask[:,:,np.newaxis] * shadow_lift * 0.3)
+    else:
+        lifted = img_float + (shadow_mask * shadow_lift * 0.3)
+    
+    return (np.clip(lifted, 0, 1) * 255).astype(np.uint8)
+
+def reduce_glare(image: np.ndarray, glare_threshold: float = 0.85, reduction_strength: float = 0.3) -> np.ndarray:
+    """
+    Reduce glare by identifying and toning down overexposed bright areas.
+    """
+    # Convert to float for processing
+    img_float = image.astype(np.float32) / 255.0
+    
+    # Create luminance to identify bright areas
+    if len(img_float.shape) == 3:
+        luminance = 0.299 * img_float[:,:,2] + 0.587 * img_float[:,:,1] + 0.114 * img_float[:,:,0]
+    else:
+        luminance = img_float
+    
+    # Create glare mask (bright areas = higher values)
+    glare_mask = np.maximum(0, (luminance - glare_threshold)) / (1.0 - glare_threshold)
+    glare_mask = glare_mask ** 2  # Quadratic falloff for smooth transition
+    
+    # Apply glare reduction
+    glare_reduction = reduction_strength * glare_mask
+    
+    if len(img_float.shape) == 3:
+        # Apply to all channels, preserve some detail in bright areas
+        reduced = img_float * (1.0 - glare_reduction[:,:,np.newaxis] * 0.5)
+    else:
+        # Grayscale
+        reduced = img_float * (1.0 - glare_reduction * 0.5)
+    
+    return (np.clip(reduced, 0, 1) * 255).astype(np.uint8)
+
+def enhance_360_image(image: np.ndarray) -> np.ndarray:
+    """
+    Complete 360° image enhancement: reduce glare and lift shadows.
+    """
+    # Step 1: Reduce glare in bright areas (windows, reflections)
+    glare_reduced = reduce_glare(image, glare_threshold=0.8, reduction_strength=0.4)
+    
+    # Step 2: Lift shadows in dark areas
+    final_result = lift_shadows(glare_reduced, shadow_amount=30.0)
+    
+    return final_result
+
 def equalise_histogram(image: np.ndarray) -> np.ndarray:
     """
-    Apply histogram equalisation to the image.
-    For colour images, equalise the Y channel in YUV space.
+    Apply simple shadow lifting instead of complex histogram processing.
     """
-    if len(image.shape) == 2 or image.shape[2] == 1:
-        # Grayscale
-        return cv2.equalizeHist(image)
-    else:
-        # Colour image
-        img_yuv = cv2.cvtColor(image, cv2.COLOR_BGR2YUV)
-        img_yuv[:, :, 0] = cv2.equalizeHist(img_yuv[:, :, 0])
-        return cv2.cvtColor(img_yuv, cv2.COLOR_YUV2BGR)
+    return enhance_360_image(image)
 
 def create_resized_image(image_path: str, dimensions: dict) -> bytes:
     """
@@ -68,9 +127,12 @@ def create_resized_image(image_path: str, dimensions: dict) -> bytes:
     """
     with Image.open(image_path) as img:
         resized_img = img.resize((dimensions['width'], dimensions['height']), Image.Resampling.LANCZOS)
-        # Save to bytes as PNG
+        # Convert to RGB if necessary for JPEG
+        if resized_img.mode in ('RGBA', 'LA', 'P'):
+            resized_img = resized_img.convert('RGB')
+        # Save to bytes as JPEG
         output = io.BytesIO()
-        resized_img.save(output, format='PNG', optimize=True)
+        resized_img.save(output, format='JPEG', quality=100, optimize=True)
         return output.getvalue()
 
 def upload_image_resolutions(local_path: str, ts: str):
@@ -78,7 +140,7 @@ def upload_image_resolutions(local_path: str, ts: str):
     Upload multiple resolution versions of an image to R2.
     """
     for resolution_name, settings in RESOLUTION_LEVELS.items():
-        remote_key = f"{ts}-{resolution_name}.png"
+        remote_key = f"{ts}-{resolution_name}.jpg"
         
         # Check if file already exists
         try:
