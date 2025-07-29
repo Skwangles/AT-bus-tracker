@@ -37,3 +37,6 @@ exceptions.log
 error.log
 
 .devdbrc
+
+vvv/
+venv/
