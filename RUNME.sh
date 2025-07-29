@@ -105,8 +105,8 @@ if [ "$CV_EXTRACT_USED_IMAGES" == true ]; then
 fi
 
 if [ "$CV_START_SERVER" == true ]; then
-  ./bin/scripts/cv_run_13_start_frontend.sh
-  check_command "Starting frontend server"
+  ./bin/scripts/cv_run_13_export.sh
+  check_command "Exporting DB and Floorplan images to client directory"
 fi
 
 echo "Script completed successfully."

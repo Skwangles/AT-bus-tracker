@@ -20,10 +20,10 @@ R2_REGION = os.getenv('CV_R2_REGION', 'auto')
 
 # Resolution levels for image processing
 RESOLUTION_LEVELS = {
-    'preview': {'resolution': {'width': 480, 'height': 240}},
-    'low': {'resolution': {'width': 1920, 'height': 960}},
-    'high': {'resolution': {'width': 3840, 'height': 1920}},
-    'ultra': {'resolution': {'width': 5760, 'height': 2880}},
+    'preview': {'resolution': {'width': 480, 'height': 240}, 'extension': 'jpg', 'quality': 70},
+    'low': {'resolution': {'width': 1920, 'height': 960}, 'extension': 'jpg', 'quality': 80},
+    'high': {'resolution': {'width': 3840, 'height': 1920}, 'extension': 'png', 'quality': 100},
+    'ultra': {'resolution': {'width': 5760, 'height': 2880}, 'extension': 'png', 'quality': 100},
 }
 
 # Set up boto3 S3 client for R2
@@ -35,104 +35,47 @@ s3 = boto3.client(
     region_name=R2_REGION,
 )
 
-def blur_faces(image: np.ndarray) -> np.ndarray:
-    """
-    Detect and blur faces in an image using OpenCV's Haar cascade.
-    """
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-    faces = face_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=5, minSize=(30, 30))
-    for (x, y, w, h) in faces:
-        face_roi = image[y:y+h, x:x+w]
-        blurred_face = cv2.GaussianBlur(face_roi, (99, 99), 30)
-        image[y:y+h, x:x+w] = blurred_face
-    return image
 
-def lift_shadows(image: np.ndarray, shadow_amount: float = 40.0) -> np.ndarray:
+def apply_gamma_correction(image: np.ndarray, gamma: float = 2.2) -> np.ndarray:
     """
-    Simple shadow lifting - brightens dark areas without affecting highlights.
+    Simple gamma correction to brighten the image.
     """
-    # Convert to float for processing
-    img_float = image.astype(np.float32) / 255.0
+    # Build lookup table
+    invGamma = 1.0 / gamma
+    table = np.array([((i / 255.0) ** invGamma) * 255 for i in np.arange(0, 256)]).astype("uint8")
     
-    # Create luminance to identify shadow areas
-    if len(img_float.shape) == 3:
-        luminance = 0.299 * img_float[:,:,2] + 0.587 * img_float[:,:,1] + 0.114 * img_float[:,:,0]
-    else:
-        luminance = img_float
-    
-    # Create shadow mask (darker areas = higher values)
-    shadow_mask = (1.0 - luminance) ** 2  # Quadratic falloff for natural transition
-    
-    # Apply gentle lift only to shadows
-    shadow_lift = shadow_amount / 100.0
-    
-    if len(img_float.shape) == 3:
-        lifted = img_float + (shadow_mask[:,:,np.newaxis] * shadow_lift * 0.3)
-    else:
-        lifted = img_float + (shadow_mask * shadow_lift * 0.3)
-    
-    return (np.clip(lifted, 0, 1) * 255).astype(np.uint8)
+    return cv2.LUT(image, table)
 
-def reduce_glare(image: np.ndarray, glare_threshold: float = 0.85, reduction_strength: float = 0.3) -> np.ndarray:
+def process_image(image: np.ndarray) -> np.ndarray:
     """
-    Reduce glare by identifying and toning down overexposed bright areas.
+    Apply gamma correction to brighten the image.
     """
-    # Convert to float for processing
-    img_float = image.astype(np.float32) / 255.0
-    
-    # Create luminance to identify bright areas
-    if len(img_float.shape) == 3:
-        luminance = 0.299 * img_float[:,:,2] + 0.587 * img_float[:,:,1] + 0.114 * img_float[:,:,0]
-    else:
-        luminance = img_float
-    
-    # Create glare mask (bright areas = higher values)
-    glare_mask = np.maximum(0, (luminance - glare_threshold)) / (1.0 - glare_threshold)
-    glare_mask = glare_mask ** 2  # Quadratic falloff for smooth transition
-    
-    # Apply glare reduction
-    glare_reduction = reduction_strength * glare_mask
-    
-    if len(img_float.shape) == 3:
-        # Apply to all channels, preserve some detail in bright areas
-        reduced = img_float * (1.0 - glare_reduction[:,:,np.newaxis] * 0.5)
-    else:
-        # Grayscale
-        reduced = img_float * (1.0 - glare_reduction * 0.5)
-    
-    return (np.clip(reduced, 0, 1) * 255).astype(np.uint8)
+    return apply_gamma_correction(image, gamma=1.3)
 
-def enhance_360_image(image: np.ndarray) -> np.ndarray:
-    """
-    Complete 360° image enhancement: reduce glare and lift shadows.
-    """
-    # Step 1: Reduce glare in bright areas (windows, reflections)
-    glare_reduced = reduce_glare(image, glare_threshold=0.8, reduction_strength=0.4)
-    
-    # Step 2: Lift shadows in dark areas
-    final_result = lift_shadows(glare_reduced, shadow_amount=30.0)
-    
-    return final_result
 
-def equalise_histogram(image: np.ndarray) -> np.ndarray:
-    """
-    Apply simple shadow lifting instead of complex histogram processing.
-    """
-    return enhance_360_image(image)
-
-def create_resized_image(image_path: str, dimensions: dict) -> bytes:
+def create_resized_image(image_path: str, dimensions: dict, extension: str, quality: int) -> bytes:
     """
     Create a resized version of an image using PIL.
     """
     with Image.open(image_path) as img:
-        resized_img = img.resize((dimensions['width'], dimensions['height']), Image.Resampling.LANCZOS)
-        # Convert to RGB if necessary for JPEG
-        if resized_img.mode in ('RGBA', 'LA', 'P'):
-            resized_img = resized_img.convert('RGB')
-        # Save to bytes as JPEG
+        resized_img = img.resize((dimensions['width'], dimensions['height']), Image.Resampling.BILINEAR)
+        
+        # Determine format based on extension
+        if extension == 'jpg':
+            format_type = 'JPEG'
+            # Convert to RGB if necessary for JPEG
+            if resized_img.mode in ('RGBA', 'LA', 'P'):
+                resized_img = resized_img.convert('RGB')
+        else:  # png
+            format_type = 'PNG'
+        
+        # Save to bytes
         output = io.BytesIO()
-        resized_img.save(output, format='JPEG', quality=100, optimize=True)
+        if format_type == 'JPEG':
+            resized_img.save(output, format='JPEG', quality=quality, optimize=True)
+        else:  # PNG
+            resized_img.save(output, format='PNG', optimize=True)
+        
         return output.getvalue()
 
 def upload_image_resolutions(local_path: str, ts: str):
@@ -140,7 +83,7 @@ def upload_image_resolutions(local_path: str, ts: str):
     Upload multiple resolution versions of an image to R2.
     """
     for resolution_name, settings in RESOLUTION_LEVELS.items():
-        remote_key = f"{ts}-{resolution_name}.jpg"
+        remote_key = f"{ts}-{resolution_name}.{settings['extension']}"
         
         # Check if file already exists
         try:
@@ -154,17 +97,17 @@ def upload_image_resolutions(local_path: str, ts: str):
         
         # Create resized image and upload
         try:
-            resized_buffer = create_resized_image(local_path, settings['resolution'])
+            resized_buffer = create_resized_image(
+                local_path, 
+                settings['resolution'], 
+                settings['extension'], 
+                settings['quality']
+            )
             s3.upload_fileobj(io.BytesIO(resized_buffer), R2_BUCKET, remote_key)
             print(f"Uploaded {remote_key} to R2")
         except Exception as e:
             print(f"Error uploading {remote_key}: {e}")
 
-def is_histogram_equalised(filename: str) -> bool:
-    """
-    Heuristic: Check if the filename ends with '_eq.png' to determine if histogram equalisation was applied.
-    """
-    return filename.endswith('_eq.png')
 
 def process_from_db(table_prefix: str, db_path: str, input_dir: str, output_dir: str):
     """
@@ -195,7 +138,7 @@ def process_from_db(table_prefix: str, db_path: str, input_dir: str, output_dir:
                 if image is None:
                     print(f"Failed to read {input_file}")
                     continue
-                image_eq = equalise_histogram(image)
+                image_eq = process_image(image)
                 cv2.imwrite(str(eq_file), image_eq)
             else:
                 print(f"Histogram equalised file exists: {eq_file}")

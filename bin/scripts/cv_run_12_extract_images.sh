@@ -46,8 +46,28 @@ if [[ ! -d "$OUTPUT_DIR" ]]; then
     mkdir -p "$OUTPUT_DIR" || error_exit "Failed to create output directory $OUTPUT_DIR"
 fi
 
-cd "$CV_HOME_DIR/Apps/ImageSplitter" || error_exit "Failed to change directory to $CV_HOME_DIR/Apps/ImageSplitter"
-npm install || error_exit "npm install failed"
-npm run build || error_exit "npm run build failed"
-npm run start -- --input_dir="$INPUT_DIR" --output_dir="$OUTPUT_DIR" --db="$INPUT_DB" --prefix="$TABLE_PREFIX" --use_r2=true || error_exit "npm run start failed"
+cd "$CV_HOME_DIR/Apps/ImageProcessor" || error_exit "Failed to change directory to $CV_HOME_DIR/Apps/ImageProcessor"
+
+# Create virtual environment if it doesn't exist
+VENV_DIR="venv"
+if [[ ! -d "$VENV_DIR" ]]; then
+    echo "Creating Python virtual environment..."
+    python3 -m venv "$VENV_DIR" || error_exit "Failed to create virtual environment"
+fi
+
+# Activate virtual environment
+echo "Activating virtual environment..."
+source "$VENV_DIR/bin/activate" || error_exit "Failed to activate virtual environment"
+
+# Install Python dependencies
+echo "Installing Python dependencies..."
+pip install -r requirements.txt || error_exit "pip install failed"
+
+# Run the Python image splitter
+echo "Running Python image splitter..."
+python image_processor.py db "$TABLE_PREFIX" "$INPUT_DB" "$INPUT_DIR" "$OUTPUT_DIR" || error_exit "Python image splitter failed"
+
+# Deactivate virtual environment
+deactivate
+
 cd "$ORIGINAL_DIR" || error_exit "Failed to change back to original directory"

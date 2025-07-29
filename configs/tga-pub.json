@@ -12,9 +12,9 @@
     "edit_db_visually": false,
     "init_data": false,
     "start_authoring": false,
-    "strip_restricted_nodes": true,
-    "extract_used_images": false,
-    "start_server": true
+    "strip_restricted_nodes": false,
+    "extract_used_images": true,
+    "start_server": false
   },
   "paths": {
     "home_dir": "/home/skwangles/Documents/Honours/Sitexplorer",
@@ -93,7 +93,7 @@
     
     "use_r2": true,
     "r2_endpoint": "https://b86c45732de187c8f0043a8cb944b6a5.r2.cloudflarestorage.com",
-    "r2_bucket": "uow-tga-002",
+    "r2_bucket": "uow-tga-003",
     "r2_region": "auto"
   },
   "env_file": ".env.tga"
