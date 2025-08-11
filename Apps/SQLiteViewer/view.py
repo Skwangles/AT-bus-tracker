@@ -5,7 +5,7 @@ from tqdm import tqdm
 import math
 
 proximity = 1.5 / 10
-SHOW_EDGES = False
+SHOW_EDGES = True
 EDGE_TYPE_EDGECONTRACTION = 3
 EDGE_TYPE_COVISIBILITY = -1
 
@@ -31,10 +31,24 @@ def load_nodes(db_path):
     """Load nodes from the SQLite database."""
     connection = sqlite3.connect(db_path)
     cursor = connection.cursor()
-    sql_str = "SELECT keyframe_id, x_trans, y_trans, z_trans, pose FROM "+ table_name_prefix+"nodes"
+    
+    # Check if the prefixed table exists, otherwise use the regular table
+    table_name = table_name_prefix + "nodes"
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table_name,))
+    if not cursor.fetchone():
+        # Fall back to regular table name
+        table_name = "nodes"
+        print(f"Table {table_name_prefix}nodes not found, using {table_name}")
+    
+    sql_str = f"SELECT keyframe_id, x_trans, y_trans, z_trans, pose FROM {table_name}"
     print("Executing:", sql_str)
     cursor.execute(sql_str)
-    nodes = list(map(lambda x: Node(x[0], [x[1], x[2], x[3]], x[4]), np.array(cursor.fetchall())))
+    nodes_data = cursor.fetchall()
+    nodes = []
+    for row in nodes_data:
+        keyframe_id = int(row[0])  # Convert to integer
+        node = Node(keyframe_id, [row[1], row[2], row[3]], row[4])
+        nodes.append(node)
     connection.close()
     
     return nodes
@@ -82,9 +96,52 @@ def load_edges(db_path, all=False):
     """Load edges from the SQLite database."""
     connection = sqlite3.connect(db_path)
     cursor = connection.cursor()
-    cursor.execute("SELECT keyframe_id0, keyframe_id1 FROM "+ table_name_prefix+"edges WHERE " + ("type >= 0" if not all else " 1 = 1")) # 'Covisibility edges' are type = -1
+    
+    # Check if the prefixed table exists, otherwise use the regular table
+    table_name = table_name_prefix + "edges"
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table_name,))
+    if not cursor.fetchone():
+        # Fall back to regular table name
+        table_name = "edges"
+        print(f"Table {table_name_prefix}edges not found, using {table_name}")
+    
+    # Check if the table has the type and zone columns (refined_edges structure)
+    cursor.execute(f"PRAGMA table_info({table_name})")
+    columns = [column[1] for column in cursor.fetchall()]
+    has_type_column = 'type' in columns
+    has_zone_column = 'zone' in columns
+    
+    if has_type_column and has_zone_column:
+        # Use the refined_edges structure with type and zone
+        if all:
+            cursor.execute(f"SELECT keyframe_id0, keyframe_id1, type, zone FROM {table_name}")
+        else:
+            cursor.execute(f"SELECT keyframe_id0, keyframe_id1, type, zone FROM {table_name} WHERE type >= 0")
+        print(f"Loading edges with type and zone from {table_name}")
+    else:
+        # Fall back to basic structure
+        if table_name == "edges":
+            cursor.execute(f"SELECT keyframe_id0, keyframe_id1 FROM {table_name}")  # Show all edges
+            print(f"Loading all edges from {table_name} (including covisibility edges)")
+        else:
+            cursor.execute(f"SELECT keyframe_id0, keyframe_id1 FROM {table_name} WHERE " + ("type >= 0" if not all else " 1 = 1"))
+    
     edges = cursor.fetchall()  # List of tuples
     connection.close()
+    
+    # Print some debugging information
+    if edges:
+        print(f"Loaded {len(edges)} edges")
+        if len(edges[0]) >= 4:
+            print(f"Edge structure includes type and zone columns")
+            # Show some sample edges
+            for i, edge in enumerate(edges[:5]):
+                print(f"Sample edge {i}: {edge}")
+        else:
+            print(f"Edge structure is basic (keyframe_id0, keyframe_id1)")
+    else:
+        print("No edges found")
+    
     return edges
 
 def load_elevator_edges(db_path):
@@ -116,6 +173,7 @@ second_id = -1
 plotter = None
 
 temp_viewed_mesh = []
+edge_actors = []  # Store edge actors for toggling visibility
 
 removeable_ids = []
 addable_edges = []
@@ -273,6 +331,24 @@ def store_point():
         return
     second_id = picked_id
     print("Stored:", second_id)
+
+def toggle_edges():
+    global edge_actors
+    global plotter
+    
+    if not edge_actors:
+        print("No edges to toggle")
+        return
+    
+    # Toggle visibility of all edge actors
+    for actor in edge_actors:
+        if actor.GetVisibility():
+            actor.SetVisibility(False)
+        else:
+            actor.SetVisibility(True)
+    
+    plotter.render()
+    print("Toggled edge visibility")
     
 def picked_point(picked):
     global picked_id
@@ -281,11 +357,22 @@ def picked_point(picked):
     if id != None and id != -1:
         picked_id = id
 
-def get_lines_from_ids(edge1, edge2):
-    p0, p1 = nodes[mapped[edge1]], nodes[mapped[edge2]]
+def get_lines_from_ids(edge1, edge2, nodes_list):
+    # Check if both nodes exist in our mapping
+    if edge1 not in mapped or edge2 not in mapped:
+        print(f"Warning: Edge references non-existent nodes: {edge1} -> {edge2}")
+        print(f"Available node IDs: {list(mapped.keys())[:20]}...")
+        return None
+    
+    # Check if the mapped indices are valid
+    if mapped[edge1] >= len(nodes_list) or mapped[edge2] >= len(nodes_list):
+        print(f"Warning: Edge references invalid node indices: {edge1} -> {edge2}")
+        return None
+    
+    p0, p1 = nodes_list[mapped[edge1]], nodes_list[mapped[edge2]]
     return [p0, p1]
 
-def render(nodes_list, other_nodes_list=None, edges=None):
+def render(nodes_list, other_nodes_list=None, edges=None, elevator_edges=None):
     """Render nodes and edges in 3D using PyVista."""
     global pos_map
     global idx_to_id
@@ -297,11 +384,15 @@ def render(nodes_list, other_nodes_list=None, edges=None):
     plotter = pv.Plotter()
     
     print("Creating a lookup for the keyframe id")
+    print(f"Number of nodes in nodes_list: {len(nodes_list)}")
     for i, node in tqdm(enumerate(nodes_list)):
         mapped[node.keyframe_id] = i
         idx_to_id[i] = node.keyframe_id
     
-    for i, node in tqdm(enumerate(nodes)):
+    print(f"Created mapping for {len(mapped)} nodes")
+    print(f"Sample mappings: {list(mapped.items())[:10]}")
+    
+    for i, node in tqdm(enumerate(nodes_list)):
         pos_map[str(node.position)] = i
         
     # Add other_nodes to the lookup as well
@@ -316,7 +407,7 @@ def render(nodes_list, other_nodes_list=None, edges=None):
     # Create a PolyData object with the points rendered as arrows
     
     # points = pv.PolyData(list(map(lambda x: x.position, nodes.position)))
-    for node in tqdm(nodes):
+    for node in tqdm(nodes_list):
         plotter.add_mesh(node.get_arrow(), color="green", pickable=True)
         # plotter.add_point_labels(node.position, [str(node.keyframe_id)], font_size=10, point_size=10, color="black")
     
@@ -351,7 +442,13 @@ def render(nodes_list, other_nodes_list=None, edges=None):
         ("N", "Normal node"),
         ("E", "Elevator node"),
         ("I", "Info/Toilet node"),
-        ("R", "Room node")
+        ("R", "Room node"),
+        ("Blue Lines", "Type 0 edges"),
+        ("Green Lines", "Type 1 edges"),
+        ("Orange Lines", "Type 2 edges (default)"),
+        ("Red Lines", "Type 3 edges (edge contraction)"),
+        ("Purple Lines", "Covisibility edges"),
+        ("Cyan Lines", "Elevator edges")
     ]
     
     # Create a simple text legend
@@ -367,10 +464,64 @@ def render(nodes_list, other_nodes_list=None, edges=None):
     if SHOW_EDGES and edges:
         print("Adding edges...")
         lines = []
+        valid_edges = 0
+        invalid_edges = 0
+        
+        # Define edge type colours
+        edge_type_colors = {
+            0: "blue",      # Default/unknown type
+            1: "green",     # Type 1
+            2: "orange",    # Type 2 (default)
+            3: "red",       # Type 3 (edge contraction)
+            -1: "purple"    # Covisibility edges
+        }
+        
         for edge in tqdm(edges):
-            [p0, p1] = get_lines_from_ids(edge[0], edge[1])
-            line = pv.Line(p0, p1)
-            plotter.add_mesh(line, color="red", line_width=1.0, pickable=False)
+            # Handle different edge data structures
+            if len(edge) >= 4:
+                # Enhanced structure with type and zone
+                edge_id0, edge_id1, edge_type, zone = edge[0], edge[1], edge[2], edge[3]
+                edge_color = edge_type_colors.get(edge_type, "gray")
+                line_width = 2.0 if edge_type == 3 else 1.0  # Thicker lines for edge contraction
+            else:
+                # Basic structure
+                edge_id0, edge_id1 = edge[0], edge[1]
+                edge_color = "red"
+                line_width = 1.0
+            
+            line_points = get_lines_from_ids(edge_id0, edge_id1, nodes_list)
+            if line_points is not None:
+                [p0, p1] = line_points
+                line = pv.Line(p0.position, p1.position)
+                actor = plotter.add_mesh(line, color=edge_color, line_width=line_width, pickable=False)
+                edge_actors.append(actor)
+                valid_edges += 1
+            else:
+                invalid_edges += 1
+        
+        print(f"Rendered {valid_edges} valid edges, skipped {invalid_edges} invalid edges")
+    
+    # Add elevator edges if available
+    if elevator_edges:
+        print("Adding elevator edges...")
+        elevator_valid = 0
+        elevator_invalid = 0
+        for elevator_edge in tqdm(elevator_edges):
+            # elevator_edge structure: (id, shaft_id, id0, id1)
+            edge_id0, edge_id1 = elevator_edge[2], elevator_edge[3]
+            
+            # Try to find the corresponding other_nodes
+            line_points = get_lines_from_ids(edge_id0, edge_id1, nodes_list)
+            if line_points is not None:
+                [p0, p1] = line_points
+                line = pv.Line(p0.position, p1.position)
+                actor = plotter.add_mesh(line, color="cyan", line_width=3.0, pickable=False)
+                edge_actors.append(actor)
+                elevator_valid += 1
+            else:
+                elevator_invalid += 1
+        
+        print(f"Rendered {elevator_valid} valid elevator edges, skipped {elevator_invalid} invalid elevator edges")
 
     # Show the 3D scene
     print("Showing...")
@@ -380,6 +531,7 @@ def render(nodes_list, other_nodes_list=None, edges=None):
     plotter.add_key_event('n', callback=show_neighbours)
     plotter.add_key_event('1', callback=store_point)
     plotter.add_key_event('2', callback=connect_points)
+    plotter.add_key_event('t', callback=toggle_edges)
     plotter.show()
 
 if __name__ == "__main__":
@@ -412,6 +564,8 @@ if __name__ == "__main__":
           1 - store the selected point as the 1st of 2 points
           2 - connect the current selected point to the point stored in 1
           e - execute the actions - e.g. remove IDs from the remove list
+          n - show neighbours of selected point
+          t - toggle edge visibility
           """)
 
-    render(nodes, other_nodes, edges)
+    render(nodes, other_nodes, edges, elevator_edges)
