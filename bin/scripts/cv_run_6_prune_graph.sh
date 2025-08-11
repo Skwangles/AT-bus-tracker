@@ -16,26 +16,41 @@ check_command() {
   fi
 }
 
-echo "PRUNING"
+echo "PRUNING GRAPH WITH GRID-BASED PYTHON METHOD"
 
 [[ -z "$CV_HOME_DIR" ]] && error_exit "CV_HOME_DIR is not set"
-[[ -z "$CV_KEYFRAME_IMG_DIR" ]] && error_exit "CV_KEYFRAME_IMG_DIR is not set"
 [[ -z "$CV_DB_DIR" ]] && error_exit "CV_DB_DIR is not set"
 [[ -z "$CV_PRUNE_DB_NAME" ]] && error_exit "CV_PRUNE_DB_NAME is not set"
-[[ -z "$CV_PRUNE_USE_PRECALCULATED_IMAGE_SHARPNESS" && -z "$CV_PRECALCULATE_IMAGE_SHARPNESS_JSON_PATH" ]] && error_exit "Either CV_PRUNE_USE_PRECALCULATED_IMAGE_SHARPNESS or CV_PRECALCULATE_IMAGE_SHARPNESS_JSON_PATH must be provided"
-[[ -z "$1" && -z "$CV_PRUNE_TABLE_PREFIX" ]] && error_exit "Either CLI argument or CV_PRUNE_TABLE_PREFIX must be provided"
-TABLE_PREFIX="${1:-$CV_PRUNE_TABLE_PREFIX}"
+
+# Optional parameters with defaults
+GRID_SIZE="${CV_PRUNE_GRID_SIZE:-5.0}"
+COORDS_TO_METRES="${CV_PRUNE_COORDS_TO_METRES:-15.0}"
+VERBOSE="${CV_PRUNE_VERBOSE:-false}"
 
 ORIGINAL_DIR=$(pwd)
 
-echo "Arg 1 -Table prefix:" ${1:-$CV_PRUNE_TABLE_PREFIX}
+echo "Database: $CV_DB_DIR$CV_PRUNE_DB_NAME"
+echo "Grid size: ${GRID_SIZE}m"
+echo "Coordinate scaling: ${COORDS_TO_METRES}x"
+echo "Verbose: $VERBOSE"
 
-cd "$CV_HOME_DIR"/Apps/GraphPruner || error_exit "Failed to change directory to $CV_HOME_DIR/Apps/GraphPruner"
+cd "$CV_HOME_DIR"/Apps/GraphProcessor || error_exit "Failed to change directory to $CV_HOME_DIR/Apps/GraphProcessor"
 
-OPTION=""
-[[ -n "$CV_PRUNE_USE_PRECALCULATED_IMAGE_SHARPNESS" ]] && OPTION="--preproc_sharpness_json=\"$CV_PRECALCULATE_IMAGE_SHARPNESS_JSON_PATH\""
+# Check if Python dependencies are installed
+echo "Checking Python dependencies..."
+python -c "import numpy, networkx, scipy, sklearn, tqdm" 2>/dev/null || {
+    echo "Installing Python dependencies..."
+    pip install numpy networkx scipy scikit-learn tqdm matplotlib
+}
 
-npm run start -- --img_dir="$CV_KEYFRAME_IMG_DIR" --db="$CV_DB_DIR$CV_PRUNE_DB_NAME" $OPTION --table_prefix="${1:-$CV_PRUNE_TABLE_PREFIX}"
-check_command "Pruning graph"
+# Run the grid-based pruning
+VERBOSE_FLAG=""
+[[ "$VERBOSE" == "true" ]] && VERBOSE_FLAG="--verbose"
+
+python run_pruning.py prune "$CV_DB_DIR$CV_PRUNE_DB_NAME" --grid-size "$GRID_SIZE" --coords-to-metres "$COORDS_TO_METRES" $VERBOSE_FLAG
+check_command "Pruning graph with grid-based method"
 
 cd "$ORIGINAL_DIR" || error_exit "Failed to change directory back to $ORIGINAL_DIR"
+
+echo "Graph pruning completed successfully!"
+echo "Results saved to: $CV_DB_DIR/grid_$CV_PRUNE_DB_NAME"

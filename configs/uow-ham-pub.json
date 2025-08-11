@@ -81,16 +81,9 @@
     "extract_batch_size": 8,
     "extract_used_images_dir": "/media/skwangles/KINGSTON/MEDIA/HAMILTON/blurred_pictures_prod/",
     "extract_face_blur": true,
-    "server_port": 3001,
-    "server_use_table_prefix": true,
-    "server_table_prefix": "refined_",
     "server_db_name": "uow-ham-pub.db", 
-    "server_send_test_image": false,
-    "server_neighbours_includes_proximity": false,
     "server_floorplan_img_dir": "/media/skwangles/KINGSTON/MEDIA/HAMILTON/floorplans_prod/",
-   
-    "server_keyframe_img_extension": ".png",
-    
+
     "use_r2": true,
     "r2_endpoint": "https://b86c45732de187c8f0043a8cb944b6a5.r2.cloudflarestorage.com",
     "r2_bucket": "uow-ham-001",
