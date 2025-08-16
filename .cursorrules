@@ -13,7 +13,8 @@
     },
     "documentation": {
         "comments": "Use clear, concise comments in British English to describe the purpose of complex logic and classes.",
-        "docstrings": "Utilise JSDoc/TSDoc (or typescript types) for documenting functions and classes. Include parameter and return type descriptions."
+        "docstrings": "Utilise JSDoc/TSDoc (or typescript types) for documenting functions and classes. Include parameter and return type descriptions.",
+        "diagrams": "Use diagrams to visualise the code structure and logic. Use mermaid for diagrams."
     },
     "accessibility": {
         "aria_labels": "Use ARIA labels to enhance accessibility for screen readers - don't add aria labels where the element is self-explanatory",
@@ -30,6 +31,6 @@
     },
     "best_practices": {
         "testing": "Write unit tests for critical components and functions to ensure reliability and robustness.",
-        "version_control": "Use Git for version control, with meaningful commit messages in British English."
+        "version_control": "Use Git for version control, with meaningful commit messages in British English.",
     }
 }
