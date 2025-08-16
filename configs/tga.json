@@ -5,15 +5,15 @@
     "stitch_insv": false,
     "vslam_map": false,
     "edit_vslam": false,
-    "export_db": false,
+    "export_db": true,
     "precalculate_image_sharpness": false,
-    "graph_prune": false,
+    "graph_prune": true,
     "merge_maps": false,
     "edit_db_visually": false,
-    "init_data": false,
-    "start_authoring": false,
-    "strip_restricted_nodes": false,
-    "extract_used_images": false,
+    "init_data": true,
+    "start_authoring": true,
+    "strip_restricted_nodes": true,
+    "extract_used_images": true,
     "start_server": true
   },
   "paths": {
@@ -47,7 +47,7 @@
     "prune_outdoors_y_dist_threshold": 2,
     "prune_y_dist_threshold": 2,
     "prune_outdoors_location_name": "outdoors",
-    "prune_table_prefix": "refined_",
+    "prune_db_prefix": "refined_",
     "prune_use_sqlite": true,
     "prune_db_name": "tga.db",
     "merge_1_name": "tga.db",
@@ -58,7 +58,7 @@
     "edit_db_name": "tga-test.db",
     "edit_db_table_prefix": "refined_",
     "init_db_name": "tga.db",
-    "init_use_table_prefix": true,
+    "init_use_table_prefix": false,
     "init_dont_overwrite_map_points": true,
     "init_table_prefix": "refined_",
     "authoring_port": 3002,
@@ -79,12 +79,7 @@
     "extract_used_images_dir": "/media/skwangles/KINGSTON/MEDIA/TGA/blurred_pictures/",
     "extract_face_blur": true,
     "server_db_name": "tga-pub.db",
-    "server_floorplan_img_dir": "/media/skwangles/KINGSTON/MEDIA/TGA/floorplans",
-
-    "use_r2": false,
-    "r2_endpoint": "https://your-account-id.r2.cloudflarestorage.com",
-    "r2_bucket": "your-bucket-name",
-    "r2_region": "auto"
+    "server_floorplan_img_dir": "/media/skwangles/KINGSTON/MEDIA/TGA/floorplans"
   },
   "env_file": ".env.tga"
 } 
