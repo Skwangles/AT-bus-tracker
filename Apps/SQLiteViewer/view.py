@@ -9,7 +9,7 @@ SHOW_EDGES = True
 EDGE_TYPE_EDGECONTRACTION = 3
 EDGE_TYPE_COVISIBILITY = -1
 
-table_name_prefix = "refined_"
+table_name_prefix = ""
 db_path = ""
 
 class Node:
@@ -33,14 +33,9 @@ def load_nodes(db_path):
     cursor = connection.cursor()
     
     # Check if the prefixed table exists, otherwise use the regular table
-    table_name = table_name_prefix + "nodes"
-    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table_name,))
-    if not cursor.fetchone():
-        # Fall back to regular table name
-        table_name = "nodes"
-        print(f"Table {table_name_prefix}nodes not found, using {table_name}")
+    table_name = "nodes"
     
-    sql_str = f"SELECT keyframe_id, x_trans, y_trans, z_trans, pose FROM {table_name}"
+    sql_str = f"SELECT keyframe_id, x_trans, y_trans, z_trans, pose FROM nodes"
     print("Executing:", sql_str)
     cursor.execute(sql_str)
     nodes_data = cursor.fetchall()
@@ -98,12 +93,7 @@ def load_edges(db_path, all=False):
     cursor = connection.cursor()
     
     # Check if the prefixed table exists, otherwise use the regular table
-    table_name = table_name_prefix + "edges"
-    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table_name,))
-    if not cursor.fetchone():
-        # Fall back to regular table name
-        table_name = "edges"
-        print(f"Table {table_name_prefix}edges not found, using {table_name}")
+    table_name = "edges"
     
     # Check if the table has the type and zone columns (refined_edges structure)
     cursor.execute(f"PRAGMA table_info({table_name})")
@@ -114,17 +104,17 @@ def load_edges(db_path, all=False):
     if has_type_column and has_zone_column:
         # Use the refined_edges structure with type and zone
         if all:
-            cursor.execute(f"SELECT keyframe_id0, keyframe_id1, type, zone FROM {table_name}")
+            cursor.execute(f"SELECT keyframe_id0, keyframe_id1, type, zone FROM edges")
         else:
-            cursor.execute(f"SELECT keyframe_id0, keyframe_id1, type, zone FROM {table_name} WHERE type >= 0")
-        print(f"Loading edges with type and zone from {table_name}")
+            cursor.execute(f"SELECT keyframe_id0, keyframe_id1, type, zone FROM edges WHERE type >= 0")
+        print(f"Loading edges with type and zone from edges")
     else:
         # Fall back to basic structure
         if table_name == "edges":
-            cursor.execute(f"SELECT keyframe_id0, keyframe_id1 FROM {table_name}")  # Show all edges
-            print(f"Loading all edges from {table_name} (including covisibility edges)")
+            cursor.execute(f"SELECT keyframe_id0, keyframe_id1 FROM edges")  # Show all edges
+            print(f"Loading all edges from edges (including covisibility edges)")
         else:
-            cursor.execute(f"SELECT keyframe_id0, keyframe_id1 FROM {table_name} WHERE " + ("type >= 0" if not all else " 1 = 1"))
+            cursor.execute(f"SELECT keyframe_id0, keyframe_id1 FROM edges WHERE " + ("type >= 0" if not all else " 1 = 1"))
     
     edges = cursor.fetchall()  # List of tuples
     connection.close()
@@ -541,12 +531,6 @@ if __name__ == "__main__":
         sys.exit(1)
 
     db_path = sys.argv[1]
-    
-    if len(sys.argv) == 3:
-        if (sys.argv[2].lower() != "None".lower() and sys.argv[2] != ""):
-            table_name_prefix = sys.argv[2]
-        else: 
-            table_name_prefix = ""
         
     nodes = load_nodes(db_path)
     other_nodes = load_other_nodes(db_path)

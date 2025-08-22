@@ -109,13 +109,13 @@ def upload_image_resolutions(local_path: str, ts: str):
             print(f"Error uploading {remote_key}: {e}")
 
 
-def process_from_db(table_prefix: str, db_path: str, input_dir: str, output_dir: str):
+def process_from_db(db_path: str, input_dir: str, output_dir: str):
     """
     For each ts in the db, round to 5dp, add .png, process image: equalise histogram, blur faces (equirect), upload to R2 if not already present.
     """
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
-    table_name = f"{table_prefix}nodes"
+    table_name = f"nodes"
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
     try:
@@ -179,10 +179,9 @@ if __name__ == '__main__':
     folder_parser.add_argument('output_folder', help='Path to output folder for processed images')
 
     db_parser = subparsers.add_parser('db', help='Process images listed in a SQLite3 db nodes table')
-    db_parser.add_argument('table_prefix', help='Prefix for the nodes table (e.g. "", "my_", etc.)')
     db_parser.add_argument('db_path', help='Path to SQLite3 database')
     db_parser.add_argument('input_dir', help='Directory containing input images')
     db_parser.add_argument('output_dir', help='Directory for processed images')
 
     args = parser.parse_args()
-    process_from_db(args.table_prefix, args.db_path, args.input_dir, args.output_dir)
+    process_from_db(args.db_path, args.input_dir, args.output_dir)
