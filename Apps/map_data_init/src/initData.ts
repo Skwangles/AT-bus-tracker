@@ -167,20 +167,21 @@ async function getBorderNodes(location: string): Promise<Array<{ keyframe_id: nu
   }
 
   // Step 1: Get all border nodes (nodes not in current location but connected to it)
+  // Check for any edge regardless of direction (id0 or id1)
   const borderNodesResult = await readDB(`
     SELECT DISTINCT 
-      e.keyframe_id1 as keyframe_id, 
-      l2.location, 
+      n.keyframe_id,
+      l2.location,
       n.x_trans, 
       n.z_trans 
     FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}edges e 
     JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l 
-      ON e.keyframe_id0 = l.keyframe_id 
+      ON (e.keyframe_id0 = l.keyframe_id OR e.keyframe_id1 = l.keyframe_id)
     JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l2 
-      ON e.keyframe_id1 = l2.keyframe_id
+      ON (e.keyframe_id0 = l2.keyframe_id OR e.keyframe_id1 = l2.keyframe_id)
     JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n 
-      ON n.keyframe_id = e.keyframe_id1
-    WHERE l.location = ? AND l2.location <> ?
+      ON n.keyframe_id = l2.keyframe_id
+    WHERE l.location = ? AND l2.location <> ? AND l.keyframe_id != l2.keyframe_id
   `, [location, location])
 
   if (borderNodesResult.length === 0) {
@@ -218,8 +219,8 @@ async function processStaircaseNodes(
           SELECT DISTINCT l.location
           FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}edges e
           JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l 
-            ON e.keyframe_id1 = l.keyframe_id
-          WHERE e.keyframe_id0 = ? AND l.location <> ? AND l.location <> ?
+            ON (e.keyframe_id0 = l.keyframe_id OR e.keyframe_id1 = l.keyframe_id)
+          WHERE l.keyframe_id = ? AND l.location <> ? AND l.location <> ?
         `, [node.keyframe_id, currentLocation, node.location])
 
         // Find the first node in a non-staircase location that connects to this staircase
@@ -229,10 +230,10 @@ async function processStaircaseNodes(
               SELECT n.keyframe_id, l.location, n.x_trans, n.z_trans
               FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}edges e
               JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l 
-                ON e.keyframe_id1 = l.keyframe_id
+                ON (e.keyframe_id0 = l.keyframe_id OR e.keyframe_id1 = l.keyframe_id)
               JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n 
-                ON n.keyframe_id = e.keyframe_id1
-              WHERE e.keyframe_id0 = ? AND l.location = ?
+                ON n.keyframe_id = l.keyframe_id
+              WHERE l.keyframe_id = ? AND l.location = ?
               LIMIT 1
             `, [node.keyframe_id, connectedLocation.location])
 
@@ -276,14 +277,14 @@ async function clusterBorderNodes(
   // Build connection graph for border nodes
   for (const node of borderNodes) {
     const connections = await readDB(`
-      SELECT DISTINCT e.keyframe_id1 as connected_id
+      SELECT DISTINCT 
+        CASE 
+          WHEN e.keyframe_id0 = ? THEN e.keyframe_id1
+          WHEN e.keyframe_id1 = ? THEN e.keyframe_id0
+        END as connected_id
       FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}edges e
-      WHERE e.keyframe_id0 = ?
-      UNION
-      SELECT DISTINCT e.keyframe_id0 as connected_id
-      FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}edges e
-      WHERE e.keyframe_id1 = ?
-    `, [node.keyframe_id, node.keyframe_id])
+      WHERE e.keyframe_id0 = ? OR e.keyframe_id1 = ?
+    `, [node.keyframe_id, node.keyframe_id, node.keyframe_id, node.keyframe_id])
 
     const connectedIds = new Set<number>(connections.map((conn: { connected_id: number }) => conn.connected_id))
     nodeConnections.set(node.keyframe_id, connectedIds)
