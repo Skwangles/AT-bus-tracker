@@ -34,7 +34,7 @@ def setup_logging(verbose: bool = False):
 
 
 
-def run_grid_pruning(db_path: str, grid_size: float = 5.0, coords_to_metres: float = 15.0, verbose: bool = False):
+async def run_grid_pruning(db_path: str, grid_size: float = 5.0, coords_to_metres: float = 15.0, verbose: bool = False, db_prefix: str = "refined_"):
     """
     Run grid-based pruning approach using spatial grid partitioning.
     
@@ -54,13 +54,13 @@ def run_grid_pruning(db_path: str, grid_size: float = 5.0, coords_to_metres: flo
         outer_ring=grid_size,
         inner_ring=grid_size * 0.1,  # 10% of grid size
         coords_to_metres=coords_to_metres,
-        table_prefix=""
+        table_prefix=db_prefix
     )
     
     # Create working copy of the database
     logger.info(f"Creating working copy of database: {db_path}")
     db_manager = DatabaseManager(db_path, config)
-    working_db_path = db_manager.create_working_copy("grid_")
+    working_db_path = db_manager.create_working_copy(db_prefix)
     
     # Create database manager for working copy
     working_db_manager = DatabaseManager(working_db_path, config)
@@ -68,6 +68,14 @@ def run_grid_pruning(db_path: str, grid_size: float = 5.0, coords_to_metres: flo
     
     # Create and run grid pruner
     grid_pruner = GridBasedPruner(working_db_manager, coords_to_metres)
+    
+    # Load sharpness data if available
+    sharpness_json_path = f"{db_prefix}sharpness.json" if db_prefix else "sharpness.json"
+    if os.path.exists(sharpness_json_path):
+        logger.info(f"Loading sharpness data from {sharpness_json_path}")
+        grid_pruner.load_sharpness_data(sharpness_json_path)
+    else:
+        logger.warning(f"Sharpness file not found: {sharpness_json_path}. Using default sharpness values.")
     
     # Load graph data
     if not grid_pruner.load_graph_data():
@@ -89,7 +97,7 @@ def run_grid_pruning(db_path: str, grid_size: float = 5.0, coords_to_metres: flo
     is_covered, coverage_score, uncovered_points = coverage_validator.validate_coverage()
     
     # Save results
-    grid_pruner.save_to_database()
+    await grid_pruner.save_to_database()
     
     # Log results
     logger.info("=== GRID PRUNING RESULTS ===")
@@ -155,6 +163,14 @@ def analyze_graph_coverage(db_path: str, grid_size: float = 5.0, coords_to_metre
     # Create grid pruner for analysis (without actually pruning)
     grid_pruner = GridBasedPruner(db_manager, coords_to_metres)
     
+    # Load sharpness data if available
+    sharpness_json_path = "sharpness.json"
+    if os.path.exists(sharpness_json_path):
+        logger.info(f"Loading sharpness data from {sharpness_json_path}")
+        grid_pruner.load_sharpness_data(sharpness_json_path)
+    else:
+        logger.warning(f"Sharpness file not found: {sharpness_json_path}. Using default sharpness values.")
+    
     if not grid_pruner.load_graph_data():
         logger.error("Failed to load graph data")
         return None, None
@@ -181,7 +197,7 @@ def analyze_graph_coverage(db_path: str, grid_size: float = 5.0, coords_to_metre
     
     return stats, uncovered_points
 
-def main():
+async def main():
     """Main function with command line interface."""
     import argparse
     
@@ -213,6 +229,8 @@ Examples:
                        help='Scale factor to convert coordinates to metres (default: 15.0)')
     parser.add_argument('--verbose', '-v', action='store_true',
                        help='Enable verbose logging')
+    parser.add_argument('--db-prefix', type=str, default="refined_",
+                       help='Prefix for the database file (default: refined_)')
     
     args = parser.parse_args()
     
@@ -222,7 +240,7 @@ Examples:
     
     try:
         if args.mode == 'prune':
-            run_grid_pruning(args.db_path, args.grid_size, args.coords_to_metres, args.verbose)
+            await run_grid_pruning(args.db_path, args.grid_size, args.coords_to_metres, args.verbose, args.db_prefix)
         elif args.mode == 'analyze':
             analyze_graph_coverage(args.db_path, args.grid_size, args.coords_to_metres, args.verbose)
 
@@ -238,4 +256,5 @@ Examples:
         return 1
 
 if __name__ == "__main__":
-    sys.exit(main())
+    import asyncio
+    sys.exit(asyncio.run(main()))

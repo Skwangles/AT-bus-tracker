@@ -3,7 +3,7 @@ Grid-based pruning strategy for spatial graphs.
 
 This module implements a grid-based approach where nodes are partitioned into 
 5x5x5 meter grid boxes, with one representative node selected per box based on
-centrality, and all edges redirected to the selected representatives.
+image sharpness, and all edges redirected to the selected representatives.
 """
 
 import logging
@@ -11,6 +11,8 @@ import numpy as np
 from typing import Dict, List, Tuple, Set, Optional
 from collections import defaultdict
 import math
+import json
+import os
 
 from db_manager import DatabaseManager
 from spatial_utils import calculate_3d_distance
@@ -21,25 +23,51 @@ logger = logging.getLogger(__name__)
 class GridBasedPruner:
     """
     Grid-based pruning strategy that partitions nodes into regular grid boxes
-    and selects the most central node from each box as a representative.
+    and selects the sharpest node from each box as a representative.
     """
     
-    def __init__(self, db_manager: DatabaseManager, coords_to_metres: float = 15.0):
+    def __init__(self, db_manager: DatabaseManager, coords_to_metres: float = 15.0, sharpness_data: Optional[Dict[str, float]] = None):
         """
         Initialize the grid-based pruner.
         
         Args:
             db_manager: Database manager instance
             coords_to_metres: Scale factor to convert coordinates to metres (default: 15.0)
+            sharpness_data: Dictionary mapping image filenames to sharpness values
         """
         self.db_manager = db_manager
         self.coords_to_metres = coords_to_metres
-        self.nodes = {}  # node_id -> {'x': float, 'y': float, 'z': float, 'zone': str}
+        self.nodes = {}  # node_id -> {'x': float, 'y': float, 'z': float, 'zone': str, 'is_referenced': bool, 'sharpness': float}
         self.edges = set()  # set of (node1_id, node2_id) tuples
         self.grid_boxes = {}  # grid_key -> list of node_ids
-        self.representatives = {}  # grid_key -> selected_node_id
-        self.node_to_representative = {}  # node_id -> representative_node_id
+        self.representatives = {}  # grid_key -> list of representative_node_ids (can be multiple for referenced nodes)
+        self.node_to_representative = {}  # node_id -> list of representative_node_ids
+        self.referenced_nodes = set()  # set of node IDs that are referenced by other_nodes
+        self.sharpness_data = sharpness_data or {}
         
+    def load_sharpness_data(self, sharpness_json_path: str) -> bool:
+        """
+        Load sharpness data from a JSON file.
+        
+        Args:
+            sharpness_json_path: Path to the sharpness JSON file
+            
+        Returns:
+            bool: True if data loaded successfully, False otherwise
+        """
+        try:
+            if os.path.exists(sharpness_json_path):
+                with open(sharpness_json_path, 'r') as f:
+                    self.sharpness_data = json.load(f)
+                logger.info(f"Loaded sharpness data for {len(self.sharpness_data)} images from {sharpness_json_path}")
+                return True
+            else:
+                logger.warning(f"Sharpness file not found: {sharpness_json_path}")
+                return False
+        except Exception as e:
+            logger.error(f"Failed to load sharpness data: {e}")
+            return False
+    
     def load_graph_data(self, table_name_prefix: str = "") -> bool:
         """
         Load nodes and edges from the database.
@@ -57,27 +85,65 @@ class GridBasedPruner:
             
             # Load nodes
             logger.info(f"Loading nodes from {nodes_table}...")
-            query = f"SELECT keyframe_id, x_trans, y_trans, z_trans, zone FROM {nodes_table}"
+            query = f"SELECT keyframe_id, ts, x_trans, y_trans, z_trans, zone FROM {nodes_table}"
             rows = self.db_manager.execute_query(query)
             
             for row in rows:
                 node_id = row['keyframe_id']
                 x, y, z = row['x_trans'], row['y_trans'], row['z_trans']
+                ts = round(row['ts'], 5)
                 zone = row['zone']
                 # Apply coordinate scaling
                 scaled_x = float(x) * self.coords_to_metres
                 scaled_y = float(y) * self.coords_to_metres
                 scaled_z = float(z) * self.coords_to_metres
                 
+                # Construct image filename from keyframe_id and look up sharpness
+                image_filename = f"{ts}.png"
+                sharpness_value = self.sharpness_data.get(image_filename, 0.0)
+                
                 self.nodes[node_id] = {
                     'x': scaled_x,
                     'y': scaled_y, 
                     'z': scaled_z,
-                    'zone': zone or 'unknown'
+                    'zone': zone or 'unknown',
+                    'is_referenced': False,  # Will be updated after loading references
+                    'sharpness': sharpness_value
                 }
             
             logger.info(f"Loaded {len(self.nodes)} nodes")
             
+            # Load referenced nodes (nodes that are referenced by other_nodes)
+            logger.info("Loading referenced nodes...")
+            try:
+                refs_query = "SELECT DISTINCT ref_id FROM other_nodes"
+                ref_rows = self.db_manager.execute_query(refs_query)
+                
+                for row in ref_rows:
+                    node_id = row['ref_id']
+                    if node_id in self.nodes:
+                        self.nodes[node_id]['is_referenced'] = True
+                        self.referenced_nodes.add(node_id)
+                
+                logger.info(f"Loaded {len(self.referenced_nodes)} referenced nodes")
+            except Exception as e:
+                logger.warning(f"Could not load referenced nodes: {e}")
+                logger.warning("Proceeding without reference preservation")
+            
+            # Load sharpness data
+            sharpness_json_path =  "sharpness.json"
+            self.load_sharpness_data(sharpness_json_path)
+            
+            # Log sharpness statistics
+            if self.sharpness_data:
+                sharpness_values = [node_data['sharpness'] for node_data in self.nodes.values()]
+                if sharpness_values:
+                    logger.info(f"Sharpness statistics: min={min(sharpness_values):.2f}, max={max(sharpness_values):.2f}, mean={np.mean(sharpness_values):.2f}")
+                    nodes_with_sharpness = sum(1 for s in sharpness_values if s > 0.0)
+                    logger.info(f"Nodes with sharpness data: {nodes_with_sharpness}/{len(sharpness_values)}")
+            else:
+                logger.warning("No sharpness data available - all nodes will have sharpness 0.0")
+
             # Load edges
             logger.info(f"Loading edges from {edges_table}...")
             query = f"SELECT keyframe_id0, keyframe_id1 FROM {edges_table}"
@@ -184,39 +250,97 @@ class GridBasedPruner:
         
         return central_node
     
-    def _select_representatives(self) -> Dict[Tuple[int, int, int], int]:
+    def _select_representatives(self) -> Dict[Tuple[int, int, int], List[int]]:
         """
         Select representative nodes for each grid box.
         
+        This method preserves ALL referenced nodes and selects one representative
+        for unreferenced nodes in each grid box.
+        
         Returns:
-            Dict mapping grid keys to selected representative node IDs
+            Dict mapping grid keys to lists of representative node IDs
         """
         logger.info("Selecting representative nodes for each grid box...")
+        logger.info(f"Preserving {len(self.referenced_nodes)} referenced nodes")
         
         representatives = {}
+        total_representatives = 0
         
         for grid_key, node_ids in self.grid_boxes.items():
-            representative = self._select_central_node(node_ids)
-            representatives[grid_key] = representative
+            grid_representatives = []
             
-            # Map all nodes in this box to the representative
+            # Always preserve all referenced nodes in this grid box
+            referenced_nodes_in_box = [node_id for node_id in node_ids if self.nodes[node_id]['is_referenced']]
+            grid_representatives.extend(referenced_nodes_in_box)
+            
+            # For unreferenced nodes, select one representative
+            unreferenced_nodes_in_box = [node_id for node_id in node_ids if not self.nodes[node_id]['is_referenced']]
+            if unreferenced_nodes_in_box:
+                if len(unreferenced_nodes_in_box) == 1:
+                    # Only one unreferenced node, keep it
+                    grid_representatives.append(unreferenced_nodes_in_box[0])
+                else:
+                    # Multiple unreferenced nodes, select the sharpest one
+                    sharpest_node = self._select_sharpest_node(unreferenced_nodes_in_box)
+                    sharpness_value = self.nodes[sharpest_node]['sharpness']
+                    logger.debug(f"Selected sharpest node {sharpest_node} with sharpness {sharpness_value:.2f} from {len(unreferenced_nodes_in_box)} nodes in grid box {grid_key}")
+                    grid_representatives.append(sharpest_node)
+            
+            representatives[grid_key] = grid_representatives
+            
+            # Map all nodes in this box to their representatives
             for node_id in node_ids:
-                self.node_to_representative[node_id] = representative
+                if self.nodes[node_id]['is_referenced']:
+                    # Referenced nodes represent themselves
+                    self.node_to_representative[node_id] = [node_id]
+                else:
+                    # Unreferenced nodes map to the representative
+                    self.node_to_representative[node_id] = grid_representatives
+            
+            total_representatives += len(grid_representatives)
         
         self.representatives = representatives
         
-        selected_nodes = len(representatives)
         total_nodes = len(self.nodes)
-        reduction_percentage = ((total_nodes - selected_nodes) / total_nodes) * 100
+        reduction_percentage = ((total_nodes - total_representatives) / total_nodes) * 100
         
-        logger.info(f"Selected {selected_nodes} representative nodes from {total_nodes} total nodes")
+        logger.info(f"Selected {total_representatives} representative nodes from {total_nodes} total nodes")
         logger.info(f"Node reduction: {reduction_percentage:.1f}%")
+        logger.info(f"Referenced nodes preserved: {len(self.referenced_nodes)}")
         
         return representatives
+    
+    def _select_sharpest_node(self, node_ids: List[int]) -> int:
+        """
+        Select the node with the highest sharpness value from a list of nodes.
+        
+        Args:
+            node_ids: List of node IDs to choose from
+            
+        Returns:
+            int: ID of the sharpest node
+        """
+        if not node_ids:
+            return None # Should not happen if called with non-empty list
+        
+        sharpest_node = node_ids[0]
+        max_sharpness = self.nodes[sharpest_node]['sharpness']
+        
+        for node_id in node_ids:
+            current_sharpness = self.nodes[node_id]['sharpness']
+            if current_sharpness > max_sharpness:
+                max_sharpness = current_sharpness
+                sharpest_node = node_id
+        
+        return sharpest_node
     
     def _redirect_edges(self) -> Set[Tuple[int, int]]:
         """
         Redirect all edges to connect representative nodes only.
+        
+        Since referenced nodes represent themselves, edges to/from them
+        are preserved. For unreferenced nodes, edges are redirected to
+        their representatives.
         
         Returns:
             Set of new edges between representative nodes
@@ -227,16 +351,20 @@ class GridBasedPruner:
         edge_redirections = 0
         
         for node1_id, node2_id in self.edges:
-            rep1 = self.node_to_representative.get(node1_id, node1_id)
-            rep2 = self.node_to_representative.get(node2_id, node2_id)
+            # Get representatives for both nodes
+            reps1 = self.node_to_representative.get(node1_id, [node1_id])
+            reps2 = self.node_to_representative.get(node2_id, [node2_id])
             
-            # Only add edge if representatives are different (avoid self-loops)
-            if rep1 != rep2:
-                new_edge = (min(rep1, rep2), max(rep1, rep2))
-                new_edges.add(new_edge)
-                
-                if rep1 != node1_id or rep2 != node2_id:
-                    edge_redirections += 1
+            # Create edges between all representative combinations
+            for rep1 in reps1:
+                for rep2 in reps2:
+                    # Only add edge if representatives are different (avoid self-loops)
+                    if rep1 != rep2:
+                        new_edge = (min(rep1, rep2), max(rep1, rep2))
+                        new_edges.add(new_edge)
+                        
+                        if rep1 != node1_id or rep2 != node2_id:
+                            edge_redirections += 1
         
         logger.info(f"Original edges: {len(self.edges)}")
         logger.info(f"New edges: {len(new_edges)}")
@@ -256,7 +384,10 @@ class GridBasedPruner:
             return False
         
         # Build adjacency list for representative nodes
-        representative_nodes = set(self.representatives.values())
+        representative_nodes = set()
+        for grid_reps in self.representatives.values():
+            representative_nodes.update(grid_reps)
+        
         adjacency = defaultdict(set)
         
         for node1, node2 in self.edges:
@@ -343,7 +474,43 @@ class GridBasedPruner:
         
         return results
     
-    def save_to_database(self, table_name_prefix: str = "") -> bool:
+    async def _cleanup_orphaned_edges(self, table_name_prefix: str = "") -> int:
+        """
+        Clean up any edges that reference non-existent nodes.
+        
+        Args:
+            table_name_prefix: Prefix for table names (e.g., "refined_")
+            
+        Returns:
+            int: Number of orphaned edges removed
+        """
+        try:
+            # Determine table names
+            edges_table = f"{table_name_prefix}edges" if table_name_prefix else "edges"
+            nodes_table = f"{table_name_prefix}nodes" if table_name_prefix else "nodes"
+            
+            # Find and delete orphaned edges
+            cleanup_query = f"""
+                DELETE FROM {edges_table} 
+                WHERE keyframe_id0 NOT IN (SELECT keyframe_id FROM {nodes_table})
+                   OR keyframe_id1 NOT IN (SELECT keyframe_id FROM {nodes_table})
+            """
+            
+            # Execute the cleanup
+            orphaned_count = self.db_manager.execute_write(cleanup_query)
+            
+            if orphaned_count > 0:
+                logger.info(f"Removed {orphaned_count} orphaned edges from {edges_table}")
+            else:
+                logger.info(f"No orphaned edges found in {edges_table}")
+            
+            return orphaned_count
+            
+        except Exception as e:
+            logger.error(f"Error cleaning up orphaned edges: {e}")
+            return 0
+    
+    async def save_to_database(self, table_name_prefix: str = "") -> bool:
         """
         Save the pruned graph to database.
         
@@ -366,8 +533,10 @@ class GridBasedPruner:
             # Start transaction
             self.db_manager.begin_transaction()
             
-            # Get representative node IDs
-            representative_node_ids = set(self.representatives.values())
+            # Get all representative node IDs (flatten the lists)
+            representative_node_ids = set()
+            for grid_reps in self.representatives.values():
+                representative_node_ids.update(grid_reps)
             
             # Delete non-representative nodes (edges will cascade)
             node_ids_to_delete = []
@@ -404,7 +573,13 @@ class GridBasedPruner:
             # Commit transaction
             self.db_manager.commit_transaction()
             
+            # Step 4: Clean up orphaned edges (edges that reference non-existent nodes)
+            logger.info("Cleaning up orphaned edges...")
+            orphaned_edges_removed = await self._cleanup_orphaned_edges(table_name_prefix)
+            
             logger.info("✅ Successfully saved pruned graph to database")
+            if orphaned_edges_removed > 0:
+                logger.info(f"🧹 Cleaned up {orphaned_edges_removed} orphaned edges")
             return True
             
         except Exception as e:

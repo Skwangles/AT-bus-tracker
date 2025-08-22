@@ -83,6 +83,7 @@ class DatabaseManager:
     def create_working_copy(self, suffix: str = "refined_") -> str:
         """
         Create a new database file with the suffix added to the database name.
+        If a working copy already exists, it will be deleted and recreated.
         
         Args:
             suffix: Suffix to add to the database filename (default: "refined_")
@@ -93,14 +94,14 @@ class DatabaseManager:
         # Create new database path with suffix added to filename
         working_db_path = self.db_path.parent / f"{suffix}{self.db_path.name}"
         
-        # Check if working copy already exists
+        # Check if working copy already exists and delete it
         if working_db_path.exists():
-            logger.warning(f"Working copy already exists: {working_db_path}")
-            return str(working_db_path)
+            logger.info(f"Backing up existing working copy: {working_db_path}")
+            working_db_path.rename(working_db_path.with_suffix(".old"))
         
         # Copy the database file
         shutil.copy2(self.db_path, working_db_path)
-        logger.info(f"Created working copy: {working_db_path}")
+        logger.info(f"Created fresh working copy: {working_db_path}")
         
         return str(working_db_path)
     

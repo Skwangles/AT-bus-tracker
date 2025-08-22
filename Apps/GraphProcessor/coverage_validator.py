@@ -84,7 +84,7 @@ class CoverageValidator:
                 uncovered_points.append(test_point)
         
         coverage_score = covered_count / len(test_points)
-        is_covered = coverage_score >= 0.95  # 95% coverage threshold
+        is_covered = coverage_score >= 0.95  # 95% coverage threshold (hardcoded for now)
         
         logger.info(f"Coverage validation: {coverage_score:.3f} ({covered_count}/{len(test_points)} points covered)")
         
@@ -294,5 +294,6 @@ Coverage Assessment: {'✓ PASS' if stats['coverage_score'] >= 0.95 else '✗ FA
 """
         
         return report
+
 
 
