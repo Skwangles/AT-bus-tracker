@@ -95,19 +95,19 @@ def load_edges(db_path, all=False):
     # Check if the prefixed table exists, otherwise use the regular table
     table_name = "edges"
     
-    # Check if the table has the type and zone columns (refined_edges structure)
-    cursor.execute(f"PRAGMA table_info({table_name})")
-    columns = [column[1] for column in cursor.fetchall()]
-    has_type_column = 'type' in columns
-    has_zone_column = 'zone' in columns
-    
-    if has_type_column and has_zone_column:
-        # Use the refined_edges structure with type and zone
-        if all:
-            cursor.execute(f"SELECT keyframe_id0, keyframe_id1, type, zone FROM edges")
-        else:
-            cursor.execute(f"SELECT keyframe_id0, keyframe_id1, type, zone FROM edges WHERE type >= 0")
-        print(f"Loading edges with type and zone from edges")
+            # Check if the table has the type and zone columns
+        cursor.execute(f"PRAGMA table_info({table_name})")
+        columns = [column[1] for column in cursor.fetchall()]
+        has_type_column = 'type' in columns
+        has_zone_column = 'zone' in columns
+        
+        if has_type_column and has_zone_column:
+            # Use the edges structure with type and zone
+            if all:
+                cursor.execute(f"SELECT keyframe_id0, keyframe_id1, type, zone FROM edges")
+            else:
+                cursor.execute(f"SELECT keyframe_id0, keyframe_id1, type, zone FROM edges WHERE type >= 0")
+            print(f"Loading edges with type and zone from edges")
     else:
         # Fall back to basic structure
         if table_name == "edges":
@@ -527,7 +527,7 @@ def render(nodes_list, other_nodes_list=None, edges=None, elevator_edges=None):
 if __name__ == "__main__":
     import sys
     if len(sys.argv) < 2:
-        print("Usage: python render.py <database file> <optional - table_name_prefix e.g. 'refined_'>")
+        print("Usage: python render.py <database file>")
         sys.exit(1)
 
     db_path = sys.argv[1]

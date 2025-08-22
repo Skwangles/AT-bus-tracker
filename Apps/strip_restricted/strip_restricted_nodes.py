@@ -8,8 +8,8 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Filter an SQLite3 database based on provided arguments")
     parser.add_argument('input_db', help="Path to the input SQLite3 database file")
     parser.add_argument('output_db', help="Path to the output SQLite3 database file")
-    parser.add_argument('--del_non_prefix', help="Delete all tables that are non-prefixed e.g. nodes, node_locations, edges, etc. and keep refined_nodes, etc.", action='store_true')
-    parser.add_argument('--prefix', help="Table prefix to add to tables")
+    parser.add_argument('--del_non_prefix', help="Delete all tables that are non-prefixed e.g. nodes, node_locations, edges, etc. and keep prefixed tables, etc.", action='store_true')
+    parser.add_argument('--prefix', default="", help="Table prefix to add to tables (optional)")
     parser.add_argument('--remove_areas', type=str, help="List of locations to remove, e.g. '[\"floor1\", \"floor2\"]'")
     parser.add_argument('--keep_id', type=str, help="List of IDs to keep, e.g. '[15, 16, 17]'")
     parser.add_argument('--keep_labels', type=str, help="List of labels to keep, e.g. '[\"reserved\"]'")
@@ -38,7 +38,7 @@ def get_keep_labels(keep_labels_str):
     return []
 
 def delete_filtered_nodes(prefix, db_cursor, remove_list, keep_id_list, keep_labels, del_non_prefix):
-    """Delete nodes from refined_nodes based on provided filters."""
+    """Delete nodes from nodes based on provided filters."""
     remove_str = ', '.join(f"'{location}'" for location in remove_list)
     keep_id_str = ', '.join(map(str, keep_id_list))
     keep_label_str = ', '.join(f"'{label}'" for label in keep_labels)

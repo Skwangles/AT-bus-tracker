@@ -68,20 +68,17 @@ class GridBasedPruner:
             logger.error(f"Failed to load sharpness data: {e}")
             return False
     
-    def load_graph_data(self, table_name_prefix: str = "") -> bool:
+    def load_graph_data(self) -> bool:
         """
         Load nodes and edges from the database.
         
-        Args:
-            table_name_prefix: Prefix for table names (e.g., "refined_")
-            
         Returns:
             bool: True if data loaded successfully, False otherwise
         """
         try:
-            # Determine table names
-            nodes_table = f"{table_name_prefix}nodes" if table_name_prefix else "nodes"
-            edges_table = f"{table_name_prefix}edges" if table_name_prefix else "edges"
+            # Use standard table names
+            nodes_table = "nodes"
+            edges_table = "edges"
             
             # Load nodes
             logger.info(f"Loading nodes from {nodes_table}...")
@@ -131,7 +128,7 @@ class GridBasedPruner:
                 logger.warning("Proceeding without reference preservation")
             
             # Load sharpness data
-            sharpness_json_path =  "sharpness.json"
+            sharpness_json_path = "sharpness.json"
             self.load_sharpness_data(sharpness_json_path)
             
             # Log sharpness statistics
@@ -474,20 +471,17 @@ class GridBasedPruner:
         
         return results
     
-    async def _cleanup_orphaned_edges(self, table_name_prefix: str = "") -> int:
+    async def _cleanup_orphaned_edges(self) -> int:
         """
         Clean up any edges that reference non-existent nodes.
         
-        Args:
-            table_name_prefix: Prefix for table names (e.g., "refined_")
-            
         Returns:
             int: Number of orphaned edges removed
         """
         try:
-            # Determine table names
-            edges_table = f"{table_name_prefix}edges" if table_name_prefix else "edges"
-            nodes_table = f"{table_name_prefix}nodes" if table_name_prefix else "nodes"
+            # Use standard table names
+            edges_table = "edges"
+            nodes_table = "nodes"
             
             # Find and delete orphaned edges
             cleanup_query = f"""
@@ -510,20 +504,17 @@ class GridBasedPruner:
             logger.error(f"Error cleaning up orphaned edges: {e}")
             return 0
     
-    async def save_to_database(self, table_name_prefix: str = "") -> bool:
+    async def save_to_database(self) -> bool:
         """
         Save the pruned graph to database.
         
-        Args:
-            table_name_prefix: Prefix for table names (e.g., "refined_")
-            
         Returns:
             bool: True if saved successfully, False otherwise
         """
         try:
-            # Determine table names
-            nodes_table = f"{table_name_prefix}nodes" if table_name_prefix else "nodes"
-            edges_table = f"{table_name_prefix}edges" if table_name_prefix else "edges"
+            # Use standard table names
+            nodes_table = "nodes"
+            edges_table = "edges"
             
             logger.info(f"Saving pruned graph to {nodes_table} and {edges_table}...")
             

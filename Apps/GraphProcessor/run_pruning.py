@@ -34,7 +34,7 @@ def setup_logging(verbose: bool = False):
 
 
 
-async def run_grid_pruning(db_path: str, grid_size: float = 5.0, coords_to_metres: float = 15.0, verbose: bool = False, db_prefix: str = "refined_"):
+async def run_grid_pruning(db_path: str, grid_size: float = 5.0, coords_to_metres: float = 15.0, verbose: bool = False):
     """
     Run grid-based pruning approach using spatial grid partitioning.
     
@@ -53,14 +53,13 @@ async def run_grid_pruning(db_path: str, grid_size: float = 5.0, coords_to_metre
     config = Config(
         outer_ring=grid_size,
         inner_ring=grid_size * 0.1,  # 10% of grid size
-        coords_to_metres=coords_to_metres,
-        table_prefix=db_prefix
+        coords_to_metres=coords_to_metres
     )
     
     # Create working copy of the database
     logger.info(f"Creating working copy of database: {db_path}")
     db_manager = DatabaseManager(db_path, config)
-    working_db_path = db_manager.create_working_copy(db_prefix)
+    working_db_path = db_manager.create_working_copy("pruned_")
     
     # Create database manager for working copy
     working_db_manager = DatabaseManager(working_db_path, config)
@@ -70,7 +69,7 @@ async def run_grid_pruning(db_path: str, grid_size: float = 5.0, coords_to_metre
     grid_pruner = GridBasedPruner(working_db_manager, coords_to_metres)
     
     # Load sharpness data if available
-    sharpness_json_path = f"{db_prefix}sharpness.json" if db_prefix else "sharpness.json"
+    sharpness_json_path = "sharpness.json"
     if os.path.exists(sharpness_json_path):
         logger.info(f"Loading sharpness data from {sharpness_json_path}")
         grid_pruner.load_sharpness_data(sharpness_json_path)
@@ -229,8 +228,7 @@ Examples:
                        help='Scale factor to convert coordinates to metres (default: 15.0)')
     parser.add_argument('--verbose', '-v', action='store_true',
                        help='Enable verbose logging')
-    parser.add_argument('--db-prefix', type=str, default="refined_",
-                       help='Prefix for the database file (default: refined_)')
+
     
     args = parser.parse_args()
     
@@ -240,7 +238,7 @@ Examples:
     
     try:
         if args.mode == 'prune':
-            await run_grid_pruning(args.db_path, args.grid_size, args.coords_to_metres, args.verbose, args.db_prefix)
+            await run_grid_pruning(args.db_path, args.grid_size, args.coords_to_metres, args.verbose)
         elif args.mode == 'analyze':
             analyze_graph_coverage(args.db_path, args.grid_size, args.coords_to_metres, args.verbose)
 
