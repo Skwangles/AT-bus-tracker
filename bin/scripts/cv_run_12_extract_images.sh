@@ -26,16 +26,13 @@ ORIGINAL_DIR=$(pwd)
 [[ -z "$1" && -z "$CV_KEYFRAME_IMG_DIR" ]] && error_exit "Input directory is not provided as an argument or environment variable"
 [[ -z "$2" && -z "$CV_EXTRACT_USED_IMAGES_DIR" ]] && error_exit "Output directory is not provided as an argument or environment variable"
 [[ -z "$3" && ( -z "$CV_EXTRACT_IN_DB_NAME" || -z "$CV_DB_DIR" ) ]] && error_exit "Input DB is not provided as an argument or environment variable"
-[[ -z "$4" && -z "$CV_EXTRACT_TABLE_PREFIX" ]] && error_exit "Table prefix is not provided as an argument or environment variable"
 
 INPUT_DIR=${1:-$CV_KEYFRAME_IMG_DIR}
 OUTPUT_DIR=${2:-$CV_EXTRACT_USED_IMAGES_DIR}
 INPUT_DB=${3:-$CV_DB_DIR/$CV_EXTRACT_IN_DB_NAME}
-TABLE_PREFIX=${4:-$CV_EXTRACT_TABLE_PREFIX}
 echo "Arg 1 - Input dir: $INPUT_DIR"
 echo "Arg 2 - Output dir: $OUTPUT_DIR"
 echo "Arg 3 - In DB name: $INPUT_DB"
-echo "Arg 4 - Table Prefix: $TABLE_PREFIX"
 
 # Check if the input directory exists
 [[ ! -d "$INPUT_DIR" ]] && error_exit "Input directory $INPUT_DIR does not exist"
@@ -65,7 +62,7 @@ pip install -r requirements.txt || error_exit "pip install failed"
 
 # Run the Python image splitter
 echo "Running Python image splitter..."
-python image_processor.py db "$TABLE_PREFIX" "$INPUT_DB" "$INPUT_DIR" "$OUTPUT_DIR" || error_exit "Python image splitter failed"
+python image_processor.py db "$INPUT_DB" "$INPUT_DIR" "$OUTPUT_DIR" || error_exit "Python image splitter failed"
 
 # Deactivate virtual environment
 deactivate
