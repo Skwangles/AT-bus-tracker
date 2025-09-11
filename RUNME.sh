@@ -104,7 +104,7 @@ if [ "$CV_EXTRACT_USED_IMAGES" == true ]; then
   check_command "Extracting used images"
 fi
 
-if [ "$CV_START_SERVER" == true ]; then
+if [ "$CV_EXPORT_FILES" == true ]; then
   ./bin/scripts/cv_run_13_export.sh
   check_command "Exporting DB and Floorplan images to client directory"
 fi

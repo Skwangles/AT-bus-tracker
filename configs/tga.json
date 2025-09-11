@@ -14,7 +14,7 @@
     "start_authoring": true,
     "strip_restricted_nodes": true,
     "extract_used_images": true,
-    "start_server": true
+    "export_files": true
   },
   "paths": {
     "home_dir": "/home/skwangles/Documents/Honours/Sitexplorer",

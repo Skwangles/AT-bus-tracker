@@ -11,10 +11,10 @@
     "merge_maps": false,
     "edit_db_visually": true,
     "init_data": false,
-    "start_authoring": false,
+    "start_authoring": true,
     "strip_restricted_nodes": false,
     "extract_used_images": false,
-    "start_server": false
+    "export_files": false
   },
   "paths": {
     "home_dir": "/home/skwangles/Documents/Honours/Sitexplorer",
