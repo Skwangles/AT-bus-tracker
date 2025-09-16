@@ -13,6 +13,7 @@ def parse_args():
     parser.add_argument('--remove_areas', type=str, help="List of locations to remove, e.g. '[\"floor1\", \"floor2\"]'")
     parser.add_argument('--keep_id', type=str, help="List of IDs to keep, e.g. '[15, 16, 17]'")
     parser.add_argument('--keep_labels', type=str, help="List of labels to keep, e.g. '[\"reserved\"]'")
+    parser.add_argument('--remove_duplicates', action='store_true', help="Remove duplicate other_nodes based on ref_id, label, and description")
     return parser.parse_args()
 
 def copy_database(input_db, output_db):
@@ -36,6 +37,24 @@ def get_keep_labels(keep_labels_str):
     if keep_labels_str:
         return json.loads(keep_labels_str)
     return []
+
+def remove_duplicate_other_nodes(prefix, db_cursor):
+    """Remove duplicate other_nodes based on ref_id, label, and description."""
+    print("Removing duplicate other_nodes...")
+    
+    # Find and delete duplicates, keeping the one with the lowest ID
+    query = f"""
+    DELETE FROM {prefix}other_nodes
+    WHERE id NOT IN (
+        SELECT MIN(id)
+        FROM {prefix}other_nodes
+        GROUP BY ref_id, label, description
+    );
+    """
+    print("Running query:", query)
+    db_cursor.execute(query)
+    deleted_count = db_cursor.rowcount
+    print(f"Deleted {deleted_count} duplicate other_nodes")
 
 def delete_filtered_nodes(prefix, db_cursor, remove_list, keep_id_list, keep_labels, del_non_prefix):
     """Delete nodes from nodes based on provided filters."""
@@ -142,6 +161,9 @@ def main():
     del_non_prefix = args.del_non_prefix or False
     prefix = args.prefix or ""
     
+    # Remove duplicates if requested
+    if args.remove_duplicates:
+        remove_duplicate_other_nodes(prefix, cursor)
 
     # Perform the deletion operation
     delete_filtered_nodes(prefix, cursor, remove_list, keep_id_list, keep_labels, del_non_prefix)
