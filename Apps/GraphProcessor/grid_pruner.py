@@ -31,7 +31,7 @@ class GridBasedPruner:
         
         Args:
             db_manager: Database manager instance
-            coords_to_metres: Scale factor to convert coordinates to metres (default: 15.0)
+            coords_to_metres: Scale factor to convert coordinates to metres and for final transformation (default: 15.0)
             sharpness_data: Dictionary mapping image filenames to sharpness values
         """
         self.db_manager = db_manager
@@ -525,6 +525,48 @@ class GridBasedPruner:
             logger.error(f"Error cleaning up orphaned edges: {e}")
             return 0
     
+    def _apply_final_coordinate_transformation(self) -> None:
+        """
+        Apply the final coordinate transformation to representative nodes.
+        The SLAM output produces coordinates in the camera coordinate system and need to be transformed to the world coordinate system.
+        (-x, -y, z) -> (x, y, z)
+        Because SLAM output is scale invariant, we need to apply our own SCALE FACTOR to the coordinates.
+        """
+        logger.info("Applying final coordinate transformation...")
+        
+        # Get all representative node IDs (flatten the lists)
+        representative_node_ids = set()
+        for grid_reps in self.representatives.values():
+            representative_node_ids.update(grid_reps)
+        
+        transformation_count = 0
+        
+        for node_id in representative_node_ids:
+            if node_id in self.nodes:
+                node_data = self.nodes[node_id]
+                
+                # Apply transformation: -1 * coordinate, then multiply by coords_to_metres
+                original_x = node_data['x']
+                original_y = node_data['y']
+                original_z = node_data['z']
+                
+                # Transform: -1 * coordinate * coords_to_metres = -coords_to_metres * coordinate
+                transformed_x = -self.coords_to_metres * original_x
+                transformed_y = -self.coords_to_metres * original_y
+                transformed_z = self.coords_to_metres * original_z # already correctly aligned, don't need to negate
+                
+                # Update the node data
+                node_data['x'] = transformed_x
+                node_data['y'] = transformed_y
+                node_data['z'] = transformed_z
+                
+                transformation_count += 1
+                
+                logger.debug(f"Transformed node {node_id}: ({original_x:.3f}, {original_y:.3f}, {original_z:.3f}) -> ({transformed_x:.3f}, {transformed_y:.3f}, {transformed_z:.3f})")
+        
+        logger.info(f"Applied final coordinate transformation to {transformation_count} representative nodes")
+        logger.info(f"Transformation: x_trans = -{self.coords_to_metres} * original_x, y_trans = -{self.coords_to_metres} * original_y")
+
     async def save_to_database(self) -> bool:
         """
         Save the pruned graph to database.
@@ -549,12 +591,29 @@ class GridBasedPruner:
             logger.info("Redirecting references to representative nodes...")
             redirected_references = self._redirect_references()
             
+            # Step 2: Apply final coordinate transformation
+            self._apply_final_coordinate_transformation()
+            
             # Get all representative node IDs (flatten the lists)
             representative_node_ids = set()
             for grid_reps in self.representatives.values():
                 representative_node_ids.update(grid_reps)
             
-            # Delete non-representative nodes (edges will cascade)
+            # Step 3: Update coordinates for representative nodes in database
+            logger.info("Updating coordinates for representative nodes...")
+            for node_id in representative_node_ids:
+                if node_id in self.nodes:
+                    node_data = self.nodes[node_id]
+                    # Convert back to original coordinate system for database storage
+                    # Since we applied -15 * original, we need to store the transformed values
+                    self.db_manager.update_node_position(
+                        node_id, 
+                        node_data['x'], 
+                        node_data['y'], 
+                        node_data['z']
+                    )
+            
+            # Step 4: Delete non-representative nodes (edges will cascade)
             node_ids_to_delete = []
             for node_id in self.nodes.keys():
                 if node_id not in representative_node_ids:
@@ -571,7 +630,7 @@ class GridBasedPruner:
                 
                 logger.info(f"Deleted {len(node_ids_to_delete)} non-representative nodes")
             
-            # Delete all existing edges and insert new ones
+            # Step 5: Delete all existing edges and insert new ones
             self.db_manager.execute_write(f"DELETE FROM {edges_table}")
             
             # Insert new edges
@@ -589,7 +648,7 @@ class GridBasedPruner:
             # Commit transaction
             self.db_manager.commit_transaction()
             
-            # Step 4: Clean up orphaned edges (edges that reference non-existent nodes)
+            # Step 6: Clean up orphaned edges (edges that reference non-existent nodes)
             logger.info("Cleaning up orphaned edges...")
             orphaned_edges_removed = await self._cleanup_orphaned_edges()
             

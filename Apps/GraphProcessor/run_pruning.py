@@ -40,7 +40,7 @@ async def run_grid_pruning(db_path: str, sharpness_json_path: str, grid_size: fl
         db_path: Path to the database file
         sharpness_json_path: Path to the sharpness JSON file
         grid_size: Size of each grid box in metres (default: 5.0m)
-        coords_to_metres: Scale factor to convert coordinates to metres (default: 15.0)
+        coords_to_metres: Scale factor to convert coordinates to metres and for final transformation (default: 15.0)
         verbose: Whether to enable verbose logging
     """
     setup_logging(verbose)
@@ -135,7 +135,7 @@ Examples:
     parser.add_argument('--grid-size', type=float, default=5.0,
                        help='Grid box size in metres (default: 5.0m)')
     parser.add_argument('--coords-to-metres', type=float, default=15.0,
-                       help='Scale factor to convert coordinates to metres (default: 15.0)')
+                       help='Scale factor to convert coordinates to metres and for final transformation (default: 15.0)')
     parser.add_argument('--verbose', '-v', action='store_true',
                        help='Enable verbose logging')
     parser.add_argument('--db-prefix', type=str, default="pruned_",
