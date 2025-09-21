@@ -11,7 +11,7 @@ export const hideMapPoint = async (req: Request, res: Response) => {
   try {
     // Check if the point exists in floorplan_points
     const existingPoint = await readDB(
-      `SELECT keyframe_id FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_points 
+      `SELECT keyframe_id FROM floorplan_points 
        WHERE location = ? AND keyframe_id = ?`,
       [location, keyframe_id],
       true
@@ -23,7 +23,7 @@ export const hideMapPoint = async (req: Request, res: Response) => {
 
     // Remove from floorplan_points (hides from map but keeps in nodes table)
     const deleteQuery = `
-      DELETE FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_points 
+      DELETE FROM floorplan_points 
       WHERE location = ? AND keyframe_id = ?
     `;
     await writeDB(deleteQuery, [location, keyframe_id]);
@@ -47,7 +47,7 @@ export const showMapPoint = async (req: Request, res: Response) => {
   try {
     // Check if the point exists in nodes table
     const nodeExists = await readDB(
-      `SELECT keyframe_id FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes 
+      `SELECT keyframe_id FROM nodes 
        WHERE keyframe_id = ?`,
       [keyframe_id],
       true
@@ -59,7 +59,7 @@ export const showMapPoint = async (req: Request, res: Response) => {
 
     // Check if point is already on the map
     const existingPoint = await readDB(
-      `SELECT keyframe_id FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_points 
+      `SELECT keyframe_id FROM floorplan_points 
        WHERE location = ? AND keyframe_id = ?`,
       [location, keyframe_id],
       true
@@ -71,7 +71,7 @@ export const showMapPoint = async (req: Request, res: Response) => {
 
     // Add back to floorplan_points
     const insertQuery = `
-      INSERT INTO ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_points 
+      INSERT INTO floorplan_points 
       (location, keyframe_id, x, y, type) VALUES (?, ?, ?, ?, ?)
     `;
     await writeDB(insertQuery, [location, keyframe_id, x, y, type]);
@@ -97,10 +97,10 @@ export const getHiddenPoints = async (req: Request, res: Response) => {
     // Get all nodes that exist but are not in floorplan_points for this location
     const hiddenPointsQuery = `
       SELECT n.keyframe_id, n.x_trans, n.y_trans, n.z_trans, n.ts
-      FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n
-      LEFT JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_points fp 
+      FROM nodes n
+      LEFT JOIN floorplan_points fp 
         ON n.keyframe_id = fp.keyframe_id AND fp.location = ?
-      LEFT JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations nl 
+      LEFT JOIN node_locations nl 
         ON n.keyframe_id = nl.keyframe_id AND nl.location = ?
       WHERE fp.keyframe_id IS NULL 
         AND nl.keyframe_id IS NOT NULL
@@ -128,8 +128,8 @@ export const getClusteringSuggestions = async (req: Request, res: Response) => {
     // Get all visible points for this location
     const visiblePointsQuery = `
       SELECT fp.keyframe_id, fp.x, fp.y, fp.type, n.x_trans, n.y_trans, n.z_trans
-      FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_points fp
-      JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n ON fp.keyframe_id = n.keyframe_id
+      FROM floorplan_points fp
+      JOIN nodes n ON fp.keyframe_id = n.keyframe_id
       WHERE fp.location = ?
       ORDER BY fp.keyframe_id
     `;
@@ -223,7 +223,7 @@ export const applyClusteringSuggestions = async (req: Request, res: Response) =>
 
     // Hide all suggested points
     const deleteQuery = `
-      DELETE FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_points 
+      DELETE FROM floorplan_points 
       WHERE location = ? AND keyframe_id IN (${keyframe_ids.map(() => '?').join(',')})
     `;
     

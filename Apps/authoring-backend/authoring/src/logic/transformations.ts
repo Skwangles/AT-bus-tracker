@@ -27,7 +27,7 @@ export const scalePoints = (
   return points.map(point => ({
     ...point,
     x: centreX + (point.x - centreX) * scaleFactor,
-    y: centreY + (point.y - centreY) * scaleFactor
+    y: centreY + (point.y - centreY) * scaleFactor,
   }))
 }
 

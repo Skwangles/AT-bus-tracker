@@ -10,7 +10,7 @@ export const getLabels = async (req: Request, res: Response) => {
     // Get labels from other_nodes table first
     const otherNodesQuery = `
       SELECT id, label, description, type, x_trans, y_trans, z_trans 
-      FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes 
+      FROM other_nodes 
       WHERE ref_id = ? 
       ORDER BY type, label
     `;
@@ -41,7 +41,7 @@ export const addLabel = async (req: Request, res: Response) => {
 
   try {
     // Get node coordinates for the other_nodes table
-    const nodeQuery = `SELECT x_trans, y_trans, z_trans FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes WHERE keyframe_id = ?`;
+    const nodeQuery = `SELECT x_trans, y_trans, z_trans FROM nodes WHERE keyframe_id = ?`;
     const nodeResult = await readDB(nodeQuery, [id], true);
     
     if (!nodeResult) {
@@ -77,7 +77,7 @@ export const addLabel = async (req: Request, res: Response) => {
 
     // Check if label already exists for this node
     const existingLabelQuery = `
-      SELECT id FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes 
+      SELECT id FROM other_nodes 
       WHERE ref_id = ? AND label = ?
     `;
     const existingLabel = await readDB(existingLabelQuery, [id, label], true);
@@ -91,7 +91,7 @@ export const addLabel = async (req: Request, res: Response) => {
     
     // Insert into other_nodes table
     const otherNodesQuery = `
-      INSERT INTO ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes 
+      INSERT INTO other_nodes 
       (ref_id, label, description, type, x_trans, y_trans, z_trans) 
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
@@ -99,7 +99,7 @@ export const addLabel = async (req: Request, res: Response) => {
       id, 
       label, 
       description, 
-      type, 
+      type ?? 0, 
       finalX, 
       finalY, 
       finalZ
@@ -107,7 +107,7 @@ export const addLabel = async (req: Request, res: Response) => {
     
     // Get the ID of the inserted label
     const insertedLabelQuery = `
-      SELECT id FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes 
+      SELECT id FROM other_nodes 
       WHERE ref_id = ? AND label = ? ORDER BY id DESC LIMIT 1
     `;
     const insertedLabel = await readDB(insertedLabelQuery, [id, label], true);
@@ -123,7 +123,7 @@ export const addLabel = async (req: Request, res: Response) => {
           
           // Find other elevator nodes in the same shaft
           const elevatorNodesQuery = `
-            SELECT id FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes 
+            SELECT id FROM other_nodes 
             WHERE type = 1 AND label LIKE ? AND ref_id != ?
           `;
           const elevatorNodes = await readDB(elevatorNodesQuery, [`%${shaft_id}%`, id]);
@@ -131,7 +131,7 @@ export const addLabel = async (req: Request, res: Response) => {
           // Create edges to all other elevator nodes in the same shaft
           for (const elevatorNode of elevatorNodes) {
             const edgeQuery = `
-              INSERT OR IGNORE INTO ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}elevator_edges 
+              INSERT OR IGNORE INTO elevator_edges 
               (shaft_id, id0, id1) VALUES (?, ?, ?)
             `;
             await writeDB(edgeQuery, [shaft_id, labelId, elevatorNode.id]);
@@ -167,7 +167,7 @@ export const updateLabel = async (req: Request, res: Response) => {
   try {
     // Update in other_nodes table
     const otherNodesQuery = `
-      UPDATE ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes 
+      UPDATE other_nodes 
       SET label = ?, description = ?, type = ? 
       WHERE ref_id = ? AND label = ?
     `;
@@ -189,7 +189,7 @@ export const updateLabelPosition = async (req: Request, res: Response) => {
   try {
     // Update position in other_nodes table
     const updateQuery = `
-      UPDATE ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes 
+      UPDATE other_nodes 
       SET x_trans = ?, y_trans = ?, z_trans = ? 
       WHERE ref_id = ? AND label = ?
     `;
@@ -237,7 +237,7 @@ export const deleteLabel = async (req: Request, res: Response) => {
 
   try {
     // Delete from other_nodes table
-    const otherNodesQuery = `DELETE FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes WHERE ref_id = ? AND label = ?`;
+    const otherNodesQuery = `DELETE FROM other_nodes WHERE ref_id = ? AND label = ?`;
     await writeDB(otherNodesQuery, [id, label]);
     
     res.status(200).json({ message: 'Label deleted successfully' });

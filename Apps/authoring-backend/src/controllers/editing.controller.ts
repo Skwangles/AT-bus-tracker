@@ -12,7 +12,7 @@ export async function updateMultipleMapPoints(req: Request, res: Response) {
   let count = 0;
   for (const point of points) {
     await writeDB(
-      `UPDATE ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_points SET x = ?, y = ? WHERE keyframe_id = ? AND location = ?;`,
+      `UPDATE floorplan_points SET x = ?, y = ? WHERE keyframe_id = ? AND location = ?;`,
       [point.x, point.y, point.keyframe_id, name]
     )
       .then((changes: number) => {
@@ -42,7 +42,7 @@ export async function updateMapPoint(req: Request, res: Response) {
   const { id, x, y } = req.body;
 
   await writeDB(
-    `UPDATE ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_points SET x = ?, y = ? WHERE keyframe_id = ? AND location = ?;`,
+    `UPDATE floorplan_points SET x = ?, y = ? WHERE keyframe_id = ? AND location = ?;`,
     [x, y, id, name]
   )
     .then((changes: number) => {
@@ -66,7 +66,7 @@ export async function addLabelToMapPoint(req: Request, res: Response) {
   }
   
   // Get node coordinates for positioning the label
-  const nodeQuery = `SELECT x_trans, y_trans, z_trans FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes WHERE keyframe_id = ?`;
+  const nodeQuery = `SELECT x_trans, y_trans, z_trans FROM nodes WHERE keyframe_id = ?`;
   const nodeResult = await readDB(nodeQuery, [id], true);
   
   if (!nodeResult) {
@@ -76,7 +76,7 @@ export async function addLabelToMapPoint(req: Request, res: Response) {
 
   // Check if label already exists for this node
   const existingLabelQuery = `
-    SELECT id FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes 
+    SELECT id FROM other_nodes 
     WHERE ref_id = ? AND label = ?
   `;
   const existingLabel = await readDB(existingLabelQuery, [id, label], true);
@@ -88,7 +88,7 @@ export async function addLabelToMapPoint(req: Request, res: Response) {
 
   // Insert into other_nodes table
   const changes = await writeDB(
-    `INSERT INTO ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes 
+    `INSERT INTO other_nodes 
      (ref_id, label, description, type, x_trans, y_trans, z_trans) 
      VALUES (?, ?, ?, ?, ?, ?, ?)`,
     [id, label, label, 0, nodeResult.x_trans, nodeResult.y_trans * 1.05, nodeResult.z_trans]
@@ -111,7 +111,7 @@ export async function deleteLabelFromMapOnly(req: Request, res: Response) {
     res.status(400).send("Invalid Arguments").end();
     return;
   }
-  const result = await writeDB(`DELETE FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_points WHERE location = ? AND keyframe_id = ?`, [loc, id])
+  const result = await writeDB(`DELETE FROM floorplan_points WHERE location = ? AND keyframe_id = ?`, [loc, id])
   res
     .status(result > 0 ? 200 : 409)
     .send(
@@ -148,7 +148,7 @@ export async function connectTwoPoints(req: Request, res: Response) {
   }
 
   const is_on_same_level = await readDB(
-    `SELECT kf1.keyframe_id, kf2.keyframe_id, kf1.location FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_points kf1 JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_points kf2 ON kf1.location = kf2.location AND kf1.keyframe_id <> kf2.keyframe_id AND kf1.keyframe_id = ? AND kf2.keyframe_id = ? LIMIT 1;`,
+    `SELECT kf1.keyframe_id, kf2.keyframe_id, kf1.location FROM floorplan_points kf1 JOIN floorplan_points kf2 ON kf1.location = kf2.location AND kf1.keyframe_id <> kf2.keyframe_id AND kf1.keyframe_id = ? AND kf2.keyframe_id = ? LIMIT 1;`,
     [id1, id2]
   );
   if (is_on_same_level.length == 0) {
@@ -271,7 +271,7 @@ export async function updateFloorplanImage(req: Request, res: Response) {
     // Check if floorplan_images table exists and has the location
     try {
       const existingLocation = await readDB(
-        `SELECT location FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_images WHERE location = ?`,
+        `SELECT location FROM floorplan_images WHERE location = ?`,
         [name],
         true
       )
@@ -284,7 +284,7 @@ export async function updateFloorplanImage(req: Request, res: Response) {
 
         // Create new entry in floorplan_images table
         await writeDB(
-          `INSERT INTO ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_images (location, path) VALUES (?, ?)`,
+          `INSERT INTO floorplan_images (location, path) VALUES (?, ?)`,
           [name, file.filename]
         )
         
@@ -301,7 +301,7 @@ export async function updateFloorplanImage(req: Request, res: Response) {
 
         // Update existing entry
         await writeDB(
-          `UPDATE ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_images SET path = ? WHERE location = ?`,
+          `UPDATE floorplan_images SET path = ? WHERE location = ?`,
           [file.filename, name]
         )
       }

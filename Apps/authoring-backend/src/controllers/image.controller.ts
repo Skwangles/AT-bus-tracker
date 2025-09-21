@@ -74,7 +74,7 @@ export async function getImageById(req: Request, res: Response) {
     return
   }
 
-  const result = await readDB(`SELECT ts FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes WHERE keyframe_id = ? LIMIT 1`, [id], true)
+  const result = await readDB(`SELECT ts FROM nodes WHERE keyframe_id = ? LIMIT 1`, [id], true)
   if (!result) {
     logger.warn(`[GetImageById] - Could not find node with id: ${id}`)
     res.status(404).send("Invalid Arguments");
