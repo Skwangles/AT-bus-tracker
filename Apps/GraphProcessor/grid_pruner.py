@@ -59,7 +59,6 @@ class GridBasedPruner:
                 with open(sharpness_json_path, 'r') as f:
                     self.sharpness_data = json.load(f)
                 logger.info(f"Loaded sharpness data for {len(self.sharpness_data)} images from {sharpness_json_path}")
-                logger.info(f"Sharpness data: {self.sharpness_data.keys()}")
                 return True
             else:
                 logger.warning(f"Sharpness file not found: {sharpness_json_path}")
@@ -550,10 +549,10 @@ class GridBasedPruner:
                 original_y = node_data['y']
                 original_z = node_data['z']
                 
-                # Transform: -1 * coordinate * coords_to_metres = -coords_to_metres * coordinate
-                transformed_x = -self.coords_to_metres * original_x
-                transformed_y = -self.coords_to_metres * original_y
-                transformed_z = self.coords_to_metres * original_z # already correctly aligned, don't need to negate
+                # Transform - negate x and y to make upright
+                transformed_x = -original_x
+                transformed_y = -original_y
+                transformed_z = original_z # already correctly aligned, don't need to negate
                 
                 # Update the node data
                 node_data['x'] = transformed_x
