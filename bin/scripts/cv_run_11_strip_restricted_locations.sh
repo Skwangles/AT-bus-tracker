@@ -51,7 +51,14 @@ if [[ ! -d "$OUTPUT_DIR" ]]; then
     mkdir -p "$OUTPUT_DIR" || error_exit "Failed to create output directory $OUTPUT_DIR"
 fi
 
+if [[ -d "$CV_HOME_DIR/py-venv" ]]; then
+  python3 -m venv "$CV_HOME_DIR/py-venv"
+fi
+source "$CV_HOME_DIR/py-venv/bin/activate"
+
+pip install -r "$CV_HOME_DIR/Apps/strip_restricted/requirements.txt"
+
 # Run the Python script
 cd "$CV_HOME_DIR/Apps/strip_restricted" || error_exit "Failed to change directory to $CV_HOME_DIR/Apps/strip_restricted"
-python3 strip_restricted_nodes.py "$INPUT_DB" "$OUTPUT_DB" --remove_areas="$REMOVE_LIST" --keep_id="$KEEP_ID_LIST" --keep_labels="$KEEP_LABELS" --scale_factor="$SCALE_FACTOR" || error_exit "Python script failed"
+python strip_restricted_nodes.py "$INPUT_DB" "$OUTPUT_DB" --remove_areas="$REMOVE_LIST" --keep_id="$KEEP_ID_LIST" --keep_labels="$KEEP_LABELS" --scale_factor="$SCALE_FACTOR" || error_exit "Python script failed"
 cd "$ORIGINAL_DIR" || error_exit "Failed to change back to the original directory"

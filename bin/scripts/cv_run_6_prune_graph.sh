@@ -39,9 +39,14 @@ cd "$CV_HOME_DIR"/Apps/GraphProcessor || error_exit "Failed to change directory 
 
 # Check if Python dependencies are installed
 echo "Checking Python dependencies..."
+if [[ -d "$CV_HOME_DIR/py-venv" ]]; then
+  python3 -m venv "$CV_HOME_DIR/py-venv"
+fi
+source "$CV_HOME_DIR/py-venv/bin/activate"
+
 python -c "import numpy, networkx, scipy, sklearn, tqdm" 2>/dev/null || {
     echo "Installing Python dependencies..."
-    pip install numpy networkx scipy scikit-learn tqdm matplotlib
+    pip install -r "$CV_HOME_DIR/Apps/GraphProcessor/requirements.txt"
 }
 
 # Run the grid-based pruning

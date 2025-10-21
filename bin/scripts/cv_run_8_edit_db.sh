@@ -28,12 +28,15 @@ ORIGINAL_DIR=$(pwd)
 cd "$CV_HOME_DIR"/Apps/SQLiteViewer || error_exit "Failed to change directory to $CV_HOME_DIR/Apps/SQLiteViewer"
 
 echo "Setting up Python environment"
-python3 -m venv ./env
-source ./env/bin/activate
+
+if [[ -d "$CV_HOME_DIR/py-venv" ]]; then
+  python3 -m venv "$CV_HOME_DIR/py-venv"
+fi
+source "$CV_HOME_DIR/py-venv/bin/activate"
 
 echo "Installing necessary libraries for SQLiteViewer"
 pip install -r ./requirements.txt
 
-python3 ./view.py "$DB_PATH"
+python ./view.py "$DB_PATH"
 check_command "Editing DB"
 cd "$ORIGINAL_DIR" || error_exit "Failed to change back to original directory"
