@@ -4,6 +4,27 @@
 #include <stdio.h>
 
 
+bool is_valid_json(std::string json_filename, std::string json_dir) {
+    std::string full_filePath = json_dir + "/" + json_filename;
+    std::ifstream i(full_filePath);
+    if (!i.is_open()) {
+        std::cerr << "Error: Could not open file " << full_filePath << std::endl;
+        return false;
+    }
+
+    try {
+        nlohmann::json j;
+        i >> j; // Attempt to parse the JSON content
+        return true; // If no exception is thrown, it's parsable
+    } catch (const nlohmann::json::parse_error& e) {
+        std::cerr << "JSON parse error: " << e.what() << std::endl;
+        return false;
+    } catch (const std::exception& e) {
+        std::cerr << "An unexpected error occurred: " << e.what() << std::endl;
+        return false;
+    }
+}
+
 nlohmann::json filename_to_json_obj(std::string json_filename, std::string json_dir){
     nlohmann::json json_obj;
     std::string full_filepath = json_dir + "/" + json_filename;
@@ -15,7 +36,7 @@ nlohmann::json filename_to_json_obj(std::string json_filename, std::string json_
     }
     
     json_file >> json_obj;
-
+    
     return json_obj;
 }
 
