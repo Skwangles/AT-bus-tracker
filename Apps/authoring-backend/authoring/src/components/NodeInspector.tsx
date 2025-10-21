@@ -22,6 +22,8 @@ interface OtherNode {
   ref_id: number
   label: string
   description: string
+  info: string
+  image: string
   type: number
   x_trans: number
   y_trans: number
@@ -33,14 +35,19 @@ interface NodeInspectorProps {
   onNodeUpdate?: () => void
 }
 
-const NodeInspector: React.FC<NodeInspectorProps> = ({ nodeId, onNodeUpdate }) => {
+const NodeInspector: React.FC<NodeInspectorProps> = ({
+  nodeId,
+  onNodeUpdate,
+}) => {
   const [nodeInfo, setNodeInfo] = useState<NodeInfo | null>(null)
   const [otherNodes, setOtherNodes] = useState<OtherNode[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [imageUrl, setImageUrl] = useState<string | null>(null)
   const [showImage, setShowImage] = useState(false)
-  const [editingOtherNode, setEditingOtherNode] = useState<OtherNode | null>(null)
+  const [editingOtherNode, setEditingOtherNode] = useState<OtherNode | null>(
+    null
+  )
   const [showCreateForm, setShowCreateForm] = useState(false)
 
   const nodeTypes = {
@@ -51,7 +58,7 @@ const NodeInspector: React.FC<NodeInspectorProps> = ({ nodeId, onNodeUpdate }) =
     4: { name: 'Stair', color: '#6f42c1', icon: '🪜' },
     5: { name: 'Exit', color: '#dc3545', icon: '🚪' },
     50: { name: 'Border', color: '#ff6b35', icon: '🔗' },
-    'labeled': { name: 'Labeled', color: '#9c27b0', icon: '🏷️' }
+    labeled: { name: 'Labeled', color: '#9c27b0', icon: '🏷️' },
   }
 
   const fetchNodeInfo = async () => {
@@ -63,12 +70,15 @@ const NodeInspector: React.FC<NodeInspectorProps> = ({ nodeId, onNodeUpdate }) =
     try {
       const response = await axios.get(`${API_PREFIX}/api/v1/point/${nodeId}`)
       setNodeInfo(response.data)
-      
+
       // Fetch associated image
       try {
-        const imageResponse = await axios.get(`${API_PREFIX}/api/v1/point/${nodeId}/image`, {
-          responseType: 'blob'
-        })
+        const imageResponse = await axios.get(
+          `${API_PREFIX}/api/v1/point/${nodeId}/image`,
+          {
+            responseType: 'blob',
+          }
+        )
         const imageBlob = new Blob([imageResponse.data], { type: 'image/jpeg' })
         setImageUrl(URL.createObjectURL(imageBlob))
       } catch (imageError) {
@@ -77,7 +87,9 @@ const NodeInspector: React.FC<NodeInspectorProps> = ({ nodeId, onNodeUpdate }) =
       }
 
       // Fetch other_nodes
-      const labelsResponse = await axios.get(`${API_PREFIX}/api/v1/point/${nodeId}/labels`)
+      const labelsResponse = await axios.get(
+        `${API_PREFIX}/api/v1/point/${nodeId}/labels`
+      )
       setOtherNodes(labelsResponse.data.otherNodes || [])
     } catch (err) {
       console.error('Error fetching node info:', err)
@@ -118,7 +130,7 @@ const NodeInspector: React.FC<NodeInspectorProps> = ({ nodeId, onNodeUpdate }) =
         old_label: otherNode.label,
         new_label: otherNode.label,
         description: otherNode.description,
-        type: otherNode.type
+        type: otherNode.type,
       })
       setEditingOtherNode(null)
       fetchNodeInfo() // Refresh data
@@ -133,7 +145,7 @@ const NodeInspector: React.FC<NodeInspectorProps> = ({ nodeId, onNodeUpdate }) =
     if (!confirm('Are you sure you want to delete this label?')) return
 
     try {
-      await axios.delete(`${API_PREFIX}/api/v1/other-nodes/${otherNodeId}`)
+      await axios.delete(`${API_PREFIX}/api/v1/labels/${otherNodeId}`)
       fetchNodeInfo() // Refresh data
       if (onNodeUpdate) onNodeUpdate()
     } catch (err) {
@@ -166,7 +178,9 @@ const NodeInspector: React.FC<NodeInspectorProps> = ({ nodeId, onNodeUpdate }) =
       <div className="node-inspector">
         <div className="error">
           {error}
-          <button onClick={fetchNodeInfo} className="retry-btn">Retry</button>
+          <button onClick={fetchNodeInfo} className="retry-btn">
+            Retry
+          </button>
         </div>
       </div>
     )
@@ -268,7 +282,11 @@ const NodeInspector: React.FC<NodeInspectorProps> = ({ nodeId, onNodeUpdate }) =
             {otherNodes.map((otherNode) => (
               <div key={otherNode.id} className="label-item">
                 <div className="label-header">
-                  <span className={`label-type ${nodeTypes[otherNode.type as keyof typeof nodeTypes]?.color}`}>
+                  <span
+                    className={`label-type ${
+                      nodeTypes[otherNode.type as keyof typeof nodeTypes]?.color
+                    }`}
+                  >
                     {nodeTypes[otherNode.type as keyof typeof nodeTypes]?.icon}
                   </span>
                   <span className="label-text">{otherNode.label}</span>
@@ -550,14 +568,18 @@ interface CreateLabelFormProps {
   nodeTypes: any
 }
 
-const CreateLabelForm: React.FC<CreateLabelFormProps> = ({ onSubmit, onCancel, nodeTypes }) => {
+const CreateLabelForm: React.FC<CreateLabelFormProps> = ({
+  onSubmit,
+  onCancel,
+  nodeTypes,
+}) => {
   const [formData, setFormData] = useState({
     label: '',
     description: '',
     type: 0,
     x_offset: 0,
     y_offset: 0.05,
-    z_offset: 0
+    z_offset: 0,
   })
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -576,21 +598,25 @@ const CreateLabelForm: React.FC<CreateLabelFormProps> = ({ onSubmit, onCancel, n
           required
         />
       </div>
-      
+
       <div className="form-group">
         <label>Description:</label>
         <textarea
           value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          onChange={(e) =>
+            setFormData({ ...formData, description: e.target.value })
+          }
           rows={2}
         />
       </div>
-      
+
       <div className="form-group">
         <label>Type:</label>
         <select
           value={formData.type}
-          onChange={(e) => setFormData({ ...formData, type: Number(e.target.value) })}
+          onChange={(e) =>
+            setFormData({ ...formData, type: Number(e.target.value) })
+          }
         >
           {Object.entries(nodeTypes).map(([key, type]: [string, any]) => (
             <option key={key} value={key}>
@@ -599,10 +625,14 @@ const CreateLabelForm: React.FC<CreateLabelFormProps> = ({ onSubmit, onCancel, n
           ))}
         </select>
       </div>
-      
+
       <div className="form-actions">
-        <button type="submit" className="submit-btn">Create</button>
-        <button type="button" onClick={onCancel} className="cancel-btn">Cancel</button>
+        <button type="submit" className="submit-btn">
+          Create
+        </button>
+        <button type="button" onClick={onCancel} className="cancel-btn">
+          Cancel
+        </button>
       </div>
 
       <style>{`
@@ -685,9 +715,14 @@ interface EditLabelFormProps {
   nodeTypes: any
 }
 
-const EditLabelForm: React.FC<EditLabelFormProps> = ({ otherNode, onSubmit, onCancel, nodeTypes }) => {
+const EditLabelForm: React.FC<EditLabelFormProps> = ({
+  otherNode,
+  onSubmit,
+  onCancel,
+  nodeTypes,
+}) => {
   const [formData, setFormData] = useState({
-    ...otherNode
+    ...otherNode,
   })
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -706,21 +741,25 @@ const EditLabelForm: React.FC<EditLabelFormProps> = ({ otherNode, onSubmit, onCa
           required
         />
       </div>
-      
+
       <div className="form-group">
         <label>Description:</label>
         <textarea
           value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          onChange={(e) =>
+            setFormData({ ...formData, description: e.target.value })
+          }
           rows={2}
         />
       </div>
-      
+
       <div className="form-group">
         <label>Type:</label>
         <select
           value={formData.type}
-          onChange={(e) => setFormData({ ...formData, type: Number(e.target.value) })}
+          onChange={(e) =>
+            setFormData({ ...formData, type: Number(e.target.value) })
+          }
         >
           {Object.entries(nodeTypes).map(([key, type]: [string, any]) => (
             <option key={key} value={key}>
@@ -729,13 +768,17 @@ const EditLabelForm: React.FC<EditLabelFormProps> = ({ otherNode, onSubmit, onCa
           ))}
         </select>
       </div>
-      
+
       <div className="form-actions">
-        <button type="submit" className="submit-btn">Update</button>
-        <button type="button" onClick={onCancel} className="cancel-btn">Cancel</button>
+        <button type="submit" className="submit-btn">
+          Update
+        </button>
+        <button type="button" onClick={onCancel} className="cancel-btn">
+          Cancel
+        </button>
       </div>
     </form>
   )
 }
 
-export default NodeInspector 
+export default NodeInspector

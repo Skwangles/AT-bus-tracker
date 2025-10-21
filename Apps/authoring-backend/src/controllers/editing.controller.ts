@@ -8,33 +8,88 @@ import { replaceNode, connectNodes, disconnectNodes } from "../logic/utils";
 export async function updateMultipleMapPoints(req: Request, res: Response) {
   const { name } = req.params;
   const { points } = req.body;
-  let failed = false;
-  let count = 0;
-  for (const point of points) {
-    await writeDB(
-      `UPDATE floorplan_points SET x = ?, y = ? WHERE keyframe_id = ? AND location = ?;`,
-      [point.x, point.y, point.keyframe_id, name]
-    )
-      .then((changes: number) => {
-        if (changes > 0) {
-          count++;
-        }
-      })
-      .catch((e) => {
-        res.status(404).send("Error updating point");
-        console.error("Error updating point:", e);
-        failed = true;
-        return;
-      });
-      if (failed) {
-        // Headers have already been sent, so we need to return
-        console.error("Error updating point");
-        return;
-      }
+  
+  if (!points || !Array.isArray(points) || points.length === 0) {
+    res.status(400).send("Invalid points data provided");
+    return;
   }
 
-  console.log("updateMultipleMapPoints: Successfully updated", count, "points");
-  res.sendStatus(200).end();
+  let totalUpdated = 0;
+  const batchSize = 50;
+  
+  try {
+    // Process points in batches of 50
+    for (let i = 0; i < points.length; i += batchSize) {
+      const batch = points.slice(i, i + batchSize);
+      
+      // Build the CASE WHEN clauses for x and y coordinates
+      const caseWhenClausesX = batch.map(() => `WHEN keyframe_id = ? AND location = ? THEN ?`).join(' ');
+      const caseWhenClausesY = batch.map(() => `WHEN keyframe_id = ? AND location = ? THEN ?`).join(' ');
+      
+      // Build the WHERE clause with all keyframe_ids and locations
+      const whereClause = batch.map(() => '(keyframe_id = ? AND location = ?)').join(' OR ');
+      
+      // Prepare parameters: [keyframe_id1, location1, x1, keyframe_id1, location1, y1, ...]
+      const params: any[] = [];
+      
+      // Add parameters for x CASE WHEN clauses
+      batch.forEach(point => {
+        params.push(point.keyframe_id, name, point.x);
+      });
+      
+      // Add parameters for y CASE WHEN clauses  
+      batch.forEach(point => {
+        params.push(point.keyframe_id, name, point.y);
+      });
+      
+      // Add parameters for WHERE clause
+      batch.forEach(point => {
+        params.push(point.keyframe_id, name);
+      });
+      
+      const updateQuery = `
+        UPDATE floorplan_points 
+        SET 
+          x = CASE ${caseWhenClausesX} END,
+          y = CASE ${caseWhenClausesY} END
+        WHERE ${whereClause}
+      `;
+      
+      const changes = await writeDB(updateQuery, params);
+      totalUpdated += changes;
+      
+      logger.info(`[updateMultipleMapPoints] Batch ${Math.floor(i / batchSize) + 1}: Updated ${changes} points`, {
+        batchNumber: Math.floor(i / batchSize) + 1,
+        batchSize: batch.length,
+        totalProcessed: i + batch.length,
+        totalPoints: points.length
+      });
+    }
+    
+    logger.info(`[updateMultipleMapPoints] Successfully updated ${totalUpdated} points in ${Math.ceil(points.length / batchSize)} batches`, {
+      totalPoints: points.length,
+      totalUpdated: totalUpdated,
+      batchesProcessed: Math.ceil(points.length / batchSize)
+    });
+    
+    res.status(200).json({ 
+      message: "Points updated successfully",
+      totalUpdated: totalUpdated,
+      totalProcessed: points.length,
+      batchesProcessed: Math.ceil(points.length / batchSize)
+    });
+    
+  } catch (error) {
+    logger.error(`[updateMultipleMapPoints] Error updating points: ${error}`, {
+      error: error,
+      totalPoints: points.length,
+      batchesProcessed: Math.floor(totalUpdated / batchSize)
+    });
+    res.status(500).json({ 
+      message: "Error updating points",
+      error: error instanceof Error ? error.message : "Unknown error"
+    });
+  }
 }
 
 export async function updateMapPoint(req: Request, res: Response) {
@@ -89,9 +144,9 @@ export async function addLabelToMapPoint(req: Request, res: Response) {
   // Insert into other_nodes table
   const changes = await writeDB(
     `INSERT INTO other_nodes 
-     (ref_id, label, description, type, x_trans, y_trans, z_trans) 
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [id, label, label, 0, nodeResult.x_trans, nodeResult.y_trans * 1.05, nodeResult.z_trans]
+     (ref_id, label, description, info, image, type, x_trans, y_trans, z_trans) 
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [id, label, label, '', '', 0, nodeResult.x_trans, nodeResult.y_trans * 1.05, nodeResult.z_trans]
   );
   
   res
@@ -147,14 +202,14 @@ export async function connectTwoPoints(req: Request, res: Response) {
     return;
   }
 
-  const is_on_same_level = await readDB(
-    `SELECT kf1.keyframe_id, kf2.keyframe_id, kf1.location FROM floorplan_points kf1 JOIN floorplan_points kf2 ON kf1.location = kf2.location AND kf1.keyframe_id <> kf2.keyframe_id AND kf1.keyframe_id = ? AND kf2.keyframe_id = ? LIMIT 1;`,
-    [id1, id2]
-  );
-  if (is_on_same_level.length == 0) {
-    res.status(409).send("Points are not on the same level!");
-    return;
-  }
+  // const is_on_same_level = await readDB(
+  //   `SELECT kf1.keyframe_id, kf2.keyframe_id, kf1.location FROM floorplan_points kf1 JOIN floorplan_points kf2 ON kf1.location = kf2.location AND kf1.keyframe_id <> kf2.keyframe_id AND kf1.keyframe_id = ? AND kf2.keyframe_id = ? LIMIT 1;`,
+  //   [id1, id2]
+  // );
+  // if (is_on_same_level.length == 0) {
+  //   res.status(409).send("Points are not on the same level!");
+  //   return;
+  // }
 
   const result = await connectNodes(Number(id1), Number(id2));
   res
