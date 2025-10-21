@@ -33,6 +33,7 @@ OUTPUT_DB=${2:-$CV_DB_DIR/$CV_STRIP_OUTPUT_DB}
 REMOVE_LIST=${3:-$CV_STRIP_REMOVE}
 KEEP_ID_LIST=${4:-$CV_STRIP_KEEP_ID}
 KEEP_LABELS=${5:-$CV_STRIP_KEEP_LABELS}
+SCALE_FACTOR=${6:-$CV_STRIP_SCALE_FACTOR}
 
 echo "Arg 1 - Input DB: $INPUT_DB"
 echo "Arg 2 - Output DB: $OUTPUT_DB"
@@ -52,5 +53,5 @@ fi
 
 # Run the Python script
 cd "$CV_HOME_DIR/Apps/strip_restricted" || error_exit "Failed to change directory to $CV_HOME_DIR/Apps/strip_restricted"
-python3 strip_restricted_nodes.py "$INPUT_DB" "$OUTPUT_DB" --remove_areas="$REMOVE_LIST" --keep_id="$KEEP_ID_LIST" --keep_labels="$KEEP_LABELS" --del_non_prefix || error_exit "Python script failed"
+python3 strip_restricted_nodes.py "$INPUT_DB" "$OUTPUT_DB" --remove_areas="$REMOVE_LIST" --keep_id="$KEEP_ID_LIST" --keep_labels="$KEEP_LABELS" --scale_factor="$SCALE_FACTOR" || error_exit "Python script failed"
 cd "$ORIGINAL_DIR" || error_exit "Failed to change back to the original directory"

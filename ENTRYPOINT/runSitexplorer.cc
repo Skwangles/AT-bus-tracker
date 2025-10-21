@@ -3,14 +3,12 @@
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
 
-
-
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
 
 fs::path path_to_stella = fs::path("Apps/SLAM/SitexplorerInterface/build/");
 fs::path path_to_fbow = fs::path("Apps/SLAM/FBoW/orb_vocab.fbow");
-fs::path path_to_config = fs::path("Config/");
+fs::path path_to_config = fs::path("Apps/SLAM/Config/");
 
 int main(int argc, char** argv) {
     po::options_description desc("Allowed options");
@@ -30,7 +28,7 @@ int main(int argc, char** argv) {
         ("videos", po::value<std::string>(), "Comma-separated ordered videos")
         ("json_dir", po::value<std::string>(), "JSON group-to-timestamp file directory")
         ("picture_dir", po::value<std::string>()->default_value("pictures/"), "Keyframe image output dir - Default 'pictures/'")
-        ("config_file", po::value<std::string>()->default_value("indoors.yaml"), "Config file - Default 'indoors.yaml'")
+        ("config_file", po::value<std::string>()->default_value("default.yaml"), "Config file - Default 'default.yaml'")
         ("ts", po::value<std::string>(), "Start time of the Timestamps (Can use to make sure timestamps don't overlap)");
 
     po::positional_options_description pos_desc;

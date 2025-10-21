@@ -19,6 +19,7 @@ check_command() {
 
 [[ -z "$CV_HOME_DIR" ]] && error_exit "CV_HOME_DIR is not set"
 [[ -z "$CV_VSLAM_MAP_DIR" ]] && error_exit "CV_VSLAM_MAP_DIR is not set"
+[[ -z "$CV_VSLAM_CONFIG_FILE" ]] && error_exit "CV_VSLAM_CONFIG_FILE is not set"
 
 echo $CV_EXPORT_IN_MAP_NAME
 [[ -z "$1" && -z "$CV_EXPORT_IN_MAP_NAME" ]] && error_exit "Input map name is not provided"
@@ -27,5 +28,5 @@ echo $CV_EXPORT_IN_MAP_NAME
 echo "VSLAM Map:" ${1:-$CV_EXPORT_IN_MAP_NAME}
 echo "Exported DB:" ${2:-$CV_EXPORT_DB_NAME}
 
-runSitexplorer true $CV_HOME_DIR --in ${1:-$CV_EXPORT_IN_MAP_NAME} --export_path ${2:-$CV_DB_DIR$CV_EXPORT_DB_NAME} --map_dir $CV_VSLAM_MAP_DIR --convertToSQLite
+runSitexplorer true $CV_HOME_DIR --in ${1:-$CV_EXPORT_IN_MAP_NAME} --export_path ${2:-$CV_DB_DIR$CV_EXPORT_DB_NAME} --map_dir $CV_VSLAM_MAP_DIR --convertToSQLite --config_file $CV_VSLAM_CONFIG_FILE
 check_command "Exporting VSLAM map to SQLite"

@@ -26,6 +26,7 @@ check_command() {
 [[ -z "$CV_VSLAM_MAP_HEADLESS" ]] && error_exit "CV_VSLAM_MAP_HEADLESS is not set"
 [[ -z "$CV_VSLAM_EPOCH_START" ]] && error_exit "CV_VSLAM_EPOCH_START is not set"
 [[ -z "$CV_VIDEO_DIR" ]] && error_exit "CV_VIDEO_DIR is not set"
+[[ -z "$CV_VSLAM_CONFIG_FILE" ]] && error_exit "CV_VSLAM_CONFIG_FILE is not set"
 
 # Check if the required inputs are provided either as arguments or environment variables
 VIDEOS=${1:-$CV_VSLAM_MAP_VIDEOS_COMMA_SEPARATED_NAMES}
@@ -43,5 +44,5 @@ IN_MAP_OPTION=""
 EPOCH_OPTION=""
 [[ -n "$CV_VSLAM_EPOCH_START" ]] && EPOCH_OPTION="--ts $CV_VSLAM_EPOCH_START"
 
-runSitexplorer $CV_VSLAM_MAP_HEADLESS \'$CV_HOME_DIR\' \'$VIDEOS\' --out \'$MAP\' $IN_MAP_OPTION --video_dir \'$CV_VIDEO_DIR\' --map_dir \'$CV_VSLAM_MAP_DIR\' --json_dir \'$CV_JSON_DIR\' --picture_dir \'$CV_KEYFRAME_IMG_DIR\' $EPOCH_OPTION
+runSitexplorer $CV_VSLAM_MAP_HEADLESS "$CV_HOME_DIR" "$VIDEOS" --out "$MAP" $IN_MAP_OPTION --video_dir "$CV_VIDEO_DIR" --map_dir "$CV_VSLAM_MAP_DIR" --json_dir "$CV_JSON_DIR" --picture_dir "$CV_KEYFRAME_IMG_DIR" --config_file "$CV_VSLAM_CONFIG_FILE" $EPOCH_OPTION
 check_command "Mapping videos with VSLAM"

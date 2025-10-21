@@ -1,6 +1,5 @@
 import sqlite3
 import shutil
-import sys
 import argparse
 import json
 
@@ -14,6 +13,7 @@ def parse_args():
     parser.add_argument('--keep_id', type=str, help="List of IDs to keep, e.g. '[15, 16, 17]'")
     parser.add_argument('--keep_labels', type=str, help="List of labels to keep, e.g. '[\"reserved\"]'")
     parser.add_argument('--remove_duplicates', action='store_true', help="Remove duplicate other_nodes based on ref_id, label, and description")
+    parser.add_argument('--scale_factor', type=float, help="Scale factor to apply to other_nodes")
     return parser.parse_args()
 
 def copy_database(input_db, output_db):
@@ -44,10 +44,10 @@ def remove_duplicate_other_nodes(prefix, db_cursor):
     
     # Find and delete duplicates, keeping the one with the lowest ID
     query = f"""
-    DELETE FROM {prefix}other_nodes
+    DELETE FROM other_nodes
     WHERE id NOT IN (
         SELECT MIN(id)
-        FROM {prefix}other_nodes
+        FROM other_nodes
         GROUP BY ref_id, label, description
     );
     """
@@ -65,19 +65,19 @@ def delete_filtered_nodes(prefix, db_cursor, remove_list, keep_id_list, keep_lab
 
     # First, delete the nodes
     query = f"""
-    DELETE FROM {prefix}nodes
+    DELETE FROM nodes
     WHERE EXISTS (
         SELECT 1
-        FROM {prefix}node_locations
-        WHERE {prefix}nodes.keyframe_id = {prefix}node_locations.keyframe_id
-          AND {prefix}node_locations.location IN ({remove_str})
+        FROM node_locations
+        WHERE nodes.keyframe_id = node_locations.keyframe_id
+          AND node_locations.location IN ({remove_str})
     )
-    AND {prefix}nodes.keyframe_id NOT IN ({keep_id_str})
+    AND nodes.keyframe_id NOT IN ({keep_id_str})
     AND NOT EXISTS (
         SELECT 1
-        FROM {prefix}other_nodes
-        WHERE {prefix}nodes.keyframe_id = {prefix}other_nodes.ref_id
-          AND {prefix}other_nodes.label IN ({keep_label_str})
+        FROM other_nodes
+        WHERE nodes.keyframe_id = other_nodes.ref_id
+          AND other_nodes.label IN ({keep_label_str})
     );
     """
     print("Running query:", query)
@@ -86,11 +86,11 @@ def delete_filtered_nodes(prefix, db_cursor, remove_list, keep_id_list, keep_lab
 
     # Delete orphaned other_nodes (nodes that no longer have a valid ref_id)
     query = f"""
-    DELETE FROM {prefix}other_nodes
+    DELETE FROM other_nodes
     WHERE NOT EXISTS (
         SELECT 1
-        FROM {prefix}nodes
-        WHERE {prefix}other_nodes.ref_id = {prefix}nodes.keyframe_id
+        FROM nodes
+        WHERE other_nodes.ref_id = nodes.keyframe_id
     );
     """
     print("Running query:", query)
@@ -99,16 +99,16 @@ def delete_filtered_nodes(prefix, db_cursor, remove_list, keep_id_list, keep_lab
 
     # Delete orphaned elevator_edges (edges that reference non-existent other_nodes)
     query = f"""
-    DELETE FROM {prefix}elevator_edges
+    DELETE FROM elevator_edges
     WHERE NOT EXISTS (
         SELECT 1
-        FROM {prefix}other_nodes
-        WHERE {prefix}elevator_edges.id0 = {prefix}other_nodes.id
+        FROM other_nodes
+        WHERE elevator_edges.id0 = other_nodes.id
     )
     OR NOT EXISTS (
         SELECT 1
-        FROM {prefix}other_nodes
-        WHERE {prefix}elevator_edges.id1 = {prefix}other_nodes.id
+        FROM other_nodes
+        WHERE elevator_edges.id1 = other_nodes.id
     );
     """
     print("Running query:", query)
@@ -117,32 +117,45 @@ def delete_filtered_nodes(prefix, db_cursor, remove_list, keep_id_list, keep_lab
 
     # Delete orphaned node_locations
     query = f"""
-    DELETE FROM {prefix}node_locations
+    DELETE FROM node_locations
     WHERE NOT EXISTS (
         SELECT 1
-        FROM {prefix}nodes
-        WHERE {prefix}node_locations.keyframe_id = {prefix}nodes.keyframe_id
+        FROM nodes
+        WHERE node_locations.keyframe_id = nodes.keyframe_id
     );
     """
     print("Running query:", query)
     db_cursor.execute(query)
     print("Deleting orphaned node_locations: ", db_cursor.rowcount)
 
-    if del_non_prefix and prefix != "": 
-        print("Deleting all tables not matching the table prefix")
-        print("Removing tables: nodes, edges, node_locations, other_nodes, elevator_edges, floorplan_points, floorplan_images")
-        response = input("Are you sure? (Y/n):")
-        while (response.lower() != '' and response.lower() != 'y' and response.lower() != 'n'):
-            print("Invalid input, choose y or n")
-            response = input("Are you sure? (Y/n):")
-        if (response.lower() == 'y'):
-            db_cursor.execute("DROP TABLE IF EXISTS nodes;")
-            db_cursor.execute("DROP TABLE IF EXISTS edges;")
-            db_cursor.execute("DROP TABLE IF EXISTS node_locations;")
-            db_cursor.execute("DROP TABLE IF EXISTS other_nodes;")
-            db_cursor.execute("DROP TABLE IF EXISTS elevator_edges;")
-            db_cursor.execute("DROP TABLE IF EXISTS floorplan_points;")
-            db_cursor.execute("DROP TABLE IF EXISTS floorplan_images;")
+    # Delete orphaned edges
+    query = f"""
+    DELETE FROM edges
+    WHERE NOT EXISTS ( 
+        SELECT 1
+        FROM nodes
+        WHERE edges.keyframe_id0 = nodes.keyframe_id
+    ) OR NOT EXISTS (
+        SELECT 1
+        FROM nodes
+        WHERE edges.keyframe_id1 = nodes.keyframe_id
+    );
+    """
+    print("Running query:", query)
+    db_cursor.execute(query)
+    print("Deleting orphaned edges: ", db_cursor.rowcount)
+
+def scale_other_nodes(scale_factor, db_cursor):
+    """Scale other_nodes based on the scale factor."""
+    print("Scaling other_nodes...")
+    query = f"""
+    UPDATE other_nodes
+    SET x_trans = x_trans * -{scale_factor}, y_trans = y_trans * -{scale_factor}, z_trans = z_trans * {scale_factor}
+    """
+    print("Running query:", query)
+    db_cursor.execute(query)
+    print("Scaling other_nodes: ", db_cursor.rowcount)
+
 
 def main():
     args = parse_args()
@@ -160,6 +173,7 @@ def main():
     keep_labels = get_keep_labels(args.keep_labels)
     del_non_prefix = args.del_non_prefix or False
     prefix = args.prefix or ""
+    scale_factor = args.scale_factor or 15.0
     
     # Remove duplicates if requested
     if args.remove_duplicates:
@@ -167,6 +181,7 @@ def main():
 
     # Perform the deletion operation
     delete_filtered_nodes(prefix, cursor, remove_list, keep_id_list, keep_labels, del_non_prefix)
+    scale_other_nodes(scale_factor, cursor)
 
     # Commit changes and close the connection
     conn.commit()
