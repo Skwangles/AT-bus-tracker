@@ -94,12 +94,14 @@ export async function getPointInfoFromId(req: Request, res: Response) {
 
   // Fetch associated labels
   const labelRows = await readDB(
-    `SELECT label, description, type FROM other_nodes WHERE ref_id = ?;`,
+    `SELECT label, description, info, image, type FROM other_nodes WHERE ref_id = ?;`,
     [id]
   );
   const labels = Array.isArray(labelRows) ? labelRows.map((row: any) => ({
     label: row.label,
     description: row.description,
+    info: row.info,
+    image: row.image,
     type: row.type
   })) : [];
 
@@ -119,7 +121,7 @@ export async function getPointInfoFromId(req: Request, res: Response) {
  * Create a new point with the given position, type, and label
  */
 export async function createNewPoint(req: Request, res: Response) {
-  const { x_trans, y_trans, z_trans, type, label, location, description } = req.body;
+  const { x_trans, y_trans, z_trans, type, label, location, description, info, image } = req.body;
 
   // Validate input
   if (isNaN(Number(x_trans)) || isNaN(Number(y_trans)) || isNaN(Number(z_trans)) ||
@@ -173,8 +175,8 @@ export async function createNewPoint(req: Request, res: Response) {
     if (label) {
       await writeDB(
         `INSERT INTO other_nodes 
-         (ref_id, label, description, type, x_trans, y_trans, z_trans) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [keyframeId, label, label, 0, 0, 0, 0]
+         (ref_id, label, description, info, image, type, x_trans, y_trans, z_trans) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [keyframeId, label, description || label, info || '', image || '', 0, 0, 0, 0]
       );
     }
 
@@ -454,6 +456,8 @@ export async function addPointLabel(req: Request, res: Response) {
     label, 
     type = 0, 
     description = '', 
+    info = '',
+    image = '',
     x_offset = 0, 
     y_offset = 0.05, 
     z_offset = 0 
@@ -502,9 +506,9 @@ export async function addPointLabel(req: Request, res: Response) {
     // Insert into other_nodes table
     await writeDB(
       `INSERT INTO other_nodes 
-       (ref_id, label, description, type, x_trans, y_trans, z_trans) 
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [pointId, label, description, type, finalX, finalY, finalZ]
+       (ref_id, label, description, info, image, type, x_trans, y_trans, z_trans) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [pointId, label, description, info, image, type, finalX, finalY, finalZ]
     );
     
     res.status(201).json({ 
@@ -523,7 +527,7 @@ export async function addPointLabel(req: Request, res: Response) {
  */
 export async function updatePointLabel(req: Request, res: Response) {
   const pointId = Number(req.params.id);
-  const { old_label, new_label, type = 0, description = '' } = req.body;
+  const { old_label, new_label, type = 0, description = '', info = '', image = '' } = req.body;
 
   if (isNaN(pointId)) {
     logger.warn(`[updatePointLabel] Invalid point ID: ${pointId}`);
@@ -534,9 +538,9 @@ export async function updatePointLabel(req: Request, res: Response) {
   try {
     await writeDB(
       `UPDATE other_nodes 
-       SET label = ?, description = ?, type = ? 
+       SET label = ?, description = ?, info = ?, image = ?, type = ? 
        WHERE ref_id = ? AND label = ?`,
-      [new_label, description, type, pointId, old_label]
+      [new_label, description, info, image, type, pointId, old_label]
     );
     
     res.status(200).json({ 

@@ -9,14 +9,14 @@ export const getLabels = async (req: Request, res: Response) => {
   try {
     // Get labels from other_nodes table first
     const otherNodesQuery = `
-      SELECT id, label, description, type, x_trans, y_trans, z_trans 
+      SELECT id, label, description, info, image, type, x_trans, y_trans, z_trans 
       FROM other_nodes 
       WHERE ref_id = ? 
       ORDER BY type, label
     `;
     const otherNodesLabels = await readDB(otherNodesQuery, [id]);
-    
-  
+
+
     res.status(200).json({
       otherNodes: otherNodesLabels,
     });
@@ -29,11 +29,13 @@ export const getLabels = async (req: Request, res: Response) => {
 // Controller to add a new label for a specific keyframe_id
 export const addLabel = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { 
-    label, 
-    type = 0, 
-    description = '', 
-    x_offset = 0, 
+  const {
+    label,
+    type = 0,
+    description = '',
+    info = '',
+    image = '',
+    x_offset = 0,
     y_offset = 0.05, // Default 5% higher
     z_offset = 0,
     position_strategy = 'auto' // 'auto', 'custom', 'relative'
@@ -43,14 +45,14 @@ export const addLabel = async (req: Request, res: Response) => {
     // Get node coordinates for the other_nodes table
     const nodeQuery = `SELECT x_trans, y_trans, z_trans FROM nodes WHERE keyframe_id = ?`;
     const nodeResult = await readDB(nodeQuery, [id], true);
-    
+
     if (!nodeResult) {
       return res.status(404).json({ message: 'Node not found' });
     }
 
     // Calculate position based on strategy
     let finalX, finalY, finalZ;
-    
+
     switch (position_strategy) {
       case 'custom':
         // Use provided coordinates directly
@@ -58,14 +60,14 @@ export const addLabel = async (req: Request, res: Response) => {
         finalY = y_offset;
         finalZ = z_offset;
         break;
-        
+
       case 'relative':
         // Use offsets relative to the original node position
         finalX = nodeResult.x_trans + x_offset;
         finalY = nodeResult.y_trans + y_offset;
         finalZ = nodeResult.z_trans + z_offset;
         break;
-        
+
       case 'auto':
       default:
         // Default strategy: 5% higher than original node
@@ -81,30 +83,32 @@ export const addLabel = async (req: Request, res: Response) => {
       WHERE ref_id = ? AND label = ?
     `;
     const existingLabel = await readDB(existingLabelQuery, [id, label], true);
-    
+
     if (existingLabel) {
-      return res.status(409).json({ 
+      return res.status(409).json({
         message: 'Label already exists for this node',
-        existing_id: existingLabel.id 
+        existing_id: existingLabel.id
       });
     }
-    
+
     // Insert into other_nodes table
     const otherNodesQuery = `
       INSERT INTO other_nodes 
-      (ref_id, label, description, type, x_trans, y_trans, z_trans) 
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      (ref_id, label, description, info, image, type, x_trans, y_trans, z_trans) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     await writeDB(otherNodesQuery, [
-      id, 
-      label, 
-      description, 
-      type ?? 0, 
-      finalX, 
-      finalY, 
+      id,
+      label,
+      description,
+      info,
+      image,
+      type ?? 0,
+      finalX,
+      finalY,
       finalZ
     ]);
-    
+
     // Get the ID of the inserted label
     const insertedLabelQuery = `
       SELECT id FROM other_nodes 
@@ -112,7 +116,7 @@ export const addLabel = async (req: Request, res: Response) => {
     `;
     const insertedLabel = await readDB(insertedLabelQuery, [id, label], true);
     const labelId = insertedLabel?.id;
-    
+
     // If this is an elevator label, create elevator edges
     if (type === 1 && label.startsWith('!!elevator') && labelId) {
       try {
@@ -120,14 +124,14 @@ export const addLabel = async (req: Request, res: Response) => {
         const parts = label.split(',').map((part: string) => part.trim());
         if (parts.length >= 2) {
           const shaft_id = parts[1];
-          
+
           // Find other elevator nodes in the same shaft
           const elevatorNodesQuery = `
             SELECT id FROM other_nodes 
             WHERE type = 1 AND label LIKE ? AND ref_id != ?
           `;
           const elevatorNodes = await readDB(elevatorNodesQuery, [`%${shaft_id}%`, id]);
-          
+
           // Create edges to all other elevator nodes in the same shaft
           for (const elevatorNode of elevatorNodes) {
             const edgeQuery = `
@@ -142,8 +146,8 @@ export const addLabel = async (req: Request, res: Response) => {
         // Don't fail the entire operation if elevator edge creation fails
       }
     }
-    
-    res.status(201).json({ 
+
+    res.status(201).json({
       message: 'Label added successfully',
       label_id: labelId,
       position: {
@@ -162,18 +166,18 @@ export const addLabel = async (req: Request, res: Response) => {
 // Controller to update a label for a specific keyframe_id
 export const updateLabel = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { old_label, new_label, type = 0, description = '' } = req.body;
+  const { old_label, new_label, type = 0, description = '', info = '', image = '' } = req.body;
 
   try {
     // Update in other_nodes table
     const otherNodesQuery = `
       UPDATE other_nodes 
-      SET label = ?, description = ?, type = ? 
+      SET label = ?, description = ?, info = ?, image = ?, type = ? 
       WHERE ref_id = ? AND label = ?
     `;
-    await writeDB(otherNodesQuery, [new_label, description, type, id, old_label]);
-    
-    
+    await writeDB(otherNodesQuery, [new_label, description, info, image, type, id, old_label]);
+
+
     res.status(200).json({ message: 'Label updated successfully' });
   } catch (error) {
     console.error('Error updating label:', error);
@@ -194,9 +198,9 @@ export const updateLabelPosition = async (req: Request, res: Response) => {
       WHERE ref_id = ? AND label = ?
     `;
     const result = await writeDB(updateQuery, [x_trans, y_trans, z_trans, id, label]);
-    
+
     if (result > 0) {
-      res.status(200).json({ 
+      res.status(200).json({
         message: 'Label position updated successfully',
         position: { x: x_trans, y: y_trans, z: z_trans }
       });
@@ -222,7 +226,7 @@ export const getLabelTypes = async (req: Request, res: Response) => {
       { id: 6, name: 'Room', description: 'Room or office' },
       { id: 7, name: 'Service', description: 'Service area' }
     ];
-    
+
     res.status(200).json(labelTypes);
   } catch (error) {
     console.error('Error fetching label types:', error);
@@ -233,13 +237,12 @@ export const getLabelTypes = async (req: Request, res: Response) => {
 // Controller to delete a label from the list for a specific keyframe_id
 export const deleteLabel = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const { label } = req.body;
 
   try {
     // Delete from other_nodes table
-    const otherNodesQuery = `DELETE FROM other_nodes WHERE ref_id = ? AND label = ?`;
-    await writeDB(otherNodesQuery, [id, label]);
-    
+    const otherNodesQuery = `DELETE FROM other_nodes WHERE id = ?`;
+    await writeDB(otherNodesQuery, [id]);
+
     res.status(200).json({ message: 'Label deleted successfully' });
   } catch (error) {
     console.error('Error deleting label:', error);
