@@ -40,6 +40,8 @@ error.log
 
 vvv/
 venv/
+py-venv/
+
 
 output/
 __pycache__/
