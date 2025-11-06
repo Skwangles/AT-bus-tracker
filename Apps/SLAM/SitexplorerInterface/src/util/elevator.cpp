@@ -81,6 +81,8 @@ bool create_other_nodes_table(sqlite3* db) {
             ref_id INTEGER NOT NULL,
             label TEXT NOT NULL,
             description TEXT,
+            info TEXT,
+            image TEXT,
             type INTEGER NOT NULL,
             x_trans REAL NOT NULL,
             y_trans REAL NOT NULL,
@@ -89,6 +91,7 @@ bool create_other_nodes_table(sqlite3* db) {
         );
         CREATE INDEX IF NOT EXISTS idx_other_nodes_type ON other_nodes(type);
         CREATE INDEX IF NOT EXISTS idx_other_nodes_ref ON other_nodes(ref_id);
+        CREATE UNIQUE INDEX unique_other_nodes ON other_nodes(ref_id, label, description)
     )";
 
     char* err_msg = nullptr;
@@ -133,7 +136,7 @@ bool create_elevator_edges_table(sqlite3* db) {
 bool add_other_node(sqlite3* db, OtherNode& node) {
     sqlite3_stmt* stmt = nullptr;
     const char* sql = R"(
-        INSERT INTO other_nodes 
+        INSERT INTO other_nodes
         (ref_id, label, description, type, x_trans, y_trans, z_trans)
         VALUES (?, ?, ?, ?, ?, ?, ?)
         RETURNING id

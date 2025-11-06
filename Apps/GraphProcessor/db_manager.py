@@ -80,13 +80,13 @@ class DatabaseManager:
             self.connection.close()
             logger.debug("Database connection closed")
     
-    def create_working_copy(self, suffix: str = "refined_") -> str:
+    def create_working_copy(self, suffix: str = "pruned_") -> str:
         """
         Create a new database file with the suffix added to the database name.
         If a working copy already exists, it will be deleted and recreated.
         
         Args:
-            suffix: Suffix to add to the database filename (default: "refined_")
+            suffix: Suffix to add to the database filename (default: "pruned_")
             
         Returns:
             Path to the new database file

@@ -51,9 +51,16 @@ const App: React.FC = () => {
       </div>
 
       <style>{`
+        .body {
+          background: #f5f5f5;
+          width: 100vw;
+          height: 100vh;
+        }
+
         .app-container {
           display: flex;
           height: 100vh;
+          width: 100vw;
           background: #f5f5f5;
         }
 

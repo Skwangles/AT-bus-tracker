@@ -31,11 +31,11 @@ export async function getNeighbours(keyframeId: number, get_elevator_neighbours 
     // Get elevator neighbours via other_nodes and elevator_edges
     elevatorNeighbours = await readDB(
       `SELECT DISTINCT n2.keyframe_id, n2.ts, 1 as degree
-      FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n
-      JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes on1 ON n.keyframe_id = on1.ref_id
-      JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}elevator_edges ee ON (on1.id = ee.id0 OR on1.id = ee.id1)
-      JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes on2 ON (on2.id = ee.id0 OR on2.id = ee.id1)
-      JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n2 ON on2.ref_id = n2.keyframe_id
+      FROM nodes n
+      JOIN other_nodes on1 ON n.keyframe_id = on1.ref_id
+      JOIN elevator_edges ee ON (on1.id = ee.id0 OR on1.id = ee.id1)
+      JOIN other_nodes on2 ON (on2.id = ee.id0 OR on2.id = ee.id1)
+      JOIN nodes n2 ON on2.ref_id = n2.keyframe_id
       WHERE n.keyframe_id = ? 
       AND on1.id != on2.id
       AND on1.type = 1 

@@ -1,186 +1,362 @@
-# CampusVirtual Components
+# Sitexplorer Components Documentation
 
-This document provides a detailed overview of the key components that make up the CampusVirtual system.
+## Component Overview
+
+Sitexplorer consists of multiple interconnected components that work together to create panoramic virtual tours. This document provides detailed information about each component, its purpose, and how it integrates with the overall system.
 
 ## Core Components
 
-### 1. Video Processing Pipeline
+### 1. VSLAM Processing (`Apps/SLAM/`)
 
-#### Insta360 Integration
-- Handles raw Insta360 INSV files
-- Performs video stitching
-- Generates equirectangular output
+**Purpose**: Visual Simultaneous Localization and Mapping for 360° video processing
 
-#### Video Processing
-- Frame extraction
-- Quality assessment
-- Metadata extraction
+**Key Files**:
+- `SitexplorerInterface/src/map.cc`: Main mapping tool
+- `SitexplorerInterface/src/view.cc`: Static map viewer
+- `SitexplorerInterface/src/slam_to_sqlite.cc`: Database conversion
 
-### 2. VSLAM System
+**Architecture**:
+```mermaid
+graph TB
+    A[Video Input] --> B[Frame Extraction]
+    B --> C[Feature Detection<br/>ORB Features]
+    C --> D[Pose Estimation<br/>PnP Solver]
+    D --> E[Map Building<br/>Keyframe Management]
+    E --> F[Loop Closure<br/>Place Recognition]
+    F --> G[Bundle Adjustment<br/>Graph Optimization]
+    G --> H[Database Export<br/>SQLite]
+    
+    style A fill:#e1f5fe
+    style H fill:#c8e6c9
+```
 
-#### Stella VSLAM Integration
-- Camera pose tracking
-- Feature detection and matching
-- Map building
+**Key Features**:
+- Monocular camera setup for 360° video
+- Real-time pose tracking and map building
+- JSON-based location metadata integration
+- Iridescence viewer integration for real-time visualization
 
-#### Graph Generation
-- Node creation from keyframes
-- Edge generation for navigation
-- Loop closure detection
+**Configuration**:
+- Camera configuration: `indoors.yaml`
+- Vocabulary file: `orb_vocab.fbow`
+- Location metadata: JSON files
 
-### 3. Graph Management
+### 2. Authoring Backend (`Apps/authoring-backend/`)
 
-#### Graph Structure
-- Node types:
-  - Type 0: Normal image points
-  - Type 1: Elevator points
-  - Type 2+: Special points (merge points)
+**Purpose**: Web-based interface for editing spatial data and managing virtual tours
 
-- Edge types:
-  - Type -1: Covisibility edges
-  - Type 0: Normal navigation edges
-  - Type 1: Loop closure edges
-  - Type 2: Merge point edges
-  - Type 3: Edge contraction edges
-  - Type 4: Pathfind-only edges
+**Architecture**:
+```mermaid
+graph TB
+    subgraph "Frontend (React)"
+        A[App.tsx] --> B[LocationGroupSelector]
+        A --> C[FloorplanEditor]
+        C --> D[PointManager]
+        C --> E[ImageUploader]
+    end
+    
+    subgraph "Backend (Node.js)"
+        F[Express Server] --> G[Points Controller]
+        F --> H[Image Controller]
+        F --> I[Labels Controller]
+        F --> J[Editing Controller]
+    end
+    
+    subgraph "Database"
+        K[SQLite] --> L[nodes table]
+        K --> M[other_nodes table]
+        K --> N[floorplan_points table]
+    end
+    
+    A --> F
+    G --> K
+    H --> K
+    I --> K
+    J --> K
+    
+    style A fill:#e1f5fe
+    style F fill:#f3e5f5
+    style K fill:#c8e6c9
+```
 
-#### Graph Optimization
-- Path pruning
-- Node merging
-- Graph simplification
+**Key Features**:
+- Interactive floorplan editing with drag-and-drop
+- Point management and spatial editing
+- Image upload and management
+- Real-time collaboration support
+- THREE.js integration for 3D transformations
 
-### 4. Database System
+**API Endpoints**:
+- `GET/POST /api/points`: Point CRUD operations
+- `GET/POST /api/images`: Image management
+- `GET/POST /api/labels`: Label management
+- `GET/POST /api/editing`: Spatial editing operations
 
-#### PostgreSQL Integration
-- Graph data storage
-- User management
-- Configuration storage
+### 3. Graph Processing (`Apps/GraphProcessor/`)
 
-#### Data Models
-- Node storage
-- Edge relationships
-- Metadata management
+**Purpose**: Spatial graph optimization and pruning for navigation performance
 
-### 5. Web Interface
+**Key Files**:
+- `grid_pruner.py`: Grid-based pruning algorithm
+- `db_manager.py`: Database management utilities
+- `run_pruning.py`: Main execution script
 
-#### Frontend Components
-- React-based UI
-- THREE.js visualization
-- Interactive controls
+**Algorithm**:
+```mermaid
+graph TB
+    A[Input Database] --> B[Spatial Partitioning<br/>5x5x5m grid boxes]
+    B --> C[Sharpness-Based Selection<br/>Highest quality per box]
+    C --> D[Reference Redirection<br/>Maintain data integrity]
+    D --> E[Edge Mapping<br/>Redirect connections]
+    E --> F[Connectivity Validation<br/>Ensure navigation]
+    F --> G[Optimized Database<br/>60-80% reduction]
+    
+    style A fill:#e1f5fe
+    style G fill:#c8e6c9
+```
 
-#### Backend Services
-- Node.js API
-- WebSocket support
-- File serving
+**Key Features**:
+- Grid-based spatial partitioning
+- Sharpness-based node selection
+- Reference redirection for data integrity
+- Connectivity validation
+- Batch processing with transaction safety
+
+**Performance**: Achieves 60-80% node reduction while maintaining connectivity
+
+### 4. Image Processing (`Apps/SharpnessCalculator/`)
+
+**Purpose**: Image quality analysis for optimal node selection
+
+**Key Files**:
+- `sharpness.py`: Core sharpness calculation
+- `main.py`: Command-line interface
+
+**Algorithm**:
+```python
+def calculate_sharpness(image_path):
+    with Image.open(image_path) as img:
+        grayscale_img = img.convert("L")
+        laplacian = grayscale_img.filter(ImageFilter.FIND_EDGES)
+        laplacian_array = np.array(laplacian)
+        sharpness = laplacian_array.var()
+    return sharpness
+```
+
+**Key Features**:
+- Variance of Laplacian for sharpness calculation
+- Concurrent processing with ThreadPoolExecutor
+- JSON output for integration with graph pruning
+- PIL-based image processing
+
+### 5. Map Data Initialization (`Apps/map_data_init/`)
+
+**Purpose**: Converts 3D spatial data to 2D floorplan projections
+
+**Key Files**:
+- `src/initData.ts`: Main initialization logic
+- `src/consts.ts`: Configuration constants
+
+**Process**:
+```mermaid
+graph TB
+    A[3D Nodes<br/>Spatial Graph] --> B[Location Extraction<br/>Group by location]
+    B --> C[Coordinate Normalization<br/>2D projection]
+    C --> D[Multi-Floor Handling<br/>Staircases, elevators]
+    D --> E[Floorplan Points<br/>2D coordinates]
+    E --> F[Database Storage<br/>floorplan_points table]
+    
+    style A fill:#e1f5fe
+    style F fill:#c8e6c9
+```
+
+**Key Features**:
+- 3D to 2D coordinate transformation
+- Multi-floor connection handling
+- Location-based clustering
+- Table prefixing support for refined/unrefined data
+
+### 6. SQLite Viewer (`Apps/SQLiteViewer/`)
+
+**Purpose**: 3D visualization tool for spatial graph data
+
+**Key Files**:
+- `view.py`: Main visualization script
+- `SPECIFICATION.md`: Component specification
+
+**Features**:
+- Interactive 3D graph visualization
+- Node and edge inspection
+- Spatial proximity analysis
+- PyVista-based rendering
 
 ## Supporting Components
 
-### 1. Authoring Tools
+### 7. Face Blurring (`Apps/blur360-images/`)
 
-#### Floorplan Alignment
-- 2D floorplan integration
-- Point alignment tools
-- Navigation path editing
+**Purpose**: Privacy protection for 360° images
 
-#### Content Management
-- Media organization
-- Metadata editing
-- Access control
+**Key Features**:
+- Face detection and blurring
+- Privacy compliance
+- Batch processing capabilities
 
-### 2. Processing Tools
+### 8. Map Merging (`Apps/MapMerge/`)
 
-#### Map Merge
-- Multiple map integration
-- Conflict resolution
-- Graph optimization
+**Purpose**: Combines multiple VSLAM maps into unified navigation graphs
 
-#### Graph Pruner
-- Redundant node removal
-- Path optimization
-- Performance improvement
+**Key Features**:
+- Multi-session map integration
+- Spatial alignment
+- Graph merging algorithms
 
-### 3. Utility Components
+### 9. File Processing (`Apps/Sitexplorer-FileProcessing/`)
 
-#### Image Processing
-- Sharpness calculation
-- Image splitting
-- Face blurring
+**Purpose**: Video file processing and preparation
 
-#### Data Export
-- Database conversion
-- Format transformation
-- Backup generation
+**Key Features**:
+- Insta360 SDK integration
+- Video stitching capabilities
+- Format conversion
 
-## Component Interactions
+## Component Integration
 
-### Data Flow
-1. Video input → Processing pipeline
-2. Processed frames → VSLAM system
-3. VSLAM output → Graph generation
-4. Graph data → Database storage
-5. Stored data → Web interface
+### Data Flow Between Components
 
-### Control Flow
-1. User input → Web interface
-2. Interface requests → Backend services
-3. Service processing → Database queries
-4. Query results → Frontend rendering
+```mermaid
+flowchart LR
+    A[Video Files] --> B[File Processing]
+    B --> C[VSLAM Processing]
+    C --> D[Database Conversion]
+    D --> E[Graph Processing]
+    E --> F[Map Data Init]
+    F --> G[Authoring Backend]
+    G --> H[SQLite Viewer]
+    
+    style A fill:#e1f5fe
+    style H fill:#c8e6c9
+```
 
-## Component Dependencies
+### Component Dependencies
 
-### Required Libraries
-- OpenCV
-- Stella VSLAM
-- g2o
-- Node.js
-- React
-- THREE.js
-- PostgreSQL
+```mermaid
+graph TB
+    subgraph "Core Dependencies"
+        A[VSLAM Processing] --> B[Database Conversion]
+        B --> C[Graph Processing]
+        C --> D[Map Data Init]
+        D --> E[Authoring Backend]
+    end
+    
+    subgraph "Supporting Components"
+        F[Image Processing] --> C
+        G[Face Blurring] --> E
+        H[Map Merging] --> C
+        I[File Processing] --> A
+    end
+    
+    subgraph "Visualization"
+        J[SQLite Viewer] --> B
+        K[Authoring Frontend] --> E
+    end
+    
+    style A fill:#e1f5fe
+    style E fill:#c8e6c9
+    style J fill:#fff3e0
+```
 
-### External Services
-- Insta360 SDK
-- Docker
-- Web servers
+## Configuration and Environment
 
-## Component Configuration
+### Component-Specific Configuration
 
-### Environment Setup
-- Base configuration
-- Profile-specific settings
-- Secret management
+Each component has its own configuration requirements:
 
-### Performance Tuning
-- VSLAM parameters
-- Graph optimization settings
-- Database configuration
+**VSLAM Processing**:
+- Camera configuration files
+- Vocabulary files
+- Location metadata JSON
+
+**Authoring Backend**:
+- Database connection settings
+- File upload paths
+- Port configuration
+
+**Graph Processing**:
+- Grid size parameters
+- Sharpness thresholds
+- Coordinate scaling factors
+
+### Environment Variables
+
+Common environment variables used across components:
+
+```bash
+# Core paths
+CV_HOME_DIR=/path/to/sitexplorer
+CV_KEYFRAME_IMG_DIR=/path/to/images
+CV_DB_DIR=/path/to/databases
+
+# Processing parameters
+CV_COORDS_TO_METRES=10
+CV_PRUNE_GRID_SIZE=5.0
+CV_AUTHORING_PORT=3005
+
+# Feature flags
+CV_VSLAM_MAP=true
+CV_GRAPH_PRUNE=true
+CV_START_AUTHORING=true
+```
 
 ## Development Guidelines
 
-### Component Development
-1. Follow established patterns
-2. Maintain documentation
-3. Include unit tests
-4. Consider performance impact
+### Adding New Components
 
-### Integration Guidelines
-1. Use defined interfaces
-2. Handle errors gracefully
-3. Maintain backward compatibility
-4. Document changes
+1. **Create component directory** in `Apps/`
+2. **Define configuration** in profile JSON files
+3. **Add build scripts** to `BUILD_SITEXPLORER.sh`
+4. **Update environment manager** for configuration
+5. **Add pipeline integration** to `RUNME.sh`
 
-## Maintenance Considerations
+### Component Communication
 
-### Monitoring
-- Performance metrics
-- Error tracking
-- Resource usage
+Components communicate through:
+- **File system**: Shared data directories
+- **Database**: SQLite for spatial data
+- **Environment variables**: Configuration sharing
+- **JSON files**: Metadata and configuration
 
-### Updates
-- Version control
-- Dependency management
-- Security patches
+### Testing Components
 
-### Backup
-- Database backups
-- Configuration backups
-- Media storage 
+Each component should include:
+- **Unit tests** for core functionality
+- **Integration tests** for component interaction
+- **Configuration validation** for environment setup
+- **Performance benchmarks** for optimization
+
+## Troubleshooting
+
+### Common Issues
+
+1. **VSLAM Processing Failures**:
+   - Check camera configuration files
+   - Verify vocabulary file paths
+   - Ensure video format compatibility
+
+2. **Graph Processing Errors**:
+   - Validate database schema
+   - Check coordinate scaling parameters
+   - Verify sharpness data availability
+
+3. **Authoring Backend Issues**:
+   - Check database connectivity
+   - Verify file upload permissions
+   - Validate environment configuration
+
+### Debugging Tools
+
+- **SQLite Viewer**: Visual inspection of spatial data
+- **Log files**: Component-specific logging
+- **Environment validation**: Configuration checking
+- **Performance monitoring**: Resource usage tracking
+
+This components documentation provides a comprehensive overview of each component's purpose, architecture, and integration within the Sitexplorer system.

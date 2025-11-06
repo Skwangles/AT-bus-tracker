@@ -57,6 +57,8 @@ struct OtherNode {
     int ref_id;         // Reference to node in Nodes table
     std::string label;  // Label string
     std::string description; // Raw text description
+    std::string info;   // Extra info for InfoSpots
+    std::string image;  // Optional image name
     OtherNodeType type; // Node type
     double x_trans;     // X translation
     double y_trans;     // Y translation

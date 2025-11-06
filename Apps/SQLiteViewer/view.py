@@ -9,7 +9,6 @@ SHOW_EDGES = True
 EDGE_TYPE_EDGECONTRACTION = 3
 EDGE_TYPE_COVISIBILITY = -1
 
-table_name_prefix = ""
 db_path = ""
 
 class Node:
@@ -60,7 +59,7 @@ def load_other_nodes(db_path):
         connection.close()
         return []
     
-    sql_str = "SELECT id, ref_id, label, description, type, x_trans, y_trans, z_trans FROM other_nodes"
+    sql_str = "SELECT id, ref_id, label, description, info, image, type, x_trans, y_trans, z_trans FROM other_nodes"
     print("Executing:", sql_str)
     cursor.execute(sql_str)
     other_nodes_data = cursor.fetchall()
@@ -69,7 +68,7 @@ def load_other_nodes(db_path):
     # Convert to Node objects for consistency
     other_nodes = []
     for row in other_nodes_data:
-        node_id, ref_id, label, description, node_type, x_trans, y_trans, z_trans = row
+        node_id, ref_id, label, description, info, image, node_type, x_trans, y_trans, z_trans = row
         # Create a Node object with the other_node data
         # We'll use a special keyframe_id format to distinguish from regular nodes
         special_id = f"other_{node_id}"
@@ -82,6 +81,8 @@ def load_other_nodes(db_path):
         node.ref_id = ref_id
         node.label = label
         node.description = description
+        node.info = info or ""
+        node.image = image or ""
         node.node_type = node_type
         other_nodes.append(node)
     
@@ -95,19 +96,19 @@ def load_edges(db_path, all=False):
     # Check if the prefixed table exists, otherwise use the regular table
     table_name = "edges"
     
-    # Check if the table has the type and zone columns (refined_edges structure)
+            # Check if the table has the type and zone columns
     cursor.execute(f"PRAGMA table_info({table_name})")
     columns = [column[1] for column in cursor.fetchall()]
     has_type_column = 'type' in columns
     has_zone_column = 'zone' in columns
-    
+        
     if has_type_column and has_zone_column:
-        # Use the refined_edges structure with type and zone
-        if all:
-            cursor.execute(f"SELECT keyframe_id0, keyframe_id1, type, zone FROM edges")
-        else:
-            cursor.execute(f"SELECT keyframe_id0, keyframe_id1, type, zone FROM edges WHERE type >= 0")
-        print(f"Loading edges with type and zone from edges")
+            # Use the edges structure with type and zone
+            if all:
+                cursor.execute(f"SELECT keyframe_id0, keyframe_id1, type, zone FROM edges")
+            else:
+                cursor.execute(f"SELECT keyframe_id0, keyframe_id1, type, zone FROM edges WHERE type >= 0")
+            print(f"Loading edges with type and zone from edges")
     else:
         # Fall back to basic structure
         if table_name == "edges":
@@ -180,27 +181,25 @@ def export_changes():
         connection = sqlite3.connect(db_path)
         cursor = connection.cursor()
         
-        
-        
         delete_edges = [(int(id), int(id),) for id in removeable_ids]
         delete_nodes = [(int(id),) for id in removeable_ids]
         
         print("Removing:", delete_nodes )
-        cursor.executemany("DELETE FROM " + table_name_prefix + "edges WHERE keyframe_id0 = ? OR keyframe_id1 = ?;", delete_edges)
+        cursor.executemany("DELETE FROM edges WHERE keyframe_id0 = ? OR keyframe_id1 = ?;", delete_edges)
         print("Wrote:", cursor.rowcount)
-        cursor.executemany("DELETE FROM " + table_name_prefix + "node_locations WHERE keyframe_id = ?;", delete_nodes)
+        cursor.executemany("DELETE FROM node_locations WHERE keyframe_id = ?;", delete_nodes)
         print("Wrote:", cursor.rowcount)
         
         # Delete from other_nodes table
-        cursor.executemany("DELETE FROM " + table_name_prefix + "other_nodes WHERE ref_id = ?;", delete_nodes)
+        cursor.executemany("DELETE FROM other_nodes WHERE ref_id = ?;", delete_nodes)
         print("Wrote other_nodes:", cursor.rowcount)
         
         # Delete from elevator_edges table (this will be handled by CASCADE, but we'll do it explicitly for safety)
-        cursor.execute("DELETE FROM " + table_name_prefix + "elevator_edges WHERE id0 IN (SELECT id FROM " + table_name_prefix + "other_nodes WHERE ref_id IN (" + ",".join("?" * len(delete_nodes)) + ")) OR id1 IN (SELECT id FROM " + table_name_prefix + "other_nodes WHERE ref_id IN (" + ",".join("?" * len(delete_nodes)) + "));", delete_nodes + delete_nodes)
+        cursor.execute("DELETE FROM elevator_edges WHERE id0 IN (SELECT id FROM other_nodes WHERE ref_id IN (" + ",".join("?" * len(delete_nodes)) + ")) OR id1 IN (SELECT id FROM other_nodes WHERE ref_id IN (" + ",".join("?" * len(delete_nodes)) + "));", delete_nodes + delete_nodes)
         print("Wrote elevator_edges:", cursor.rowcount)
         
         print("Wrote:", cursor.rowcount)
-        cursor.executemany("DELETE FROM " + table_name_prefix+ "nodes WHERE keyframe_id = ?;", delete_nodes)
+        cursor.executemany("DELETE FROM nodes WHERE keyframe_id = ?;", delete_nodes)
         print("Wrote:", cursor.rowcount)
         
         confirmed = input("Confirm removal (y/N):")
@@ -248,13 +247,13 @@ def show_neighbours():
                 x_trans,
                 y_trans,
                 z_trans
-            FROM """ + table_name_prefix + """nodes
+            FROM nodes
             WHERE keyframe_id = ?
             )
 
             SELECT
                 rn.keyframe_id, rn.x_trans, rn.y_trans, rn.z_trans
-                FROM """+ table_name_prefix + """nodes rn
+                FROM nodes rn
             JOIN target_point ON(
                 sqrt(pow(rn.x_trans - target_point.x_trans, 2) +
                     pow(rn.z_trans - target_point.z_trans, 2) +
@@ -291,13 +290,14 @@ def connect_points():
     
     print("Connecting", picked_id, "to", second_id)
 
-    find_zone_sql = "SELECT zone FROM " + table_name_prefix + "nodes WHERE keyframe_id = ?"
+    find_zone_sql = "SELECT zone FROM nodes WHERE keyframe_id = ?"
     result = cursor.execute(find_zone_sql, (int(picked_id),))
     zone = result.fetchone()[0]
     print("Zone:", zone)
 
-    cursor.execute("INSERT INTO " + table_name_prefix + "edges (keyframe_id0, keyframe_id1, type, zone) VALUES (?, ?, ?, ?) ON CONFLICT (keyframe_id0, keyframe_id1) DO UPDATE SET type=? WHERE type = ?", (picked_id, second_id, EDGE_TYPE_EDGECONTRACTION, zone, EDGE_TYPE_EDGECONTRACTION, EDGE_TYPE_COVISIBILITY,))
-    cursor.execute("INSERT INTO " + table_name_prefix + "edges (keyframe_id0, keyframe_id1, type, zone) VALUES (?, ?, ?, ?) ON CONFLICT (keyframe_id0, keyframe_id1) DO UPDATE SET type=? WHERE type = ?", (second_id, picked_id, EDGE_TYPE_EDGECONTRACTION, zone, EDGE_TYPE_EDGECONTRACTION, EDGE_TYPE_COVISIBILITY,))
+    # yes, this is vulnerable to SQL injection
+    cursor.execute("INSERT INTO edges (keyframe_id0, keyframe_id1, type, zone) VALUES (?, ?, ?, ?) ON CONFLICT (keyframe_id0, keyframe_id1) DO UPDATE SET type=? WHERE type = ?", (picked_id, second_id, EDGE_TYPE_EDGECONTRACTION, zone, EDGE_TYPE_EDGECONTRACTION, EDGE_TYPE_COVISIBILITY,))
+    cursor.execute("INSERT INTO edges (keyframe_id0, keyframe_id1, type, zone) VALUES (?, ?, ?, ?) ON CONFLICT (keyframe_id0, keyframe_id1) DO UPDATE SET type=? WHERE type = ?", (second_id, picked_id, EDGE_TYPE_EDGECONTRACTION, zone, EDGE_TYPE_EDGECONTRACTION, EDGE_TYPE_COVISIBILITY,))
     if (cursor.rowcount > 0):
         print("Edge created successfully. Restart to load...")
     connection.commit()
@@ -342,8 +342,12 @@ def toggle_edges():
     
 def picked_point(picked):
     global picked_id
-    id = idx_to_id[pos_map[str(picked)]]
-    print("Picked", picked, "Keyframe_id:", id)
+    pos = str(f"[{picked[0]:.3f}, {picked[1]:.3f}, {picked[2]:.3f}]")
+    if pos not in pos_map:
+        print("pos not in pos_map", pos)
+        return
+    pos_pos = pos_map[pos]
+    id = idx_to_id[pos_map[pos_pos]]
     if id != None and id != -1:
         picked_id = id
 
@@ -383,7 +387,9 @@ def render(nodes_list, other_nodes_list=None, edges=None, elevator_edges=None):
     print(f"Sample mappings: {list(mapped.items())[:10]}")
     
     for i, node in tqdm(enumerate(nodes_list)):
-        pos_map[str(node.position)] = i
+        pos = f"[{node.position[0]:.4f}, {node.position[1]:.4f}, {node.position[2]:.4f}]"
+        pos_map[pos] = i
+    print("pos map", pos_map.keys())
         
     # Add other_nodes to the lookup as well
     if other_nodes_list:
@@ -396,7 +402,7 @@ def render(nodes_list, other_nodes_list=None, edges=None, elevator_edges=None):
     print("Adding nodes to the plot...")
     # Create a PolyData object with the points rendered as arrows
     
-    # points = pv.PolyData(list(map(lambda x: x.position, nodes.position)))
+    points = pv.PolyData(list(map(lambda x: x.position, nodes)))
     for node in tqdm(nodes_list):
         plotter.add_mesh(node.get_arrow(), color="green", pickable=True)
         # plotter.add_point_labels(node.position, [str(node.keyframe_id)], font_size=10, point_size=10, color="black")
@@ -424,21 +430,10 @@ def render(nodes_list, other_nodes_list=None, edges=None, elevator_edges=None):
         
     # Add legend
     legend_entries = [
-        ("Green Arrows", "Regular SLAM nodes"),
-        ("Gray Spheres", "Normal other nodes"),
-        ("Red Spheres", "Elevator nodes"),
-        ("Orange Spheres", "Info/Toilet nodes"),
-        ("Purple Spheres", "Room nodes"),
         ("N", "Normal node"),
         ("E", "Elevator node"),
         ("I", "Info/Toilet node"),
-        ("R", "Room node"),
-        ("Blue Lines", "Type 0 edges"),
-        ("Green Lines", "Type 1 edges"),
-        ("Orange Lines", "Type 2 edges (default)"),
-        ("Red Lines", "Type 3 edges (edge contraction)"),
-        ("Purple Lines", "Covisibility edges"),
-        ("Cyan Lines", "Elevator edges")
+        ("R", "Room node")
     ]
     
     # Create a simple text legend
@@ -446,8 +441,8 @@ def render(nodes_list, other_nodes_list=None, edges=None, elevator_edges=None):
     plotter.add_text(legend_text, position='upper_left', font_size=12, color='black')
         
     # print("Points:", points)
-    # plotter.add_mesh(points, color="blue", point_size=5.0, render_points_as_spheres=True, pickable=True)
-    plotter.add_axes(True)
+    plotter.add_mesh(points, color="blue", point_size=5.0, render_points_as_spheres=True, pickable=True)
+    plotter.add_axes(interactive=True)
     plotter.add_axes_at_origin(labels_off=True)
 
     # Add edges to the plot (optional)
@@ -527,7 +522,7 @@ def render(nodes_list, other_nodes_list=None, edges=None, elevator_edges=None):
 if __name__ == "__main__":
     import sys
     if len(sys.argv) < 2:
-        print("Usage: python render.py <database file> <optional - table_name_prefix e.g. 'refined_'>")
+        print("Usage: python render.py <database file>")
         sys.exit(1)
 
     db_path = sys.argv[1]

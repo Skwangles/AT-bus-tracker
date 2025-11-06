@@ -8,7 +8,7 @@ import logger from "../logger";
 import * as THREE from "three";
 
 export async function getFirstPointId(req: Request, res: Response) {
-  const firstPoint = await readDB(`SELECT keyframe_id FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes WHERE keyframe_id >= 0 LIMIT 1;`, [], true);
+  const firstPoint = await readDB(`SELECT keyframe_id FROM nodes WHERE keyframe_id >= 0 LIMIT 1;`, [], true);
   if (firstPoint && 'keyframe_id' in firstPoint) {
     res.json(firstPoint.keyframe_id)
   }
@@ -28,11 +28,11 @@ export async function pathfindFromPointId(req: Request, res: Response) {
   }
 
   // Check label first, as these are manually annotated (and supposedly special) points
-  let locationResults = await readDB(`SELECT otn.ref_id as keyframe_id FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes otn WHERE otn.label = ? LIMIT 1;`, [locationCode], true);
+  let locationResults = await readDB(`SELECT otn.ref_id as keyframe_id FROM other_nodes otn WHERE otn.label = ? LIMIT 1;`, [locationCode], true);
   let isLabel = true;
   if (!locationResults) {
     isLabel = false
-    const firstPointWithLocation = (await readDB(`SELECT n.keyframe_id FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations nl ON n.keyframe_id = nl.keyframe_id WHERE nl.location = ? LIMIT 1;`, [locationCode], true));
+    const firstPointWithLocation = (await readDB(`SELECT n.keyframe_id FROM nodes n JOIN node_locations nl ON n.keyframe_id = nl.keyframe_id WHERE nl.location = ? LIMIT 1;`, [locationCode], true));
     if (firstPointWithLocation.length === 0) {
       logger.warn(`[PathfindFromPointId] Failed to find endpoint for a location, for start: ${point} and end location: ${locationCode}`)
       res.status(400).send("End location could not be found");
@@ -63,7 +63,7 @@ export async function findNeigboursFromPointId(req: Request, res: Response) {
 
   // Fetch the initial point
   const currentPoint = await readDB(
-    `SELECT x_trans, y_trans, z_trans FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes WHERE keyframe_id = ?`,
+    `SELECT x_trans, y_trans, z_trans FROM nodes WHERE keyframe_id = ?`,
     [mainPointId], true
   );
   if (!currentPoint) {
@@ -85,8 +85,8 @@ export async function getPointInfoFromId(req: Request, res: Response) {
 
   const pointData = await readDB(
     `SELECT n.keyframe_id, n.ts, n.pose, l.location, n.x_trans, n.y_trans, n.z_trans 
-     FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n 
-     LEFT JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l 
+     FROM nodes n 
+     LEFT JOIN node_locations l 
      ON n.keyframe_id = l.keyframe_id 
      WHERE n.keyframe_id = ?;`, 
     [id], true
@@ -94,12 +94,14 @@ export async function getPointInfoFromId(req: Request, res: Response) {
 
   // Fetch associated labels
   const labelRows = await readDB(
-    `SELECT label, description, type FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes WHERE ref_id = ?;`,
+    `SELECT label, description, info, image, type FROM other_nodes WHERE ref_id = ?;`,
     [id]
   );
   const labels = Array.isArray(labelRows) ? labelRows.map((row: any) => ({
     label: row.label,
     description: row.description,
+    info: row.info,
+    image: row.image,
     type: row.type
   })) : [];
 
@@ -119,7 +121,7 @@ export async function getPointInfoFromId(req: Request, res: Response) {
  * Create a new point with the given position, type, and label
  */
 export async function createNewPoint(req: Request, res: Response) {
-  const { x_trans, y_trans, z_trans, type, label, location, description } = req.body;
+  const { x_trans, y_trans, z_trans, type, label, location, description, info, image } = req.body;
 
   // Validate input
   if (isNaN(Number(x_trans)) || isNaN(Number(y_trans)) || isNaN(Number(z_trans)) ||
@@ -143,7 +145,7 @@ export async function createNewPoint(req: Request, res: Response) {
     // 1. Insert into nodes table
     const timestamp = Date.now();
     const result = await writeDB(
-      `INSERT INTO ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes 
+      `INSERT INTO nodes 
        (ts, pose, x_trans, y_trans, z_trans, zone) 
        VALUES (?, ?, ?, ?, ?, ?)`,
       [timestamp, poseBuffer, x_trans, y_trans, z_trans, null]
@@ -164,7 +166,7 @@ export async function createNewPoint(req: Request, res: Response) {
 
     // 2. Insert into node_locations table
     await writeDB(
-      `INSERT INTO ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations 
+      `INSERT INTO node_locations 
        (keyframe_id, location) VALUES (?, ?)`,
       [keyframeId, location]
     );
@@ -172,15 +174,15 @@ export async function createNewPoint(req: Request, res: Response) {
     // 3. Insert into other_nodes table if label is provided
     if (label) {
       await writeDB(
-        `INSERT INTO ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes 
-         (ref_id, label, description, type, x_trans, y_trans, z_trans) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [keyframeId, label, label, 0, 0, 0, 0]
+        `INSERT INTO other_nodes 
+         (ref_id, label, description, info, image, type, x_trans, y_trans, z_trans) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [keyframeId, label, description || label, info || '', image || '', 0, 0, 0, 0]
       );
     }
 
     // 4. Insert into floorplan_points table
     await writeDB(
-      `INSERT INTO ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_points 
+      `INSERT INTO floorplan_points 
        (location, x, y, keyframe_id, type) VALUES (?, ?, ?, ?, ?)`,
       [location, 0.5, 0.5, keyframeId, type || FLOOR_POINT_DEFAULT_TYPE]
     );
@@ -201,7 +203,7 @@ export async function createNewPoint(req: Request, res: Response) {
 export async function getRandomPointId(req: Request, res: Response) {
   try {
     const result = await readDB(
-      `SELECT keyframe_id FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes WHERE keyframe_id >= 0 ORDER BY RANDOM() LIMIT 1;`,
+      `SELECT keyframe_id FROM nodes WHERE keyframe_id >= 0 ORDER BY RANDOM() LIMIT 1;`,
       [],
       true
     );
@@ -231,7 +233,7 @@ export async function getNearbyPoints(req: Request, res: Response) {
     // Get the reference point
     const referencePoint = await readDB(
       `SELECT keyframe_id, x_trans, y_trans, z_trans 
-       FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes 
+       FROM nodes 
        WHERE keyframe_id = ?`,
       [pointId],
       true
@@ -247,7 +249,7 @@ export async function getNearbyPoints(req: Request, res: Response) {
     if (location) {
       locationFilter = `
         AND EXISTS (
-          SELECT 1 FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations nl 
+          SELECT 1 FROM node_locations nl 
           WHERE nl.keyframe_id = n.keyframe_id AND nl.location = ?
         )
       `;
@@ -263,8 +265,8 @@ export async function getNearbyPoints(req: Request, res: Response) {
                POWER(n.y_trans - ?, 2) + 
                POWER(n.z_trans - ?, 2)
              ) as distance
-      FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n
-      LEFT JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_points fp 
+      FROM nodes n
+      LEFT JOIN floorplan_points fp 
         ON n.keyframe_id = fp.keyframe_id
       WHERE n.keyframe_id != ? 
         AND SQRT(
@@ -307,9 +309,9 @@ export async function getClusteringStats(req: Request, res: Response) {
     // Get all points for this location
     const pointsQuery = `
       SELECT n.keyframe_id, n.x_trans, n.y_trans, n.z_trans, fp.type
-      FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n
-      JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations nl ON n.keyframe_id = nl.keyframe_id
-      LEFT JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_points fp ON n.keyframe_id = fp.keyframe_id
+      FROM nodes n
+      JOIN node_locations nl ON n.keyframe_id = nl.keyframe_id
+      LEFT JOIN floorplan_points fp ON n.keyframe_id = fp.keyframe_id
       WHERE nl.location = ?
       ORDER BY n.keyframe_id
     `;
@@ -393,7 +395,7 @@ export async function getPointImage(req: Request, res: Response) {
   try {
     // Get the timestamp for this point
     const pointResult = await readDB(
-      `SELECT ts FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes WHERE keyframe_id = ?`,
+      `SELECT ts FROM nodes WHERE keyframe_id = ?`,
       [pointId],
       true
     );
@@ -430,7 +432,7 @@ export async function getPointLabels(req: Request, res: Response) {
   try {
     const otherNodes = await readDB(
       `SELECT id, ref_id, label, description, type, x_trans, y_trans, z_trans 
-       FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes 
+       FROM other_nodes 
        WHERE ref_id = ? 
        ORDER BY type, label`,
       [pointId]
@@ -454,6 +456,8 @@ export async function addPointLabel(req: Request, res: Response) {
     label, 
     type = 0, 
     description = '', 
+    info = '',
+    image = '',
     x_offset = 0, 
     y_offset = 0.05, 
     z_offset = 0 
@@ -468,7 +472,7 @@ export async function addPointLabel(req: Request, res: Response) {
   try {
     // Get node coordinates for positioning
     const nodeResult = await readDB(
-      `SELECT x_trans, y_trans, z_trans FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes WHERE keyframe_id = ?`,
+      `SELECT x_trans, y_trans, z_trans FROM nodes WHERE keyframe_id = ?`,
       [pointId],
       true
     );
@@ -485,7 +489,7 @@ export async function addPointLabel(req: Request, res: Response) {
 
     // Check if label already exists
     const existingLabel = await readDB(
-      `SELECT id FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes 
+      `SELECT id FROM other_nodes 
        WHERE ref_id = ? AND label = ?`,
       [pointId, label],
       true
@@ -501,10 +505,10 @@ export async function addPointLabel(req: Request, res: Response) {
     
     // Insert into other_nodes table
     await writeDB(
-      `INSERT INTO ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes 
-       (ref_id, label, description, type, x_trans, y_trans, z_trans) 
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [pointId, label, description, type, finalX, finalY, finalZ]
+      `INSERT INTO other_nodes 
+       (ref_id, label, description, info, image, type, x_trans, y_trans, z_trans) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [pointId, label, description, info, image, type, finalX, finalY, finalZ]
     );
     
     res.status(201).json({ 
@@ -523,7 +527,7 @@ export async function addPointLabel(req: Request, res: Response) {
  */
 export async function updatePointLabel(req: Request, res: Response) {
   const pointId = Number(req.params.id);
-  const { old_label, new_label, type = 0, description = '' } = req.body;
+  const { old_label, new_label, type = 0, description = '', info = '', image = '' } = req.body;
 
   if (isNaN(pointId)) {
     logger.warn(`[updatePointLabel] Invalid point ID: ${pointId}`);
@@ -533,10 +537,10 @@ export async function updatePointLabel(req: Request, res: Response) {
 
   try {
     await writeDB(
-      `UPDATE ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes 
-       SET label = ?, description = ?, type = ? 
+      `UPDATE other_nodes 
+       SET label = ?, description = ?, info = ?, image = ?, type = ? 
        WHERE ref_id = ? AND label = ?`,
-      [new_label, description, type, pointId, old_label]
+      [new_label, description, info, image, type, pointId, old_label]
     );
     
     res.status(200).json({ 
@@ -565,7 +569,7 @@ export async function deleteOtherNode(req: Request, res: Response) {
 
   try {
     const result = await writeDB(
-      `DELETE FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes WHERE id = ?`,
+      `DELETE FROM other_nodes WHERE id = ?`,
       [otherNodeId]
     );
     

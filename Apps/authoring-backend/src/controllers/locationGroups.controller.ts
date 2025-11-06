@@ -40,7 +40,7 @@ enum ReservedTypeIndex {
 export async function getAllLocationGroups(req: Request, res: Response) {
   try {
     // Get all unique locations
-    const locations = await readDB(`SELECT DISTINCT l.location FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l ORDER BY l.location;`)
+    const locations = await readDB(`SELECT DISTINCT l.location FROM node_locations l ORDER BY l.location;`)
     
     const locationGroups: LocationGroupMetadata[] = []
     
@@ -54,8 +54,8 @@ export async function getAllLocationGroups(req: Request, res: Response) {
       // Get point count for this location
       const pointCountResult = await readDB(
         `SELECT COUNT(DISTINCT n.keyframe_id) as count 
-         FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n 
-         JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l ON n.keyframe_id = l.keyframe_id 
+         FROM nodes n 
+         JOIN node_locations l ON n.keyframe_id = l.keyframe_id 
          WHERE l.location = ?`,
         [locationName],
         true
@@ -64,8 +64,8 @@ export async function getAllLocationGroups(req: Request, res: Response) {
       // Get last modified timestamp from nodes table (using ts column)
       const lastModifiedResult = await readDB(
         `SELECT MAX(n.ts) as last_modified 
-         FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n 
-         JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l ON n.keyframe_id = l.keyframe_id 
+         FROM nodes n 
+         JOIN node_locations l ON n.keyframe_id = l.keyframe_id 
          WHERE l.location = ?`,
         [locationName],
         true
@@ -74,8 +74,8 @@ export async function getAllLocationGroups(req: Request, res: Response) {
       // Check if there are any other_nodes for this location
       const labelCountResult = await readDB(
         `SELECT COUNT(DISTINCT otn.label) as count 
-         FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes otn 
-         JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l ON otn.ref_id = l.keyframe_id 
+         FROM other_nodes otn 
+         JOIN node_locations l ON otn.ref_id = l.keyframe_id 
          WHERE l.location = ?`,
         [locationName],
         true
@@ -86,7 +86,7 @@ export async function getAllLocationGroups(req: Request, res: Response) {
         pointCount: pointCountResult?.count || 0,
         hasImage: false, // No floorplan_images table in the schema
         imagePath: undefined,
-        lastModified: lastModifiedResult?.last_modified ? new Date(lastModifiedResult.last_modified * 1000).toISOString() : undefined,
+        lastModified: new Date(lastModifiedResult?.last_modified) ? new Date(lastModifiedResult.last_modified * 1000).toISOString() : undefined,
         description: `Location group with ${pointCountResult?.count || 0} points and ${labelCountResult?.count || 0} labels`
       })
     }
@@ -113,7 +113,7 @@ export async function getLocationGroupDetails(req: Request, res: Response) {
   try {
     // Get basic location info
     const locationExists = await readDB(
-      `SELECT 1 FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations WHERE location = ? LIMIT 1`,
+      `SELECT 1 FROM node_locations WHERE location = ? LIMIT 1`,
       [locationName],
       true
     )
@@ -130,9 +130,9 @@ export async function getLocationGroupDetails(req: Request, res: Response) {
          COUNT(DISTINCT otn.label) as labeledPoints,
          MIN(n.ts) as earliestPoint,
          MAX(n.ts) as latestPoint
-       FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n 
-       JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l ON n.keyframe_id = l.keyframe_id 
-       LEFT JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes otn ON n.keyframe_id = otn.ref_id
+       FROM nodes n 
+       JOIN node_locations l ON n.keyframe_id = l.keyframe_id 
+       LEFT JOIN other_nodes otn ON n.keyframe_id = otn.ref_id
        WHERE l.location = ?`,
       [locationName],
       true
@@ -141,9 +141,9 @@ export async function getLocationGroupDetails(req: Request, res: Response) {
     // Get edge count for this location
     const edgeCountResult = await readDB(
       `SELECT COUNT(*) as count
-       FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}edges e
-       JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l1 ON e.keyframe_id0 = l1.keyframe_id
-       JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l2 ON e.keyframe_id1 = l2.keyframe_id
+       FROM edges e
+       JOIN node_locations l1 ON e.keyframe_id0 = l1.keyframe_id
+       JOIN node_locations l2 ON e.keyframe_id1 = l2.keyframe_id
        WHERE l1.location = ? AND l2.location = ?`,
       [locationName, locationName],
       true
@@ -152,8 +152,8 @@ export async function getLocationGroupDetails(req: Request, res: Response) {
     // Get other_nodes for this location
     const labelsResult = await readDB(
       `SELECT otn.label, otn.keyframe_id, otn.description, otn.type
-       FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes otn
-       JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l ON otn.ref_id = l.keyframe_id
+       FROM other_nodes otn
+       JOIN node_locations l ON otn.ref_id = l.keyframe_id
        WHERE l.location = ?
        ORDER BY otn.label`,
       [locationName]
@@ -189,7 +189,7 @@ export async function createLocationGroup(req: Request, res: Response) {
   try {
     // Check if location already exists
     const existingLocation = await readDB(
-      `SELECT 1 FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations WHERE location = ? LIMIT 1`,
+      `SELECT 1 FROM node_locations WHERE location = ? LIMIT 1`,
       [name],
       true
     )
@@ -229,7 +229,7 @@ export async function updateLocationGroup(req: Request, res: Response) {
   try {
     // Check if location exists
     const existingLocation = await readDB(
-      `SELECT 1 FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations WHERE location = ? LIMIT 1`,
+      `SELECT 1 FROM node_locations WHERE location = ? LIMIT 1`,
       [locationName],
       true
     )
@@ -267,7 +267,7 @@ export async function deleteLocationGroup(req: Request, res: Response) {
   try {
     // Check if location has any nodes
     const nodeCount = await readDB(
-      `SELECT COUNT(*) as count FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations WHERE location = ?`,
+      `SELECT COUNT(*) as count FROM node_locations WHERE location = ?`,
       [locationName],
       true
     )
@@ -295,7 +295,7 @@ export async function deleteLocationGroup(req: Request, res: Response) {
 
 export async function getAllSearchableLabels(req: Request, res: Response) {
 
-  const locations = await readDB(`SELECT DISTINCT l.location FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l;`)
+  const locations = await readDB(`SELECT DISTINCT l.location FROM node_locations l;`)
   const parsed_locations = locations.map((location: any) => {
     if (!location || location == "" || location.length > REASONABLE_MAX_STRING_SIZE) {
       return null
@@ -308,8 +308,8 @@ export async function getAllSearchableLabels(req: Request, res: Response) {
     }
   })
 
-  const labels = await readDB(`SELECT label, l.location FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes s 
-    JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l ON l.keyframe_id = s.ref_id
+  const labels = await readDB(`SELECT label, l.location FROM other_nodes s 
+    JOIN node_locations l ON l.keyframe_id = s.ref_id
     WHERE s.label is not NULL AND s.label <> '' AND s.label <> '${ReservedTypeIndex[ReservedTypeIndex.Anchor]}'`)
 
   // Parse special labels types
@@ -380,7 +380,7 @@ export async function getPointWithLocationGroupOrLabelName(req: Request, res: Re
   }
 
   // Get FIRST node which has that location/label
-  const nodeWithOtherNodeLabel = await readDB(`SELECT n.keyframe_id, s.label FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}other_nodes s ON s.ref_id = n.keyframe_id WHERE s.label = ? LIMIT 1`, [name], true)
+  const nodeWithOtherNodeLabel = await readDB(`SELECT n.keyframe_id, s.label FROM nodes n JOIN other_nodes s ON s.ref_id = n.keyframe_id WHERE s.label = ? LIMIT 1`, [name], true)
 
   if (nodeWithOtherNodeLabel) {
     logger.debug(`[getPointWithLocationGroupOrLabelName] Found a label: ${nodeWithOtherNodeLabel}`)
@@ -388,7 +388,7 @@ export async function getPointWithLocationGroupOrLabelName(req: Request, res: Re
     return
   }
 
-  const firstNodeWithLocation = await readDB(`SELECT n.keyframe_id, l.location FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l ON n.keyframe_id = l.keyframe_id WHERE l.location = ? LIMIT 1`, [name], true)
+  const firstNodeWithLocation = await readDB(`SELECT n.keyframe_id, l.location FROM nodes n JOIN node_locations l ON n.keyframe_id = l.keyframe_id WHERE l.location = ? LIMIT 1`, [name], true)
   if (firstNodeWithLocation) {
     res.json(firstNodeWithLocation)
     return
