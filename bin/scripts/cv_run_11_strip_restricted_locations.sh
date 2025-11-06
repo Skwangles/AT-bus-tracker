@@ -51,9 +51,11 @@ if [[ ! -d "$OUTPUT_DIR" ]]; then
     mkdir -p "$OUTPUT_DIR" || error_exit "Failed to create output directory $OUTPUT_DIR"
 fi
 
-if [[ -d "$CV_HOME_DIR/py-venv" ]]; then
+if [[ ! -d "$CV_HOME_DIR/py-venv" ]]; then
+  echo "Creating Python virtual environment..."
   python3 -m venv "$CV_HOME_DIR/py-venv"
 fi
+echo "Activating virtual environment..."
 source "$CV_HOME_DIR/py-venv/bin/activate"
 
 pip install -r "$CV_HOME_DIR/Apps/strip_restricted/requirements.txt"

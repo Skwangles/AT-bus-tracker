@@ -39,9 +39,11 @@ cd "$CV_HOME_DIR"/Apps/GraphProcessor || error_exit "Failed to change directory 
 
 # Check if Python dependencies are installed
 echo "Checking Python dependencies..."
-if [[ -d "$CV_HOME_DIR/py-venv" ]]; then
+if [[ ! -d "$CV_HOME_DIR/py-venv" ]]; then
+  echo "Creating Python virtual environment..."
   python3 -m venv "$CV_HOME_DIR/py-venv"
 fi
+echo "Activating virtual environment..."
 source "$CV_HOME_DIR/py-venv/bin/activate"
 
 python -c "import numpy, networkx, scipy, sklearn, tqdm" 2>/dev/null || {

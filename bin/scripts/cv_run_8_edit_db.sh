@@ -29,9 +29,11 @@ cd "$CV_HOME_DIR"/Apps/SQLiteViewer || error_exit "Failed to change directory to
 
 echo "Setting up Python environment"
 
-if [[ -d "$CV_HOME_DIR/py-venv" ]]; then
+if [[ ! -d "$CV_HOME_DIR/py-venv" ]]; then
+  echo "Creating Python virtual environment..."
   python3 -m venv "$CV_HOME_DIR/py-venv"
 fi
+echo "Activating virtual environment..."
 source "$CV_HOME_DIR/py-venv/bin/activate"
 
 echo "Installing necessary libraries for SQLiteViewer"
