@@ -35,7 +35,7 @@
     "vslam_map_videos_comma_separated_names": "VID_20241219_095545_00_057.mp4,VID_20241219_115207_00_001.mp4",
     "vslam_map_headless": true,
     "vslam_map_name": "tga-vslam.db",
-    "vslam_config_file": "default.yaml",
+    "vslam_config_file": "default.yml",
     "edit_vslam_output_map_name": "map-edited.db",
     "export_in_map_name": "tga-vslam.db",
     "export_db_name": "dev.db",
