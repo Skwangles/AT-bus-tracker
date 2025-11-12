@@ -46,18 +46,17 @@ fi
 cd "$CV_HOME_DIR/Apps/ImageProcessor" || error_exit "Failed to change directory to $CV_HOME_DIR/Apps/ImageProcessor"
 
 # Create virtual environment if it doesn't exist
-VENV_DIR="venv"
-if [[ ! -d "$VENV_DIR" ]]; then
-    echo "Creating Python virtual environment..."
-    python3 -m venv "$VENV_DIR" || error_exit "Failed to create virtual environment"
+echo "Checking Python dependencies..."
+if [[ ! -d "$CV_HOME_DIR/py-venv" ]]; then
+  echo "Creating Python virtual environment..."
+  python3 -m venv "$CV_HOME_DIR/py-venv"
+  python -m ensurepip --default-pip
 fi
-
-# Activate virtual environment
 echo "Activating virtual environment..."
-source "$VENV_DIR/bin/activate" || error_exit "Failed to activate virtual environment"
+source "$CV_HOME_DIR/py-venv/bin/activate"
 
-# Install Python dependencies
 echo "Installing Python dependencies..."
+python -m ensurepip --default-pip
 pip install -r requirements.txt || error_exit "pip install failed"
 
 # Run the Python image splitter

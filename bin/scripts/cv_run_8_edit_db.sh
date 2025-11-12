@@ -32,6 +32,7 @@ echo "Setting up Python environment"
 if [[ ! -d "$CV_HOME_DIR/py-venv" ]]; then
   echo "Creating Python virtual environment..."
   python3 -m venv "$CV_HOME_DIR/py-venv"
+  python -m ensurepip --default-pip
 fi
 echo "Activating virtual environment..."
 source "$CV_HOME_DIR/py-venv/bin/activate"
