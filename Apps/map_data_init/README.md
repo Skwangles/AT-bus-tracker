@@ -69,14 +69,58 @@ await initDB(quit_if_tables_exist=False)
 close_db()
 ```
 
+## Environment Variables
+
+### Required Variables
+- `CV_HOME_DIR` - Root directory of the Sitexplorer project
+
+### Optional Variables
+- `CV_DB_DIR` - Directory containing SQLite database files (default: `"/Maps/"`)
+- `CV_INIT_DB_NAME` - Name of the database to initialize (default: `"campus.db"`)
+- `CV_INIT_USE_TABLE_PREFIX` - Whether to use table prefixes (default: `false`, set to `"true"` to enable)
+- `CV_INIT_TABLE_PREFIX` - Table prefix string (default: `"refined_"`)
+- `CV_INIT_DONT_OVERWRITE_MAP_POINTS` - Skip if map already configured (default: `false`, set to `"true"` to enable)
+
+## Scripts
+
+### `bin/scripts/cv_run_9_init_data.sh`
+Initializes map data in the database:
+- Builds the TypeScript project
+- Runs the initialization script
+- Creates floorplan_images and floorplan_points tables
+
+**Usage:**
+```bash
+./bin/scripts/cv_run_9_init_data.sh
+```
+
+**Environment Variables:**
+- Uses `CV_HOME_DIR`, `CV_DB_DIR`, `CV_INIT_DB_NAME`
+- Optional: `CV_INIT_USE_TABLE_PREFIX`, `CV_INIT_TABLE_PREFIX`, `CV_INIT_DONT_OVERWRITE_MAP_POINTS`
+
+## Pipeline Position
+
+The Map Data Initialization runs **after** the following steps:
+- `cv_run_1_process_files.sh` - File processing
+- `cv_run_2_map.sh` - VSLAM mapping
+- `cv_run_4_export_sqlite.sh` - Database export
+- `cv_run_6_prune_graph.sh` - Graph pruning (optional)
+
+**Before:**
+- Database must be exported and contain nodes, edges, and node_locations tables
+
+**After:**
+- Floorplan data ready for authoring system
+- `cv_run_10_start_authoring.sh` - Start authoring system
+
 ## Configuration
 
-### Environment Variables
+### Environment Variables (Legacy)
 
-The module respects these configuration options:
+The module also respects these configuration options (now via CV_ variables):
 
-- `USE_TABLE_PREFIX`: Whether to use table prefixes (default: True)
-- `TABLE_PREFIX`: Table prefix string (default: "refined_")
+- `USE_TABLE_PREFIX`: Whether to use table prefixes (now `CV_INIT_USE_TABLE_PREFIX`)
+- `TABLE_PREFIX`: Table prefix string (now `CV_INIT_TABLE_PREFIX`)
 
 ### Constants
 
