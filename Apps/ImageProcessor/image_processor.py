@@ -13,7 +13,7 @@ from PIL import Image
 load_dotenv()
 
 R2_ENDPOINT = os.getenv('CV_R2_ENDPOINT')
-R2_BUCKET = os.getenv('CV_R2_BUCKET_NAME')
+R2_BUCKET = os.getenv('CV_R2_BUCKET')
 R2_ACCESS_KEY_ID = os.getenv('CV_R2_ACCESS_KEY_ID')
 R2_SECRET_ACCESS_KEY = os.getenv('CV_R2_SECRET_ACCESS_KEY')
 R2_REGION = os.getenv('CV_R2_REGION', 'auto')
@@ -82,9 +82,10 @@ def upload_image_resolutions(local_path: str, ts: str):
     """
     Upload multiple resolution versions of an image to R2.
     """
+    print(f"AWS config: {R2_ENDPOINT}, {R2_BUCKET}, {R2_ACCESS_KEY_ID}, {R2_SECRET_ACCESS_KEY}, {R2_REGION}")
     for resolution_name, settings in RESOLUTION_LEVELS.items():
         remote_key = f"{ts}-{resolution_name}.{settings['extension']}"
-        
+        print(f"Uploading {local_path} to {remote_key}")
         # Check if file already exists
         try:
             s3.head_object(Bucket=R2_BUCKET, Key=remote_key)
@@ -129,29 +130,16 @@ def process_from_db(db_path: str, input_dir: str, output_dir: str):
                 print(f"File not found: {input_file}")
                 continue
             # Output file paths
-            eq_file = output_path / f"{ts}_eq.png"
             blurred_file = output_path / f"{ts}_blurred.png"
-            # Step 1: Histogram equalisation
-            if not eq_file.exists():
-                print(f"Equalising histogram for {input_file} -> {eq_file}")
-                image = cv2.imread(str(input_file))
-                if image is None:
-                    print(f"Failed to read {input_file}")
-                    continue
-                image_eq = process_image(image)
-                cv2.imwrite(str(eq_file), image_eq)
-            else:
-                print(f"Histogram equalised file exists: {eq_file}")
-            # Step 2: Blur faces using equirect-blur-image
             if not blurred_file.exists():
-                print(f"Blurring faces for {eq_file} -> {blurred_file}")
+                print(f"Blurring faces for {input_file} -> {blurred_file}")
                 models_dir = os.getenv('BLUR360_MODELS_DIR', '/usr/local/share/blur360/models')
                 cmd = [
-                    'equirect-blur-image',
+                    '/home/skwangles/Documents/Honours/FaceBlurring/blur360/build/src/equirect-blur-image',
                     f'-m={models_dir}',
                     '-b',
                     f'-o={blurred_file}',
-                    str(eq_file)
+                    str(input_file)
                 ]
                 try:
                     result = subprocess.run(cmd, capture_output=True, text=True, check=True)
