@@ -66,6 +66,7 @@
     "strip_remove": ["4", "Level 4"],
     "strip_keep_id": [],
     "strip_keep_labels": ["save"],
+    "strip_scale_factor": 15.0,
     "extract_in_db_name": "dev-pub.db",
     "extract_batch_size": 8,
     "extract_used_images_dir": "/media/skwangles/KINGSTON/MEDIA/TGA/blurred_pictures/",
@@ -74,8 +75,13 @@
     "server_floorplan_img_dir": "/media/skwangles/KINGSTON/MEDIA/TGA/floorplans",
     "use_r2": true,
     "r2_endpoint": "https://b86c45732de187c8f0043a8cb944b6a5.r2.cloudflarestorage.com",
-    "r2_bucket": "uow-tga-003",
-    "r2_region": "auto"
+    "r2_bucket_name": "uow-tga-003",
+    "r2_region": "auto",
+    "pg_host": "localhost",
+    "pg_port": 5432,
+    "pg_database": "",
+    "pg_user": "postgres",
+    "pg_password": ""
   },
   "env_file": ".env.tga"
 } 

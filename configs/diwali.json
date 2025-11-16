@@ -11,9 +11,9 @@
     "merge_maps": false,
     "edit_db_visually": false,
     "init_data": false,
-    "start_authoring": false,
-    "strip_restricted_nodes": false,
-    "extract_used_images": true,
+    "start_authoring": true,
+    "strip_restricted_nodes": true,
+    "extract_used_images": false,
     "export_files": true
   },
   "paths": {
@@ -71,12 +71,17 @@
     "extract_batch_size": 8,
     "extract_used_images_dir": "/media/skwangles/KINGSTON/MEDIA/X5/blurred_pictures/",
     "extract_face_blur": true,
-    "server_db_name": "pruned_diwali.db", 
+    "server_db_name": "diwali-pub.db", 
     "server_floorplan_img_dir": "/media/skwangles/KINGSTON/MEDIA/X5/FLOORPLANS/",
     "use_r2": true,
     "r2_endpoint": "https://b86c45732de187c8f0043a8cb944b6a5.r2.cloudflarestorage.com",
-    "r2_bucket": "diwali-001",
-    "r2_region": "auto"
+    "r2_bucket_name": "diwali-001",
+    "r2_region": "auto",
+    "pg_host": "localhost",
+    "pg_port": 5432,
+    "pg_database": "",
+    "pg_user": "postgres",
+    "pg_password": ""
   },
   "env_file": ".env.tga"
 } 
