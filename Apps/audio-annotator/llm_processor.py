@@ -38,7 +38,7 @@ FIELD DISTINCTIONS:
   - **CRITICAL RULE**: The FIRST area mentioned in the `data` array (chronologically, the earliest area) MUST ALWAYS have timestamp 0ms (t: 0), regardless of when it was actually spoken in the audio. This represents the starting area. If you create a data entry for the first area mentioned, set its timestamp to 0ms even if the transcription timestamp is different.
 
 - **`user_defined` array**: Use for custom labelled points (static markers at specific locations). Examples:
-  - "This point is the Tech Bar" → {"g": "Tech Bar", "t": <timestamp>}
+  - "This is the Tech Bar" → {"g": "Tech Bar", "t": <timestamp>}
   - "This is the reception desk" → {"g": "Reception Desk", "t": <timestamp>}
   - "Mark this as the entrance" → {"g": "Entrance", "t": <timestamp>}
   - Any instruction about marking a specific point or location
@@ -58,6 +58,11 @@ SPECIAL POINT FORMATS (in `user_defined` array):
    - Format: "$$<area name>"
    - Area name should be in Title Case
 
+4. **Anchor Points**: "This is an anchor point" or "Mark an anchor point here" → {"g": "!!anchor", "t": <timestamp>}
+   - Format: "!!anchor"
+   - This is a special point to help identify short corridors that may get 
+   - Area name should be in Title Case
+
 - **`disable_loop` array**: Use for loop detection control. Examples:
   - "Stop loop detection" → {"disable": true, "t": <timestamp>}
   - "Start loop detection" → {"disable": false, "t": <timestamp>}
@@ -74,6 +79,7 @@ RULES:
 8. Always return valid JSON, even if empty arrays.
 9. For elevators, use the context provided (recent transcriptions) to infer the current area/floor. (The shaft name is important to match with other elevators of the same shaft/elevator group)
 10. The Areas are important to match with other areas of the same area group - e.g. "Level 1" and "1st Level" refer to the same area, so should have the same group name, so you should use "Level 1" for both (or whichever is more common).
+11. Use the start timestamp of the segment to determine the timestamp for the entry - e.g when you start saying "this is <point>", the time should be when you start saying that not when you finish saying it.
 
 Return ONLY the JSON object, no additional text or explanation."""
 
@@ -136,7 +142,6 @@ class LLMProcessor:
                     {"role": "system", "content": self.system_prompt},
                     {"role": "user", "content": user_message}
                 ],
-                temperature=0.3,  # Lower temperature for more consistent parsing
                 response_format={"type": "json_object"}
             )
             
