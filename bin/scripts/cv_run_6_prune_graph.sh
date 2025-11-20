@@ -56,7 +56,7 @@ python -c "import numpy, networkx, scipy, sklearn, tqdm" 2>/dev/null || {
 VERBOSE_FLAG=""
 [[ "$VERBOSE" == "true" ]] && VERBOSE_FLAG="--verbose"
 
-python run_pruning.py prune "$CV_DB_DIR$CV_PRUNE_DB_NAME" --sharpness-json "$CV_PRECALCULATE_IMAGE_SHARPNESS_JSON_PATH" --grid-size "$GRID_SIZE" --coords-to-metres "$COORDS_TO_METRES" $VERBOSE_FLAG
+python run_pruning.py prune "$CV_DB_DIR$CV_PRUNE_DB_NAME" --sharpness-json "$CV_PRECALCULATE_IMAGE_SHARPNESS_JSON_PATH" --grid-size "$GRID_SIZE" --grid-size-y "$GRID_SIZE_Y" --coords-to-metres "$COORDS_TO_METRES" $VERBOSE_FLAG
 check_command "Pruning graph with grid-based method"
 
 cd "$ORIGINAL_DIR" || error_exit "Failed to change directory back to $ORIGINAL_DIR"
