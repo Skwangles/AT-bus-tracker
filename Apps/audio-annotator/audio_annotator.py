@@ -15,6 +15,7 @@ from pathlib import Path
 
 from whisper_transcriber import WhisperTranscriber
 from llm_processor import LLMProcessor
+from api_annotator import APIAnnotator
 
 
 def main():
@@ -51,6 +52,11 @@ def main():
         default="gpt-5",
         help="OpenAI GPT model to use (default: gpt-5)"
     )
+    parser.add_argument(
+        "--use-transcribe",
+        action="store_true",
+        help="Use gpt-4o with audio input to process audio directly with system prompt (combines transcription and annotation)"
+    )
     
     args = parser.parse_args()
     
@@ -63,35 +69,57 @@ def main():
     output_path = Path(args.output_file)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     
-    print(f"Loading Whisper model ({args.model_size})...")
-    transcriber = WhisperTranscriber(model_size=args.model_size)
+    # Get API key
+    api_key = args.api_key
+    if api_key is None:
+        api_key = os.getenv("OPENAI_API_KEY")
     
-    print(f"Transcribing audio file: {args.input_file}")
-    try:
-        segments = transcriber.transcribe(args.input_file)
-        print(f"Transcribed {len(segments)} segments")
-    except Exception as e:
-        print(f"Error during transcription: {e}", file=sys.stderr)
-        sys.exit(1)
-    
-    if not segments:
-        print("Warning: No transcription segments found. Creating empty JSON file.")
-        result = {
-            "data": [],
-            "user_defined": [],
-            "disable_loop": []
-        }
-    else:
-        print(f"Processing transcriptions with {args.model}...")
+    # Use gpt-4o-transcribe for direct audio processing
+    if args.use_transcribe:
+        if not api_key:
+            print("Error: OPENAI_API_KEY environment variable is not set and --api-key not provided.", file=sys.stderr)
+            sys.exit(1)
+        
+        print("Using gpt-4o with audio input for direct audio processing...")
         try:
-            processor = LLMProcessor(api_key=args.api_key, model=args.model)
-            result = processor.processSegments(segments)
+            annotator = APIAnnotator(api_key=api_key)
+            result = annotator.processAudio(args.input_file)
             print(f"Generated {len(result['data'])} data entries, "
                   f"{len(result['user_defined'])} user_defined entries, "
                   f"{len(result['disable_loop'])} disable_loop entries")
         except Exception as e:
-            print(f"Error during LLM processing: {e}", file=sys.stderr)
+            print(f"Error during audio processing: {e}", file=sys.stderr)
             sys.exit(1)
+    else:
+        print(f"Loading Whisper model ({args.model_size})...")
+        transcriber = WhisperTranscriber(model_size=args.model_size)
+        
+        print(f"Transcribing audio file: {args.input_file}")
+        try:
+            segments = transcriber.transcribe(args.input_file)
+            print(f"Transcribed {len(segments)} segments")
+        except Exception as e:
+            print(f"Error during transcription: {e}", file=sys.stderr)
+            sys.exit(1)
+        
+        if not segments:
+            print("Warning: No transcription segments found. Creating empty JSON file.")
+            result = {
+                "data": [],
+                "user_defined": [],
+                "disable_loop": []
+            }
+        else:
+            print(f"Processing transcriptions with {args.model}...")
+            try:
+                processor = LLMProcessor(api_key=args.api_key, model=args.model)
+                result = processor.processSegments(segments)
+                print(f"Generated {len(result['data'])} data entries, "
+                      f"{len(result['user_defined'])} user_defined entries, "
+                      f"{len(result['disable_loop'])} disable_loop entries")
+            except Exception as e:
+                print(f"Error during LLM processing: {e}", file=sys.stderr)
+                sys.exit(1)
     
     # Write output JSON
     print(f"Writing output to: {args.output_file}")
