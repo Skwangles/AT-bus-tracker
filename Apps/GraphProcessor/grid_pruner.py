@@ -168,39 +168,39 @@ class GridBasedPruner:
             logger.error(f"Error loading graph data: {e}")
             return False
     
-    def _get_grid_key(self, x: float, y: float, z: float, grid_size: float = 5.0) -> Tuple[int, int, int]:
+    def _get_grid_key(self, x: float, y: float, z: float, grid_size: float = 5.0, grid_size_y: float = 2.0) -> Tuple[int, int, int]:
         """
         Calculate the grid box key for given coordinates.
         
         Args:
             x, y, z: Coordinates in metres
             grid_size: Size of each grid box in metres (default: 5.0)
-            
+            NOTE: The grid_size is halved in the Y direction e.g. 10x5x10 grid box.
         Returns:
             Tuple[int, int, int]: Grid box coordinates (grid_x, grid_y, grid_z)
         """
         grid_x = int(math.floor(x / grid_size))
-        grid_y = int(math.floor(y / grid_size))
+        grid_y = int(math.floor(y / grid_size_y))
         grid_z = int(math.floor(z / grid_size))
         return (grid_x, grid_y, grid_z)
     
-    def _partition_into_grid(self, grid_size: float = 5.0) -> Dict[Tuple[int, int, int], List[int]]:
+    def _partition_into_grid(self, grid_size: float = 5.0, grid_size_y: float = 2.0) -> Dict[Tuple[int, int, int], List[int]]:
         """
         Partition all nodes into grid boxes.
         
         Args:
             grid_size: Size of each grid box in metres (default: 5.0)
-            
+            grid_size_y: Size of each grid box in the Y direction (default: 2.0)
         Returns:
             Dict mapping grid keys to lists of node IDs
         """
-        logger.info(f"Partitioning {len(self.nodes)} nodes into {grid_size}x{grid_size}x{grid_size}m grid boxes...")
+        logger.info(f"Partitioning {len(self.nodes)} nodes into {grid_size}x{grid_size_y}x{grid_size}m grid boxes...")
         
         grid_boxes = defaultdict(list)
         
         for node_id, node_data in self.nodes.items():
             x, y, z = node_data['x'], node_data['y'], node_data['z']
-            grid_key = self._get_grid_key(x, y, z, grid_size)
+            grid_key = self._get_grid_key(x, y, z, grid_size, grid_size_y)
             grid_boxes[grid_key].append(node_id)
         
         # Convert to regular dict
@@ -432,7 +432,7 @@ class GridBasedPruner:
         
         return is_connected
     
-    def grid_based_pruning(self, grid_size: float = 5.0) -> Dict:
+    def grid_based_pruning(self, grid_size: float = 5.0, grid_size_y: float = 2.0) -> Dict:
         """
         Perform grid-based pruning of the graph.
         
@@ -442,13 +442,13 @@ class GridBasedPruner:
         Returns:
             Dict with pruning statistics and results
         """
-        logger.info(f"Starting grid-based pruning with {grid_size}x{grid_size}x{grid_size}m grid boxes...")
+        logger.info(f"Starting grid-based pruning with {grid_size}x{grid_size_y}x{grid_size}m grid boxes...")
         
         original_nodes = len(self.nodes)
         original_edges = len(self.edges)
         
         # Step 1: Partition nodes into grid boxes
-        self._partition_into_grid(grid_size)
+        self._partition_into_grid(grid_size, grid_size_y)
         
         # Step 2: Select representative nodes for each box
         self._select_representatives()
@@ -478,6 +478,7 @@ class GridBasedPruner:
             'edge_reduction_percent': edge_reduction,
             'grid_boxes_created': len(self.grid_boxes),
             'grid_size_metres': grid_size,
+            'grid_size_y_metres': grid_size_y,
             'connectivity_maintained': connectivity_maintained,
             'coords_to_metres_scale': self.coords_to_metres
         }
@@ -485,7 +486,7 @@ class GridBasedPruner:
         logger.info("=== GRID PRUNING RESULTS ===")
         logger.info(f"Nodes: {original_nodes} → {final_nodes} ({node_reduction:.1f}% reduction)")
         logger.info(f"Edges: {original_edges} → {final_edges} ({edge_reduction:.1f}% reduction)")
-        logger.info(f"Grid boxes: {len(self.grid_boxes)} ({grid_size}x{grid_size}x{grid_size}m)")
+        logger.info(f"Grid boxes: {len(self.grid_boxes)} ({grid_size}x{grid_size_y}x{grid_size}m)")
         logger.info(f"Connectivity: {'✅ Maintained' if connectivity_maintained else '❌ Lost'}")
         logger.info(f"Coordinate scaling: {self.coords_to_metres}x")
         

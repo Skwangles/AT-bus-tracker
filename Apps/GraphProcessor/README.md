@@ -115,6 +115,65 @@ graph LR
 - Falls back to spatial centrality if no sharpness data available
 - Preserves highest quality visual references for better SLAM performance
 
+## Environment Variables
+
+### Required Variables
+- `CV_HOME_DIR` - Root directory of the Sitexplorer project
+- `CV_DB_DIR` - Directory containing SQLite database files
+- `CV_PRUNE_DB_NAME` - Name of the input database to prune
+- `CV_PRECALCULATE_IMAGE_SHARPNESS_JSON_PATH` - Path to JSON file with precalculated sharpness values
+
+### Optional Variables
+- `CV_PRUNE_GRID_SIZE` - Grid box size in metres (default: `5.0`)
+- `CV_PRUNE_COORDS_TO_METRES` - Coordinate scaling factor (default: `15.0`)
+- `CV_COORDS_TO_METRES` - Alternative name for coordinate scaling (default: `15.0`)
+- `CV_PRUNE_VERBOSE` - Enable verbose logging (default: `false`)
+- `CV_PRUNE_TABLE_PREFIX` - Table prefix for output (default: `"refined_"`)
+- `CV_PRUNE_TARGET_CLOSENESS` - Target closeness for grid partitioning (default: `5.0`)
+- `CV_PRUNE_ALWAYS_MERGE_CLOSENESS` - Always merge closeness threshold (default: `0.5`)
+- `CV_PRUNE_OUTDOORS_TARGET_CLOSENESS` - Outdoors target closeness (default: `7.0`)
+- `CV_PRUNE_OUTDOORS_ALWAYS_MERGE_CLOSENESS` - Outdoors always merge threshold (default: `1.0`)
+- `CV_PRUNE_Y_DIST_THRESHOLD` - Y distance threshold (default: `2.0`)
+- `CV_PRUNE_OUTDOORS_Y_DIST_THRESHOLD` - Outdoors Y distance threshold (default: `2.0`)
+- `CV_KEYFRAME_IMG_DIR` - Directory containing keyframe images
+- `CV_KEYFRAME_IMG_EXTENSION` - Image file extension (default: `".png"`)
+- `CV_OUTDOORS_LOCATION_NAME` - Name of outdoors location (default: `"outdoors"`)
+
+## Scripts
+
+### `bin/scripts/cv_run_6_prune_graph.sh`
+Runs grid-based graph pruning on the database:
+- Creates Python virtual environment if needed
+- Installs dependencies automatically
+- Processes database with grid-based pruning
+- Uses sharpness data for node selection
+
+**Usage:**
+```bash
+./bin/scripts/cv_run_6_prune_graph.sh
+```
+
+**Environment Variables:**
+- Uses `CV_DB_DIR`, `CV_PRUNE_DB_NAME`, `CV_PRECALCULATE_IMAGE_SHARPNESS_JSON_PATH`
+- Optional: `CV_PRUNE_GRID_SIZE`, `CV_PRUNE_COORDS_TO_METRES`, `CV_PRUNE_VERBOSE`
+
+## Pipeline Position
+
+The Graph Processor runs **after** the following steps:
+- `cv_run_1_process_files.sh` - File processing (creates keyframe images)
+- `cv_run_2_map.sh` - VSLAM mapping
+- `cv_run_4_export_sqlite.sh` - Database export
+- `cv_run_5_sharpness_calculate.sh` - Sharpness calculation (recommended)
+
+**Before:**
+- Database must be exported from VSLAM
+- Sharpness JSON file recommended (from `cv_run_5_sharpness_calculate.sh`)
+
+**After:**
+- Pruned database ready for further processing
+- `cv_run_7_merge_maps.sh` - Map merging (if multiple maps)
+- `cv_run_9_init_data.sh` - Data initialization
+
 ## Installation
 
 1. Install dependencies:

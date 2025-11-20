@@ -35,7 +35,7 @@
     "vslam_map_videos_comma_separated_names": "VID_20241219_095545_00_057.mp4,VID_20241219_115207_00_001.mp4",
     "vslam_map_headless": true,
     "vslam_map_name": "tga-vslam.db",
-    "vslam_config_file": "default.yaml",
+    "vslam_config_file": "default.yml",
     "edit_vslam_output_map_name": "map-edited.db",
     "export_in_map_name": "tga-vslam.db",
     "export_db_name": "dev.db",
@@ -45,6 +45,7 @@
     "precalculate_export_histogram": true,
     "prune_use_precalculated_image_sharpness": true,
     "prune_grid_size": 5.0,
+    "prune_grid_size_y": 2.0,
     "prune_coords_to_metres": 15.0,
     "prune_verbose": true,
     "prune_db_prefix": "",
@@ -66,6 +67,7 @@
     "strip_remove": ["4", "Level 4"],
     "strip_keep_id": [],
     "strip_keep_labels": ["save"],
+    "strip_scale_factor": 15.0,
     "extract_in_db_name": "dev-pub.db",
     "extract_batch_size": 8,
     "extract_used_images_dir": "/media/skwangles/KINGSTON/MEDIA/TGA/blurred_pictures/",
@@ -74,8 +76,13 @@
     "server_floorplan_img_dir": "/media/skwangles/KINGSTON/MEDIA/TGA/floorplans",
     "use_r2": true,
     "r2_endpoint": "https://b86c45732de187c8f0043a8cb944b6a5.r2.cloudflarestorage.com",
-    "r2_bucket": "uow-tga-003",
-    "r2_region": "auto"
+    "r2_bucket_name": "uow-tga-003",
+    "r2_region": "auto",
+    "pg_host": "localhost",
+    "pg_port": 5432,
+    "pg_database": "",
+    "pg_user": "postgres",
+    "pg_password": ""
   },
   "env_file": ".env.tga"
 } 

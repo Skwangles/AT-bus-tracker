@@ -1,6 +1,70 @@
 # SQLiteViewer - Enhanced Edge Visualisation
 
-This enhanced version of SQLiteViewer now supports comprehensive edge visualisation with the `refined_edges` table structure.
+Python-based 3D visualisation tool for SQLite databases containing SLAM map data. This enhanced version supports comprehensive edge visualisation with the `refined_edges` table structure.
+
+## Overview
+
+SQLiteViewer provides interactive 3D visualisation of spatial graph data stored in SQLite databases. It displays nodes, edges, and supports various edge types with colour coding for easy inspection and debugging of SLAM maps.
+
+## Environment Variables
+
+This application does not use any CV_ environment variables. It is a standalone visualisation tool that takes database file paths as command-line arguments.
+
+## Scripts
+
+This application is not called by any `bin/scripts/` scripts. It is a manual tool for visualising and inspecting databases.
+
+## Architecture
+
+```mermaid
+graph TB
+    subgraph "Input"
+        A[SQLite Database<br/>nodes, edges tables]
+    end
+    
+    subgraph "Processing"
+        B[Load Database<br/>SQLite3]
+        C[Parse Nodes<br/>Coordinates, IDs]
+        D[Parse Edges<br/>Connections, Types]
+        E[3D Rendering<br/>PyVista]
+    end
+    
+    subgraph "Output"
+        F[Interactive 3D Viewer<br/>Point cloud & edges]
+    end
+    
+    subgraph "External Dependencies"
+        G[SQLite3<br/>Database]
+        H[PyVista<br/>3D Visualisation]
+        I[NumPy<br/>Array Operations]
+    end
+    
+    A --> B
+    B --> C
+    B --> D
+    C --> E
+    D --> E
+    E --> F
+    B --> G
+    E --> H
+    C --> I
+    D --> I
+    
+    style A fill:#e1f5fe
+    style E fill:#f3e5f5
+    style F fill:#c8e6c9
+```
+
+## Pipeline Position
+
+SQLiteViewer is a **manual inspection tool** that can be used at any point after database creation:
+
+- **After** `cv_run_4_export_sqlite.sh` - View exported SLAM data
+- **After** `cv_run_6_prune_graph.sh` - Inspect pruned graph
+- **After** `cv_run_7_merge_maps.sh` - Verify merged maps
+- **After** `cv_run_9_init_data.sh` - Check floorplan data
+
+It is not part of the automated pipeline but is useful for debugging and visual verification.
 
 ## Features
 

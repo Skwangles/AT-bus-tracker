@@ -45,6 +45,7 @@
     "precalculate_export_histogram": true,
     "prune_use_precalculated_image_sharpness": true,
     "prune_grid_size": 5.0,
+    "prune_grid_size_y": 2.0,
     "prune_coords_to_metres": 15.0,
     "prune_verbose": false,
     "prune_db_prefix": "pruned_",
@@ -63,7 +64,7 @@
     "authoring_keyframe_img_extension": ".png",
     "strip_input_db": "pruned_tga-003.db",
     "strip_output_db": "tga-003-pub.db",
-    "strip_remove": ["Level 4"],
+    "strip_remove": [""],
     "strip_keep_id": [],
     "strip_keep_labels": ["!!anchor"],
     "strip_scale_factor": 15.0,
@@ -76,7 +77,12 @@
     "use_r2": true,
     "r2_endpoint": "https://b86c45732de187c8f0043a8cb944b6a5.r2.cloudflarestorage.com",
     "r2_bucket_name": "uow-tga-008",
-    "r2_region": "auto"
+    "r2_region": "auto",
+    "pg_host": "localhost",
+    "pg_port": 5432,
+    "pg_database": "",
+    "pg_user": "postgres",
+    "pg_password": ""
   },
   "env_file": ".env.tga"
 }

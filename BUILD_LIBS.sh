@@ -40,7 +40,7 @@ mkdir -p $NON_MODIFIABLE_LIBS_DIR
 
 echo "Initialising submodules"
 
-git submodule update --init --recursive
+git submodule update --recursive
 
 # Stella libs - https://stella-cv.readthedocs.io/en/latest/installation.html
 sudo apt update -y
@@ -48,9 +48,11 @@ sudo apt upgrade -y --no-install-recommends
 # basic dependencies
 sudo apt install -y build-essential pkg-config cmake git wget curl unzip
 # g2o dependencies
-sudo apt install -y libatlas-base-dev libsuitesparse-dev libdw-dev libdwarf-dev
+sudo apt install -y libsuitesparse-dev libdw-dev libdwarf-dev
 # OpenCV dependencies
 sudo apt install -y libgtk-3-dev ffmpeg libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libswresample-dev libtbb-dev
+# Additional OpenCV build dependencies
+sudo apt install -y libjpeg-dev libpng-dev libtiff-dev libopenexr-dev libwebp-dev libv4l-dev libxvidcore-dev libx264-dev
 # eigen dependencies
 sudo apt install -y gfortran
 # backward-cpp dependencies (optional)
@@ -63,6 +65,8 @@ sudo apt install -y libeigen3-dev libspdlog-dev libsuitesparse-dev qtdeclarative
 # (if you plan on using IridescenceViewer)
 # Iridescence dependencies
 sudo apt install -y libglm-dev libglfw3-dev libpng-dev libjpeg-dev libeigen3-dev libboost-filesystem-dev libboost-program-options-dev
+# Install boost-process (version-specific package name on newer Ubuntu)
+sudo apt install -y libboost-process1.88-dev || sudo apt install -y libboost-process-dev || sudo apt install -y libboost-all-dev
 # (Or build eigen from source if still not found)
 
 # (if you plan on using SocketViewer)
@@ -103,8 +107,46 @@ make -j4 && sudo make install
 # Eigen3 - https://gitlab.com/libeigen/eigen
 sudo apt install libeigen3-dev
 
-# OpenCV - https://phoenixnap.com/kb/installing-opencv-on-ubuntu
-sudo apt install libopencv-dev
+# Build OpenCV from source to ensure compatibility with system FFmpeg libraries
+# This ensures OpenCV is built against the correct FFmpeg versions (61/59/8)
+cd $NON_MODIFIABLE_LIBS_DIR
+if [ ! -d opencv ] ; then
+    git clone https://github.com/opencv/opencv.git
+fi
+if [ ! -d opencv_contrib ] ; then
+    git clone https://github.com/opencv/opencv_contrib.git
+fi
+cd opencv
+git checkout 4.10.0  # Use the same version as apt package for compatibility
+cd ../opencv_contrib
+git checkout 4.10.0
+cd ../opencv
+# Clean build directory if it exists to force fresh build
+if [ -d build ]; then
+    rm -rf build
+fi
+mkdir build -p && cd build
+cmake -D CMAKE_BUILD_TYPE=Release \
+      -D CMAKE_INSTALL_PREFIX=/usr/local \
+      -D OPENCV_EXTRA_MODULES_PATH=$NON_MODIFIABLE_LIBS_DIR/opencv_contrib/modules \
+      -D WITH_FFMPEG=ON \
+      -D BUILD_EXAMPLES=OFF \
+      -D BUILD_DOCS=OFF \
+      -D BUILD_TESTS=OFF \
+      -D BUILD_PERF_TESTS=OFF \
+      -D BUILD_opencv_python2=OFF \
+      -D BUILD_opencv_python3=OFF \
+      -D WITH_GTK=ON \
+      -D WITH_QT=OFF \
+      -D WITH_OPENGL=ON \
+      -D WITH_TBB=ON \
+      -D ENABLE_CXX11=ON \
+      -D CMAKE_CXX_STANDARD=17 \
+      ..
+make -j$(nproc)
+check_command "Building OpenCV from source"
+sudo make install
+sudo ldconfig
 
 # Install g2o
 cd $NON_MODIFIABLE_LIBS_DIR
@@ -155,6 +197,14 @@ fi
 cd iridescence
 git checkout 085322e0c949f75b67d24d361784e85ad7f197ab
 git submodule update --init --recursive
+# Fix CMakeLists.txt to include boost-process (required for info_window.cpp)
+if [ -f CMakeLists.txt ]; then
+    sed -i 's/find_package(Boost REQUIRED filesystem program_options)/find_package(Boost REQUIRED filesystem program_options process)/' CMakeLists.txt
+fi
+# Clean build directory if it exists to force CMake reconfiguration
+if [ -d build ]; then
+    rm -rf build
+fi
 mkdir build -p && cd build
 cmake \
     -DCMAKE_BUILD_TYPE=RelWithDebInfo \
@@ -171,6 +221,22 @@ fi
 cd socket.io-client-cpp
 git submodule init
 git submodule update
+# Fix rapidjson compatibility issue with GCC 15 (assignment to const member)
+# The assignment operator tries to assign to const members, which GCC 15 rejects
+if [ -f lib/rapidjson/include/rapidjson/document.h ]; then
+    python3 << 'EOF'
+import re
+file_path = "lib/rapidjson/include/rapidjson/document.h"
+with open(file_path, 'r') as f:
+    content = f.read()
+# Replace the problematic assignment operator with a deleted one
+pattern = r'(\s+)GenericStringRef& operator=\(const GenericStringRef& rhs\) \{ s = rhs\.s; length = rhs\.length; \}'
+replacement = r'\1GenericStringRef& operator=(const GenericStringRef& rhs) = delete; // Deleted: cannot assign to const members'
+content = re.sub(pattern, replacement, content)
+with open(file_path, 'w') as f:
+    f.write(content)
+EOF
+fi
 mkdir build -p && cd build
 cmake \
     -DCMAKE_BUILD_TYPE=Release \

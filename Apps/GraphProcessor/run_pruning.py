@@ -32,7 +32,7 @@ def setup_logging(verbose: bool = False):
 
 
 
-async def run_grid_pruning(db_path: str, sharpness_json_path: str, grid_size: float = 5.0, coords_to_metres: float = 15.0, verbose: bool = False, prefix: str = "pruned_"):
+async def run_grid_pruning(db_path: str, sharpness_json_path: str, grid_size: float = 5.0, grid_size_y: float = 2.0, coords_to_metres: float = 15.0, verbose: bool = False, prefix: str = "pruned_"):
     """
     Run grid-based pruning approach using spatial grid partitioning.
     
@@ -40,28 +40,22 @@ async def run_grid_pruning(db_path: str, sharpness_json_path: str, grid_size: fl
         db_path: Path to the database file
         sharpness_json_path: Path to the sharpness JSON file
         grid_size: Size of each grid box in metres (default: 5.0m)
+        grid_size_y: Size of each grid box in the Y direction (default: 2.0m)
         coords_to_metres: Scale factor to convert coordinates to metres and for final transformation (default: 15.0)
         verbose: Whether to enable verbose logging
     """
     setup_logging(verbose)
     logger = logging.getLogger(__name__)
     
-    logger.info(f"Running grid-based pruning with {grid_size}x{grid_size}x{grid_size}m grid boxes...")
-    
-    # Configuration for grid pruning
-    config = Config(
-        outer_ring=grid_size,
-        inner_ring=grid_size * 0.1,  # 10% of grid size
-        coords_to_metres=coords_to_metres
-    )
+    logger.info(f"Running grid-based pruning with {grid_size}x{grid_size_y}x{grid_size}m grid boxes...")
     
     # Create working copy of the database
     logger.info(f"Creating working copy of database: {db_path}")
-    db_manager = DatabaseManager(db_path, config)
+    db_manager = DatabaseManager(db_path)
     working_db_path = db_manager.create_working_copy(prefix)
     
     # Create database manager for working copy
-    working_db_manager = DatabaseManager(working_db_path, config)
+    working_db_manager = DatabaseManager(working_db_path)
     working_db_manager.connect()
     
     # Create and run grid pruner
@@ -83,7 +77,7 @@ async def run_grid_pruning(db_path: str, sharpness_json_path: str, grid_size: fl
         return None, 0.0
     
     # Perform grid-based pruning
-    result = grid_pruner.grid_based_pruning(grid_size)
+    result = grid_pruner.grid_based_pruning(grid_size, grid_size_y)
     
     # Save results
     await grid_pruner.save_to_database()
@@ -134,6 +128,8 @@ Examples:
                        help='Path to the sharpness JSON file (required)')
     parser.add_argument('--grid-size', type=float, default=5.0,
                        help='Grid box size in metres (default: 5.0m)')
+    parser.add_argument('--grid-size-y', type=float, default=2.0,
+                       help='Grid box size in the Y direction in metres (default: 2.0m)')
     parser.add_argument('--coords-to-metres', type=float, default=15.0,
                        help='Scale factor to convert coordinates to metres and for final transformation (default: 15.0)')
     parser.add_argument('--verbose', '-v', action='store_true',

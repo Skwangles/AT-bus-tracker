@@ -42,6 +42,7 @@ echo "Checking Python dependencies..."
 if [[ ! -d "$CV_HOME_DIR/py-venv" ]]; then
   echo "Creating Python virtual environment..."
   python3 -m venv "$CV_HOME_DIR/py-venv"
+  python -m ensurepip --default-pip
 fi
 echo "Activating virtual environment..."
 source "$CV_HOME_DIR/py-venv/bin/activate"
@@ -55,7 +56,7 @@ python -c "import numpy, networkx, scipy, sklearn, tqdm" 2>/dev/null || {
 VERBOSE_FLAG=""
 [[ "$VERBOSE" == "true" ]] && VERBOSE_FLAG="--verbose"
 
-python run_pruning.py prune "$CV_DB_DIR$CV_PRUNE_DB_NAME" --sharpness-json "$CV_PRECALCULATE_IMAGE_SHARPNESS_JSON_PATH" --grid-size "$GRID_SIZE" --coords-to-metres "$COORDS_TO_METRES" $VERBOSE_FLAG
+python run_pruning.py prune "$CV_DB_DIR$CV_PRUNE_DB_NAME" --sharpness-json "$CV_PRECALCULATE_IMAGE_SHARPNESS_JSON_PATH" --grid-size "$GRID_SIZE" --grid-size-y "$GRID_SIZE_Y" --coords-to-metres "$COORDS_TO_METRES" $VERBOSE_FLAG
 check_command "Pruning graph with grid-based method"
 
 cd "$ORIGINAL_DIR" || error_exit "Failed to change directory back to $ORIGINAL_DIR"

@@ -8,12 +8,13 @@ import sqlite3
 import subprocess
 import io
 from PIL import Image
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # Load environment variables from .env file
 load_dotenv()
 
 R2_ENDPOINT = os.getenv('CV_R2_ENDPOINT')
-R2_BUCKET = os.getenv('CV_R2_BUCKET_NAME')
+R2_BUCKET = os.getenv('CV_R2_BUCKET')
 R2_ACCESS_KEY_ID = os.getenv('CV_R2_ACCESS_KEY_ID')
 R2_SECRET_ACCESS_KEY = os.getenv('CV_R2_SECRET_ACCESS_KEY')
 R2_REGION = os.getenv('CV_R2_REGION', 'auto')
@@ -35,22 +36,6 @@ s3 = boto3.client(
     region_name=R2_REGION,
 )
 
-
-def apply_gamma_correction(image: np.ndarray, gamma: float = 2.2) -> np.ndarray:
-    """
-    Simple gamma correction to brighten the image.
-    """
-    # Build lookup table
-    invGamma = 1.0 / gamma
-    table = np.array([((i / 255.0) ** invGamma) * 255 for i in np.arange(0, 256)]).astype("uint8")
-    
-    return cv2.LUT(image, table)
-
-def process_image(image: np.ndarray) -> np.ndarray:
-    """
-    Apply gamma correction to brighten the image.
-    """
-    return apply_gamma_correction(image, gamma=1.3)
 
 
 def create_resized_image(image_path: str, dimensions: dict, extension: str, quality: int) -> bytes:
@@ -78,13 +63,38 @@ def create_resized_image(image_path: str, dimensions: dict, extension: str, qual
         
         return output.getvalue()
 
+def blur_image(input_file: Path, blurred_file: Path) -> bool:
+    """
+    Blur faces in an equirectangular image.
+    Returns True if successful, False otherwise.
+    """
+    try:
+        print(f"Blurring {input_file} -> {blurred_file}")
+        models_dir = os.getenv('BLUR360_MODELS_DIR', '/usr/local/share/blur360/models')
+        cmd = [
+            '/home/skwangles/Documents/Honours/FaceBlurring/blur360/build/src/equirect-blur-image',
+            f'-m={models_dir}',
+            '-b',
+            f'-o={blurred_file}',
+            str(input_file)
+        ]
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        print(f"Blurring {input_file} -> {blurred_file} Result: {result.returncode}")
+        if result.stderr:
+            print(f"Warnings from blur command for {input_file}: {result.stderr}")
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"Error running blur command for {input_file}: {e.stderr}")
+        return False
+
 def upload_image_resolutions(local_path: str, ts: str):
     """
     Upload multiple resolution versions of an image to R2.
     """
+    print(f"AWS config: {R2_ENDPOINT}, {R2_BUCKET}, {R2_ACCESS_KEY_ID}, {R2_SECRET_ACCESS_KEY}, {R2_REGION}")
     for resolution_name, settings in RESOLUTION_LEVELS.items():
         remote_key = f"{ts}-{resolution_name}.{settings['extension']}"
-        
+        print(f"Uploading {local_path} to {remote_key}")
         # Check if file already exists
         try:
             s3.head_object(Bucket=R2_BUCKET, Key=remote_key)
@@ -112,6 +122,7 @@ def upload_image_resolutions(local_path: str, ts: str):
 def process_from_db(db_path: str, input_dir: str, output_dir: str):
     """
     For each ts in the db, round to 5dp, add .png, process image: equalise histogram, blur faces (equirect), upload to R2 if not already present.
+    Processes blurring operations in batches of 8 concurrent operations.
     """
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
@@ -121,6 +132,13 @@ def process_from_db(db_path: str, input_dir: str, output_dir: str):
     try:
         cursor.execute(f"SELECT ts FROM {table_name}")
         rows = cursor.fetchall()
+
+        print(f"Processing {len(rows)} images")
+        
+        # Collect all images that need blurring
+        images_to_blur = []
+        images_to_upload = []
+        
         for (ts_raw,) in rows:
             ts = f"{float(ts_raw):.5f}"
             filename = f"{ts}.png"
@@ -128,43 +146,46 @@ def process_from_db(db_path: str, input_dir: str, output_dir: str):
             if not input_file.exists():
                 print(f"File not found: {input_file}")
                 continue
-            # Output file paths
-            eq_file = output_path / f"{ts}_eq.png"
+            
             blurred_file = output_path / f"{ts}_blurred.png"
-            # Step 1: Histogram equalisation
-            if not eq_file.exists():
-                print(f"Equalising histogram for {input_file} -> {eq_file}")
-                image = cv2.imread(str(input_file))
-                if image is None:
-                    print(f"Failed to read {input_file}")
-                    continue
-                image_eq = process_image(image)
-                cv2.imwrite(str(eq_file), image_eq)
-            else:
-                print(f"Histogram equalised file exists: {eq_file}")
-            # Step 2: Blur faces using equirect-blur-image
-            if not blurred_file.exists():
-                print(f"Blurring faces for {eq_file} -> {blurred_file}")
-                models_dir = os.getenv('BLUR360_MODELS_DIR', '/usr/local/share/blur360/models')
-                cmd = [
-                    'equirect-blur-image',
-                    f'-m={models_dir}',
-                    '-b',
-                    f'-o={blurred_file}',
-                    str(eq_file)
-                ]
-                try:
-                    result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-                    if result.stderr:
-                        print(f"Warnings from blur command: {result.stderr}")
-                except subprocess.CalledProcessError as e:
-                    print(f"Error running blur command: {e.stderr}")
-                    continue
-            else:
+            if blurred_file.exists():
                 print(f"Blurred file exists: {blurred_file}")
-            # Step 3: Upload multiple resolutions to R2
+                images_to_upload.append((ts, blurred_file))
+            else:
+                images_to_blur.append((ts, input_file, blurred_file))
+        
+        # Process blurring in batches of 8
+        batch_size = 8
+        print(f"Blurring {len(images_to_blur)} images in batches of {batch_size}")
+        
+        with ThreadPoolExecutor(max_workers=batch_size) as executor:
+            # Submit all blur tasks
+            future_to_image = {
+                executor.submit(blur_image, input_file, blurred_file): (ts, input_file, blurred_file)
+                for ts, input_file, blurred_file in images_to_blur
+            }
+            
+            # Process completed tasks
+            completed = 0
+            for future in as_completed(future_to_image):
+                ts, input_file, blurred_file = future_to_image[future]
+                completed += 1
+                try:
+                    success = future.result()
+                    if success:
+                        print(f"Completed blurring {completed}/{len(images_to_blur)}: {input_file} -> {blurred_file}")
+                        images_to_upload.append((ts, blurred_file))
+                    else:
+                        print(f"Failed to blur {input_file}")
+                except Exception as e:
+                    print(f"Exception while blurring {input_file}: {e}")
+        
+        # Upload all processed images
+        print(f"Uploading {len(images_to_upload)} images to R2")
+        for ts, blurred_file in images_to_upload:
             print(f"Uploading multiple resolutions for {ts}")
             upload_image_resolutions(str(blurred_file), ts)
+            
     finally:
         cursor.close()
         conn.close()
