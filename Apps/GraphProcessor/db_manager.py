@@ -14,8 +14,6 @@ from typing import List, Dict, Any, Optional, Tuple
 import logging
 from tqdm import tqdm
 
-from config import Config
-
 logger = logging.getLogger(__name__)
 
 class DatabaseManager:
@@ -26,16 +24,14 @@ class DatabaseManager:
     data, and managing database connections safely.
     """
     
-    def __init__(self, db_path: str, config: Config):
+    def __init__(self, db_path: str):
         """
         Initialize the database manager.
         
         Args:
             db_path: Path to the SQLite database
-            config: Configuration object
         """
         self.db_path = Path(db_path)
-        self.config = config
         self.connection = None
         self.cursor = None
         
