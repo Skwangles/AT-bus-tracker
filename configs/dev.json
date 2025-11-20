@@ -45,6 +45,7 @@
     "precalculate_export_histogram": true,
     "prune_use_precalculated_image_sharpness": true,
     "prune_grid_size": 5.0,
+    "prune_grid_size_y": 2.0,
     "prune_coords_to_metres": 15.0,
     "prune_verbose": true,
     "prune_db_prefix": "",
