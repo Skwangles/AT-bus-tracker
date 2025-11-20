@@ -59,7 +59,7 @@ const Toolbar: React.FC<ToolbarProps> = ({
   const [isLoading, setIsLoading] = useState(false)
 
   const scaleFactor = 1.1
-  const rotationAngle = 15 // degrees
+  const rotationAngle = 5 // degrees
   const moveDistance = 0.01 // relative to image size
 
   const handleConnectPoints = async () => {
