@@ -95,10 +95,10 @@ std::pair<int, double> get_loop_detector_status_from_json(nlohmann::json &obj, d
 
     double seconds = ms/1000;
 
-    if (!obj.contains("disable_loop")) return std::pair(-1, -1);
+    if (!obj.contains("disable_loop")) return std::pair(0, -1);
 
     nlohmann::json timecode_array = obj["disable_loop"];
-    int status;
+    int status = 1;
     for (auto timecode : timecode_array){
 
         double time_ms = timecode["t"];

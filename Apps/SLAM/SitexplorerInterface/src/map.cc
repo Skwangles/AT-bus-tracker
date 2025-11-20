@@ -247,9 +247,15 @@ int mono_tracking(const std::shared_ptr<stella_vslam::system>& slam,
             // 5. Disable/enable loop detector from JSON timecodes 
             // Some points during filming may need the loop detection disabled to prevent false overlaps
             if (manual_loop_detect_pause != -1 &&  sec_since_start > next_loop_disable_check) {
-                auto next_check = get_loop_detector_status_from_json(json_obj, ms_since_start);
-                manual_loop_detect_pause = next_check.first;
-                next_loop_disable_check = next_check.second;
+                if (json_obj != NULL){
+                    auto next_check = get_loop_detector_status_from_json(json_obj, ms_since_start);
+                    manual_loop_detect_pause = next_check.first;
+                    next_loop_disable_check = next_check.second;
+                }
+                else{
+                    manual_loop_detect_pause = false;
+                    next_loop_disable_check = __DBL_MAX__;
+                }
             }
             
             // Disable loop detect based on timecode, but don't enable if the 'pause loop detector checkbox' is still ticked
