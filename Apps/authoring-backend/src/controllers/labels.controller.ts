@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
 import { readDB, writeDB } from '../db'; // Import your database functions
-import { TABLE_PREFIX, USE_TABLE_PREFIX } from '../consts';
 
 // Controller to fetch labels based on keyframe_id
 export const getLabels = async (req: Request, res: Response) => {

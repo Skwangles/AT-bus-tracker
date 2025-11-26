@@ -1,4 +1,4 @@
-import { USE_TABLE_PREFIX, TABLE_PREFIX, REASONABLE_MAX_STRING_SIZE, RESERVED_START_OF_LABELS } from "../consts"
+import { REASONABLE_MAX_STRING_SIZE, RESERVED_START_OF_LABELS } from "../consts"
 import { readDB, writeDB } from "../db"
 import { Request, Response } from "express"
 import { convertToUICoordinateScale } from "../logic/utils"

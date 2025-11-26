@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
 import { readDB, writeDB } from '../db';
-import { TABLE_PREFIX, USE_TABLE_PREFIX } from '../consts';
 import logger from '../logger';
 
 // Controller to hide a point from the map (remove from floorplan_points but keep in nodes)

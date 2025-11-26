@@ -3,8 +3,6 @@ import {
   BORDERING_FLOOR_POINT_DEFAULT_TYPE,
   COORDS_TO_METRES,
   EdgeType,
-  TABLE_PREFIX,
-  USE_TABLE_PREFIX,
 } from "../consts";
 import * as THREE from "three";
 import logger from "../logger";
@@ -13,12 +11,9 @@ import { ThreeNumbersArray } from "../types";
 export async function getNeighbours(keyframeId: number, get_elevator_neighbours = false): Promise<any[]> {
   // Get regular neighbours from edges table
   const regularNeighbours = await readDB(
-    `SELECT e.keyframe_id1 as keyframe_id, n.ts, COUNT(e1.keyframe_id1) as degree FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""
-    }edges e 
-              JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""
-    }edges e1 ON e.keyframe_id1 = e1.keyframe_id0
-              JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""
-    }nodes n ON e.keyframe_id1 = n.keyframe_id 
+    `SELECT e.keyframe_id1 as keyframe_id, n.ts, COUNT(e1.keyframe_id1) as degree FROM edges e 
+              JOIN edges e1 ON e.keyframe_id1 = e1.keyframe_id0
+              JOIN nodes n ON e.keyframe_id1 = n.keyframe_id 
               WHERE e.keyframe_id0 = ? AND (e.type >= ${EdgeType.Normal
     }) AND (e1.type >= ${EdgeType.Normal}) 
               GROUP BY e.keyframe_id1, n.ts`,
@@ -59,8 +54,7 @@ export async function getNeighbours(keyframeId: number, get_elevator_neighbours 
 // Helper function to delete a node and its edges
 export async function replaceNode(keyframeId: number) {
   const direct_neighbours = await readDB(
-    `SELECT keyframe_id1 as keyframe_id FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""
-    }edges WHERE keyframe_id0 = ? AND (type >= ${EdgeType.Normal})`,
+    `SELECT keyframe_id1 as keyframe_id FROM edges WHERE keyframe_id0 = ? AND (type >= ${EdgeType.Normal})`,
     [keyframeId]
   );
 
@@ -72,14 +66,12 @@ export async function replaceNode(keyframeId: number) {
     for (const new_neighbour of direct_neighbours.slice(neighbour_id)) {
       if (new_neighbour.keyframe_id == neighbour.keyframe_id) continue;
       await writeDB(
-        `INSERT INTO ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""
-        }edges (keyframe_id0, keyframe_id1, type) VALUES (?, ?, 1) ON CONFLICT (keyframe_id0, keyframe_id1) DO UPDATE SET type = ${EdgeType.EdgeContraction
+        `INSERT INTO edges (keyframe_id0, keyframe_id1, type) VALUES (?, ?, 1) ON CONFLICT (keyframe_id0, keyframe_id1) DO UPDATE SET type = ${EdgeType.EdgeContraction
         };`,
         [neighbour.keyframe_id, new_neighbour.keyframe_id]
       );
       await writeDB(
-        `INSERT INTO ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""
-        }edges (keyframe_id1, keyframe_id0, type) VALUES (?, ?, 1) ON CONFLICT (keyframe_id0, keyframe_id1) DO UPDATE SET type = ${EdgeType.EdgeContraction
+        `INSERT INTO edges (keyframe_id1, keyframe_id0, type) VALUES (?, ?, 1) ON CONFLICT (keyframe_id0, keyframe_id1) DO UPDATE SET type = ${EdgeType.EdgeContraction
         };`,
         [neighbour.keyframe_id, new_neighbour.keyframe_id]
       );
@@ -88,9 +80,7 @@ export async function replaceNode(keyframeId: number) {
 
   // TODO: Gracefully handle deleteing border nodes
   const changes = await writeDB(
-    `DELETE FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""
-    }floorplan_points WHERE keyframe_id = ? AND NOT EXISTS (SELECT * FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""
-    }floorplan_points WHERE keyframe_id = ? AND type >= ?);`,
+    `DELETE FROM floorplan_points WHERE keyframe_id = ? AND NOT EXISTS (SELECT * FROM floorplan_points WHERE keyframe_id = ? AND type >= ?);`,
     [keyframeId, keyframeId, BORDERING_FLOOR_POINT_DEFAULT_TYPE]
   );
   if (changes == 0) {
@@ -101,18 +91,15 @@ export async function replaceNode(keyframeId: number) {
     return false;
   }
   await writeDB(
-    `DELETE FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""
-    }edges WHERE keyframe_id0 = ? OR keyframe_id1 = ?;`,
+    `DELETE FROM edges WHERE keyframe_id0 = ? OR keyframe_id1 = ?;`,
     [keyframeId, keyframeId]
   );
   await writeDB(
-    `DELETE FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""
-    }node_locations WHERE keyframe_id = ?`,
+    `DELETE FROM node_locations WHERE keyframe_id = ?`,
     [keyframeId]
   );
   await writeDB(
-    `DELETE FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""
-    }nodes WHERE keyframe_id = ?;`,
+    `DELETE FROM nodes WHERE keyframe_id = ?;`,
     [keyframeId]
   );
 
@@ -124,13 +111,11 @@ export async function connectNodes(keyframe_id0: number, keyframe_id1: number) {
   try {
     await writeDB("BEGIN;");
     await writeDB(
-      `INSERT INTO ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""
-      }edges (keyframe_id0, keyframe_id1, type) VALUES (?, ?, 2) ON CONFLICT (keyframe_id0, keyframe_id1) DO NOTHING;`,
+      `INSERT INTO edges (keyframe_id0, keyframe_id1, type) VALUES (?, ?, 2) ON CONFLICT (keyframe_id0, keyframe_id1) DO NOTHING;`,
       [keyframe_id0, keyframe_id1]
     );
     await writeDB(
-      `INSERT INTO ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""
-      }edges(keyframe_id0, keyframe_id1, type) VALUES(?, ?, 2) ON CONFLICT(keyframe_id0, keyframe_id1) DO NOTHING;`,
+      `INSERT INTO edges(keyframe_id0, keyframe_id1, type) VALUES(?, ?, 2) ON CONFLICT(keyframe_id0, keyframe_id1) DO NOTHING;`,
       [keyframe_id1, keyframe_id0]
     );
     await writeDB("COMMIT;");
@@ -184,8 +169,7 @@ export async function disconnectNodes(
   try {
     await writeDB("BEGIN;");
     await writeDB(
-      `DELETE FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""
-      }edges WHERE (keyframe_id0 = ? AND keyframe_id1 = ?) OR (keyframe_id0 = ? AND keyframe_id1 = ?);`,
+      `DELETE FROM edges WHERE (keyframe_id0 = ? AND keyframe_id1 = ?) OR (keyframe_id0 = ? AND keyframe_id1 = ?);`,
       [keyframe_id0, keyframe_id1, keyframe_id1, keyframe_id0]
     );
     await writeDB("COMMIT;");
@@ -205,8 +189,7 @@ export async function getNodePosition(
   use_trans = true
 ): Promise<ThreeNumbersArray | null> {
   const result = (await readDB(
-    `SELECT pose, x_trans, y_trans, z_trans FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""
-    }nodes WHERE keyframe_id = ?LIMIT 1;`,
+    `SELECT pose, x_trans, y_trans, z_trans FROM nodes WHERE keyframe_id = ?LIMIT 1;`,
     [keyframeId],
     true
   )) as any;

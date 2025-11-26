@@ -1,5 +1,5 @@
 import { Request, Response } from 'express'
-import { COORDS_TO_METRES, EdgeType, NEIGHBOURS_INCLUDES_PROXIMITY, TABLE_PREFIX, USE_TABLE_PREFIX } from '../consts';
+import { COORDS_TO_METRES, EdgeType, NEIGHBOURS_INCLUDES_PROXIMITY } from '../consts';
 import { readDB } from '../db';
 import { BlobArrayToMatrix, convertToUICoordinateScale } from './utils';
 import logger from '../logger';

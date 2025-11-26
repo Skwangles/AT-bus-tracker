@@ -25,8 +25,6 @@ The following CV_ environment variables are used:
 - `CV_SERVER_FLOORPLAN_IMG_DIR` - Directory for floorplan images
 - `CV_AUTHORING_KEYFRAME_IMG_EXTENSION` - Image file extension (default: `".png"`)
 - `CV_COORDS_TO_METRES` - Coordinate scaling factor (default: `10`)
-- `CV_AUTHORING_USE_TABLE_PREFIX` - Whether to use table prefixes (default: `false`)
-- `CV_AUTHORING_TABLE_PREFIX` - Table prefix string (default: `"refined_"`)
 - `CV_AUTHORING_DONT_OVERWRITE_MAP_POINTS` - Skip if map already configured (default: `false`)
 - `NEIGHBOURS_INCLUDES_PROXIMITY` - Include proximity in neighbour calculations (default: `false`)
 
@@ -111,7 +109,7 @@ graph TB
 
 ### Database Operations
 - Reads from SQLite database using `better-sqlite3`
-- Supports table prefixes for refined/unrefined data
+- Operates directly on the canonical tables for refined data
 - Handles floorplan_points, nodes, edges, labels, and other_nodes tables
 
 ## Pipeline Position

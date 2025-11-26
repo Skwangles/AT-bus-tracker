@@ -1,6 +1,6 @@
 import path from "node:path";
 import fs from 'fs'
-import { USE_TABLE_PREFIX, TABLE_PREFIX, FLOORPLAN_IMG_DIR, REASONABLE_MAX_STRING_SIZE } from "../consts";
+import { FLOORPLAN_IMG_DIR, REASONABLE_MAX_STRING_SIZE } from "../consts";
 import { readDB, writeDB } from "../db";
 import { Request, Response } from "express";
 import logger from "../logger";

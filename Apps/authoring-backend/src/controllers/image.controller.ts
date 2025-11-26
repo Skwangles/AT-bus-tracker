@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import path from "path";
 import sharp from "sharp";
-import { KEYFRAME_IMG_DIR, KEYFRAME_IMG_EXTENSION, USE_TABLE_PREFIX, TABLE_PREFIX } from "../consts";
+import { KEYFRAME_IMG_DIR, KEYFRAME_IMG_EXTENSION } from "../consts";
 import fs from "fs"
 import { readDB, } from "../db";
 import multer from "multer";

@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import logger from "../logger";
-import { REASONABLE_MAX_STRING_SIZE, USE_TABLE_PREFIX, TABLE_PREFIX } from "../consts";
+import { REASONABLE_MAX_STRING_SIZE } from "../consts";
 import { writeDB, readDB } from "../db";
 import { replaceNode, connectNodes, disconnectNodes } from "../logic/utils";
 
@@ -227,8 +227,7 @@ export async function disconnectTwoPoints(req: Request, res: Response) {
   const { id1, id2 } = req.params;
 
   const is_edge = await readDB(
-    `SELECT * FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""
-    }edges WHERE (keyframe_id0 = ? AND keyframe_id1 = ?) OR (keyframe_id0 = ? AND keyframe_id1 = ?) LIMIT 1;`,
+    `SELECT * FROM edges WHERE (keyframe_id0 = ? AND keyframe_id1 = ?) OR (keyframe_id0 = ? AND keyframe_id1 = ?) LIMIT 1;`,
     [id1, id2, id2, id1]
   );
   if (is_edge.length == 0) {
