@@ -7,23 +7,24 @@
     "edit_vslam": false,
     "export_db": false,
     "precalculate_image_sharpness": false,
-    "graph_prune": false,
+    "graph_prune": true,
     "merge_maps": false,
     "edit_db_visually": false,
     "init_data": false,
     "start_authoring": true,
     "strip_restricted_nodes": true,
     "extract_used_images": false,
-    "export_files": true
+    "export_files": false,
+    "export_to_postgres": true
   },
   "paths": {
     "home_dir": "/home/skwangles/Documents/Honours/Sitexplorer",
-    "video_dir": "/media/skwangles/KINGSTON/MEDIA/X5/",
-    "keyframe_img_dir": "/media/skwangles/KINGSTON/MEDIA/X5/NEW_PICTURES/",
+    "video_dir": "/run/media/skwangles/KINGSTON/MEDIA/X5/",
+    "keyframe_img_dir": "/run/media/skwangles/KINGSTON/MEDIA/X5/NEW_PICTURES/",
     "db_dir": "/home/skwangles/Documents/MAPS/",
     "vslam_map_dir": "/home/skwangles/Documents/MAPS/",
-    "json_dir": "/media/skwangles/KINGSTON/MEDIA/X5/JSON/",
-    "floorplan_dir": "/media/skwangles/KINGSTON/MEDIA/X5/FLOORPLANS/",
+    "json_dir": "/run/media/skwangles/KINGSTON/MEDIA/X5/JSON/",
+    "floorplan_dir": "/run/media/skwangles/KINGSTON/MEDIA/X5/FLOORPLANS/",
     "export_dir": "/home/skwangles/Documents/Coding/SiteXploreServer/clients/tga"
   },
   "config": {
@@ -39,14 +40,14 @@
     "edit_vslam_output_map_name": "map-edited.db",
     "export_in_map_name": "tga-refilm-slow-vslam.db",
     "export_db_name": "tga-refilm.db",
-    "precalculate_image_sharpness_json_path": "/media/skwangles/KINGSTON/MEDIA/X5/JSON/sharpness.json",
-    "precalculate_image_dir": "/media/skwangles/KINGSTON/MEDIA/X5/JSON/",
-    "precalculate_histogram_json_path": "/media/skwangles/KINGSTON/MEDIA/X5/JSON/histogram.json",
+    "precalculate_image_sharpness_json_path": "/run/media/skwangles/KINGSTON/MEDIA/X5/JSON/sharpness.json",
+    "precalculate_image_dir": "/run/media/skwangles/KINGSTON/MEDIA/X5/JSON/",
+    "precalculate_histogram_json_path": "/run/media/skwangles/KINGSTON/MEDIA/X5/JSON/histogram.json",
     "precalculate_export_histogram": true,
     "prune_use_precalculated_image_sharpness": true,
-    "prune_grid_size": 5.0,
+    "prune_grid_size": 7.0,
     "prune_grid_size_y": 2.0,
-    "prune_coords_to_metres": 10.0,
+    "prune_coords_to_metres": 15.0,
     "prune_verbose": false,
     "prune_db_prefix": "pruned_",
     "prune_db_name": "tga-refilm.db",
@@ -80,9 +81,9 @@
     "r2_region": "auto",
     "pg_host": "localhost",
     "pg_port": 5432,
-    "pg_database": "",
-    "pg_user": "postgres",
-    "pg_password": ""
+    "pg_database": "tga",
+    "pg_user": "sitexplore",
+    "pg_password": "$2b$10$284bimsTBK75yRjkiZify.qFVI5sCpVxu16UR6nnrXko.ah2ClhPG"
   },
   "env_file": ".env.tga"
 }

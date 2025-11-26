@@ -14,7 +14,8 @@
     "start_authoring": true,
     "strip_restricted_nodes": true,
     "extract_used_images": false,
-    "export_files": true
+    "export_files": true,
+    "export_to_postgres": falseThis JSX tag requires the module path 'react/jsx-runtime' to exist, but none could be found. Make sure you have types for the appropriate package installed.
   },
   "paths": {
     "home_dir": "/home/skwangles/Documents/Honours/Sitexplorer",

@@ -14,7 +14,8 @@
     "start_authoring": false,
     "strip_restricted_nodes": false,
     "extract_used_images": false,
-    "export_files": false
+    "export_files": false,
+    "export_to_postgres": false
   },
   "paths": {
     "home_dir": "/home/skwangles/Documents/Honours/Sitexplorer",
@@ -41,11 +42,9 @@
     "export_db_name": "tga-refilm2.db",
     "precalculate_image_sharpness_json_path": "/media/skwangles/KINGSTON/MEDIA/X5/JSON/sharpness.json",
     "precalculate_image_dir": "/media/skwangles/KINGSTON/MEDIA/X5/JSON/",
-    "precalculate_histogram_json_path": "/media/skwangles/KINGSTON/MEDIA/X5/JSON/histogram.json",
     "precalculate_export_histogram": true,
     "prune_use_precalculated_image_sharpness": true,
     "prune_grid_size": 5.0,
-    "prune_grid_size_y": 2.0,
     "prune_coords_to_metres": 15.0,
     "prune_verbose": false,
     "prune_db_prefix": "pruned_",
@@ -77,12 +76,7 @@
     "use_r2": true,
     "r2_endpoint": "https://b86c45732de187c8f0043a8cb944b6a5.r2.cloudflarestorage.com",
     "r2_bucket_name": "uow-x5-001",
-    "r2_region": "auto",
-    "pg_host": "localhost",
-    "pg_port": 5432,
-    "pg_database": "",
-    "pg_user": "postgres",
-    "pg_password": ""
+    "r2_region": "auto"
   },
   "env_file": ".env.tga"
 }

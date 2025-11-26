@@ -109,4 +109,9 @@ if [ "$CV_EXPORT_FILES" == true ]; then
   check_command "Exporting DB and Floorplan images to client directory"
 fi
 
+if [ "$CV_EXPORT_TO_POSTGRES" == true ]; then
+  ./bin/scripts/cv_run_14_export-to-postgres.sh
+  check_command "Exporting SQLite database to PostgreSQL"
+fi
+
 echo "Script completed successfully."
