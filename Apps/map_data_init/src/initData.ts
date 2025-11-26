@@ -1,27 +1,27 @@
-import { USE_TABLE_PREFIX, TABLE_PREFIX, FLOOR_POINT_DEFAULT_TYPE, BORDERING_FLOOR_POINT_DEFAULT_TYPE, REASONABLE_MAX_STRING_SIZE } from "./consts";
+import { FLOOR_POINT_DEFAULT_TYPE, BORDERING_FLOOR_POINT_DEFAULT_TYPE, REASONABLE_MAX_STRING_SIZE } from "./consts";
 import { writeDB, readDB } from "./db";
 import logger from "./logger";
 
 export default async function initDB(quitIfTablesExist = false) {
   try {
     logger.debug("[initMap] Initalising data...")
-    await writeDB(`CREATE TABLE ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_images (
+    await writeDB(`CREATE TABLE floorplan_images (
       location TEXT PRIMARY KEY,
       path TEXT DEFAULT ''
       );`);
 
-    await writeDB(`CREATE TABLE ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_points (
+    await writeDB(`CREATE TABLE floorplan_points (
       location TEXT NOT NULL,
       x DOUBLE PRECISION DEFAULT 0 NOT NULL,
       y DOUBLE PRECISION DEFAULT 0 NOT NULL,
-      keyframe_id INTEGER REFERENCES ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes (keyframe_id) ON DELETE CASCADE,
+      keyframe_id INTEGER REFERENCES nodes (keyframe_id) ON DELETE CASCADE,
       type INTEGER DEFAULT 0 NOT NULL,
       PRIMARY KEY (keyframe_id, location)
     );`);
   }
   catch (e) {
 
-    logger.info(`[initMap] Already built ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_images and${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_points - Exception: ${e}`)
+    logger.info(`[initMap] Already built floorplan_images and floorplan_points - Exception: ${e}`)
     if (quitIfTablesExist) {
       logger.info("[initMap] Skipping map data init!")
       return;
@@ -30,7 +30,7 @@ export default async function initDB(quitIfTablesExist = false) {
   try {
     await writeDB("BEGIN;");
     // Do by location to avoid causing a possible crash/memory overload
-    const locationsResult = await readDB(`SELECT DISTINCT location FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations;`)
+    const locationsResult = await readDB(`SELECT DISTINCT location FROM node_locations;`)
     const locations = locationsResult.map((location: { location: string }) => location.location);
     logger.debug(`[initMap] Locations: ${locations}`)
 
@@ -121,7 +121,7 @@ async function insertPointOnMap(location: string, keyframe_id: number, type: num
     return false;
   }
 
-  return (await writeDB(`INSERT OR IGNORE INTO ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_points (location, keyframe_id, type, x, y) VALUES (?, ?, ?, ?, ?);`, [location, keyframe_id, type, x, y])) > 0;
+  return (await writeDB(`INSERT OR IGNORE INTO floorplan_points (location, keyframe_id, type, x, y) VALUES (?, ?, ?, ?, ?);`, [location, keyframe_id, type, x, y])) > 0;
 }
 
 /**
@@ -135,7 +135,7 @@ async function insertLocationIntoImages(location: string) {
     throw new Error("Invalid Location")
   }
 
-  await writeDB(`INSERT OR IGNORE INTO ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}floorplan_images (location) VALUES (?);`, [location])
+  await writeDB(`INSERT OR IGNORE INTO floorplan_images (location) VALUES (?);`, [location])
   return true; // IGNORE is acceptable
 }
 
@@ -150,7 +150,7 @@ async function getFloorNodes(location: string): Promise<Array<{ keyframe_id: num
     throw new Error("Invalid Location")
   }
 
-  const nodesResult = await readDB(`SELECT n.keyframe_id, l.location, n.x_trans, n.z_trans FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l ON l.keyframe_id = n.keyframe_id WHERE l.location = ?;`, [location])
+  const nodesResult = await readDB(`SELECT n.keyframe_id, l.location, n.x_trans, n.z_trans FROM nodes n JOIN node_locations l ON l.keyframe_id = n.keyframe_id WHERE l.location = ?;`, [location])
   return nodesResult
 }
 
@@ -174,12 +174,12 @@ async function getBorderNodes(location: string): Promise<Array<{ keyframe_id: nu
       l2.location,
       n.x_trans, 
       n.z_trans 
-    FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}edges e 
-    JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l 
+    FROM edges e 
+    JOIN node_locations l 
       ON (e.keyframe_id0 = l.keyframe_id OR e.keyframe_id1 = l.keyframe_id)
-    JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l2 
+    JOIN node_locations l2 
       ON (e.keyframe_id0 = l2.keyframe_id OR e.keyframe_id1 = l2.keyframe_id)
-    JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n 
+    JOIN nodes n 
       ON n.keyframe_id = l2.keyframe_id
     WHERE l.location = ? AND l2.location <> ? AND l.keyframe_id != l2.keyframe_id
   `, [location, location])
@@ -217,8 +217,8 @@ async function processStaircaseNodes(
         // Find all distinct locations that this staircase connects to
         const connectedLocations = await readDB(`
           SELECT DISTINCT l.location
-          FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}edges e
-          JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l 
+          FROM edges e
+          JOIN node_locations l 
             ON (e.keyframe_id0 = l.keyframe_id OR e.keyframe_id1 = l.keyframe_id)
           WHERE l.keyframe_id = ? AND l.location <> ? AND l.location <> ?
         `, [node.keyframe_id, currentLocation, node.location])
@@ -228,10 +228,10 @@ async function processStaircaseNodes(
           if (!connectedLocation.location.endsWith('- staircase') && connectedLocation.location !== currentLocation) {
             const destinationNode = await readDB(`
               SELECT n.keyframe_id, l.location, n.x_trans, n.z_trans
-              FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}edges e
-              JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}node_locations l 
+              FROM edges e
+              JOIN node_locations l 
                 ON (e.keyframe_id0 = l.keyframe_id OR e.keyframe_id1 = l.keyframe_id)
-              JOIN ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}nodes n 
+              JOIN nodes n 
                 ON n.keyframe_id = l.keyframe_id
               WHERE l.keyframe_id = ? AND l.location = ?
               LIMIT 1
@@ -282,7 +282,7 @@ async function clusterBorderNodes(
           WHEN e.keyframe_id0 = ? THEN e.keyframe_id1
           WHEN e.keyframe_id1 = ? THEN e.keyframe_id0
         END as connected_id
-      FROM ${USE_TABLE_PREFIX ? TABLE_PREFIX : ""}edges e
+      FROM edges e
       WHERE e.keyframe_id0 = ? OR e.keyframe_id1 = ?
     `, [node.keyframe_id, node.keyframe_id, node.keyframe_id, node.keyframe_id])
 

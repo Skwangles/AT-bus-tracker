@@ -128,7 +128,6 @@ graph LR
 - `CV_PRUNE_COORDS_TO_METRES` - Coordinate scaling factor (default: `15.0`)
 - `CV_COORDS_TO_METRES` - Alternative name for coordinate scaling (default: `15.0`)
 - `CV_PRUNE_VERBOSE` - Enable verbose logging (default: `false`)
-- `CV_PRUNE_TABLE_PREFIX` - Table prefix for output (default: `"refined_"`)
 - `CV_PRUNE_TARGET_CLOSENESS` - Target closeness for grid partitioning (default: `5.0`)
 - `CV_PRUNE_ALWAYS_MERGE_CLOSENESS` - Always merge closeness threshold (default: `0.5`)
 - `CV_PRUNE_OUTDOORS_TARGET_CLOSENESS` - Outdoors target closeness (default: `7.0`)

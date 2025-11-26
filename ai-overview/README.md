@@ -221,7 +221,6 @@ export const COORDS_TO_METRES: number = 10; // Coordinate scaling factor
 export const PORT = 3004; // Authoring server port
 export const KEYFRAME_IMG_DIR = process.env.CV_KEYFRAME_IMG_DIR ?? "";
 export const FLOORPLAN_IMG_DIR = process.env.CV_SERVER_FLOORPLAN_IMG_DIR ?? "";
-export const USE_TABLE_PREFIX: boolean = true; // Database table prefixing
 ```
 
 ---
@@ -339,7 +338,7 @@ services:
 - **Coordinate Scaling**: `coords_to_metres` for spatial accuracy
 - **Grid Pruning**: Configurable grid sizes (5x5x5m default)
 - **Image Processing**: Batch sizes and sharpness thresholds
-- **Database Optimization**: Table prefixing for refined/unrefined data
+- **Database Integration**: Consistent use of canonical tables across tools
 
 #### Monitoring & Logging
 

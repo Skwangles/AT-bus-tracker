@@ -25,7 +25,6 @@ This is useful for creating public-facing databases that exclude sensitive or re
 ### Optional Variables
 - `CV_STRIP_KEEP_ID` - JSON array of node IDs to keep (default: `"[]"`)
 - `CV_STRIP_KEEP_LABELS` - JSON array of label names to keep (default: `'["save"]'`)
-- `CV_STRIP_TABLE_PREFIX` - Table prefix to use (default: `"refined_"`)
 - `CV_STRIP_SCALE_FACTOR` - Scale factor for coordinates (optional)
 
 ## Scripts

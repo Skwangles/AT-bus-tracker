@@ -18,9 +18,7 @@ export enum EdgeType {
 export const SQLITE_DB_NAME = process.env.CV_INIT_DB_NAME ?? "campus.db"
 export const SQLITE_DB_DIR = process.env.CV_DB_DIR ?? "/Maps/"
 
-export const USE_TABLE_PREFIX: boolean = process.env.CV_INIT_USE_TABLE_PREFIX === 'true'; // false = unrefined, true = refined (e.g. use prefix to work out the DB filename to use/load)
 export const SKIP_IF_MAP_ALREADY_CONFIGED: boolean = process.env.CV_INIT_DONT_OVERWRITE_MAP_POINTS === 'true';
-export const TABLE_PREFIX = process.env.CV_INIT_TABLE_PREFIX ?? "refined_";
 
 logger.debug("DB File:" + SQLITE_DB_DIR)
 logger.debug("DB files in dir:" + fs.readdirSync(SQLITE_DB_DIR).join(", "))
