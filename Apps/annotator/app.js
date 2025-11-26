@@ -385,3 +385,4 @@ downloadBtn.addEventListener('click', () => {
 // Initialise marker form fields
 updateMarkerFormFields();
 
+

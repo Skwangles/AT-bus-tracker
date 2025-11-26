@@ -227,3 +227,4 @@ SLAM/
 - Maps can be extended by providing an existing map as input
 - The export process converts poses to SQLite format for downstream processing
 
+

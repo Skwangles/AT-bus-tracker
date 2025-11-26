@@ -139,3 +139,4 @@ Check pgloader output for specific error messages. Common issues:
 - Constraint violations
 - Insufficient PostgreSQL resources (work_mem, etc.)
 
+

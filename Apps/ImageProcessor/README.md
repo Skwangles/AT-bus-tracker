@@ -188,3 +188,4 @@ For each processed image with timestamp `ts`:
 - `{ts}-high.png` - High resolution (uploaded to R2)
 - `{ts}-ultra.png` - Ultra resolution (uploaded to R2)
 
+

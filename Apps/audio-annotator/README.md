@@ -287,3 +287,4 @@ The generated JSON file can be used with the annotator tool by:
 
 Note: The annotator currently doesn't have automatic JSON import, so you may need to manually copy the annotations or extend the annotator to support import functionality.
 
+
