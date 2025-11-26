@@ -24,6 +24,7 @@ echo "PRUNING GRAPH WITH GRID-BASED PYTHON METHOD"
 [[ -z "$CV_PRECALCULATE_IMAGE_SHARPNESS_JSON_PATH" ]] && error_exit "CV_PRECALCULATE_IMAGE_SHARPNESS_JSON_PATH is not set"
 # Optional parameters with defaults
 GRID_SIZE="${CV_PRUNE_GRID_SIZE:-5.0}"
+GRID_SIZE_Y="${CV_PRUNE_GRID_SIZE_Y:-2.0}"
 COORDS_TO_METRES="${CV_PRUNE_COORDS_TO_METRES:-15.0}"
 VERBOSE="${CV_PRUNE_VERBOSE:-false}"
 
@@ -55,6 +56,7 @@ python -c "import numpy, networkx, scipy, sklearn, tqdm" 2>/dev/null || {
 # Run the grid-based pruning
 VERBOSE_FLAG=""
 [[ "$VERBOSE" == "true" ]] && VERBOSE_FLAG="--verbose"
+echo "$COORDS_TO_METRES"
 
 python run_pruning.py prune "$CV_DB_DIR$CV_PRUNE_DB_NAME" --sharpness-json "$CV_PRECALCULATE_IMAGE_SHARPNESS_JSON_PATH" --grid-size "$GRID_SIZE" --grid-size-y "$GRID_SIZE_Y" --coords-to-metres "$COORDS_TO_METRES" $VERBOSE_FLAG
 check_command "Pruning graph with grid-based method"
