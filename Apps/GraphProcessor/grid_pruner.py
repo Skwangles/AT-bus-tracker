@@ -34,8 +34,12 @@ class GridBasedPruner:
             coords_to_metres: Scale factor to convert coordinates to metres and for final transformation (default: 15.0)
             sharpness_data: Dictionary mapping image filenames to sharpness values
         """
+
+        if coords_to_metres is None or coords_to_metres <= 0.0:
+            raise ValueError("coords_to_metres must be a positive number")
+
         self.db_manager = db_manager
-        self.coords_to_metres = coords_to_metres
+        self.coords_to_metres = coords_to_metres if coords_to_metres is not None and coords_to_metres > 0.0 else 15.0
         self.nodes = {}  # node_id -> {'x': float, 'y': float, 'z': float, 'zone': str, 'is_referenced': bool, 'sharpness': float}
         self.edges = set()  # set of (node1_id, node2_id) tuples
         self.grid_boxes = {}  # grid_key -> list of node_ids
@@ -89,11 +93,12 @@ class GridBasedPruner:
                 x, y, z = row['x_trans'], row['y_trans'], row['z_trans']
                 ts = round(row['ts'], 5)
                 zone = row['zone']
+
                 # Apply coordinate scaling
                 scaled_x = float(x) * self.coords_to_metres
                 scaled_y = float(y) * self.coords_to_metres
                 scaled_z = float(z) * self.coords_to_metres
-                
+
                 # Construct image filename from keyframe_id and look up sharpness
                 image_filename = f"{ts:.5f}.png"
                 sharpness_value = self.sharpness_data.get(image_filename, 0.0)

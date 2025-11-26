@@ -149,7 +149,7 @@ Examples:
     
     try:
         if args.mode == 'prune':
-            await run_grid_pruning(args.db_path, args.sharpness_json, args.grid_size, args.coords_to_metres, args.verbose, args.db_prefix)
+            await run_grid_pruning(args.db_path, args.sharpness_json, args.grid_size, args.grid_size_y, args.coords_to_metres, args.verbose, args.db_prefix)
 
         
         print("Operation completed successfully!")
