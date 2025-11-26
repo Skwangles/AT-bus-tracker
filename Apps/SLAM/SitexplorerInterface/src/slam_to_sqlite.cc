@@ -54,7 +54,7 @@ void create_basic_tables_if_not_exist(sqlite3* db) {
         DROP TABLE IF EXISTS user_defined_labels;
 
         CREATE TABLE nodes (
-            ts REAL NOT NULL,
+            ts NUMERIC NOT NULL,
             keyframe_id INTEGER PRIMARY KEY,
             pose BLOB NOT NULL,
             x_trans REAL,
