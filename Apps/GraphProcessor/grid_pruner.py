@@ -598,6 +598,7 @@ class GridBasedPruner:
             
             # Step 2: Apply final coordinate transformation
             self._apply_final_coordinate_transformation()
+            self.db_manager.flip_other_nodes_xy(scale_factor=self.coords_to_metres)
             
             # Get all representative node IDs (flatten the lists)
             representative_node_ids = set()

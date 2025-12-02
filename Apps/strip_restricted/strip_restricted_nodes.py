@@ -145,17 +145,6 @@ def delete_filtered_nodes(prefix, db_cursor, remove_list, keep_id_list, keep_lab
     db_cursor.execute(query)
     print("Deleting orphaned edges: ", db_cursor.rowcount)
 
-def scale_other_nodes(scale_factor, db_cursor):
-    """Scale other_nodes based on the scale factor."""
-    print("Scaling other_nodes...")
-    query = f"""
-    UPDATE other_nodes
-    SET x_trans = x_trans * -{scale_factor}, y_trans = y_trans * -{scale_factor}, z_trans = z_trans * {scale_factor}
-    """
-    print("Running query:", query)
-    db_cursor.execute(query)
-    print("Scaling other_nodes: ", db_cursor.rowcount)
-
 
 def main():
     args = parse_args()
@@ -181,7 +170,6 @@ def main():
 
     # Perform the deletion operation
     delete_filtered_nodes(prefix, cursor, remove_list, keep_id_list, keep_labels, del_non_prefix)
-    scale_other_nodes(scale_factor, cursor)
 
     # Commit changes and close the connection
     conn.commit()

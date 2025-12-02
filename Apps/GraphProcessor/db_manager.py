@@ -303,3 +303,58 @@ class DatabaseManager:
             logger.error(f"Number of parameter sets: {len(params_list)}")
             self.connection.rollback()
             raise
+    
+    def flip_other_nodes_xy(self, scale_factor: float = 1.0) -> int:
+        """
+        Update all other_nodes to flip X and Y coordinates (negate them) while keeping Z unchanged.
+        Transforms positions from (x, y, z) to (-x, -y, z).
+        
+        Returns:
+            Number of other_nodes updated
+        """
+        try:
+            # First, check if other_nodes table exists
+            table_check = self.execute_query(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='other_nodes'",
+                fetch_all=False
+            )
+            
+            if not table_check:
+                logger.warning("other_nodes table does not exist in the database")
+                return 0
+            
+            # Get all other_nodes with their current positions
+            other_nodes = self.execute_query(
+                """
+                SELECT id, x_trans, y_trans, z_trans
+                FROM other_nodes
+                """
+            )
+            
+            if not other_nodes:
+                logger.info("No other_nodes found to update")
+                return 0
+            
+            logger.info(f"Found {len(other_nodes)} other_nodes to update")
+            
+            # Update each other_node to (-x, -y, z)
+            update_query = """
+                UPDATE other_nodes
+                SET x_trans = ?, y_trans = ?, z_trans = ?
+                WHERE id = ?
+            """
+            
+            params_list = [
+                (-row['x_trans'] * scale_factor, -row['y_trans'] * scale_factor, row['z_trans'] * scale_factor, row['id'])
+                for row in other_nodes
+            ]
+            
+            # Use execute_many for efficiency (it handles transaction internally)
+            affected_rows = self.execute_many(update_query, params_list)
+            
+            logger.info(f"Successfully updated {affected_rows} other_nodes to (-x, -y, z)")
+            return affected_rows
+                
+        except sqlite3.Error as e:
+            logger.error(f"Error in flip_other_nodes_xy: {e}")
+            raise
