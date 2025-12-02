@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
-import { REASONABLE_MAX_STRING_SIZE, REASONABLE_MAX_Y_DIST_THRESHOLD, REASONABLE_MAX_XZ_DIST_THRESHOLD, FLOOR_POINT_DEFAULT_TYPE } from "../consts";
+import { REASONABLE_MAX_STRING_SIZE, REASONABLE_MAX_Y_DIST_THRESHOLD, REASONABLE_MAX_XZ_DIST_THRESHOLD, FLOOR_POINT_DEFAULT_TYPE, EdgeType } from "../consts";
 import { readDB, writeDB } from "../db";
 import { searchNeighbour } from "../logic/neighbourSearch";
 import { aStarPathfinding } from "../logic/pathfinding";
-import { BlobArrayToMatrix, convertToUICoordinateScale } from "../logic/utils";
+import { BlobArrayToMatrix } from "../logic/utils";
 import logger from "../logger";
 import * as THREE from "three";
 
@@ -107,13 +107,67 @@ export async function getPointInfoFromId(req: Request, res: Response) {
 
   if (pointData && 'pose' in pointData) {
     res.json({
-      ...convertToUICoordinateScale({ ...pointData, pose: BlobArrayToMatrix(pointData.pose) }),
+      keyframe_id: pointData.keyframe_id,
+      ts: pointData.ts,
+      location: pointData.location,
+      x_trans: pointData.x_trans,
+      y_trans: pointData.y_trans,
+      z_trans: pointData.z_trans,
+      pose: BlobArrayToMatrix(pointData.pose),
       labels
     });
   }
   else {
     logger.warn(`[getPointInfoFromId] id doesn't exist, or pose not in pointData: ${id} data: ${pointData}`)
     res.status(400).send("Point ID given does not exist!").end()
+  }
+}
+
+/**
+ * Get neighbours of a point with their positions
+ */
+export async function getPointNeighbours(req: Request, res: Response) {
+  const id = Number(req.params.id)
+  if (isNaN(id)) {
+    logger.warn(`[getPointNeighbours] invalid ID:${id}`)
+    res.status(400).send("Non-number point ID passed").end()
+    return
+  }
+
+  try {
+    // Get neighbours from edges table (both directions)
+    // Get neighbours where this node is keyframe_id0
+    const neighbours0 = await readDB(
+      `SELECT e.keyframe_id1 as keyframe_id, n.x_trans, n.y_trans, n.z_trans
+       FROM edges e
+       JOIN nodes n ON e.keyframe_id1 = n.keyframe_id
+       WHERE e.keyframe_id0 = ? AND e.type >= ${EdgeType.Normal}`,
+      [id]
+    )
+
+    // Get neighbours where this node is keyframe_id1
+    const neighbours1 = await readDB(
+      `SELECT e.keyframe_id0 as keyframe_id, n.x_trans, n.y_trans, n.z_trans
+       FROM edges e
+       JOIN nodes n ON e.keyframe_id0 = n.keyframe_id
+       WHERE e.keyframe_id1 = ? AND e.type >= ${EdgeType.Normal}`,
+      [id]
+    )
+
+    // Combine and deduplicate
+    const allNeighbours = [...(neighbours0 || []), ...(neighbours1 || [])]
+    const uniqueNeighbours = new Map()
+    
+    for (const neighbour of allNeighbours) {
+      if (!uniqueNeighbours.has(neighbour.keyframe_id)) {
+        uniqueNeighbours.set(neighbour.keyframe_id, neighbour)
+      }
+    }
+
+    res.json(Array.from(uniqueNeighbours.values()))
+  } catch (error) {
+    logger.error(`[getPointNeighbours] Error: ${error}`)
+    res.status(500).json({ message: 'Error fetching neighbours' })
   }
 }
 

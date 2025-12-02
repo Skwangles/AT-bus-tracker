@@ -1,7 +1,6 @@
 import { REASONABLE_MAX_STRING_SIZE, RESERVED_START_OF_LABELS } from "../consts"
 import { readDB, writeDB } from "../db"
 import { Request, Response } from "express"
-import { convertToUICoordinateScale } from "../logic/utils"
 import logger from "../logger"
 
 interface Label {

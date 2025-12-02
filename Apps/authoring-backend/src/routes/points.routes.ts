@@ -3,7 +3,8 @@ import {
   createNewPoint, 
   findNeigboursFromPointId, 
   getFirstPointId, 
-  getPointInfoFromId, 
+  getPointInfoFromId,
+  getPointNeighbours,
   pathfindFromPointId, 
   getRandomPointId,
   getNearbyPoints,
@@ -20,6 +21,7 @@ const app = Router();
 app.get('/first', getFirstPointId);
 app.get('/random', getRandomPointId);
 app.get('/:id', getPointInfoFromId);
+app.get('/:id/neighbours', getPointNeighbours);
 app.get('/:id/neighbours/:distance_thresh_m/:y_dist_thresh_m', findNeigboursFromPointId);
 app.get('/:id/path/:location', pathfindFromPointId);
 

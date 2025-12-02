@@ -248,3 +248,88 @@ export const deleteLabel = async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Error deleting label' });
   }
 };
+
+// Controller to get all other_nodes with location group information
+export const getAllOtherNodes = async (req: Request, res: Response) => {
+  const { location } = req.query;
+
+  try {
+    let query = `
+      SELECT 
+        otn.id,
+        otn.ref_id,
+        otn.label,
+        otn.description,
+        otn.info,
+        otn.image,
+        otn.type,
+        otn.x_trans,
+        otn.y_trans,
+        otn.z_trans,
+        nl.location
+      FROM other_nodes otn
+      LEFT JOIN node_locations nl ON otn.ref_id = nl.keyframe_id
+    `;
+    
+    const params: any[] = [];
+    
+    if (location && typeof location === 'string') {
+      query += ` WHERE nl.location = ?`;
+      params.push(location);
+    }
+    
+    query += ` ORDER BY nl.location, otn.label`;
+
+    const otherNodes = await readDB(query, params);
+
+    res.status(200).json({
+      otherNodes: otherNodes || [],
+    });
+  } catch (error) {
+    console.error('Error fetching all other nodes:', error);
+    res.status(500).json({ message: 'Error fetching all other nodes' });
+  }
+};
+
+// Controller to update other_node position by ID
+export const updateOtherNodePositionById = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { x_trans, y_trans, z_trans } = req.body;
+
+  if (isNaN(Number(x_trans)) || isNaN(Number(y_trans)) || isNaN(Number(z_trans))) {
+    return res.status(400).json({ message: 'Invalid position values' });
+  }
+
+  try {
+    // Check if other_node exists
+    const existingNode = await readDB(
+      `SELECT id FROM other_nodes WHERE id = ?`,
+      [id],
+      true
+    );
+
+    if (!existingNode) {
+      return res.status(404).json({ message: 'Other node not found' });
+    }
+
+    // Update position in other_nodes table
+    const updateQuery = `
+      UPDATE other_nodes 
+      SET x_trans = ?, y_trans = ?, z_trans = ? 
+      WHERE id = ?
+    `;
+    const result = await writeDB(updateQuery, [x_trans, y_trans, z_trans, id]);
+
+    if (result > 0) {
+      res.status(200).json({
+        message: 'Other node position updated successfully',
+        position: { x: x_trans, y: y_trans, z: z_trans }
+      });
+    } else {
+      res.status(404).json({ message: 'Other node not found' });
+    }
+  } catch (error) {
+    console.error('Error updating other node position:', error);
+    res.status(500).json({ message: 'Error updating other node position' });
+  }
+};
