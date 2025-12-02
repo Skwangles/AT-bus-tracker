@@ -2,9 +2,13 @@ import React, { useState } from 'react'
 import LocationGroupSelector from './LocationGroupSelector'
 import FloorplanEditor from './FloorplanEditor'
 import Legend from './Legend'
+import OtherNodesEditor from './OtherNodesEditor'
+
+type TabType = 'floorplan' | 'other-nodes'
 
 const App: React.FC = () => {
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<TabType>('floorplan')
 
   const handleLocationSelect = (location: string) => {
     setSelectedLocation(location)
@@ -22,31 +26,50 @@ const App: React.FC = () => {
           onLocationSelect={handleLocationSelect}
           onLocationCreate={handleLocationCreate}
         />
-        {selectedLocation && <Legend />}
+        {selectedLocation && activeTab === 'floorplan' && <Legend />}
       </div>
       
       <div className="main-content">
-        {selectedLocation ? (
-          <FloorplanEditor floorplan={selectedLocation} />
-        ) : (
-          <div className="welcome-message">
-            <h2>Welcome to SiteExplorer Authoring</h2>
-            <p>Select a location group from the sidebar to start editing floorplans.</p>
-            <div className="features">
-              <div className="feature">
-                <h3>🎯 Point Management</h3>
-                <p>Drag to select multiple points, edit positions, and manage node types.</p>
-              </div>
-              <div className="feature">
-                <h3>📷 Image Upload</h3>
-                <p>Upload floorplan images with drag-and-drop support and preview.</p>
-              </div>
-              <div className="feature">
-                <h3>🏷️ Label Management</h3>
-                <p>Add and edit labels, descriptions, and other node information.</p>
+        <div className="tab-navigation">
+          <button
+            className={`tab-button ${activeTab === 'floorplan' ? 'active' : ''}`}
+            onClick={() => setActiveTab('floorplan')}
+          >
+            Floorplan Editor
+          </button>
+          <button
+            className={`tab-button ${activeTab === 'other-nodes' ? 'active' : ''}`}
+            onClick={() => setActiveTab('other-nodes')}
+          >
+            Other Nodes Editor
+          </button>
+        </div>
+
+        {activeTab === 'floorplan' ? (
+          selectedLocation ? (
+            <FloorplanEditor floorplan={selectedLocation} />
+          ) : (
+            <div className="welcome-message">
+              <h2>Welcome to SiteExplorer Authoring</h2>
+              <p>Select a location group from the sidebar to start editing floorplans.</p>
+              <div className="features">
+                <div className="feature">
+                  <h3>🎯 Point Management</h3>
+                  <p>Drag to select multiple points, edit positions, and manage node types.</p>
+                </div>
+                <div className="feature">
+                  <h3>📷 Image Upload</h3>
+                  <p>Upload floorplan images with drag-and-drop support and preview.</p>
+                </div>
+                <div className="feature">
+                  <h3>🏷️ Label Management</h3>
+                  <p>Add and edit labels, descriptions, and other node information.</p>
+                </div>
               </div>
             </div>
-          </div>
+          )
+        ) : (
+          <OtherNodesEditor />
         )}
       </div>
 
@@ -77,6 +100,37 @@ const App: React.FC = () => {
           overflow: hidden;
           display: flex;
           flex-direction: column;
+        }
+
+        .tab-navigation {
+          display: flex;
+          background: white;
+          border-bottom: 1px solid #ddd;
+          padding: 0;
+          gap: 0;
+        }
+
+        .tab-button {
+          padding: 12px 24px;
+          border: none;
+          background: transparent;
+          cursor: pointer;
+          font-size: 14px;
+          font-weight: 500;
+          color: #666;
+          border-bottom: 2px solid transparent;
+          transition: all 0.2s;
+        }
+
+        .tab-button:hover {
+          background: #f5f5f5;
+          color: #333;
+        }
+
+        .tab-button.active {
+          color: #007bff;
+          border-bottom-color: #007bff;
+          background: #f8f9fa;
         }
 
         .welcome-message {
