@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getLabels, addLabel, deleteLabel, updateLabel, updateLabelPosition, getLabelTypes, getAllOtherNodes, updateOtherNodePositionById } from '../controllers/labels.controller';
+import { getLabels, addLabel, deleteLabel, updateLabel, updateLabelPosition, getLabelTypes, getAllOtherNodes, updateOtherNodePositionById, updateOtherNodeById } from '../controllers/labels.controller';
 
 const router = Router();
 
@@ -20,6 +20,9 @@ router.put('/:id', updateLabel as any);
 
 // Route to update other_node position by ID (must come before /:id/position)
 router.patch('/other-node/:id/position', updateOtherNodePositionById as any);
+
+// Route to update other_node properties by ID (label, description, type, ref_id)
+router.patch('/other-node/:id', updateOtherNodeById as any);
 
 // Route to update label position
 router.patch('/:id/position', updateLabelPosition as any);

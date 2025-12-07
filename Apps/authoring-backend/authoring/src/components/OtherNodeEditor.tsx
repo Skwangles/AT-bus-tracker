@@ -49,6 +49,15 @@ const OtherNodeEditor: React.FC<OtherNodeEditorProps> = ({
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
+  // Editable fields state
+  const [editableLabel, setEditableLabel] = useState(otherNode.label)
+  const [editableDescription, setEditableDescription] = useState(otherNode.description || '')
+  const [editableInfo, setEditableInfo] = useState(otherNode.info || '')
+  const [editableType, setEditableType] = useState(otherNode.type)
+  const [editableRefId, setEditableRefId] = useState(otherNode.ref_id)
+  const [refIdValidationError, setRefIdValidationError] = useState<string | null>(null)
+  const [validatingRefId, setValidatingRefId] = useState(false)
+
   // Position state - absolute
   const [absX, setAbsX] = useState(otherNode.x_trans)
   const [absY, setAbsY] = useState(otherNode.y_trans)
@@ -76,18 +85,18 @@ const OtherNodeEditor: React.FC<OtherNodeEditorProps> = ({
     50: { name: 'Border', color: '#ff6b35', icon: '🔗' },
   }
 
-  const fetchRefNodeInfo = async () => {
+  const fetchRefNodeInfo = async (refId: number) => {
     setLoading(true)
     setError(null)
 
     try {
-      const response = await axios.get<RefNodeInfo>(`${API_PREFIX}/api/v1/point/${otherNode.ref_id}`)
+      const response = await axios.get<RefNodeInfo>(`${API_PREFIX}/api/v1/point/${refId}`)
       setRefNodeInfo(response.data)
 
       // Fetch neighbours
       try {
         const neighboursResponse = await axios.get<NeighbourInfo[]>(
-          `${API_PREFIX}/api/v1/point/${otherNode.ref_id}/neighbours`
+          `${API_PREFIX}/api/v1/point/${refId}/neighbours`
         )
         setNeighbours(neighboursResponse.data || [])
       } catch (neighbourErr) {
@@ -103,9 +112,18 @@ const OtherNodeEditor: React.FC<OtherNodeEditorProps> = ({
   }
 
   useEffect(() => {
-    fetchRefNodeInfo()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchRefNodeInfo(otherNode.ref_id)
   }, [otherNode.ref_id])
+
+  useEffect(() => {
+    // Update editable fields when otherNode changes
+    setEditableLabel(otherNode.label)
+    setEditableDescription(otherNode.description || '')
+    setEditableInfo(otherNode.info || '')
+    setEditableType(otherNode.type)
+    setEditableRefId(otherNode.ref_id)
+    setRefIdValidationError(null)
+  }, [otherNode])
 
   useEffect(() => {
     // Update absolute values when otherNode changes
@@ -148,26 +166,114 @@ const OtherNodeEditor: React.FC<OtherNodeEditorProps> = ({
     }
   }
 
+  const validateRefId = async (refId: number): Promise<boolean> => {
+    if (isNaN(refId) || refId < 0) {
+      setRefIdValidationError('Ref ID must be a positive number')
+      return false
+    }
+
+    setValidatingRefId(true)
+    setRefIdValidationError(null)
+
+    try {
+      await axios.get<RefNodeInfo>(`${API_PREFIX}/api/v1/point/${refId}`)
+      setValidatingRefId(false)
+      return true
+    } catch {
+      setValidatingRefId(false)
+      setRefIdValidationError('Reference node not found')
+      return false
+    }
+  }
+
+  const handleRefIdChange = async (value: string) => {
+    const numValue = parseInt(value, 10)
+    if (value === '' || isNaN(numValue)) {
+      setEditableRefId(numValue)
+      setRefIdValidationError(null)
+      return
+    }
+
+    setEditableRefId(numValue)
+    // Validate if it's a valid number
+    if (numValue < 0) {
+      setRefIdValidationError('Ref ID must be a positive number')
+      return
+    }
+
+    // Only validate existence if it's different from current ref_id
+    if (numValue !== otherNode.ref_id) {
+      await validateRefId(numValue)
+    } else {
+      setRefIdValidationError(null)
+    }
+  }
+
   const handleSave = async () => {
     setSaving(true)
     setError(null)
     setSuccess(false)
 
+    // Validate label
+    if (!editableLabel || editableLabel.trim().length === 0) {
+      setError('Label cannot be empty')
+      setSaving(false)
+      return
+    }
+
+    // Validate ref_id if it changed
+    if (editableRefId !== otherNode.ref_id) {
+      const isValid = await validateRefId(editableRefId)
+      if (!isValid) {
+        setError('Please fix validation errors before saving')
+        setSaving(false)
+        return
+      }
+    }
+
     try {
-      await axios.patch(`${API_PREFIX}/api/v1/labels/other-node/${otherNode.id}/position`, {
-        x_trans: absX,
-        y_trans: absY,
-        z_trans: absZ,
-      })
+      // Update properties (label, description, info, type, ref_id)
+      const hasPropertyChanges =
+        editableLabel !== otherNode.label ||
+        editableDescription !== (otherNode.description || '') ||
+        editableInfo !== (otherNode.info || '') ||
+        editableType !== otherNode.type ||
+        editableRefId !== otherNode.ref_id
+
+      if (hasPropertyChanges) {
+        await axios.patch(`${API_PREFIX}/api/v1/labels/other-node/${otherNode.id}`, {
+          label: editableLabel.trim(),
+          description: editableDescription,
+          info: editableInfo,
+          type: editableType,
+          ref_id: editableRefId,
+        })
+      }
+
+      // Update position
+      const hasPositionChanges =
+        absX !== otherNode.x_trans ||
+        absY !== otherNode.y_trans ||
+        absZ !== otherNode.z_trans
+
+      if (hasPositionChanges) {
+        await axios.patch(`${API_PREFIX}/api/v1/labels/other-node/${otherNode.id}/position`, {
+          x_trans: absX,
+          y_trans: absY,
+          z_trans: absZ,
+        })
+      }
 
       setSuccess(true)
       setTimeout(() => {
         setSuccess(false)
         onUpdate()
       }, 1500)
-    } catch (err) {
-      console.error('Error updating position:', err)
-      setError('Failed to update position')
+    } catch (err: unknown) {
+      console.error('Error updating node:', err)
+      const errorMessage =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to update node'
+      setError(errorMessage)
     } finally {
       setSaving(false)
     }
@@ -177,6 +283,12 @@ const OtherNodeEditor: React.FC<OtherNodeEditorProps> = ({
     setAbsX(otherNode.x_trans)
     setAbsY(otherNode.y_trans)
     setAbsZ(otherNode.z_trans)
+    setEditableLabel(otherNode.label)
+    setEditableDescription(otherNode.description || '')
+    setEditableInfo(otherNode.info || '')
+    setEditableType(otherNode.type)
+    setEditableRefId(otherNode.ref_id)
+    setRefIdValidationError(null)
   }
 
   // Calculate visualization scale and offset for 2D view (X-Z plane)
@@ -294,8 +406,8 @@ const OtherNodeEditor: React.FC<OtherNodeEditorProps> = ({
       <div className="editor-header">
         <div className="header-left">
           <h3>
-            {nodeTypes[otherNode.type as keyof typeof nodeTypes]?.icon || '📍'}{' '}
-            {otherNode.label || `Node ${otherNode.id}`}
+            {nodeTypes[editableType as keyof typeof nodeTypes]?.icon || '📍'}{' '}
+            {editableLabel || `Node ${otherNode.id}`}
           </h3>
           <span className="node-id">ID: #{otherNode.id}</span>
         </div>
@@ -309,7 +421,7 @@ const OtherNodeEditor: React.FC<OtherNodeEditorProps> = ({
       ) : error && !refNodeInfo ? (
         <div className="error">
           {error}
-          <button onClick={fetchRefNodeInfo} className="retry-btn">
+          <button onClick={() => fetchRefNodeInfo(editableRefId)} className="retry-btn">
             Retry
           </button>
         </div>
@@ -320,8 +432,22 @@ const OtherNodeEditor: React.FC<OtherNodeEditorProps> = ({
             <h4>Basic Information</h4>
             <div className="info-grid">
               <div className="info-item">
-                <label>Ref Node ID:</label>
-                <span>#{otherNode.ref_id}</span>
+                <label htmlFor="ref-node-id">Ref Node ID:</label>
+                <div className="input-wrapper">
+                  <input
+                    id="ref-node-id"
+                    type="number"
+                    min="0"
+                    value={editableRefId}
+                    onChange={(e) => handleRefIdChange(e.target.value)}
+                    className={refIdValidationError ? 'input-error' : ''}
+                    disabled={saving || loading}
+                  />
+                  {validatingRefId && <span className="validating-indicator">Validating...</span>}
+                  {refIdValidationError && (
+                    <span className="validation-error">{refIdValidationError}</span>
+                  )}
+                </div>
               </div>
               {otherNode.location && (
                 <div className="info-item">
@@ -329,17 +455,54 @@ const OtherNodeEditor: React.FC<OtherNodeEditorProps> = ({
                   <span>{otherNode.location}</span>
                 </div>
               )}
-              {otherNode.description && (
-                <div className="info-item">
-                  <label>Description:</label>
-                  <span>{otherNode.description}</span>
-                </div>
-              )}
               <div className="info-item">
-                <label>Type:</label>
-                <span>
-                  {nodeTypes[otherNode.type as keyof typeof nodeTypes]?.name || 'Unknown'}
-                </span>
+                <label htmlFor="label-input">Label:</label>
+                <input
+                  id="label-input"
+                  type="text"
+                  value={editableLabel}
+                  onChange={(e) => setEditableLabel(e.target.value)}
+                  disabled={saving || loading}
+                  className="editable-input"
+                />
+              </div>
+              <div className="info-item">
+                <label htmlFor="description-input">Display Name:</label>
+                <textarea
+                  id="description-input"
+                  value={editableDescription}
+                  onChange={(e) => setEditableDescription(e.target.value)}
+                  disabled={saving || loading}
+                  className="editable-textarea"
+                  rows={3}
+                />
+              </div>
+              <div className="info-item">
+                <label htmlFor="info-input">Info:</label>
+                <textarea
+                  id="info-input"
+                  value={editableInfo}
+                  onChange={(e) => setEditableInfo(e.target.value)}
+                  disabled={saving || loading}
+                  className="editable-textarea"
+                  rows={3}
+                />
+              </div>
+              <div className="info-item">
+                <label htmlFor="type-select">Type:</label>
+                <select
+                  id="type-select"
+                  value={editableType}
+                  onChange={(e) => setEditableType(parseInt(e.target.value, 10))}
+                  disabled={saving || loading}
+                  className="editable-select"
+                >
+                  {Object.entries(nodeTypes).map(([typeId, typeInfo]) => (
+                    <option key={typeId} value={typeId}>
+                      {typeInfo.icon} {typeInfo.name}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>
@@ -676,9 +839,9 @@ const OtherNodeEditor: React.FC<OtherNodeEditorProps> = ({
               <button
                 onClick={handleSave}
                 className="save-btn"
-                disabled={saving || loading}
+                disabled={saving || loading || !!refIdValidationError}
               >
-                {saving ? 'Saving...' : 'Save Position'}
+                {saving ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
           </div>
@@ -772,6 +935,62 @@ const OtherNodeEditor: React.FC<OtherNodeEditorProps> = ({
           text-align: right;
           color: #333;
           word-break: break-word;
+        }
+
+        .input-wrapper {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          gap: 4px;
+          flex: 1;
+        }
+
+        .editable-input,
+        .editable-textarea,
+        .editable-select {
+          flex: 1;
+          padding: 6px 12px;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          font-size: 14px;
+          font-family: inherit;
+          width: 100%;
+          max-width: 300px;
+        }
+
+        .editable-textarea {
+          resize: vertical;
+          min-height: 60px;
+        }
+
+        .editable-input:focus,
+        .editable-textarea:focus,
+        .editable-select:focus {
+          outline: none;
+          border-color: #007bff;
+        }
+
+        .editable-input:disabled,
+        .editable-textarea:disabled,
+        .editable-select:disabled {
+          background-color: #f5f5f5;
+          cursor: not-allowed;
+        }
+
+        .input-error {
+          border-color: #dc3545 !important;
+        }
+
+        .validation-error {
+          font-size: 12px;
+          color: #dc3545;
+          text-align: right;
+        }
+
+        .validating-indicator {
+          font-size: 12px;
+          color: #666;
+          font-style: italic;
         }
 
         .position-display {

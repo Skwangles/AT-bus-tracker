@@ -333,3 +333,112 @@ export const updateOtherNodePositionById = async (req: Request, res: Response) =
     res.status(500).json({ message: 'Error updating other node position' });
   }
 };
+
+// Controller to update other_node properties by ID (label, description, type, ref_id, info)
+export const updateOtherNodeById = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { label, description, type, ref_id, info } = req.body;
+
+  try {
+    // Check if other_node exists
+    const existingNode = await readDB(
+      `SELECT id, ref_id, label FROM other_nodes WHERE id = ?`,
+      [id],
+      true
+    );
+
+    if (!existingNode) {
+      return res.status(404).json({ message: 'Other node not found' });
+    }
+
+    // Validate ref_id if provided
+    if (ref_id !== undefined) {
+      if (isNaN(Number(ref_id)) || Number(ref_id) < 0) {
+        return res.status(400).json({ message: 'Invalid ref_id: must be a positive number' });
+      }
+
+      // Check if the ref_id (keyframe_id) exists in nodes table
+      const refNodeExists = await readDB(
+        `SELECT keyframe_id FROM nodes WHERE keyframe_id = ?`,
+        [ref_id],
+        true
+      );
+
+      if (!refNodeExists) {
+        return res.status(404).json({ message: 'Reference node (ref_id) not found' });
+      }
+    }
+
+    // Validate type if provided
+    if (type !== undefined) {
+      if (isNaN(Number(type)) || Number(type) < 0) {
+        return res.status(400).json({ message: 'Invalid type: must be a non-negative number' });
+      }
+    }
+
+    // Validate label if provided
+    if (label !== undefined && (typeof label !== 'string' || label.trim().length === 0)) {
+      return res.status(400).json({ message: 'Invalid label: must be a non-empty string' });
+    }
+
+    // Build update query dynamically based on provided fields
+    const updateFields: string[] = [];
+    const updateValues: any[] = [];
+
+    if (label !== undefined) {
+      updateFields.push('label = ?');
+      updateValues.push(label.trim());
+    }
+
+    if (description !== undefined) {
+      updateFields.push('description = ?');
+      updateValues.push(description);
+    }
+
+    if (info !== undefined) {
+      updateFields.push('info = ?');
+      updateValues.push(info);
+    }
+
+    if (type !== undefined) {
+      updateFields.push('type = ?');
+      updateValues.push(Number(type));
+    }
+
+    if (ref_id !== undefined) {
+      updateFields.push('ref_id = ?');
+      updateValues.push(Number(ref_id));
+    }
+
+    if (updateFields.length === 0) {
+      return res.status(400).json({ message: 'No fields to update' });
+    }
+
+    updateValues.push(id);
+
+    const updateQuery = `
+      UPDATE other_nodes 
+      SET ${updateFields.join(', ')} 
+      WHERE id = ?
+    `;
+    const result = await writeDB(updateQuery, updateValues);
+
+    if (result > 0) {
+      res.status(200).json({
+        message: 'Other node updated successfully',
+        updated_fields: {
+          ...(label !== undefined && { label }),
+          ...(description !== undefined && { description }),
+          ...(info !== undefined && { info }),
+          ...(type !== undefined && { type: Number(type) }),
+          ...(ref_id !== undefined && { ref_id: Number(ref_id) })
+        }
+      });
+    } else {
+      res.status(404).json({ message: 'Other node not found' });
+    }
+  } catch (error) {
+    console.error('Error updating other node:', error);
+    res.status(500).json({ message: 'Error updating other node' });
+  }
+};
