@@ -37,11 +37,11 @@ check_command "Copying environment files"
 if [ "$CV_BUILD_LIBS" == true ]; then
   ./BUILD_LIBS.sh
   check_command "Building dependencies"
-fi
 
-echo "Building Sitexplorer Files"
-./BUILD_SITEXPLORER.sh
-check_command "Building Sitexplorer"
+  echo "Building Sitexplorer Files"
+  ./BUILD_SITEXPLORER.sh
+  check_command "Building Sitexplorer"
+fi
 
 # Run features based on configuration
 if [ "$CV_STITCH_INSV" == true ]; then
