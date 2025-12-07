@@ -13,7 +13,6 @@ def parse_args():
     parser.add_argument('--keep_id', type=str, help="List of IDs to keep, e.g. '[15, 16, 17]'")
     parser.add_argument('--keep_labels', type=str, help="List of labels to keep, e.g. '[\"reserved\"]'")
     parser.add_argument('--remove_duplicates', action='store_true', help="Remove duplicate other_nodes based on ref_id, label, and description")
-    parser.add_argument('--scale_factor', type=float, help="Scale factor to apply to other_nodes")
     return parser.parse_args()
 
 def copy_database(input_db, output_db):
@@ -162,7 +161,6 @@ def main():
     keep_labels = get_keep_labels(args.keep_labels)
     del_non_prefix = args.del_non_prefix or False
     prefix = args.prefix or ""
-    scale_factor = args.scale_factor or 15.0
     
     # Remove duplicates if requested
     if args.remove_duplicates:
