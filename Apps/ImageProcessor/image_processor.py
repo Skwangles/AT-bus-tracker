@@ -63,6 +63,25 @@ def create_resized_image(image_path: str, dimensions: dict, extension: str, qual
         
         return output.getvalue()
 
+def check_blurred_image_exists_in_s3(ts: str) -> bool:
+    """
+    Check if a blurred image already exists in S3 for the given timestamp.
+    Returns True if at least one resolution exists, False otherwise.
+    """
+    for resolution_name, settings in RESOLUTION_LEVELS.items():
+        remote_key = f"{ts}-{resolution_name}.{settings['extension']}"
+        try:
+            s3.head_object(Bucket=R2_BUCKET, Key=remote_key)
+            print(f"Blurred image {remote_key} already exists in S3")
+            return True
+        except s3.exceptions.ClientError as e:
+            if e.response['Error']['Code'] != '404':
+                print(f"Error checking S3 for {remote_key}: {e}")
+                # If there's an error other than 404, we'll assume it doesn't exist
+                # and continue checking other resolutions
+                continue
+    return False
+
 def blur_image(input_file: Path, blurred_file: Path) -> bool:
     """
     Blur faces in an equirectangular image.
@@ -149,8 +168,12 @@ def process_from_db(db_path: str, input_dir: str, output_dir: str):
             
             blurred_file = output_path / f"{ts}_blurred.png"
             if blurred_file.exists():
-                print(f"Blurred file exists: {blurred_file}")
+                print(f"Blurred file exists locally: {blurred_file}")
                 images_to_upload.append((ts, blurred_file))
+            elif check_blurred_image_exists_in_s3(ts):
+                print(f"Blurred image for {ts} already exists in S3, skipping blur")
+                # Don't add to blur queue, but also don't add to upload queue
+                # since it's already uploaded
             else:
                 images_to_blur.append((ts, input_file, blurred_file))
         
