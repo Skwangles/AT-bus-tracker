@@ -16,7 +16,7 @@ export const RESERVED_START_OF_LABELS = ["!!anchor", "!!elevator", "!!toilet", "
 export const PORT = isNaN(Number(process.env.CV_AUTHORING_PORT)) ? Number(3004) : Number(process.env.CV_AUTHORING_PORT);
 export const KEYFRAME_IMG_DIR = process.env.CV_KEYFRAME_IMG_DIR ?? "";
 export const COORDS_TO_METRES: number = isNaN(Number(process.env.CV_COORDS_TO_METRES)) ? 10 : Number(process.env.CV_COORDS_TO_METRES)
-export const FLOORPLAN_IMG_DIR = process.env.CV_SERVER_FLOORPLAN_IMG_DIR ?? "";
+export const FLOORPLAN_IMG_DIR = process.env.CV_AUTHORING_FLOORPLAN_IMG_DIR ?? "";
 export const KEYFRAME_IMG_EXTENSION = process.env.CV_AUTHORING_KEYFRAME_IMG_EXTENSION ?? ".png";
 
 export const NEIGHBOURS_INCLUDES_PROXIMITY: boolean = process.env.NEIGHBOURS_INCLUDES_PROXIMITY === 'true';
