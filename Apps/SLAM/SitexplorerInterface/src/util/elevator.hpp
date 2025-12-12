@@ -65,18 +65,10 @@ struct OtherNode {
     double z_trans;     // Z translation
 };
 
-// New struct to hold elevator edge information
-struct ElevatorEdge {
-    int id;             // Unique ID
-    std::string shaft_id; // Shaft identifier
-    int id0;            // First elevator node ID
-    int id1;            // Second elevator node ID
-};
-
 // Helper functions
 bool parse_elevator_label(const std::string& label, std::string& shaft_id, std::string& description);
 bool create_elevator_point(sqlite3* db, ElevatorPoint& point);
-bool create_elevator_edges(sqlite3* db, const std::vector<ElevatorPoint>& points);
+bool create_elevator_shafts(sqlite3* db, const std::vector<ElevatorPoint>& points);
 bool update_original_point_label(sqlite3* db, int keyframe_id);
 bool create_tables_if_not_exist(sqlite3* db);
 
@@ -86,10 +78,10 @@ bool add_other_node(sqlite3* db, OtherNode& node);
 bool get_other_node(sqlite3* db, int id, OtherNode& node);
 bool get_other_nodes_by_type(sqlite3* db, OtherNodeType type, std::vector<OtherNode>& nodes);
 
-// Helper functions for elevator_edges table
-bool create_elevator_edges_table(sqlite3* db);
-bool add_elevator_edge(sqlite3* db, const ElevatorEdge& edge);
-bool get_elevator_edges_by_shaft(sqlite3* db, const std::string& shaft_id, std::vector<ElevatorEdge>& edges);
+// Helper functions for elevator_shafts table
+bool create_elevator_shafts_table(sqlite3* db);
+bool add_elevator_shaft(sqlite3* db, int other_node_id, const std::string& shaft_id);
+bool get_elevator_shafts_by_shaft(sqlite3* db, const std::string& shaft_id, std::vector<int>& other_node_ids);
 
 // Conversion functions
 bool convert_user_defined_labels_to_other_nodes(sqlite3* db);

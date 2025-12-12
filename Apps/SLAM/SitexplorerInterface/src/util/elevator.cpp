@@ -12,9 +12,9 @@ bool create_tables_if_not_exist(sqlite3* db) {
         return false;
     }
 
-    // Create elevator_edges table
-    if (!create_elevator_edges_table(db)) {
-        spdlog::error("Failed to create elevator_edges table");
+    // Create elevator_shafts table
+    if (!create_elevator_shafts_table(db)) {
+        spdlog::error("Failed to create elevator_shafts table");
         return false;
     }
 
@@ -48,25 +48,13 @@ bool parse_elevator_label(const std::string& label, std::string& shaft_id, std::
 }
 
 
-bool create_elevator_edges(sqlite3* db, const std::vector<ElevatorPoint>& points) {
-    if (points.size() < 2) {
-        return true; // No edges needed for single point
-    }
-
-    // Create edges between all pairs of points in the shaft
-    for (size_t i = 0; i < points.size(); ++i) {
-        for (size_t j = i + 1; j < points.size(); ++j) {
-            // Create ElevatorEdge struct
-            ElevatorEdge edge;
-            edge.shaft_id = points[i].shaft_id;
-            edge.id0 = points[i].elevator_point_id;
-            edge.id1 = points[j].elevator_point_id;
-
-            if (!add_elevator_edge(db, edge)) {
-                spdlog::error("Failed to add elevator connection between points {} and {}", 
-                    points[i].elevator_point_id, points[j].elevator_point_id);
-                continue;
-            }
+bool create_elevator_shafts(sqlite3* db, const std::vector<ElevatorPoint>& points) {
+    // Store each point with its shaft_id
+    for (const auto& point : points) {
+        if (!add_elevator_shaft(db, point.elevator_point_id, point.shaft_id)) {
+            spdlog::error("Failed to add elevator shaft entry for point {} with shaft_id {}", 
+                point.elevator_point_id, point.shaft_id);
+            continue;
         }
     }
 
@@ -106,26 +94,21 @@ bool create_other_nodes_table(sqlite3* db) {
     return true;
 }
 
-bool create_elevator_edges_table(sqlite3* db) {
+bool create_elevator_shafts_table(sqlite3* db) {
     const char* sql = R"(
-        CREATE TABLE IF NOT EXISTS elevator_edges (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+        CREATE TABLE IF NOT EXISTS elevator_shafts (
+            other_node_id INTEGER PRIMARY KEY,
             shaft_id TEXT NOT NULL,
-            id0 INTEGER NOT NULL,
-            id1 INTEGER NOT NULL,
-            FOREIGN KEY (id0) REFERENCES other_nodes(id) ON DELETE CASCADE,
-            FOREIGN KEY (id1) REFERENCES other_nodes(id) ON DELETE CASCADE,
-            UNIQUE(id0, id1)
+            FOREIGN KEY (other_node_id) REFERENCES other_nodes(id) ON DELETE CASCADE
         );
-        CREATE INDEX IF NOT EXISTS idx_elevator_edges_shaft ON elevator_edges(shaft_id);
-        CREATE INDEX IF NOT EXISTS idx_elevator_edges_nodes ON elevator_edges(id0, id1);
+        CREATE INDEX IF NOT EXISTS idx_elevator_shafts_shaft ON elevator_shafts(shaft_id);
     )";
 
     char* err_msg = nullptr;
     int ret = sqlite3_exec(db, sql, nullptr, nullptr, &err_msg);
     
     if (ret != SQLITE_OK) {
-        spdlog::error("Failed to create elevator_edges table: {}", err_msg);
+        spdlog::error("Failed to create elevator_shafts table: {}", err_msg);
         sqlite3_free(err_msg);
         return false;
     }
@@ -166,27 +149,47 @@ bool add_other_node(sqlite3* db, OtherNode& node) {
     return true;
 }
 
-bool add_elevator_edge(sqlite3* db, const ElevatorEdge& edge) {
+bool add_elevator_shaft(sqlite3* db, int other_node_id, const std::string& shaft_id) {
     sqlite3_stmt* stmt = nullptr;
     const char* sql = R"(
-        INSERT OR REPLACE INTO elevator_edges 
-        (shaft_id, id0, id1)
-        VALUES (?, ?, ?)
+        INSERT OR REPLACE INTO elevator_shafts 
+        (other_node_id, shaft_id)
+        VALUES (?, ?)
     )";
 
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
-        spdlog::error("Failed to prepare elevator_edge insert: {}", sqlite3_errmsg(db));
+        spdlog::error("Failed to prepare elevator_shaft insert: {}", sqlite3_errmsg(db));
         return false;
     }
 
-    sqlite3_bind_text(stmt, 1, edge.shaft_id.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_int(stmt, 2, edge.id0);
-    sqlite3_bind_int(stmt, 3, edge.id1);
+    sqlite3_bind_int(stmt, 1, other_node_id);
+    sqlite3_bind_text(stmt, 2, shaft_id.c_str(), -1, SQLITE_STATIC);
 
     if (sqlite3_step(stmt) != SQLITE_DONE) {
-        spdlog::error("Failed to insert elevator_edge: {}", sqlite3_errmsg(db));
+        spdlog::error("Failed to insert elevator_shaft: {}", sqlite3_errmsg(db));
         sqlite3_finalize(stmt);
         return false;
+    }
+
+    sqlite3_finalize(stmt);
+    return true;
+}
+
+bool get_elevator_shafts_by_shaft(sqlite3* db, const std::string& shaft_id, std::vector<int>& other_node_ids) {
+    sqlite3_stmt* stmt = nullptr;
+    const char* sql = "SELECT other_node_id FROM elevator_shafts WHERE shaft_id = ?";
+    
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        spdlog::error("Failed to prepare elevator_shafts query: {}", sqlite3_errmsg(db));
+        return false;
+    }
+
+    sqlite3_bind_text(stmt, 1, shaft_id.c_str(), -1, SQLITE_STATIC);
+    
+    other_node_ids.clear();
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int other_node_id = sqlite3_column_int(stmt, 0);
+        other_node_ids.push_back(other_node_id);
     }
 
     sqlite3_finalize(stmt);
@@ -274,19 +277,12 @@ bool convert_user_defined_labels_to_other_nodes(sqlite3* db) {
 
     sqlite3_finalize(stmt);
 
-    // Create elevator edges for each shaft
+    // Create elevator shaft entries for each node
     for (const auto& [shaft_id, nodes] : elevator_shafts) {
-        for (size_t i = 0; i < nodes.size(); ++i) {
-            for (size_t j = i + 1; j < nodes.size(); ++j) {
-                ElevatorEdge edge;
-                edge.shaft_id = shaft_id;
-                edge.id0 = nodes[i].id;
-                edge.id1 = nodes[j].id;
-
-                if (!add_elevator_edge(db, edge)) {
-                    spdlog::error("Failed to add elevator edge between nodes {} and {}", 
-                        nodes[i].id, nodes[j].id);
-                }
+        for (const auto& node : nodes) {
+            if (!add_elevator_shaft(db, node.id, shaft_id)) {
+                spdlog::error("Failed to add elevator shaft entry for node {} with shaft_id {}", 
+                    node.id, shaft_id);
             }
         }
     }

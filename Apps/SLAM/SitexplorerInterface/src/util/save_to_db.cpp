@@ -3,8 +3,6 @@
 #include <spdlog/spdlog.h>
 #include <iostream>
 
-// ... existing code ...
-
 void user_defined_labels_to_sqlite(sqlite3* db, const std::string& map_db_path) {
     // Create tables if they don't exist
     create_tables_if_not_exist(db);
@@ -60,7 +58,7 @@ void user_defined_labels_to_sqlite(sqlite3* db, const std::string& map_db_path) 
             elevator_shafts[shaft_id].points.push_back(elevator_point);
 
             // Update original point's label to anchor
-            update_original_point_label(db, user_defined_point.keyframe_id);
+            // update_original_point_label(db, user_defined_point.keyframe_id);
         }
     }
 
@@ -80,9 +78,9 @@ void user_defined_labels_to_sqlite(sqlite3* db, const std::string& map_db_path) 
             }
         }
 
-        // Create edges between all points in this shaft
-        if (!create_elevator_edges(db, shaft.points)) {
-            spdlog::error("Failed to create elevator edges for shaft {}", shaft_id);
+        // Create shaft entries for all points in this shaft
+        if (!create_elevator_shafts(db, shaft.points)) {
+            spdlog::error("Failed to create elevator shafts for shaft {}", shaft_id);
             continue;
         }
     }
