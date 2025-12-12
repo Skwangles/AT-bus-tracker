@@ -1,6 +1,49 @@
 # Map Merge
 
-C++ application for merging two SLAM maps (SQLite databases) into a single unified map using labeled merge points.
+Python + C++ tooling for merging two SLAM maps (SQLite databases) into a single unified map using labelled merge points. The new `merge_viewer.py` script offers both a headless CLI (feature parity with the legacy C++ binary) and an interactive Plotly/Dash viewer for visual alignment.
+
+## Python viewer and CLI
+
+### Dependencies
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install numpy dash[standard] plotly
+```
+
+### Command line usage
+
+```bash
+python Apps/MapMerge/merge_viewer.py FIRST.db SECOND.db OUTPUT.db \
+  --zone2 "Building B" [--zone1 "Building A"] [--overwrite]
+```
+
+- `--viewer` or `--manual` launches the Dash UI instead of running headless.
+- `--transform-json` accepts a 4x4 homogeneous transform (JSON array) to bypass automatic alignment.
+
+### Launch the viewer
+
+```bash
+python Apps/MapMerge/merge_viewer.py first.db second.db merged.db \
+  --zone2 "Building B" --viewer
+```
+
+The viewer exposes:
+
+- Numeric inputs for translation (X/Y/Z), rotation (roll/pitch/yaw, degrees) and uniform scale.
+- **Auto Align (labels)**: seeds the controls using the `$$` merge points via the built-in Procrustes solver.
+- **Write merged DB**: persists the currently selected transform by copying data from the second DB into the output file, mirroring the CLI flow.
+
+```mermaid
+graph TD
+    A[SQLite DB 1] -->|Fixed reference| C[Plotly Scene]
+    B[SQLite DB 2] -->|Transform sliders| C
+    C --> D[Preview overlap]
+    D -->|Write merged DB| E[merge_viewer.py backend]
+    E --> F[Merged SQLite DB]
+    C --> G[Auto Align via $$ labels]
+```
 
 ## Overview
 
@@ -141,7 +184,14 @@ The Map Merge tool runs **after** the following steps:
 
 ## Dependencies
 
-### C++ Libraries
+### Python runtime
+
+- **Python 3.10+**
+- **numpy** – linear algebra and matrix operations
+- **dash[standard]** – Plotly Dash UI runtime
+- **plotly** – 3D scatter visualisation
+
+### Legacy C++ Libraries
 - **Eigen3** - Linear algebra and matrix operations (Procrustes analysis)
 - **SQLite3** - Database operations
 - **Boost** - Program options and filesystem utilities
@@ -156,6 +206,12 @@ The Map Merge tool runs **after** the following steps:
 - CMake or Makefile support
 
 ## Installation
+
+### Python script
+
+No compilation is needed. Install the Python dependencies (see above) and run `merge_viewer.py` directly.
+
+### Legacy C++ binary
 
 1. Build the project:
 ```bash
@@ -172,12 +228,16 @@ The binary `cv_merge_maps` will be created in `../../bin/linux/` or installed to
 
 ## Usage
 
-### Via Script
+### Recommended: Python CLI / Viewer
+
+See [Python viewer and CLI](#python-viewer-and-cli) for examples.
+
+### Legacy shell script
 ```bash
 ./bin/scripts/cv_run_7_merge_maps.sh
 ```
 
-### Direct Usage
+### Legacy binary
 ```bash
 cv_merge_maps <first_map> <second_map> <output_map> --zone2 <zone2_name> [--zone1 <zone1_name>] [--overwrite]
 ```
@@ -191,8 +251,9 @@ cv_merge_maps <first_map> <second_map> <output_map> --zone2 <zone2_name> [--zone
 
 ```
 MapMerge/
-├── merge.cpp      # Main merge implementation
-└── Makefile       # Build configuration
+├── merge.cpp         # Legacy C++ merge implementation
+├── merge_viewer.py   # Python CLI + Plotly/Dash viewer
+└── Makefile          # Build configuration for the C++ binary
 ```
 
 ## Notes
