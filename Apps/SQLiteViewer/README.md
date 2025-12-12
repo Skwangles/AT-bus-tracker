@@ -72,7 +72,7 @@ It is not part of the automated pipeline but is useful for debugging and visual 
 - **Colour-coded edges**: Different edge types are displayed with distinct colours
 - **Edge type support**: Supports the full `refined_edges` table structure with `type` and `zone` columns
 - **Toggle visibility**: Press 't' to show/hide all edges
-- **Elevator edges**: Special cyan-coloured lines for elevator connections
+- **Elevator shafts**: Special cyan-coloured lines connecting all nodes in the same elevator shaft
 
 ### Edge Types and Colours
 - **Type 0**: Blue lines (default/unknown type)
@@ -80,7 +80,7 @@ It is not part of the automated pipeline but is useful for debugging and visual 
 - **Type 2**: Orange lines (default edge type)
 - **Type 3**: Red lines (edge contraction - displayed with thicker lines)
 - **Type -1**: Purple lines (covisibility edges)
-- **Elevator edges**: Cyan lines (thicker lines for visibility)
+- **Elevator shafts**: Cyan lines (thicker lines for visibility) connecting all nodes within the same shaft
 
 ### Database Structure Support
 The viewer now properly handles the `refined_edges` table structure:

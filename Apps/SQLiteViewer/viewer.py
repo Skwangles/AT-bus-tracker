@@ -113,7 +113,7 @@ class SQLiteViewer:
         self.nodes: List[Node] = []
         self.other_nodes: List[OtherNode] = []
         self.edges: List[Edge] = []
-        self.elevator_edges: List[Tuple] = []
+        self.elevator_shafts: Dict[str, List[int]] = {}
         
         # Visualisation state
         self.plotter: Optional[pv.Plotter] = None
@@ -287,36 +287,43 @@ class SQLiteViewer:
             logger.error(f"Error loading edges: {e}")
             return []
     
-    def load_elevator_edges(self) -> List[Tuple]:
-        """Load elevator edges from the SQLite database"""
-        logger.info("Loading elevator edges from database...")
+    def load_elevator_shafts(self) -> Dict[str, List[int]]:
+        """Load elevator shafts from the SQLite database, grouped by shaft_id"""
+        logger.info("Loading elevator shafts from database...")
         
         try:
             connection = sqlite3.connect(self.db_path)
             cursor = connection.cursor()
             
-            # Check if elevator_edges table exists
-            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='elevator_edges'")
+            # Check if elevator_shafts table exists
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='elevator_shafts'")
             if not cursor.fetchone():
-                logger.info("elevator_edges table not found, skipping...")
+                logger.info("elevator_shafts table not found, skipping...")
                 connection.close()
-                return []
+                return {}
             
-            query = "SELECT id, shaft_id, id0, id1 FROM elevator_edges"
+            query = "SELECT other_node_id, shaft_id FROM elevator_shafts"
             logger.info(f"Executing: {query}")
             cursor.execute(query)
             rows = cursor.fetchall()
             
+            # Group by shaft_id
+            shafts = {}
+            for other_node_id, shaft_id in rows:
+                if shaft_id not in shafts:
+                    shafts[shaft_id] = []
+                shafts[shaft_id].append(other_node_id)
+            
             connection.close()
-            logger.info(f"Loaded {len(rows)} elevator edges")
-            return rows
+            logger.info(f"Loaded {len(shafts)} elevator shafts with {sum(len(nodes) for nodes in shafts.values())} total nodes")
+            return shafts
             
         except sqlite3.Error as e:
-            logger.error(f"Database error loading elevator edges: {e}")
-            return []
+            logger.error(f"Database error loading elevator shafts: {e}")
+            return {}
         except Exception as e:
-            logger.error(f"Error loading elevator edges: {e}")
-            return []
+            logger.error(f"Error loading elevator shafts: {e}")
+            return {}
     
     def create_node_mapping(self):
         """Create mapping between node IDs and indices"""
@@ -641,29 +648,35 @@ class SQLiteViewer:
             
             logger.info(f"Rendered {valid_edges} valid edges, skipped {invalid_edges} invalid edges")
         
-        # Render elevator edges
-        if self.elevator_edges:
-            logger.info("Rendering elevator edges...")
+        # Render elevator shafts (create edges between all nodes in the same shaft)
+        if self.elevator_shafts:
+            logger.info("Rendering elevator shafts...")
             elevator_valid = 0
             elevator_invalid = 0
             
-            for elevator_edge in tqdm(self.elevator_edges, desc="Rendering elevator edges"):
-                edge_id0, edge_id1 = elevator_edge[2], elevator_edge[3]
-                line_points = self.get_lines_from_ids(edge_id0, edge_id1)
-                
-                if line_points is not None:
-                    p0, p1 = line_points
-                    line = pv.Line(p0.position, p1.position)
-                    actor = self.plotter.add_mesh(
-                        line, 
-                        color="cyan", 
-                        line_width=3.0, 
-                        pickable=False
-                    )
-                    self.edge_actors.append(actor)
-                    elevator_valid += 1
-                else:
-                    elevator_invalid += 1
+            for shaft_id, node_ids in tqdm(self.elevator_shafts.items(), desc="Rendering elevator shafts"):
+                # Create edges between all pairs of nodes in the same shaft
+                for i in range(len(node_ids)):
+                    for j in range(i + 1, len(node_ids)):
+                        node_id0, node_id1 = node_ids[i], node_ids[j]
+                        # Use special ID format for other nodes
+                        special_id0 = f"other_{node_id0}"
+                        special_id1 = f"other_{node_id1}"
+                        line_points = self.get_lines_from_ids(special_id0, special_id1)
+                        
+                        if line_points is not None:
+                            p0, p1 = line_points
+                            line = pv.Line(p0.position, p1.position)
+                            actor = self.plotter.add_mesh(
+                                line, 
+                                color="cyan", 
+                                line_width=3.0, 
+                                pickable=False
+                            )
+                            self.edge_actors.append(actor)
+                            elevator_valid += 1
+                        else:
+                            elevator_invalid += 1
             
             logger.info(f"Rendered {elevator_valid} valid elevator edges, skipped {elevator_invalid} invalid edges")
         
@@ -704,7 +717,7 @@ t - toggle edge visibility
         self.nodes = self.load_nodes()
         self.other_nodes = self.load_other_nodes()
         self.edges = self.load_edges()
-        self.elevator_edges = self.load_elevator_edges()
+        self.elevator_shafts = self.load_elevator_shafts()
         
         if not self.nodes:
             logger.error("No nodes loaded. Exiting.")
@@ -715,7 +728,8 @@ t - toggle edge visibility
         logger.info(f"  - {len(self.nodes)} nodes")
         logger.info(f"  - {len(self.other_nodes)} other nodes")
         logger.info(f"  - {len(self.edges)} edges")
-        logger.info(f"  - {len(self.elevator_edges)} elevator edges")
+        total_shaft_nodes = sum(len(nodes) for nodes in self.elevator_shafts.values())
+        logger.info(f"  - {len(self.elevator_shafts)} elevator shafts ({total_shaft_nodes} nodes)")
         
         # Render
         self.render()

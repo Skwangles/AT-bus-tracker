@@ -44,12 +44,12 @@ The SQLiteViewer serves as a visual debugging and editing tool for spatial mappi
   - `type` (INTEGER): Node type classification
   - `x_trans`, `y_trans`, `z_trans` (REAL): 3D position coordinates
 
-#### `elevator_edges` Table
-- **Purpose**: Special connections for elevator systems
+#### `elevator_shafts` Table
+- **Purpose**: Associates elevator nodes with their shaft identifiers
 - **Key Fields**:
-  - `id` (INTEGER): Unique identifier
-  - `shaft_id` (INTEGER): Elevator shaft identifier
-  - `id0`, `id1` (INTEGER): Connected other_node IDs
+  - `other_node_id` (INTEGER): Primary key, references `other_nodes.id`
+  - `shaft_id` (TEXT): Elevator shaft identifier
+  - Each `other_node_id` can only belong to one `shaft_id`
 
 ## Core Features
 
@@ -72,7 +72,7 @@ The SQLiteViewer serves as a visual debugging and editing tool for spatial mappi
   - Type 3: Red (edge contraction)
   - Type -1: Purple (covisibility)
 - **Line Weight**: Thicker lines for edge contraction (type 3)
-- **Elevator Edges**: Cyan lines with increased thickness
+- **Elevator Shafts**: Cyan lines with increased thickness connecting all nodes within the same shaft
 
 #### Interactive Controls
 - **Point Picking**: Click to select nodes
