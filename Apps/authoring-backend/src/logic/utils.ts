@@ -23,18 +23,19 @@ export async function getNeighbours(keyframeId: number, get_elevator_neighbours 
 
   let elevatorNeighbours: any[] = []
   if (get_elevator_neighbours) {
-    // Get elevator neighbours via other_nodes and elevator_edges
+    // Get elevator neighbours via other_nodes and elevator_shafts (all nodes in the same shaft)
     elevatorNeighbours = await readDB(
       `SELECT DISTINCT n2.keyframe_id, n2.ts, 1 as degree
       FROM nodes n
       JOIN other_nodes on1 ON n.keyframe_id = on1.ref_id
-      JOIN elevator_edges ee ON (on1.id = ee.id0 OR on1.id = ee.id1)
-      JOIN other_nodes on2 ON (on2.id = ee.id0 OR on2.id = ee.id1)
+      JOIN elevator_shafts es1 ON on1.id = es1.other_node_id
+      JOIN elevator_shafts es2 ON es1.shaft_id = es2.shaft_id
+      JOIN other_nodes on2 ON es2.other_node_id = on2.id
       JOIN nodes n2 ON on2.ref_id = n2.keyframe_id
       WHERE n.keyframe_id = ? 
       AND on1.id != on2.id
       AND on1.type = 1 
-        AND on2.type = 1`,
+      AND on2.type = 1`,
         [keyframeId]
       );
   }

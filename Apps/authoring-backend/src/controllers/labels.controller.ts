@@ -124,25 +124,16 @@ export const addLabel = async (req: Request, res: Response) => {
         if (parts.length >= 2) {
           const shaft_id = parts[1];
 
-          // Find other elevator nodes in the same shaft
-          const elevatorNodesQuery = `
-            SELECT id FROM other_nodes 
-            WHERE type = 1 AND label LIKE ? AND ref_id != ?
+          // Insert shaft assignment for this node
+          const shaftQuery = `
+            INSERT OR REPLACE INTO elevator_shafts 
+            (other_node_id, shaft_id) VALUES (?, ?)
           `;
-          const elevatorNodes = await readDB(elevatorNodesQuery, [`%${shaft_id}%`, id]);
-
-          // Create edges to all other elevator nodes in the same shaft
-          for (const elevatorNode of elevatorNodes) {
-            const edgeQuery = `
-              INSERT OR IGNORE INTO elevator_edges 
-              (shaft_id, id0, id1) VALUES (?, ?, ?)
-            `;
-            await writeDB(edgeQuery, [shaft_id, labelId, elevatorNode.id]);
-          }
+          await writeDB(shaftQuery, [labelId, shaft_id]);
         }
       } catch (elevatorError) {
-        console.warn('Failed to create elevator edges:', elevatorError);
-        // Don't fail the entire operation if elevator edge creation fails
+        console.warn('Failed to create elevator shaft entry:', elevatorError);
+        // Don't fail the entire operation if elevator shaft creation fails
       }
     }
 
