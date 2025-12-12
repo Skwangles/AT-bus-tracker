@@ -37,11 +37,11 @@ check_command "Copying environment files"
 if [ "$CV_BUILD_LIBS" == true ]; then
   ./BUILD_LIBS.sh
   check_command "Building dependencies"
+fi
 
-  echo "Building Sitexplorer Files"
+echo "Building Sitexplorer Files"
   ./BUILD_SITEXPLORER.sh
   check_command "Building Sitexplorer"
-fi
 
 # Run features based on configuration
 if [ "$CV_STITCH_INSV" == true ]; then
@@ -74,10 +74,11 @@ if [ "$CV_GRAPH_PRUNE" == true ]; then
   check_command "Pruning graph"
 fi
 
-if [ "$CV_MERGE_MAPS" == true ]; then
-  ./bin/scripts/cv_run_7_merge_maps.sh
-  check_command "Merging maps"
-fi
+# Unused for now
+# if [ "$CV_MERGE_MAPS" == true ]; then
+#   ./bin/scripts/cv_run_7_merge_maps.sh
+#   check_command "Merging maps"
+# fi
 
 if [ "$CV_EDIT_DB_VISUALLY" == true ]; then
   ./bin/scripts/cv_run_8_edit_db.sh
