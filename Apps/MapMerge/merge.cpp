@@ -497,42 +497,44 @@ private:
             }
         }
 
-        // Copy elevator_shafts table
-        const char* select_elevator_shafts_query = R"(
-            SELECT other_node_id, shaft_id FROM elevator_shafts
+        // Copy elevator_edges table
+        const char* select_elevator_edges_query = R"(
+            SELECT shaft_id, id0, id1 FROM elevator_edges
         )";
-        const char* insert_elevator_shafts_query = R"(
-            INSERT INTO elevator_shafts (other_node_id, shaft_id) VALUES (?, ?)
+        const char* insert_elevator_edges_query = R"(
+            INSERT INTO elevator_edges (shaft_id, id0, id1) VALUES (?, ?, ?)
         )";
 
-        sqlite3_stmt* select_elevator_shafts_stmt;
-        sqlite3_stmt* insert_elevator_shafts_stmt;
+        sqlite3_stmt* select_elevator_edges_stmt;
+        sqlite3_stmt* insert_elevator_edges_stmt;
 
-        // Prepare SELECT and INSERT statements for elevator_shafts
-        ret = sqlite3_prepare_v2(src_db, select_elevator_shafts_query, -1, &select_elevator_shafts_stmt, nullptr);
+        // Prepare SELECT and INSERT statements for elevator_edges
+        ret = sqlite3_prepare_v2(src_db, select_elevator_edges_query, -1, &select_elevator_edges_stmt, nullptr);
         if (ret != SQLITE_OK) {
-            spdlog::error("Failed to prepare SELECT elevator_shafts: {}", sqlite3_errmsg(src_db));
+            spdlog::error("Failed to prepare SELECT elevator_edges: {}", sqlite3_errmsg(src_db));
         } else {
-            ret = sqlite3_prepare_v2(dst_db, insert_elevator_shafts_query, -1, &insert_elevator_shafts_stmt, nullptr);
+            ret = sqlite3_prepare_v2(dst_db, insert_elevator_edges_query, -1, &insert_elevator_edges_stmt, nullptr);
             if (ret != SQLITE_OK) {
-                spdlog::error("Failed to prepare INSERT elevator_shafts: {}", sqlite3_errmsg(dst_db));
-                sqlite3_finalize(select_elevator_shafts_stmt);
+                spdlog::error("Failed to prepare INSERT elevator_edges: {}", sqlite3_errmsg(dst_db));
+                sqlite3_finalize(select_elevator_edges_stmt);
             } else {
-                // Process elevator_shafts row by row
-                while (sqlite3_step(select_elevator_shafts_stmt) == SQLITE_ROW) {
-                    int other_node_id = sqlite3_column_int(select_elevator_shafts_stmt, 0);
-                    const unsigned char* shaft_id = sqlite3_column_text(select_elevator_shafts_stmt, 1);
+                // Process elevator_edges row by row
+                while (sqlite3_step(select_elevator_edges_stmt) == SQLITE_ROW) {
+                    const unsigned char* shaft_id = sqlite3_column_text(select_elevator_edges_stmt, 0);
+                    int id0 = sqlite3_column_int(select_elevator_edges_stmt, 1);
+                    int id1 = sqlite3_column_int(select_elevator_edges_stmt, 2);
 
-                    sqlite3_bind_int(insert_elevator_shafts_stmt, 1, other_node_id);
-                    sqlite3_bind_text(insert_elevator_shafts_stmt, 2, reinterpret_cast<const char*>(shaft_id), -1, SQLITE_STATIC);
+                    sqlite3_bind_text(insert_elevator_edges_stmt, 1, reinterpret_cast<const char*>(shaft_id), -1, SQLITE_STATIC);
+                    sqlite3_bind_int(insert_elevator_edges_stmt, 2, id0);
+                    sqlite3_bind_int(insert_elevator_edges_stmt, 3, id1);
 
-                    if (sqlite3_step(insert_elevator_shafts_stmt) != SQLITE_DONE) {
-                        spdlog::error("Failed to insert elevator_shaft: {}", sqlite3_errmsg(dst_db));
+                    if (sqlite3_step(insert_elevator_edges_stmt) != SQLITE_DONE) {
+                        spdlog::error("Failed to insert elevator_edge: {}", sqlite3_errmsg(dst_db));
                     }
-                    sqlite3_reset(insert_elevator_shafts_stmt); // Reset for next iteration
+                    sqlite3_reset(insert_elevator_edges_stmt); // Reset for next iteration
                 }
-                sqlite3_finalize(select_elevator_shafts_stmt);
-                sqlite3_finalize(insert_elevator_shafts_stmt);
+                sqlite3_finalize(select_elevator_edges_stmt);
+                sqlite3_finalize(insert_elevator_edges_stmt);
             }
         }
 

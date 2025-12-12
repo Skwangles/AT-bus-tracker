@@ -135,33 +135,25 @@ def load_edges(db_path, all=False):
     
     return edges
 
-def load_elevator_shafts(db_path):
-    """Load elevator shafts from the SQLite database, grouped by shaft_id."""
+def load_elevator_edges(db_path):
+    """Load elevator edges from the SQLite database."""
     connection = sqlite3.connect(db_path)
     cursor = connection.cursor()
     
-    # Check if elevator_shafts table exists
-    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='elevator_shafts'")
+    # Check if elevator_edges table exists
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='elevator_edges'")
     if not cursor.fetchone():
-        print("elevator_shafts table not found, skipping...")
+        print("elevator_edges table not found, skipping...")
         connection.close()
-        return {}
+        return []
     
-    sql_str = "SELECT other_node_id, shaft_id FROM elevator_shafts"
+    sql_str = "SELECT id, shaft_id, id0, id1 FROM elevator_edges"
     print("Executing:", sql_str)
     cursor.execute(sql_str)
-    rows = cursor.fetchall()
-    
-    # Group by shaft_id
-    shafts = {}
-    for other_node_id, shaft_id in rows:
-        if shaft_id not in shafts:
-            shafts[shaft_id] = []
-        shafts[shaft_id].append(other_node_id)
-    
+    elevator_edges_data = cursor.fetchall()
     connection.close()
     
-    return shafts
+    return elevator_edges_data
 
 nodes = []
 mapped = {}
@@ -202,9 +194,9 @@ def export_changes():
         cursor.executemany("DELETE FROM other_nodes WHERE ref_id = ?;", delete_nodes)
         print("Wrote other_nodes:", cursor.rowcount)
         
-        # Delete from elevator_shafts table (this will be handled by CASCADE, but we'll do it explicitly for safety)
-        cursor.execute("DELETE FROM elevator_shafts WHERE other_node_id IN (SELECT id FROM other_nodes WHERE ref_id IN (" + ",".join("?" * len(delete_nodes)) + "));", delete_nodes)
-        print("Wrote elevator_shafts:", cursor.rowcount)
+        # Delete from elevator_edges table (this will be handled by CASCADE, but we'll do it explicitly for safety)
+        cursor.execute("DELETE FROM elevator_edges WHERE id0 IN (SELECT id FROM other_nodes WHERE ref_id IN (" + ",".join("?" * len(delete_nodes)) + ")) OR id1 IN (SELECT id FROM other_nodes WHERE ref_id IN (" + ",".join("?" * len(delete_nodes)) + "));", delete_nodes + delete_nodes)
+        print("Wrote elevator_edges:", cursor.rowcount)
         
         print("Wrote:", cursor.rowcount)
         cursor.executemany("DELETE FROM nodes WHERE keyframe_id = ?;", delete_nodes)
@@ -374,7 +366,7 @@ def get_lines_from_ids(edge1, edge2, nodes_list):
     p0, p1 = nodes_list[mapped[edge1]], nodes_list[mapped[edge2]]
     return [p0, p1]
 
-def render(nodes_list, other_nodes_list=None, edges=None, elevator_shafts=None):
+def render(nodes_list, other_nodes_list=None, edges=None, elevator_edges=None):
     """Render nodes and edges in 3D using PyVista."""
     global pos_map
     global idx_to_id
@@ -494,28 +486,25 @@ def render(nodes_list, other_nodes_list=None, edges=None, elevator_shafts=None):
         
         print(f"Rendered {valid_edges} valid edges, skipped {invalid_edges} invalid edges")
     
-    # Add elevator shafts if available (create edges between all nodes in the same shaft)
-    if elevator_shafts:
-        print("Adding elevator shafts...")
+    # Add elevator edges if available
+    if elevator_edges:
+        print("Adding elevator edges...")
         elevator_valid = 0
         elevator_invalid = 0
-        for shaft_id, node_ids in tqdm(elevator_shafts.items()):
-            # Create edges between all pairs of nodes in the same shaft
-            for i in range(len(node_ids)):
-                for j in range(i + 1, len(node_ids)):
-                    node_id0, node_id1 = node_ids[i], node_ids[j]
-                    # Use special ID format for other nodes (matching load_other_nodes format)
-                    special_id0 = f"other_{node_id0}"
-                    special_id1 = f"other_{node_id1}"
-                    line_points = get_lines_from_ids(special_id0, special_id1, nodes_list)
-                    if line_points is not None:
-                        [p0, p1] = line_points
-                        line = pv.Line(p0.position, p1.position)
-                        actor = plotter.add_mesh(line, color="cyan", line_width=3.0, pickable=False)
-                        edge_actors.append(actor)
-                        elevator_valid += 1
-                    else:
-                        elevator_invalid += 1
+        for elevator_edge in tqdm(elevator_edges):
+            # elevator_edge structure: (id, shaft_id, id0, id1)
+            edge_id0, edge_id1 = elevator_edge[2], elevator_edge[3]
+            
+            # Try to find the corresponding other_nodes
+            line_points = get_lines_from_ids(edge_id0, edge_id1, nodes_list)
+            if line_points is not None:
+                [p0, p1] = line_points
+                line = pv.Line(p0.position, p1.position)
+                actor = plotter.add_mesh(line, color="cyan", line_width=3.0, pickable=False)
+                edge_actors.append(actor)
+                elevator_valid += 1
+            else:
+                elevator_invalid += 1
         
         print(f"Rendered {elevator_valid} valid elevator edges, skipped {elevator_invalid} invalid elevator edges")
 
@@ -541,13 +530,12 @@ if __name__ == "__main__":
     nodes = load_nodes(db_path)
     other_nodes = load_other_nodes(db_path)
     edges = load_edges(db_path, False)
-    elevator_shafts = load_elevator_shafts(db_path)
+    elevator_edges = load_elevator_edges(db_path)
 
     print(f"Loaded {len(nodes)} nodes.")
     print(f"Loaded {len(other_nodes)} other_nodes.")
     print(f"Loaded {len(edges)} edges.")
-    total_shaft_nodes = sum(len(nodes) for nodes in elevator_shafts.values())
-    print(f"Loaded {len(elevator_shafts)} elevator shafts ({total_shaft_nodes} nodes).")
+    print(f"Loaded {len(elevator_edges)} elevator edges.")
     
     print(""" Controls 
           p - select point
@@ -559,4 +547,4 @@ if __name__ == "__main__":
           t - toggle edge visibility
           """)
 
-    render(nodes, other_nodes, edges, elevator_shafts)
+    render(nodes, other_nodes, edges, elevator_edges)

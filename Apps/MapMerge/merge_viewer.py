@@ -288,10 +288,10 @@ class MapMerger:
                 ),
             )
 
-        elevator_select = "SELECT other_node_id, shaft_id FROM elevator_shafts"
-        elevator_insert = "INSERT INTO elevator_shafts (other_node_id, shaft_id) VALUES (?, ?)"
+        elevator_select = "SELECT shaft_id, id0, id1 FROM elevator_edges"
+        elevator_insert = "INSERT INTO elevator_edges (shaft_id, id0, id1) VALUES (?, ?, ?)"
         for row in src_conn.execute(elevator_select):
-            dst_conn.execute(elevator_insert, (row["other_node_id"], row["shaft_id"]))
+            dst_conn.execute(elevator_insert, (row["shaft_id"], row["id0"], row["id1"]))
 
         labels_select = "SELECT keyframe_id, label FROM user_defined_labels"
         labels_insert = "INSERT INTO user_defined_labels (keyframe_id, label) VALUES (?, ?)"
