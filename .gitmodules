@@ -10,3 +10,6 @@
 [submodule "Apps/blur360-images"]
 	path = Apps/blur360-images
 	url = https://github.com/Skwangles/blur360.git
+[submodule "Apps/authoring-backend"]
+	path = Apps/authoring-backend
+	url = https://github.com/Skwangles/SitexploreEditor.git
