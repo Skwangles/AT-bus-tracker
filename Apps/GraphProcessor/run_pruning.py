@@ -14,6 +14,7 @@ from pathlib import Path
 # Add the current directory to the Python path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
+from transitive_reduce import TransitiveReducer
 from config import Config
 from db_manager import DatabaseManager
 from grid_pruner import GridBasedPruner
@@ -57,6 +58,10 @@ async def run_grid_pruning(db_path: str, sharpness_json_path: str, grid_size: fl
     # Create database manager for working copy
     working_db_manager = DatabaseManager(working_db_path)
     working_db_manager.connect()
+    
+    # Reduce transitive edges
+    transitive_reducer = TransitiveReducer(working_db_manager)
+    transitive_reducer.reduce_transitive_edges()
     
     # Create and run grid pruner
     grid_pruner = GridBasedPruner(working_db_manager, coords_to_metres)

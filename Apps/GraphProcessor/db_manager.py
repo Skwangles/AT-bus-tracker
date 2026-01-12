@@ -174,6 +174,10 @@ class DatabaseManager:
         if self.connection:
             self.connection.rollback()
     
+    def get_all_nodes(self) -> List[Dict[str, Any]]:
+        """Get all nodes in the database."""
+        return self.execute_query("SELECT * FROM nodes")
+    
     def get_node_count(self) -> int:
         """Get the total number of nodes in the database."""
         result = self.execute_query(
@@ -224,9 +228,15 @@ class DatabaseManager:
             """
             SELECT keyframe_id1 as keyframe_id, type, zone
             FROM edges 
-            WHERE keyframe_id0 = ? AND (type = 0 OR type = 1)
+            WHERE keyframe_id0 = ?
+
+            UNION
+
+            SELECT keyframe_id0 as keyframe_id, type, zone
+            FROM edges e
+            WHERE e.keyframe_id1 = ?
             """,
-            (keyframe_id,)
+            (keyframe_id, keyframe_id,)
         )
     
     def delete_node(self, keyframe_id: int) -> int:
@@ -255,6 +265,19 @@ class DatabaseManager:
         )
         
         return edge_deletions + node_deletions
+
+    def delete_edge(self, keyframe_id0: int, keyframe_id1: int) -> int:
+        """
+        Delete an edge.
+        
+        Args:
+            keyframe_id0: The keyframe ID of the first node
+            keyframe_id1: The keyframe ID of the second node
+        """
+        return self.execute_write(
+            "DELETE FROM edges WHERE (keyframe_id0 = ? AND keyframe_id1 = ?) OR (keyframe_id0 = ? AND keyframe_id1 = ?)",
+            (keyframe_id0, keyframe_id1, keyframe_id1, keyframe_id0)
+        )
     
     def update_node_position(self, keyframe_id: int, x_trans: float, y_trans: float, z_trans: float) -> int:
         """
