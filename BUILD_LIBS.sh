@@ -117,9 +117,9 @@ if [ ! -d opencv_contrib ] ; then
     git clone https://github.com/opencv/opencv_contrib.git
 fi
 cd opencv
-git checkout 4.10.0  # Use the same version as apt package for compatibility
+git checkout 4.13.0  # Use the same version as apt package for compatibility
 cd ../opencv_contrib
-git checkout 4.10.0
+git checkout 4.13.0
 cd ../opencv
 # Clean build directory if it exists to force fresh build
 if [ -d build ]; then

@@ -259,6 +259,7 @@ void convert_to_sqlite(const std::shared_ptr<stella_vslam::system>& slam,
                       const std::shared_ptr<stella_vslam::config>& cfg,
                       const std::string& map_db_path,
                       const std::string& output_db_path) {
+    spdlog::info("Converting to SQLite: {} -> {}", map_db_path, output_db_path);
 
     sqlite3* db = nullptr;
     int ret = sqlite3_open(output_db_path.c_str(), &db);
