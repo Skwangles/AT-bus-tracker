@@ -58,11 +58,11 @@ set(INSTALL_DIR "/usr/local/bin")
 # add_executable(cv_loop_closure src/loop_closure.cc)
 # list(APPEND EXECUTABLE_TARGETS cv_loop_closure)
 
-add_executable(cv_map src/map.cc)
+add_executable(cv_map src/map.cc src/util/save_to_db.cpp src/util/elevator.cpp)
 
 list(APPEND EXECUTABLE_TARGETS cv_map)
 
-add_executable(cv_slam_to_sqlite src/slam_to_sqlite.cc src/util/elevator.cpp)
+add_executable(cv_slam_to_sqlite src/slam_to_sqlite.cc src/util/elevator.cpp src/util/save_to_db.cpp)
 list(APPEND EXECUTABLE_TARGETS cv_slam_to_sqlite)
 
 add_executable(cv_view_map src/view.cc)
