@@ -255,7 +255,7 @@ echo "Compiling Sitexplorer Libs"
 # Install stella_vslam core library
 cd $LIBS_DIR
 if [ ! -d stella_vslam ] ; then
-    git clone --recursive https://github.com/Skwangles/stella_vslam.git
+    git clone --recursive https://github.com/SiteXplore/SLAM.git
 fi
 cd stella_vslam
 git checkout sitexplorer
@@ -269,7 +269,7 @@ sudo make install
 # When building with support for IridescenceViewer - allows you to manually trigger loop closures
 cd $LIBS_DIR
 if [ ! -d iridescence_viewer ] ; then
-    git clone --recursive https://github.com/Skwangles/iridescence_viewer.git
+    git clone --recursive https://github.com/SiteXplore/SLAM-Iridescence-Viewer.git
 fi
 cd iridescence_viewer
 git checkout sitexplorer
@@ -284,7 +284,7 @@ sudo make install
 # When building with support for SocketViewer
 cd $LIBS_DIR
 if [ ! -d sitexplorer_socket_publisher ] ; then
-    git clone --recursive https://github.com/Skwangles/sitexplorer_socket_publisher.git # Custom socket_publisher which doesn't send current frame, only the map - forked from https://github.com/stella-cv/socket_publisher.git
+    git clone --recursive https://github.com/SiteXplore/SLAM-Socket-Publisher.git # Custom socket_publisher which doesn't send current frame, only the map - forked from https://github.com/stella-cv/socket_publisher.git
 fi
 mkdir -p sitexplorer_socket_publisher/build
 cd sitexplorer_socket_publisher/build
