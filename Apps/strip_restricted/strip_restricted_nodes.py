@@ -98,17 +98,12 @@ def delete_filtered_nodes(prefix, db_cursor, remove_list, keep_id_list, keep_lab
 
     # Delete orphaned elevator_edges (edges that reference non-existent other_nodes)
     query = f"""
-    DELETE FROM elevator_edges
+    DELETE FROM elevator_shafts
     WHERE NOT EXISTS (
         SELECT 1
         FROM other_nodes
-        WHERE elevator_edges.id0 = other_nodes.id
+        WHERE elevator_shafts.other_node_id = other_nodes.id
     )
-    OR NOT EXISTS (
-        SELECT 1
-        FROM other_nodes
-        WHERE elevator_edges.id1 = other_nodes.id
-    );
     """
     print("Running query:", query)
     db_cursor.execute(query)
