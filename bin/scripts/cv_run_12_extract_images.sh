@@ -30,9 +30,11 @@ ORIGINAL_DIR=$(pwd)
 INPUT_DIR=${1:-$CV_KEYFRAME_IMG_DIR}
 OUTPUT_DIR=${2:-$CV_EXTRACT_USED_IMAGES_DIR}
 INPUT_DB=${3:-$CV_DB_DIR/$CV_EXTRACT_IN_DB_NAME}
+FACE_BLUR=${4:-$CV_EXTRACT_FACE_BLUR}
 echo "Arg 1 - Input dir: $INPUT_DIR"
 echo "Arg 2 - Output dir: $OUTPUT_DIR"
 echo "Arg 3 - In DB name: $INPUT_DB"
+echo "Arg 4 - Face blur: $FACE_BLUR"
 
 # Check if the input directory exists
 [[ ! -d "$INPUT_DIR" ]] && error_exit "Input directory $INPUT_DIR does not exist"
@@ -61,7 +63,7 @@ pip install -r requirements.txt || error_exit "pip install failed"
 
 # Run the Python image splitter
 echo "Running Python image splitter..."
-python image_processor.py db "$INPUT_DB" "$INPUT_DIR" "$OUTPUT_DIR" || error_exit "Python image splitter failed"
+python image_processor.py db "$INPUT_DB" "$INPUT_DIR" "$OUTPUT_DIR" --face_blur || error_exit "Python image splitter failed"
 
 # Deactivate virtual environment
 deactivate
