@@ -93,7 +93,7 @@ echo "CXXFLAGS=" $CXXFLAGS
 # Install Custom FBoW used
 cd $NON_MODIFIABLE_LIBS_DIR
 if [ ! -d FBoW ] ; then
-    git clone https://github.com/stella-cv/FBoW.git
+    git clone https://github.com/stella-cv/FBoW.git FBoW
 fi
 cd FBoW
 mkdir build -p && cd build
@@ -111,10 +111,10 @@ sudo apt install libeigen3-dev
 # This ensures OpenCV is built against the correct FFmpeg versions (61/59/8)
 cd $NON_MODIFIABLE_LIBS_DIR
 if [ ! -d opencv ] ; then
-    git clone https://github.com/opencv/opencv.git
+    git clone https://github.com/opencv/opencv.git opencv
 fi
 if [ ! -d opencv_contrib ] ; then
-    git clone https://github.com/opencv/opencv_contrib.git
+    git clone https://github.com/opencv/opencv_contrib.git opencv_contrib
 fi
 cd opencv
 git checkout 4.13.0  # Use the same version as apt package for compatibility
@@ -151,7 +151,7 @@ sudo ldconfig
 # Install g2o
 cd $NON_MODIFIABLE_LIBS_DIR
 if [ ! -d g2o ] ; then
-    git clone https://github.com/RainerKuemmerle/g2o.git
+    git clone https://github.com/RainerKuemmerle/g2o.git g2o
 fi
 cd g2o
 git checkout 20230223_git
@@ -175,7 +175,7 @@ make -j4 && sudo make install
 # Install backward-cpp - 
 cd $NON_MODIFIABLE_LIBS_DIR
 if [ ! -d backward-cpp ] ; then
-    git clone https://github.com/bombela/backward-cpp.git
+    git clone https://github.com/bombela/backward-cpp.git backward-cpp
 fi
 
 cd backward-cpp
@@ -192,7 +192,7 @@ make -j4 && sudo make install
 # Install Iridescence
 cd $NON_MODIFIABLE_LIBS_DIR
 if [ ! -d iridescence ] ; then
-    git clone https://github.com/koide3/iridescence.git
+    git clone https://github.com/koide3/iridescence.git iridescence
 fi
 cd iridescence
 git checkout 085322e0c949f75b67d24d361784e85ad7f197ab
@@ -216,7 +216,7 @@ sudo apt install -y libprotobuf-dev protobuf-compiler
 
 cd $NON_MODIFIABLE_LIBS_DIR
 if [ ! -d socket.io-client-cpp ] ; then
-    git clone https://github.com/shinsumicco/socket.io-client-cpp.git
+    git clone https://github.com/shinsumicco/socket.io-client-cpp.git socket.io-client-cpp
 fi
 cd socket.io-client-cpp
 git submodule init
@@ -255,7 +255,7 @@ echo "Compiling Sitexplorer Libs"
 # Install stella_vslam core library
 cd $LIBS_DIR
 if [ ! -d stella_vslam ] ; then
-    git clone --recursive https://github.com/SiteXplore/SLAM.git
+    git clone --recursive https://github.com/SiteXplore/SLAM.git stella_vslam
 fi
 cd stella_vslam
 git checkout sitexplorer
@@ -269,7 +269,7 @@ sudo make install
 # When building with support for IridescenceViewer - allows you to manually trigger loop closures
 cd $LIBS_DIR
 if [ ! -d iridescence_viewer ] ; then
-    git clone --recursive https://github.com/SiteXplore/SLAM-Iridescence-Viewer.git
+    git clone --recursive https://github.com/SiteXplore/SLAM-Iridescence-Viewer.git iridescence_viewer
 fi
 cd iridescence_viewer
 git checkout sitexplorer
@@ -284,7 +284,7 @@ sudo make install
 # When building with support for SocketViewer
 cd $LIBS_DIR
 if [ ! -d sitexplorer_socket_publisher ] ; then
-    git clone --recursive https://github.com/SiteXplore/SLAM-Socket-Publisher.git # Custom socket_publisher which doesn't send current frame, only the map - forked from https://github.com/stella-cv/socket_publisher.git
+    git clone --recursive https://github.com/SiteXplore/SLAM-Socket-Publisher.git sitexplorer_socket_publisher # Custom socket_publisher which doesn't send current frame, only the map - forked from https://github.com/stella-cv/socket_publisher.git
 fi
 mkdir -p sitexplorer_socket_publisher/build
 cd sitexplorer_socket_publisher/build
