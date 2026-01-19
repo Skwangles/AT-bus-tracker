@@ -138,7 +138,7 @@ def upload_image_resolutions(local_path: str, ts: str):
             print(f"Error uploading {remote_key}: {e}")
 
 
-def process_from_db(db_path: str, input_dir: str, output_dir: str):
+def process_from_db(db_path: str, input_dir: str, output_dir: str, face_blur: bool):
     """
     For each ts in the db, round to 5dp, add .png, process image: equalise histogram, blur faces (equirect), upload to R2 if not already present.
     Processes blurring operations in batches of 8 concurrent operations.
@@ -165,7 +165,7 @@ def process_from_db(db_path: str, input_dir: str, output_dir: str):
             if not input_file.exists():
                 print(f"File not found: {input_file}")
                 continue
-            
+  
             blurred_file = output_path / f"{ts}_blurred.png"
             if blurred_file.exists():
                 print(f"Blurred file exists locally: {blurred_file}")
@@ -174,6 +174,9 @@ def process_from_db(db_path: str, input_dir: str, output_dir: str):
                 print(f"Blurred image for {ts} already exists in S3, skipping blur")
                 # Don't add to blur queue, but also don't add to upload queue
                 # since it's already uploaded
+            elif not face_blur:
+                print(f"Face blur is disabled, skipping blur for {ts}")
+                images_to_upload.append((ts, input_file))
             else:
                 images_to_blur.append((ts, input_file, blurred_file))
         
@@ -226,6 +229,7 @@ if __name__ == '__main__':
     db_parser.add_argument('db_path', help='Path to SQLite3 database')
     db_parser.add_argument('input_dir', help='Directory containing input images')
     db_parser.add_argument('output_dir', help='Directory for processed images')
+    db_parser.add_argument('--face_blur', help='Whether to blur faces', action='store_false' , default=True)
 
     args = parser.parse_args()
-    process_from_db(args.db_path, args.input_dir, args.output_dir)
+    process_from_db(args.db_path, args.input_dir, args.output_dir, args.face_blur)
