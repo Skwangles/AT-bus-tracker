@@ -1,4 +1,5 @@
-# Equirectangular model for RICOH THETA S
+# Equirectangular model for Insta360 X5
+# Default mode uses a decent resolution and default feature levels for balanced performance and accuracy
 
 Camera:
   name: 'Insta360 X5'
