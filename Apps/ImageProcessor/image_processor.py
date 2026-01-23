@@ -13,11 +13,11 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 # Load environment variables from .env file
 load_dotenv()
 
-R2_ENDPOINT = os.getenv('CV_R2_ENDPOINT')
-R2_BUCKET = os.getenv('CV_R2_BUCKET')
-R2_ACCESS_KEY_ID = os.getenv('CV_R2_ACCESS_KEY_ID')
-R2_SECRET_ACCESS_KEY = os.getenv('CV_R2_SECRET_ACCESS_KEY')
-R2_REGION = os.getenv('CV_R2_REGION', 'auto')
+R2_ENDPOINT = os.getenv('SX_R2_ENDPOINT')
+R2_BUCKET = os.getenv('SX_R2_BUCKET')
+R2_ACCESS_KEY_ID = os.getenv('SX_R2_ACCESS_KEY_ID')
+R2_SECRET_ACCESS_KEY = os.getenv('SX_R2_SECRET_ACCESS_KEY')
+R2_REGION = os.getenv('SX_R2_REGION', 'auto')
 
 # Resolution levels for image processing
 RESOLUTION_LEVELS = {

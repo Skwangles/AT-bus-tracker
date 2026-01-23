@@ -118,29 +118,29 @@ graph LR
 ## Environment Variables
 
 ### Required Variables
-- `CV_HOME_DIR` - Root directory of the Sitexplorer project
-- `CV_DB_DIR` - Directory containing SQLite database files
-- `CV_PRUNE_DB_NAME` - Name of the input database to prune
-- `CV_PRECALCULATE_IMAGE_SHARPNESS_JSON_PATH` - Path to JSON file with precalculated sharpness values
+- `SX_HOME_DIR` - Root directory of the Sitexplorer project
+- `SX_DB_DIR` - Directory containing SQLite database files
+- `SX_PRUNE_DB_NAME` - Name of the input database to prune
+- `SX_PRECALCULATE_IMAGE_SHARPNESS_JSON_PATH` - Path to JSON file with precalculated sharpness values
 
 ### Optional Variables
-- `CV_PRUNE_GRID_SIZE` - Grid box size in metres (default: `5.0`)
-- `CV_PRUNE_COORDS_TO_METRES` - Coordinate scaling factor (default: `15.0`)
-- `CV_COORDS_TO_METRES` - Alternative name for coordinate scaling (default: `15.0`)
-- `CV_PRUNE_VERBOSE` - Enable verbose logging (default: `false`)
-- `CV_PRUNE_TARGET_CLOSENESS` - Target closeness for grid partitioning (default: `5.0`)
-- `CV_PRUNE_ALWAYS_MERGE_CLOSENESS` - Always merge closeness threshold (default: `0.5`)
-- `CV_PRUNE_OUTDOORS_TARGET_CLOSENESS` - Outdoors target closeness (default: `7.0`)
-- `CV_PRUNE_OUTDOORS_ALWAYS_MERGE_CLOSENESS` - Outdoors always merge threshold (default: `1.0`)
-- `CV_PRUNE_Y_DIST_THRESHOLD` - Y distance threshold (default: `2.0`)
-- `CV_PRUNE_OUTDOORS_Y_DIST_THRESHOLD` - Outdoors Y distance threshold (default: `2.0`)
-- `CV_KEYFRAME_IMG_DIR` - Directory containing keyframe images
-- `CV_KEYFRAME_IMG_EXTENSION` - Image file extension (default: `".png"`)
-- `CV_OUTDOORS_LOCATION_NAME` - Name of outdoors location (default: `"outdoors"`)
+- `SX_PRUNE_GRID_SIZE` - Grid box size in metres (default: `5.0`)
+- `SX_PRUNE_COORDS_TO_METRES` - Coordinate scaling factor (default: `15.0`)
+- `SX_COORDS_TO_METRES` - Alternative name for coordinate scaling (default: `15.0`)
+- `SX_PRUNE_VERBOSE` - Enable verbose logging (default: `false`)
+- `SX_PRUNE_TARGET_CLOSENESS` - Target closeness for grid partitioning (default: `5.0`)
+- `SX_PRUNE_ALWAYS_MERGE_CLOSENESS` - Always merge closeness threshold (default: `0.5`)
+- `SX_PRUNE_OUTDOORS_TARGET_CLOSENESS` - Outdoors target closeness (default: `7.0`)
+- `SX_PRUNE_OUTDOORS_ALWAYS_MERGE_CLOSENESS` - Outdoors always merge threshold (default: `1.0`)
+- `SX_PRUNE_Y_DIST_THRESHOLD` - Y distance threshold (default: `2.0`)
+- `SX_PRUNE_OUTDOORS_Y_DIST_THRESHOLD` - Outdoors Y distance threshold (default: `2.0`)
+- `SX_KEYFRAME_IMG_DIR` - Directory containing keyframe images
+- `SX_KEYFRAME_IMG_EXTENSION` - Image file extension (default: `".png"`)
+- `SX_OUTDOORS_LOCATION_NAME` - Name of outdoors location (default: `"outdoors"`)
 
 ## Scripts
 
-### `bin/scripts/cv_run_6_prune_graph.sh`
+### `bin/scripts/sx_run_6_prune_graph.sh`
 Runs grid-based graph pruning on the database:
 - Creates Python virtual environment if needed
 - Installs dependencies automatically
@@ -149,29 +149,29 @@ Runs grid-based graph pruning on the database:
 
 **Usage:**
 ```bash
-./bin/scripts/cv_run_6_prune_graph.sh
+./bin/scripts/sx_run_6_prune_graph.sh
 ```
 
 **Environment Variables:**
-- Uses `CV_DB_DIR`, `CV_PRUNE_DB_NAME`, `CV_PRECALCULATE_IMAGE_SHARPNESS_JSON_PATH`
-- Optional: `CV_PRUNE_GRID_SIZE`, `CV_PRUNE_COORDS_TO_METRES`, `CV_PRUNE_VERBOSE`
+- Uses `SX_DB_DIR`, `SX_PRUNE_DB_NAME`, `SX_PRECALCULATE_IMAGE_SHARPNESS_JSON_PATH`
+- Optional: `SX_PRUNE_GRID_SIZE`, `SX_PRUNE_COORDS_TO_METRES`, `SX_PRUNE_VERBOSE`
 
 ## Pipeline Position
 
 The Graph Processor runs **after** the following steps:
-- `cv_run_1_process_files.sh` - File processing (creates keyframe images)
-- `cv_run_2_map.sh` - VSLAM mapping
-- `cv_run_4_export_sqlite.sh` - Database export
-- `cv_run_5_sharpness_calculate.sh` - Sharpness calculation (recommended)
+- `sx_run_1_process_files.sh` - File processing (creates keyframe images)
+- `sx_run_2_map.sh` - VSLAM mapping
+- `sx_run_4_export_sqlite.sh` - Database export
+- `sx_run_5_sharpness_calculate.sh` - Sharpness calculation (recommended)
 
 **Before:**
 - Database must be exported from VSLAM
-- Sharpness JSON file recommended (from `cv_run_5_sharpness_calculate.sh`)
+- Sharpness JSON file recommended (from `sx_run_5_sharpness_calculate.sh`)
 
 **After:**
 - Pruned database ready for further processing
-- `cv_run_7_merge_maps.sh` - Map merging (if multiple maps)
-- `cv_run_9_init_data.sh` - Data initialization
+- `sx_run_7_merge_maps.sh` - Map merging (if multiple maps)
+- `sx_run_9_init_data.sh` - Data initialization
 
 ## Installation
 
@@ -202,15 +202,15 @@ python run_pruning.py prune cv.db --coords-to-metres 20.0
 
 ### Shell Script Integration
 ```bash
-# Using the cv_run_6_prune_graph.sh script
-export CV_HOME_DIR="/path/to/sitexplorer"
-export CV_DB_DIR="/path/to/databases/"
-export CV_PRUNE_DB_NAME="your-database.db"
-export CV_PRUNE_DB_PREFIX="grid_"
-export CV_PRUNE_GRID_SIZE="5.0"
-export CV_PRUNE_COORDS_TO_METRES="15.0"
+# Using the sx_run_6_prune_graph.sh script
+export SX_HOME_DIR="/path/to/sitexplorer"
+export SX_DB_DIR="/path/to/databases/"
+export SX_PRUNE_DB_NAME="your-database.db"
+export SX_PRUNE_DB_PREFIX="grid_"
+export SX_PRUNE_GRID_SIZE="5.0"
+export SX_PRUNE_COORDS_TO_METRES="15.0"
 
-./bin/scripts/cv_run_6_prune_graph.sh
+./bin/scripts/sx_run_6_prune_graph.sh
 ```
 
 ## Output

@@ -22,19 +22,19 @@ check_command() {
   fi
 }
 
-if [ -n "$CV_LIBS_CONFIGURED" ]; then 
+if [ -n "$SX_LIBS_CONFIGURED" ]; then 
     echo "Libs already built, skipping."
     exit
 fi
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )" # https://saturncloud.io/blog/how-to-get-the-directory-where-a-bash-script-is-located/#:~:text=The%20first%20method%20to%20get,directory%20name%20from%20the%20path.
 
-if [ -z "$CV_HOME_DIR" ]; then
+if [ -z "$SX_HOME_DIR" ]; then
   source $SCRIPT_DIR/SOURCE_SETUP.sh
 fi
 
-LIBS_DIR="$CV_HOME_DIR"/libs
-NON_MODIFIABLE_LIBS_DIR="$CV_HOME_DIR"/libs/tmp
+LIBS_DIR="$SX_HOME_DIR"/libs
+NON_MODIFIABLE_LIBS_DIR="$SX_HOME_DIR"/libs/tmp
 mkdir -p $LIBS_DIR
 mkdir -p $NON_MODIFIABLE_LIBS_DIR 
 
@@ -297,5 +297,5 @@ sudo make install
 sudo ldconfig
 
 
-CV_LIBS_CONFIGURED=1
-export CV_LIBS_CONFIGURED
+SX_LIBS_CONFIGURED=1
+export SX_LIBS_CONFIGURED

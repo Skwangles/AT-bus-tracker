@@ -12,47 +12,47 @@ The interface reads JSON annotation files for area markers, elevators, toilets, 
 
 ### Required Variables (from scripts)
 
-#### For Mapping (`cv_run_2_map.sh`)
-- `CV_HOME_DIR` - Root directory of the Sitexplorer project
-- `CV_VSLAM_MAP_DIR` - Directory for VSLAM map files
-- `CV_JSON_DIR` - Directory containing JSON annotation files
-- `CV_KEYFRAME_IMG_DIR` - Directory for keyframe images
-- `CV_VSLAM_MAP_HEADLESS` - Run in headless mode (`true`/`false`)
-- `CV_VSLAM_EPOCH_START` - Epoch start timestamp
-- `CV_VIDEO_DIR` - Directory containing video files
-- `CV_VSLAM_CONFIG_FILE` - Path to VSLAM configuration YAML file
-- `CV_VSLAM_MAP_VIDEOS_COMMA_SEPARATED_NAMES` - Comma-separated video names
-- `CV_VSLAM_MAP_NAME` - Output map name
+#### For Mapping (`sx_run_2_map.sh`)
+- `SX_HOME_DIR` - Root directory of the Sitexplorer project
+- `SX_VSLAM_MAP_DIR` - Directory for VSLAM map files
+- `SX_JSON_DIR` - Directory containing JSON annotation files
+- `SX_KEYFRAME_IMG_DIR` - Directory for keyframe images
+- `SX_VSLAM_MAP_HEADLESS` - Run in headless mode (`true`/`false`)
+- `SX_VSLAM_EPOCH_START` - Epoch start timestamp
+- `SX_VIDEO_DIR` - Directory containing video files
+- `SX_VSLAM_CONFIG_FILE` - Path to VSLAM configuration YAML file
+- `SX_VSLAM_MAP_VIDEOS_COMMA_SEPARATED_NAMES` - Comma-separated video names
+- `SX_VSLAM_MAP_NAME` - Output map name
 
-#### For Editing (`cv_run_3_edit_vslam_map.sh`)
-- `CV_HOME_DIR` - Root directory
-- `CV_VSLAM_MAP_DIR` - Directory for VSLAM map files
-- `CV_VSLAM_MAP_NAME` - Input map name
-- `CV_EDIT_VSLAM_OUTPUT_MAP_NAME` - Output map name
+#### For Editing (`sx_run_3_edit_vslam_map.sh`)
+- `SX_HOME_DIR` - Root directory
+- `SX_VSLAM_MAP_DIR` - Directory for VSLAM map files
+- `SX_VSLAM_MAP_NAME` - Input map name
+- `SX_EDIT_VSLAM_OUTPUT_MAP_NAME` - Output map name
 
-#### For Export (`cv_run_4_export_sqlite.sh`)
-- `CV_HOME_DIR` - Root directory
-- `CV_VSLAM_MAP_DIR` - Directory for VSLAM map files
-- `CV_VSLAM_CONFIG_FILE` - Path to VSLAM configuration YAML file
-- `CV_DB_DIR` - Directory for SQLite databases
-- `CV_EXPORT_IN_MAP_NAME` - Input map name
-- `CV_EXPORT_DB_NAME` - Output database name
+#### For Export (`sx_run_4_export_sqlite.sh`)
+- `SX_HOME_DIR` - Root directory
+- `SX_VSLAM_MAP_DIR` - Directory for VSLAM map files
+- `SX_VSLAM_CONFIG_FILE` - Path to VSLAM configuration YAML file
+- `SX_DB_DIR` - Directory for SQLite databases
+- `SX_EXPORT_IN_MAP_NAME` - Input map name
+- `SX_EXPORT_DB_NAME` - Output database name
 
 ## Scripts
 
-### `bin/scripts/cv_run_2_map.sh`
-Runs VSLAM mapping on video files using `runSitexplorer` (which calls `cv_map`):
+### `bin/scripts/sx_run_2_map.sh`
+Runs VSLAM mapping on video files using `runSitexplorer` (which calls `sx_map`):
 - Processes videos to create a SLAM map
 - Extracts keyframes and saves images
 - Reads JSON annotations for area/location markers
 
-### `bin/scripts/cv_run_3_edit_vslam_map.sh`
-Opens interactive viewer for map editing using `runSitexplorer` (which calls `cv_view_map`):
+### `bin/scripts/sx_run_3_edit_vslam_map.sh`
+Opens interactive viewer for map editing using `runSitexplorer` (which calls `sx_view_map`):
 - Loads map for visual inspection
 - Allows manual editing and adjustment
 
-### `bin/scripts/cv_run_4_export_sqlite.sh`
-Exports VSLAM map to SQLite database using `runSitexplorer` (which calls `cv_slam_to_sqlite`):
+### `bin/scripts/sx_run_4_export_sqlite.sh`
+Exports VSLAM map to SQLite database using `runSitexplorer` (which calls `sx_slam_to_sqlite`):
 - Converts VSLAM map format to SQLite
 - Creates nodes, edges, and pose data
 
@@ -67,9 +67,9 @@ graph TB
     end
     
     subgraph "SitexplorerInterface"
-        D[cv_map<br/>Mapping Tool]
-        E[cv_view_map<br/>Viewer Tool]
-        F[cv_slam_to_sqlite<br/>Export Tool]
+        D[sx_map<br/>Mapping Tool]
+        E[sx_view_map<br/>Viewer Tool]
+        F[sx_slam_to_sqlite<br/>Export Tool]
         G[Stella VSLAM<br/>Core Engine]
     end
     
@@ -136,17 +136,17 @@ Where:
 
 ### Executables
 
-1. **`cv_map`** - Main mapping tool
+1. **`sx_map`** - Main mapping tool
    - Processes equirectangular videos
    - Extracts keyframes
    - Tracks camera pose
    - Handles loop closures
 
-2. **`cv_view_map`** - Interactive map viewer
+2. **`sx_view_map`** - Interactive map viewer
    - Visual inspection of poses
    - Manual editing capabilities
 
-3. **`cv_slam_to_sqlite`** - Database export
+3. **`sx_slam_to_sqlite`** - Database export
    - Converts VSLAM binary map to SQLite
    - Creates nodes and edges tables
    - Handles special node types (elevators, etc.)
@@ -154,16 +154,16 @@ Where:
 ## Pipeline Position
 
 The SitexplorerInterface runs **after** the following steps:
-- `cv_run_1_process_files.sh` - File processing (creates videos)
+- `sx_run_1_process_files.sh` - File processing (creates videos)
 
 **Before:**
 - Equirectangular videos must be available
 - JSON annotation files (optional) for area markers
 
 **After:**
-- `cv_run_4_export_sqlite.sh` - Export to SQLite
-- `cv_run_6_prune_graph.sh` - Graph pruning
-- `cv_run_7_merge_maps.sh` - Map merging (if multiple maps)
+- `sx_run_4_export_sqlite.sh` - Export to SQLite
+- `sx_run_6_prune_graph.sh` - Graph pruning
+- `sx_run_7_merge_maps.sh` - Map merging (if multiple maps)
 
 ## Dependencies
 
@@ -193,9 +193,9 @@ The interface is built as part of the main Sitexplorer build process:
 ```
 
 This builds:
-- `cv_map` - Mapping executable
-- `cv_view_map` - Viewing executable
-- `cv_slam_to_sqlite` - Export executable
+- `sx_map` - Mapping executable
+- `sx_view_map` - Viewing executable
+- `sx_slam_to_sqlite` - Export executable
 
 ## Configuration
 

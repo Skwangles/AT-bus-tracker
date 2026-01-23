@@ -219,8 +219,8 @@ The system uses JSON configuration files in `configs/` directory:
 ```typescript
 export const COORDS_TO_METRES: number = 10; // Coordinate scaling factor
 export const PORT = 3004; // Authoring server port
-export const KEYFRAME_IMG_DIR = process.env.CV_KEYFRAME_IMG_DIR ?? "";
-export const FLOORPLAN_IMG_DIR = process.env.CV_SERVER_FLOORPLAN_IMG_DIR ?? "";
+export const KEYFRAME_IMG_DIR = process.env.SX_KEYFRAME_IMG_DIR ?? "";
+export const FLOORPLAN_IMG_DIR = process.env.SX_SERVER_FLOORPLAN_IMG_DIR ?? "";
 ```
 
 ---
@@ -253,9 +253,9 @@ graph TB
 ```
 
 **Key Components**:
-- `cv_map`: Main mapping tool for video processing
-- `cv_view_map`: Static map viewer for inspection
-- `cv_slam_to_sqlite`: Converts VSLAM maps to SQLite format
+- `sx_map`: Main mapping tool for video processing
+- `sx_view_map`: Static map viewer for inspection
+- `sx_slam_to_sqlite`: Converts VSLAM maps to SQLite format
 
 #### Graph Processing Algorithm
 
@@ -318,9 +318,9 @@ services:
     ports:
       - '3001:3001'
     volumes:
-      - '${CV_KEYFRAME_IMG_DIR}:/app/served-img/'
-      - '${CV_SERVER_FLOORPLAN_IMG_DIR}:/app/served-floorplans/'
-      - '${CV_DB_DIR}:/app/served-map/'
+      - '${SX_KEYFRAME_IMG_DIR}:/app/served-img/'
+      - '${SX_SERVER_FLOORPLAN_IMG_DIR}:/app/served-floorplans/'
+      - '${SX_DB_DIR}:/app/served-map/'
     environment:
       - NODE_ENV=production
 ```

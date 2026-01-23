@@ -1,6 +1,6 @@
-![Sitexplorer: Large-scale Low-cost Panoramic Virtual Tours](logo/SitexplorerLogo.png)
+![SiteXplore: Large-scale Low-cost Panoramic Virtual Tours](logo/sitexplore-logo.png)
 
-# Sitexplorer
+# SiteXplore
 
 A comprehensive system for creating and managing large-scale panoramic virtual tours. The system processes equirectangular videos (stitched from Insta360 INSV files), tracks camera movement using VSLAM, and creates an interactive 3D navigation experience.
 
@@ -8,7 +8,7 @@ A comprehensive system for creating and managing large-scale panoramic virtual t
 
 1. Clone the repository recursively:
    ```bash
-   git clone --recursive https://github.com/Skwangles/Sitexplorer.git
+   git clone --recursive https://github.com/SiteXplore/SiteXplore-System.git
    ```
    > **Important**: The `--recursive` flag is required as the project uses submodules. Some submodules are private and may need to be cloned manually.
 
@@ -170,11 +170,11 @@ The `config` section contains processing parameters:
 
 ### Environment Variable Mapping
 
-The configuration system automatically converts JSON values to `CV_` environment variables:
+The configuration system automatically converts JSON values to `SX_` environment variables:
 
-- `features.stitch_insv` → `CV_STITCH_INSV=true`
-- `paths.video_dir` → `CV_VIDEO_DIR=/path/to/videos`
-- `config.coords_to_metres` → `CV_COORDS_TO_METRES=15`
+- `features.stitch_insv` → `SX_STITCH_INSV=true`
+- `paths.video_dir` → `SX_VIDEO_DIR=/path/to/videos`
+- `config.coords_to_metres` → `SX_COORDS_TO_METRES=15`
 
 ### Configuration Loading Order
 
@@ -234,9 +234,9 @@ The `RUNME.sh` script orchestrates the entire pipeline:
 flowchart TD
     A[Start RUNME.sh] --> B[Load Environment<br/>env_manager.sh]
     B --> C[Load Profile JSON<br/>configs/profile.json]
-    C --> D[Set CV_ Variables<br/>from profile]
+    C --> D[Set SX_ Variables<br/>from profile]
     D --> E[Copy .env to Projects]
-    E --> F{Build Libraries?<br/>CV_BUILD_LIBS}
+    E --> F{Build Libraries?<br/>SX_BUILD_LIBS}
     F -->|Yes| G[BUILD_LIBS.sh]
     F -->|No| H[Skip Build]
     G --> I[BUILD_SITEXPLORER.sh]
@@ -256,7 +256,7 @@ flowchart TD
    - Calls `env_manager.sh` with profile name
    - Loads base `.env` file
    - Loads profile JSON from `configs/<profile>.json`
-   - Converts JSON to `CV_` environment variables
+   - Converts JSON to `SX_` environment variables
    - Loads secrets and custom environment files
 
 2. **Prepare Environment**:
@@ -265,12 +265,12 @@ flowchart TD
    - Sets up working directory
 
 3. **Build Phase**:
-   - Conditionally runs `BUILD_LIBS.sh` if `CV_BUILD_LIBS=true`
+   - Conditionally runs `BUILD_LIBS.sh` if `SX_BUILD_LIBS=true`
    - Always runs `BUILD_SITEXPLORER.sh` to build applications
 
 4. **Execute Pipeline**:
    - Checks each feature flag in the profile
-   - Runs corresponding `cv_run_X.sh` script if enabled
+   - Runs corresponding `sx_run_X.sh` script if enabled
    - Each step validates required environment variables
    - Errors stop the pipeline with clear messages
 
@@ -278,21 +278,21 @@ flowchart TD
 
 The pipeline steps execute in this order (if enabled in profile):
 
-1. `cv_run_0_copy_env_file.sh` - Copy environment files
-2. `cv_run_1_process_files.sh` - Stitch INSV files
-3. `cv_run_2_map.sh` - VSLAM mapping
-4. `cv_run_3_edit_vslam_map.sh` - Edit VSLAM map (optional)
-5. `cv_run_4_export_sqlite.sh` - Export to SQLite
-6. `cv_run_5_sharpness_calculate.sh` - Calculate sharpness
-7. `cv_run_6_prune_graph.sh` - Prune graph
-8. `cv_run_7_merge_maps.sh` - Merge maps (optional)
-9. `cv_run_8_edit_db.sh` - Visual database editing (optional)
-10. `cv_run_9_init_data.sh` - Initialize floorplan data
-11. `cv_run_10_start_authoring.sh` - Start authoring interface
-12. `cv_run_11_strip_restricted_locations.sh` - Strip restricted nodes
-13. `cv_run_12_extract_images.sh` - Extract and process images
-14. `cv_run_13_export.sh` - Export final files
-15. `cv_run_14_export-to-postgres.sh` - Export SQLite database to PostgreSQL
+1. `sx_run_0_copy_env_file.sh` - Copy environment files
+2. `sx_run_1_process_files.sh` - Stitch INSV files
+3. `sx_run_2_map.sh` - VSLAM mapping
+4. `sx_run_3_edit_vslam_map.sh` - Edit VSLAM map (optional)
+5. `sx_run_4_export_sqlite.sh` - Export to SQLite
+6. `sx_run_5_sharpness_calculate.sh` - Calculate sharpness
+7. `sx_run_6_prune_graph.sh` - Prune graph
+8. `sx_run_7_merge_maps.sh` - Merge maps (optional)
+9. `sx_run_8_edit_db.sh` - Visual database editing (optional)
+10. `sx_run_9_init_data.sh` - Initialize floorplan data
+11. `sx_run_10_start_authoring.sh` - Start authoring interface
+12. `sx_run_11_strip_restricted_locations.sh` - Strip restricted nodes
+13. `sx_run_12_extract_images.sh` - Extract and process images
+14. `sx_run_13_export.sh` - Export final files
+15. `sx_run_14_export-to-postgres.sh` - Export SQLite database to PostgreSQL
 
 ## Complete Pipeline Flow
 
@@ -357,18 +357,18 @@ flowchart TB
 ```mermaid
 graph LR
     subgraph "Step 1: File Processing"
-        A1[INSV Files] --> A2[Stitch Videos<br/>cv_stitch_insv]
+        A1[INSV Files] --> A2[Stitch Videos<br/>sx_stitch_insv]
         A2 --> A3[Equirectangular MP4]
     end
     
     subgraph "Step 2: VSLAM Mapping"
-        B1[MP4 Videos] --> B2[Extract Keyframes<br/>cv_map]
+        B1[MP4 Videos] --> B2[Extract Keyframes<br/>sx_map]
         B2 --> B3[Track Poses<br/>Stella VSLAM]
         B3 --> B4[VSLAM Map<br/>Binary format]
     end
     
     subgraph "Step 3: Database Export"
-        C1[VSLAM Map] --> C2[Convert to SQLite<br/>cv_slam_to_sqlite]
+        C1[VSLAM Map] --> C2[Convert to SQLite<br/>sx_slam_to_sqlite]
         C2 --> C3[SQLite DB<br/>nodes, edges]
     end
     
@@ -401,7 +401,7 @@ graph LR
 
 The system provides several scripts for different operations:
 
-- `bin/scripts/cv_run_X.sh`: Various processing scripts (numbered 0-13)
+- `bin/scripts/sx_run_X.sh`: Various processing scripts (numbered 0-13)
 - Individual scripts can be run manually if environment is set up
 - Each script validates required environment variables
 

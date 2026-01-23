@@ -16,38 +16,38 @@ This is useful for creating public-facing databases that exclude sensitive or re
 ## Environment Variables
 
 ### Required Variables (from script)
-- `CV_HOME_DIR` - Root directory of the Sitexplorer project
-- `CV_DB_DIR` - Directory containing SQLite database files
-- `CV_STRIP_INPUT_DB` - Name of the input database (or command-line argument)
-- `CV_STRIP_OUTPUT_DB` - Name of the output database (or command-line argument)
-- `CV_STRIP_REMOVE` - JSON array of location names to remove (or command-line argument)
+- `SX_HOME_DIR` - Root directory of the Sitexplorer project
+- `SX_DB_DIR` - Directory containing SQLite database files
+- `SX_STRIP_INPUT_DB` - Name of the input database (or command-line argument)
+- `SX_STRIP_OUTPUT_DB` - Name of the output database (or command-line argument)
+- `SX_STRIP_REMOVE` - JSON array of location names to remove (or command-line argument)
 
 ### Optional Variables
-- `CV_STRIP_KEEP_ID` - JSON array of node IDs to keep (default: `"[]"`)
-- `CV_STRIP_KEEP_LABELS` - JSON array of label names to keep (default: `'["save"]'`)
-- `CV_STRIP_SCALE_FACTOR` - Scale factor for coordinates (optional)
+- `SX_STRIP_KEEP_ID` - JSON array of node IDs to keep (default: `"[]"`)
+- `SX_STRIP_KEEP_LABELS` - JSON array of label names to keep (default: `'["save"]'`)
+- `SX_STRIP_SCALE_FACTOR` - Scale factor for coordinates (optional)
 
 ## Scripts
 
-### `bin/scripts/cv_run_11_strip_restricted_locations.sh`
+### `bin/scripts/sx_run_11_strip_restricted_locations.sh`
 Creates a public version of the database by stripping restricted content:
 
 **Usage:**
 ```bash
-./bin/scripts/cv_run_11_strip_restricted_locations.sh [INPUT_DB] [OUTPUT_DB] [REMOVE_LIST] [KEEP_ID_LIST] [KEEP_LABELS] [SCALE_FACTOR]
+./bin/scripts/sx_run_11_strip_restricted_locations.sh [INPUT_DB] [OUTPUT_DB] [REMOVE_LIST] [KEEP_ID_LIST] [KEEP_LABELS] [SCALE_FACTOR]
 ```
 
 **Arguments:**
-- `INPUT_DB` - Input database path (or `CV_DB_DIR/$CV_STRIP_INPUT_DB`)
-- `OUTPUT_DB` - Output database path (or `CV_DB_DIR/$CV_STRIP_OUTPUT_DB`)
-- `REMOVE_LIST` - JSON array of locations to remove (or `CV_STRIP_REMOVE`)
-- `KEEP_ID_LIST` - JSON array of node IDs to keep (or `CV_STRIP_KEEP_ID`)
-- `KEEP_LABELS` - JSON array of labels to keep (or `CV_STRIP_KEEP_LABELS`)
-- `SCALE_FACTOR` - Coordinate scaling factor (or `CV_STRIP_SCALE_FACTOR`)
+- `INPUT_DB` - Input database path (or `SX_DB_DIR/$SX_STRIP_INPUT_DB`)
+- `OUTPUT_DB` - Output database path (or `SX_DB_DIR/$SX_STRIP_OUTPUT_DB`)
+- `REMOVE_LIST` - JSON array of locations to remove (or `SX_STRIP_REMOVE`)
+- `KEEP_ID_LIST` - JSON array of node IDs to keep (or `SX_STRIP_KEEP_ID`)
+- `KEEP_LABELS` - JSON array of labels to keep (or `SX_STRIP_KEEP_LABELS`)
+- `SCALE_FACTOR` - Coordinate scaling factor (or `SX_STRIP_SCALE_FACTOR`)
 
 **Example:**
 ```bash
-./bin/scripts/cv_run_11_strip_restricted_locations.sh input.db output.db '["Level 4"]' '[]' '["save"]'
+./bin/scripts/sx_run_11_strip_restricted_locations.sh input.db output.db '["Level 4"]' '[]' '["save"]'
 ```
 
 ## Architecture
@@ -110,9 +110,9 @@ The script operates on tables with configurable prefixes:
 ## Pipeline Position
 
 The Strip Restricted tool runs **after** the following steps:
-- `cv_run_4_export_sqlite.sh` - Database export
-- `cv_run_6_prune_graph.sh` - Graph pruning (optional)
-- `cv_run_9_init_data.sh` - Data initialization (optional)
+- `sx_run_4_export_sqlite.sh` - Database export
+- `sx_run_6_prune_graph.sh` - Graph pruning (optional)
+- `sx_run_9_init_data.sh` - Data initialization (optional)
 
 **Before:**
 - Complete database must be available
@@ -120,7 +120,7 @@ The Strip Restricted tool runs **after** the following steps:
 
 **After:**
 - Public database ready for distribution
-- `cv_run_13_export.sh` - Export files (optional)
+- `sx_run_13_export.sh` - Export files (optional)
 
 ## Dependencies
 
@@ -138,7 +138,7 @@ No installation required - uses Python standard library only.
 
 ### Via Script
 ```bash
-./bin/scripts/cv_run_11_strip_restricted_locations.sh
+./bin/scripts/sx_run_11_strip_restricted_locations.sh
 ```
 
 ### Direct Usage

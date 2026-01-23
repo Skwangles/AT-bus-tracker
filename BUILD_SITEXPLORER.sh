@@ -1,7 +1,7 @@
 ########## CAMPUS VIRTUAL SPECIFIC CODE ##########
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )" # https://saturncloud.io/blog/how-to-get-the-directory-where-a-bash-script-is-located/#:~:text=The%20first%20method%20to%20get,directory%20name%20from%20the%20path.
 
-if [ -z "$CV_HOME_DIR" ]; then
+if [ -z "$SX_HOME_DIR" ]; then
   source $SCRIPT_DIR/SOURCE_SETUP.sh
 fi
 
@@ -42,7 +42,7 @@ fi
 # cd PgSocketViewer && sudo npm install && cd ..
 # Make sure to run this in a separate terminal before running the SitexplorerInterface with `node app.js`
 
-cd "$CV_HOME_DIR"/Apps
+cd "$SX_HOME_DIR"/Apps
 pwd
 
 # Installs MediaSDKTest tool for stitching videos
@@ -54,7 +54,7 @@ sudo ldconfig # update lookup library paths again - IMPORTANT if 'libxx.so' not 
 # IF G2O gives a QT error - sudo apt install -y qtcreator qtbase5-dev qt5-qmake cmake
 
 echo "Building Face Blurring"
-cd "$CV_HOME_DIR/Apps/blur360-images"
+cd "$SX_HOME_DIR/Apps/blur360-images"
 mkdir -p build && cd build
 cmake ..
 make
@@ -62,27 +62,27 @@ sudo make install
 
 
 echo "Building VSLAM Sitexplorer interface"
-mkdir -p "$CV_HOME_DIR"/Apps/SLAM/SitexplorerInterface/build
-cd "$CV_HOME_DIR"/Apps/SLAM/SitexplorerInterface/build 
+mkdir -p "$SX_HOME_DIR"/Apps/SLAM/SitexplorerInterface/build
+cd "$SX_HOME_DIR"/Apps/SLAM/SitexplorerInterface/build 
 cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DUSE_STACK_TRACE_LOGGER=ON ..
 make -j4
 check_command "Building VSLAM Sitexplorer interface"
 sudo make install
 
 echo "Building MapMerger"
-cd "$CV_HOME_DIR"/Apps/MapMerge
+cd "$SX_HOME_DIR"/Apps/MapMerge
 make
 check_command "Building MapMerger"
 sudo make install
 
 echo "Building CLI interfaces"
-cd "$CV_HOME_DIR"/ENTRYPOINT
+cd "$SX_HOME_DIR"/ENTRYPOINT
 make
 check_command "Building CLI interfaces"
 sudo make install
 
 
-cd "$CV_HOME_DIR"/Apps/Sitexplorer-FileProcessing
+cd "$SX_HOME_DIR"/Apps/Sitexplorer-FileProcessing
 make
 check_command "Building Sitexplorer-FileProcessing"
 sudo make install

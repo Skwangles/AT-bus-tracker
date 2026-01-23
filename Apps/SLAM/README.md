@@ -10,35 +10,35 @@ The SLAM directory contains the interface to Stella VSLAM, a visual SLAM system 
 
 ### Required Variables
 
-#### For Mapping (`cv_run_2_map.sh`)
-- `CV_HOME_DIR` - Root directory of the Sitexplorer project
-- `CV_VSLAM_MAP_DIR` - Directory for VSLAM map files
-- `CV_JSON_DIR` - Directory containing JSON annotation files
-- `CV_KEYFRAME_IMG_DIR` - Directory for keyframe images
-- `CV_VSLAM_MAP_HEADLESS` - Run in headless mode (`true`/`false`)
-- `CV_VSLAM_EPOCH_START` - Epoch start timestamp
-- `CV_VIDEO_DIR` - Directory containing video files
-- `CV_VSLAM_CONFIG_FILE` - Path to VSLAM configuration YAML file
-- `CV_VSLAM_MAP_VIDEOS_COMMA_SEPARATED_NAMES` - Comma-separated video names (or command-line argument)
-- `CV_VSLAM_MAP_NAME` - Output map name (or command-line argument)
+#### For Mapping (`sx_run_2_map.sh`)
+- `SX_HOME_DIR` - Root directory of the Sitexplorer project
+- `SX_VSLAM_MAP_DIR` - Directory for VSLAM map files
+- `SX_JSON_DIR` - Directory containing JSON annotation files
+- `SX_KEYFRAME_IMG_DIR` - Directory for keyframe images
+- `SX_VSLAM_MAP_HEADLESS` - Run in headless mode (`true`/`false`)
+- `SX_VSLAM_EPOCH_START` - Epoch start timestamp
+- `SX_VIDEO_DIR` - Directory containing video files
+- `SX_VSLAM_CONFIG_FILE` - Path to VSLAM configuration YAML file
+- `SX_VSLAM_MAP_VIDEOS_COMMA_SEPARATED_NAMES` - Comma-separated video names (or command-line argument)
+- `SX_VSLAM_MAP_NAME` - Output map name (or command-line argument)
 
-#### For Editing (`cv_run_3_edit_vslam_map.sh`)
-- `CV_HOME_DIR` - Root directory
-- `CV_VSLAM_MAP_DIR` - Directory for VSLAM map files
-- `CV_VSLAM_MAP_NAME` - Input map name (or command-line argument)
-- `CV_EDIT_VSLAM_OUTPUT_MAP_NAME` - Output map name (or command-line argument)
+#### For Editing (`sx_run_3_edit_vslam_map.sh`)
+- `SX_HOME_DIR` - Root directory
+- `SX_VSLAM_MAP_DIR` - Directory for VSLAM map files
+- `SX_VSLAM_MAP_NAME` - Input map name (or command-line argument)
+- `SX_EDIT_VSLAM_OUTPUT_MAP_NAME` - Output map name (or command-line argument)
 
-#### For Export (`cv_run_4_export_sqlite.sh`)
-- `CV_HOME_DIR` - Root directory
-- `CV_VSLAM_MAP_DIR` - Directory for VSLAM map files
-- `CV_VSLAM_CONFIG_FILE` - Path to VSLAM configuration YAML file
-- `CV_DB_DIR` - Directory for SQLite databases
-- `CV_EXPORT_IN_MAP_NAME` - Input map name (or command-line argument)
-- `CV_EXPORT_DB_NAME` - Output database name (or command-line argument)
+#### For Export (`sx_run_4_export_sqlite.sh`)
+- `SX_HOME_DIR` - Root directory
+- `SX_VSLAM_MAP_DIR` - Directory for VSLAM map files
+- `SX_VSLAM_CONFIG_FILE` - Path to VSLAM configuration YAML file
+- `SX_DB_DIR` - Directory for SQLite databases
+- `SX_EXPORT_IN_MAP_NAME` - Input map name (or command-line argument)
+- `SX_EXPORT_DB_NAME` - Output database name (or command-line argument)
 
 ## Scripts
 
-### `bin/scripts/cv_run_2_map.sh`
+### `bin/scripts/sx_run_2_map.sh`
 Runs VSLAM mapping on video files:
 - Processes videos to create a SLAM map
 - Extracts keyframes and saves images
@@ -47,10 +47,10 @@ Runs VSLAM mapping on video files:
 
 **Usage:**
 ```bash
-./bin/scripts/cv_run_2_map.sh [VIDEOS] [MAP_NAME] [IN_MAP]
+./bin/scripts/sx_run_2_map.sh [VIDEOS] [MAP_NAME] [IN_MAP]
 ```
 
-### `bin/scripts/cv_run_3_edit_vslam_map.sh`
+### `bin/scripts/sx_run_3_edit_vslam_map.sh`
 Opens interactive viewer for map editing:
 - Loads map for visual inspection
 - Allows manual editing and adjustment
@@ -58,10 +58,10 @@ Opens interactive viewer for map editing:
 
 **Usage:**
 ```bash
-./bin/scripts/cv_run_3_edit_vslam_map.sh [MAP_IN] [MAP_OUT]
+./bin/scripts/sx_run_3_edit_vslam_map.sh [MAP_IN] [MAP_OUT]
 ```
 
-### `bin/scripts/cv_run_4_export_sqlite.sh`
+### `bin/scripts/sx_run_4_export_sqlite.sh`
 Exports VSLAM map to SQLite database:
 - Converts VSLAM map format to SQLite
 - Creates nodes, edges, and pose data
@@ -69,7 +69,7 @@ Exports VSLAM map to SQLite database:
 
 **Usage:**
 ```bash
-./bin/scripts/cv_run_4_export_sqlite.sh [MAP_NAME] [DB_NAME]
+./bin/scripts/sx_run_4_export_sqlite.sh [MAP_NAME] [DB_NAME]
 ```
 
 ## Architecture
@@ -83,7 +83,7 @@ graph TB
     end
     
     subgraph "SLAM Processing"
-        D[cv_map<br/>Mapping Tool]
+        D[sx_map<br/>Mapping Tool]
         E[Stella VSLAM<br/>Core Engine]
         F[Keyframe Extraction]
         G[Pose Estimation]
@@ -92,7 +92,7 @@ graph TB
     subgraph "Output"
         H[VSLAM Map<br/>Binary format]
         I[Keyframe Images<br/>PNG files]
-        J[SQLite Database<br/>cv_slam_to_sqlite]
+        J[SQLite Database<br/>sx_slam_to_sqlite]
     end
     
     subgraph "External Dependencies"
@@ -126,7 +126,7 @@ graph TB
 
 ## Functionality
 
-### Mapping (`cv_map`)
+### Mapping (`sx_map`)
 - Processes equirectangular 360-degree videos
 - Extracts keyframes at regular intervals
 - Tracks camera pose using visual features
@@ -134,12 +134,12 @@ graph TB
 - Reads JSON annotations for area markers
 - Supports extending existing maps
 
-### Viewing (`cv_view_map`)
+### Viewing (`sx_view_map`)
 - Interactive map viewer
 - Visual inspection of poses and keyframes
 - Manual editing capabilities
 
-### Export (`cv_slam_to_sqlite`)
+### Export (`sx_slam_to_sqlite`)
 - Converts VSLAM binary map to SQLite format
 - Creates `nodes` table with poses and timestamps
 - Creates `edges` table with connections
@@ -148,16 +148,16 @@ graph TB
 ## Pipeline Position
 
 The SLAM processing runs **after**:
-- `cv_run_1_process_files.sh` - File processing (creates videos)
+- `sx_run_1_process_files.sh` - File processing (creates videos)
 
 **Before:**
 - Equirectangular videos must be available
 - JSON annotation files (optional) for area markers
 
 **After:**
-- `cv_run_4_export_sqlite.sh` - Export to SQLite
-- `cv_run_6_prune_graph.sh` - Graph pruning
-- `cv_run_7_merge_maps.sh` - Map merging (if multiple maps)
+- `sx_run_4_export_sqlite.sh` - Export to SQLite
+- `sx_run_6_prune_graph.sh` - Graph pruning
+- `sx_run_7_merge_maps.sh` - Map merging (if multiple maps)
 
 ## Dependencies
 
@@ -188,9 +188,9 @@ The SLAM interface is built as part of the main Sitexplorer build process:
 ```
 
 This builds:
-- `cv_map` - Mapping executable
-- `cv_view_map` - Viewing executable
-- `cv_slam_to_sqlite` - Export executable
+- `sx_map` - Mapping executable
+- `sx_view_map` - Viewing executable
+- `sx_slam_to_sqlite` - Export executable
 
 ## Configuration
 

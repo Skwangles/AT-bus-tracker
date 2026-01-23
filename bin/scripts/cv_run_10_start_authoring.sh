@@ -19,11 +19,11 @@ check_command() {
 echo "RUNNING AUTHORING SYSTEM"
 
 # Check if the required inputs are provided as arguments or environment variables
-if [[ -z "$CV_HOME_DIR" ]]; then
-    error_exit "CV_HOME_DIR is not set"
+if [[ -z "$SX_HOME_DIR" ]]; then
+    error_exit "SX_HOME_DIR is not set"
 fi
 
 echo "Starting the authoring syste"
-cd "$CV_HOME_DIR"/Apps/authoring-backend || error_exit "Failed to change directory"
+cd "$SX_HOME_DIR"/Apps/authoring-backend || error_exit "Failed to change directory"
 npm run build || error_exit "Failed to build the project"
 npm run start || error_exit "Failed to start the project"

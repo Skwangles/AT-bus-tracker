@@ -72,16 +72,16 @@ close_db()
 ## Environment Variables
 
 ### Required Variables
-- `CV_HOME_DIR` - Root directory of the Sitexplorer project
+- `SX_HOME_DIR` - Root directory of the Sitexplorer project
 
 ### Optional Variables
-- `CV_DB_DIR` - Directory containing SQLite database files (default: `"/Maps/"`)
-- `CV_INIT_DB_NAME` - Name of the database to initialize (default: `"campus.db"`)
-- `CV_INIT_DONT_OVERWRITE_MAP_POINTS` - Skip if map already configured (default: `false`, set to `"true"` to enable)
+- `SX_DB_DIR` - Directory containing SQLite database files (default: `"/Maps/"`)
+- `SX_INIT_DB_NAME` - Name of the database to initialize (default: `"campus.db"`)
+- `SX_INIT_DONT_OVERWRITE_MAP_POINTS` - Skip if map already configured (default: `false`, set to `"true"` to enable)
 
 ## Scripts
 
-### `bin/scripts/cv_run_9_init_data.sh`
+### `bin/scripts/sx_run_9_init_data.sh`
 Initializes map data in the database:
 - Builds the TypeScript project
 - Runs the initialization script
@@ -89,27 +89,27 @@ Initializes map data in the database:
 
 **Usage:**
 ```bash
-./bin/scripts/cv_run_9_init_data.sh
+./bin/scripts/sx_run_9_init_data.sh
 ```
 
 **Environment Variables:**
-- Uses `CV_HOME_DIR`, `CV_DB_DIR`, `CV_INIT_DB_NAME`
-- Optional: `CV_INIT_DONT_OVERWRITE_MAP_POINTS`
+- Uses `SX_HOME_DIR`, `SX_DB_DIR`, `SX_INIT_DB_NAME`
+- Optional: `SX_INIT_DONT_OVERWRITE_MAP_POINTS`
 
 ## Pipeline Position
 
 The Map Data Initialization runs **after** the following steps:
-- `cv_run_1_process_files.sh` - File processing
-- `cv_run_2_map.sh` - VSLAM mapping
-- `cv_run_4_export_sqlite.sh` - Database export
-- `cv_run_6_prune_graph.sh` - Graph pruning (optional)
+- `sx_run_1_process_files.sh` - File processing
+- `sx_run_2_map.sh` - VSLAM mapping
+- `sx_run_4_export_sqlite.sh` - Database export
+- `sx_run_6_prune_graph.sh` - Graph pruning (optional)
 
 **Before:**
 - Database must be exported and contain nodes, edges, and node_locations tables
 
 **After:**
 - Floorplan data ready for authoring system
-- `cv_run_10_start_authoring.sh` - Start authoring system
+- `sx_run_10_start_authoring.sh` - Start authoring system
 
 ## Configuration
 

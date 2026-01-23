@@ -15,10 +15,10 @@ export enum EdgeType {
   EdgeContraction,
 }
 
-export const SQLITE_DB_NAME = process.env.CV_INIT_DB_NAME ?? "campus.db"
-export const SQLITE_DB_DIR = process.env.CV_DB_DIR ?? "/Maps/"
+export const SQLITE_DB_NAME = process.env.SX_INIT_DB_NAME ?? "campus.db"
+export const SQLITE_DB_DIR = process.env.SX_DB_DIR ?? "/Maps/"
 
-export const SKIP_IF_MAP_ALREADY_CONFIGED: boolean = process.env.CV_INIT_DONT_OVERWRITE_MAP_POINTS === 'true';
+export const SKIP_IF_MAP_ALREADY_CONFIGED: boolean = process.env.SX_INIT_DONT_OVERWRITE_MAP_POINTS === 'true';
 
 logger.debug("DB File:" + SQLITE_DB_DIR)
 logger.debug("DB files in dir:" + fs.readdirSync(SQLITE_DB_DIR).join(", "))

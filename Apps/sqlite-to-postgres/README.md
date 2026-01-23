@@ -7,7 +7,7 @@ This tool migrates SQLite3 databases to PostgreSQL using `pgloader`.
 The migration tool consists of two components:
 
 1. **Python script** (`migrate.py`): Core migration logic using pgloader
-2. **Bash wrapper** (`bin/scripts/cv_run_14_export-to-postgres.sh`): Extracts environment variables and calls the Python script
+2. **Bash wrapper** (`bin/scripts/sx_run_14_export-to-postgres.sh`): Extracts environment variables and calls the Python script
 
 ## Prerequisites
 
@@ -27,17 +27,17 @@ The wrapper script extracts configuration from environment variables:
 
 ```bash
 # Set required environment variables (or load from config JSON)
-export CV_HOME_DIR="/path/to/sitexplorer"
-export CV_DB_DIR="/path/to/databases"
-export CV_SERVER_DB_NAME="database.db"
-export CV_PG_DATABASE="postgres_database_name"
-export CV_PG_HOST="localhost"  # optional, default: localhost
-export CV_PG_PORT="5432"        # optional, default: 5432
-export CV_PG_USER="postgres"    # optional, default: postgres
-export CV_PG_PASSWORD="secret"  # optional, can use .pgpass file
+export SX_HOME_DIR="/path/to/sitexplorer"
+export SX_DB_DIR="/path/to/databases"
+export SX_SERVER_DB_NAME="database.db"
+export SX_PG_DATABASE="postgres_database_name"
+export SX_PG_HOST="localhost"  # optional, default: localhost
+export SX_PG_PORT="5432"        # optional, default: 5432
+export SX_PG_USER="postgres"    # optional, default: postgres
+export SX_PG_PASSWORD="secret"  # optional, can use .pgpass file
 
 # Run migration
-bin/scripts/cv_run_14_export-to-postgres.sh
+bin/scripts/sx_run_14_export-to-postgres.sh
 ```
 
 ### Direct Python Script Usage
@@ -79,7 +79,7 @@ PostgreSQL connection settings can be configured in the profile JSON files (`con
 }
 ```
 
-These values are automatically converted to `CV_PG_*` environment variables by the configuration system.
+These values are automatically converted to `SX_PG_*` environment variables by the configuration system.
 
 ## How It Works
 
@@ -109,7 +109,7 @@ The script will exit with an error code if:
 ## Security Notes
 
 - Passwords can be provided via:
-  - `CV_PG_PASSWORD` environment variable
+  - `SX_PG_PASSWORD` environment variable
   - `.pgpass` file (recommended for production)
   - Command-line argument (less secure)
 
