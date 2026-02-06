@@ -105,21 +105,21 @@ int main(int argc, char** argv) {
         std::string command;
         if (convert_to_sqlite3) {
             std::cout << "Convert to SQLite" << std::endl;
-            command = "cv_slam_to_sqlite -c '" + (project_dir / path_to_config / config_file).string() + "'" +
+            command = "sx_slam_to_sqlite -c '" + (project_dir / path_to_config / config_file).string() + "'" +
                               " -v '" + (project_dir / path_to_fbow).string() + "'" +
                               " -i '" + (map_dir / map_in).string() + "'" +
                               " -o '" + (export_path).string() + "'";
         }
         else if (view_statically){
             std::cout << "Viewing" << std::endl;
-            command = "cv_view_map -c '" + (project_dir / path_to_config / config_file).string() + "'" +
+            command = "sx_view_map -c '" + (project_dir / path_to_config / config_file).string() + "'" +
                         " -v '" + (project_dir / path_to_fbow).string() + "'" +
                         (map_in.empty() ? "" : " -i '" + (map_dir / map_in).string() + "'") +
                         " -o '" +  (map_dir / map_out).string() + "'";
         }
         else {
             std::cout << "Mapping" << std::endl;
-            command = "cv_map -c '" + (project_dir / path_to_config / config_file).string() + "'" +
+            command = "sx_map -c '" + (project_dir / path_to_config / config_file).string() + "'" +
                                         " -v '" + ( project_dir / path_to_fbow).string() + "'" +
                                         (ts_start.size() > 0 ? " -t '" + ts_start + "'" : "" ) +
                                         (map_in.empty() ? "" : " --map-db-in '" + (map_dir / map_in).string() + "'") +

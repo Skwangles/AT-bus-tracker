@@ -8,7 +8,7 @@ SQLiteViewer provides interactive 3D visualisation of spatial graph data stored 
 
 ## Environment Variables
 
-This application does not use any CV_ environment variables. It is a standalone visualisation tool that takes database file paths as command-line arguments.
+This application does not use any SX_ environment variables. It is a standalone visualisation tool that takes database file paths as command-line arguments.
 
 ## Scripts
 
@@ -59,10 +59,10 @@ graph TB
 
 SQLiteViewer is a **manual inspection tool** that can be used at any point after database creation:
 
-- **After** `cv_run_4_export_sqlite.sh` - View exported SLAM data
-- **After** `cv_run_6_prune_graph.sh` - Inspect pruned graph
-- **After** `cv_run_7_merge_maps.sh` - Verify merged maps
-- **After** `cv_run_9_init_data.sh` - Check floorplan data
+- **After** `sx_run_4_export_sqlite.sh` - View exported SLAM data
+- **After** `sx_run_6_prune_graph.sh` - Inspect pruned graph
+- **After** `sx_run_7_merge_maps.sh` - Verify merged maps
+- **After** `sx_run_9_init_data.sh` - Check floorplan data
 
 It is not part of the automated pipeline but is useful for debugging and visual verification.
 

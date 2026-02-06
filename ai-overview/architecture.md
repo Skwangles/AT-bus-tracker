@@ -69,9 +69,9 @@ graph TB
 ```
 
 **Key Components**:
-- **`cv_map`**: Main mapping tool for video processing
-- **`cv_view_map`**: Static map viewer for inspection
-- **`cv_slam_to_sqlite`**: Converts VSLAM maps to SQLite format
+- **`sx_map`**: Main mapping tool for video processing
+- **`sx_view_map`**: Static map viewer for inspection
+- **`sx_slam_to_sqlite`**: Converts VSLAM maps to SQLite format
 
 ### 2. Graph Processing Architecture
 

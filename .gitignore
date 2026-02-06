@@ -30,7 +30,7 @@ combined.log
 exceptions.log
 .env*
 !.env.example
-cv_merge_maps
+sx_merge_maps
 *.tsbuildinfo
 combined.log
 exceptions.log

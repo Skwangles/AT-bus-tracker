@@ -19,18 +19,18 @@ check_command() {
 
 ORIGINAL_DIR=$(pwd)
 
-# Check if CV_HOME_DIR is set
-[[ -z "$CV_HOME_DIR" ]] && error_exit "CV_HOME_DIR environment variable is not set"
+# Check if SX_HOME_DIR is set
+[[ -z "$SX_HOME_DIR" ]] && error_exit "SX_HOME_DIR environment variable is not set"
 
 # Check if the required inputs are empty
-[[ -z "$1" && -z "$CV_KEYFRAME_IMG_DIR" ]] && error_exit "Input directory is not provided as an argument or environment variable"
-[[ -z "$2" && -z "$CV_EXTRACT_USED_IMAGES_DIR" ]] && error_exit "Output directory is not provided as an argument or environment variable"
-[[ -z "$3" && ( -z "$CV_EXTRACT_IN_DB_NAME" || -z "$CV_DB_DIR" ) ]] && error_exit "Input DB is not provided as an argument or environment variable"
+[[ -z "$1" && -z "$SX_KEYFRAME_IMG_DIR" ]] && error_exit "Input directory is not provided as an argument or environment variable"
+[[ -z "$2" && -z "$SX_EXTRACT_USED_IMAGES_DIR" ]] && error_exit "Output directory is not provided as an argument or environment variable"
+[[ -z "$3" && ( -z "$SX_EXTRACT_IN_DB_NAME" || -z "$SX_DB_DIR" ) ]] && error_exit "Input DB is not provided as an argument or environment variable"
 
-INPUT_DIR=${1:-$CV_KEYFRAME_IMG_DIR}
-OUTPUT_DIR=${2:-$CV_EXTRACT_USED_IMAGES_DIR}
-INPUT_DB=${3:-$CV_DB_DIR/$CV_EXTRACT_IN_DB_NAME}
-FACE_BLUR=${4:-$CV_EXTRACT_FACE_BLUR}
+INPUT_DIR=${1:-$SX_KEYFRAME_IMG_DIR}
+OUTPUT_DIR=${2:-$SX_EXTRACT_USED_IMAGES_DIR}
+INPUT_DB=${3:-$SX_DB_DIR/$SX_EXTRACT_IN_DB_NAME}
+FACE_BLUR=${4:-$SX_EXTRACT_FACE_BLUR}
 echo "Arg 1 - Input dir: $INPUT_DIR"
 echo "Arg 2 - Output dir: $OUTPUT_DIR"
 echo "Arg 3 - In DB name: $INPUT_DB"
@@ -45,17 +45,17 @@ if [[ ! -d "$OUTPUT_DIR" ]]; then
     mkdir -p "$OUTPUT_DIR" || error_exit "Failed to create output directory $OUTPUT_DIR"
 fi
 
-cd "$CV_HOME_DIR/Apps/ImageProcessor" || error_exit "Failed to change directory to $CV_HOME_DIR/Apps/ImageProcessor"
+cd "$SX_HOME_DIR/Apps/ImageProcessor" || error_exit "Failed to change directory to $SX_HOME_DIR/Apps/ImageProcessor"
 
 # Create virtual environment if it doesn't exist
 echo "Checking Python dependencies..."
-if [[ ! -d "$CV_HOME_DIR/py-venv" ]]; then
+if [[ ! -d "$SX_HOME_DIR/py-venv" ]]; then
   echo "Creating Python virtual environment..."
-  python3 -m venv "$CV_HOME_DIR/py-venv"
+  python3 -m venv "$SX_HOME_DIR/py-venv"
   python -m ensurepip --default-pip
 fi
 echo "Activating virtual environment..."
-source "$CV_HOME_DIR/py-venv/bin/activate"
+source "$SX_HOME_DIR/py-venv/bin/activate"
 
 echo "Installing Python dependencies..."
 python -m ensurepip --default-pip

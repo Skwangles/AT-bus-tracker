@@ -8,7 +8,7 @@ CXXFLAGS := $(CXXFLAGS)
 SRC_DIR = .
 BUILD_DIR = ../../bin/linux
 SRC = $(SRC_DIR)/merge.cpp
-OUT = $(BUILD_DIR)/cv_merge_maps
+OUT = $(BUILD_DIR)/sx_merge_maps
 INSTALL_DIR = /usr/local/bin
 
 # Targets
@@ -28,8 +28,8 @@ clean:
 	rm -f $(OUT)
 
 uninstall:
-	@echo "Uninstalling cv_merge_maps from $(INSTALL_DIR)"
-	rm -f $(INSTALL_DIR)/cv_merge_maps
+	@echo "Uninstalling sx_merge_maps from $(INSTALL_DIR)"
+	rm -f $(INSTALL_DIR)/sx_merge_maps
 
 # Print the location of the binary
 print:

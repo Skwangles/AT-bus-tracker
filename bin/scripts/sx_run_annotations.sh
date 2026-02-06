@@ -20,8 +20,8 @@ check_command() {
 
 ORIGINAL_DIR=$(pwd)
 
-# Check if CV_HOME_DIR is set
-[[ -z "$CV_HOME_DIR" ]] && error_exit "CV_HOME_DIR environment variable is not set"
+# Check if SX_HOME_DIR is set
+[[ -z "$SX_HOME_DIR" ]] && error_exit "SX_HOME_DIR environment variable is not set"
 
 # Main menu
 echo ""
@@ -114,19 +114,19 @@ case $choice in
         fi
         
         # Change to audio-annotator directory
-        cd "$CV_HOME_DIR/Apps/audio-annotator" || error_exit "Failed to change directory to audio-annotator"
+        cd "$SX_HOME_DIR/Apps/audio-annotator" || error_exit "Failed to change directory to audio-annotator"
         
         # Create virtual environment if it doesn't exist
         echo ""
         echo "Checking Python dependencies..."
-        if [[ ! -d "$CV_HOME_DIR/py-venv" ]]; then
+        if [[ ! -d "$SX_HOME_DIR/py-venv" ]]; then
             echo "Creating Python virtual environment..."
-            python3 -m venv "$CV_HOME_DIR/py-venv"
+            python3 -m venv "$SX_HOME_DIR/py-venv"
             python -m ensurepip --default-pip
         fi
         
         echo "Activating virtual environment..."
-        source "$CV_HOME_DIR/py-venv/bin/activate"
+        source "$SX_HOME_DIR/py-venv/bin/activate"
         
         echo "Installing Python dependencies..."
         python -m ensurepip --default-pip
@@ -150,7 +150,7 @@ case $choice in
         echo ""
         echo "To use the manual annotator:"
         echo "1. Open the annotator HTML file in your web browser:"
-        echo "   $CV_HOME_DIR/Apps/annotator/index.html"
+        echo "   $SX_HOME_DIR/Apps/annotator/index.html"
         echo ""
         echo "2. Load your video file using drag-and-drop or file path"
         echo ""
@@ -166,12 +166,12 @@ case $choice in
         read -p "Open annotator in default browser? (y/n) [default: n]: " open_browser
         if [[ "$open_browser" == "y" || "$open_browser" == "Y" ]]; then
             if command -v xdg-open > /dev/null; then
-                xdg-open "$CV_HOME_DIR/Apps/annotator/index.html"
+                xdg-open "$SX_HOME_DIR/Apps/annotator/index.html"
             elif command -v open > /dev/null; then
-                open "$CV_HOME_DIR/Apps/annotator/index.html"
+                open "$SX_HOME_DIR/Apps/annotator/index.html"
             else
                 echo "Could not automatically open browser. Please open manually:"
-                echo "$CV_HOME_DIR/Apps/annotator/index.html"
+                echo "$SX_HOME_DIR/Apps/annotator/index.html"
             fi
         fi
         ;;

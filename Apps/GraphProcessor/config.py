@@ -138,16 +138,16 @@ def load_config_from_env() -> Config:
         Config object with values from environment variables
     """
     return Config(
-        table_prefix=os.getenv('CV_PRUNE_TABLE_PREFIX', DFLT_TABLE_PREFIX),
-        coords_to_metres=float(os.getenv('CV_COORDS_TO_METRES', str(DFLT_COORDS_TO_METRES))),
-        outer_ring=float(os.getenv('CV_PRUNE_TARGET_CLOSENESS', str(DFLT_TARGET_CLOSENESS))),
-        inner_ring=float(os.getenv('CV_PRUNE_ALWAYS_MERGE_CLOSENESS', str(DFLT_ALWAYS_MERGE_CLOSENESS))),
-        otdr_outer_ring=float(os.getenv('CV_PRUNE_OUTDOORS_TARGET_CLOSENESS', str(DFLT_OUTDOORS_TARGET_CLOSENESS))),
-        otdr_inner_ring=float(os.getenv('CV_PRUNE_OUTDOORS_ALWAYS_MERGE_CLOSENESS', str(DFLT_OUTDOORS_ALWAYS_MERGE_CLOSENESS))),
-        img_dir=os.getenv('CV_KEYFRAME_IMG_DIR', DFLT_KEYFRAME_IMG_DIR),
-        img_ext=os.getenv('CV_KEYFRAME_IMG_EXTENSION', DFLT_KEYFRAME_IMG_EXTENSION),
-        y_dist_thresh=float(os.getenv('CV_PRUNE_Y_DIST_THRESHOLD', str(DFLT_Y_DIST_THRESHOLD))),
-        otdr_y_dist_thresh=float(os.getenv('CV_PRUNE_OUTDOORS_Y_DIST_THRESHOLD', str(DFLT_OUTDOORS_Y_DIST_THRESHOLD))),
-        preproc_sharpness_json=os.getenv('CV_PRECALCULATE_IMAGE_SHARPNESS_JSON_PATH', DFLT_PREPROCESSED_IMG_SHARPNESS_JSON),
-        outdoors_location_name=os.getenv('CV_OUTDOORS_LOCATION_NAME', DFLT_OUTDOORS_LOCATION_NAME)
+        table_prefix=os.getenv('SX_PRUNE_TABLE_PREFIX', DFLT_TABLE_PREFIX),
+        coords_to_metres=float(os.getenv('SX_COORDS_TO_METRES', str(DFLT_COORDS_TO_METRES))),
+        outer_ring=float(os.getenv('SX_PRUNE_TARGET_CLOSENESS', str(DFLT_TARGET_CLOSENESS))),
+        inner_ring=float(os.getenv('SX_PRUNE_ALWAYS_MERGE_CLOSENESS', str(DFLT_ALWAYS_MERGE_CLOSENESS))),
+        otdr_outer_ring=float(os.getenv('SX_PRUNE_OUTDOORS_TARGET_CLOSENESS', str(DFLT_OUTDOORS_TARGET_CLOSENESS))),
+        otdr_inner_ring=float(os.getenv('SX_PRUNE_OUTDOORS_ALWAYS_MERGE_CLOSENESS', str(DFLT_OUTDOORS_ALWAYS_MERGE_CLOSENESS))),
+        img_dir=os.getenv('SX_KEYFRAME_IMG_DIR', DFLT_KEYFRAME_IMG_DIR),
+        img_ext=os.getenv('SX_KEYFRAME_IMG_EXTENSION', DFLT_KEYFRAME_IMG_EXTENSION),
+        y_dist_thresh=float(os.getenv('SX_PRUNE_Y_DIST_THRESHOLD', str(DFLT_Y_DIST_THRESHOLD))),
+        otdr_y_dist_thresh=float(os.getenv('SX_PRUNE_OUTDOORS_Y_DIST_THRESHOLD', str(DFLT_OUTDOORS_Y_DIST_THRESHOLD))),
+        preproc_sharpness_json=os.getenv('SX_PRECALCULATE_IMAGE_SHARPNESS_JSON_PATH', DFLT_PREPROCESSED_IMG_SHARPNESS_JSON),
+        outdoors_location_name=os.getenv('SX_OUTDOORS_LOCATION_NAME', DFLT_OUTDOORS_LOCATION_NAME)
     )
