@@ -13,25 +13,25 @@ The Image Processor handles post-processing of keyframe images extracted from th
 ## Environment Variables
 
 ### Required Variables (from script)
-- `CV_HOME_DIR` - Root directory of the Sitexplorer project
-- `CV_KEYFRAME_IMG_DIR` - Directory containing input keyframe images
-- `CV_EXTRACT_USED_IMAGES_DIR` - Output directory for processed images
-- `CV_EXTRACT_IN_DB_NAME` - Name of the input SQLite database
-- `CV_DB_DIR` - Directory containing SQLite databases
+- `SX_HOME_DIR` - Root directory of the Sitexplorer project
+- `SX_KEYFRAME_IMG_DIR` - Directory containing input keyframe images
+- `SX_EXTRACT_USED_IMAGES_DIR` - Output directory for processed images
+- `SX_EXTRACT_IN_DB_NAME` - Name of the input SQLite database
+- `SX_DB_DIR` - Directory containing SQLite databases
 
 ### Optional Variables
 - `BLUR360_MODELS_DIR` - Directory containing blur360 face detection models (default: `/usr/local/share/blur360/models`)
 
 ### Cloudflare R2 Variables (for upload)
-- `CV_R2_ENDPOINT` - R2 endpoint URL
-- `CV_R2_BUCKET` - R2 bucket name
-- `CV_R2_ACCESS_KEY_ID` - R2 access key
-- `CV_R2_SECRET_ACCESS_KEY` - R2 secret access key
-- `CV_R2_REGION` - R2 region (default: `"auto"`)
+- `SX_R2_ENDPOINT` - R2 endpoint URL
+- `SX_R2_BUCKET` - R2 bucket name
+- `SX_R2_ACCESS_KEY_ID` - R2 access key
+- `SX_R2_SECRET_ACCESS_KEY` - R2 secret access key
+- `SX_R2_REGION` - R2 region (default: `"auto"`)
 
 ## Scripts
 
-### `bin/scripts/cv_run_12_extract_images.sh`
+### `bin/scripts/sx_run_12_extract_images.sh`
 Processes images from the database:
 - Reads timestamps from the database `nodes` table
 - Processes each image: blur faces, apply gamma correction
@@ -39,11 +39,11 @@ Processes images from the database:
 
 **Usage:**
 ```bash
-./bin/scripts/cv_run_12_extract_images.sh [INPUT_DIR] [OUTPUT_DIR] [DB_PATH]
+./bin/scripts/sx_run_12_extract_images.sh [INPUT_DIR] [OUTPUT_DIR] [DB_PATH]
 ```
 
 **Environment Variables:**
-- Uses `CV_KEYFRAME_IMG_DIR`, `CV_EXTRACT_USED_IMAGES_DIR`, `CV_EXTRACT_IN_DB_NAME`, `CV_DB_DIR`
+- Uses `SX_KEYFRAME_IMG_DIR`, `SX_EXTRACT_USED_IMAGES_DIR`, `SX_EXTRACT_IN_DB_NAME`, `SX_DB_DIR`
 
 ## Architecture
 
@@ -118,11 +118,11 @@ The processor creates four resolution versions:
 ## Pipeline Position
 
 The Image Processor runs **after** the following steps:
-- `cv_run_1_process_files.sh` - File processing (creates keyframe images)
-- `cv_run_2_map.sh` - VSLAM mapping
-- `cv_run_4_export_sqlite.sh` - Database export
-- `cv_run_6_prune_graph.sh` - Graph pruning (optional)
-- `cv_run_9_init_data.sh` - Data initialization
+- `sx_run_1_process_files.sh` - File processing (creates keyframe images)
+- `sx_run_2_map.sh` - VSLAM mapping
+- `sx_run_4_export_sqlite.sh` - Database export
+- `sx_run_6_prune_graph.sh` - Graph pruning (optional)
+- `sx_run_9_init_data.sh` - Data initialization
 
 **Before:**
 - Database must be exported with node timestamps
@@ -159,7 +159,7 @@ pip install -r requirements.txt
 
 ### Via Script
 ```bash
-./bin/scripts/cv_run_12_extract_images.sh
+./bin/scripts/sx_run_12_extract_images.sh
 ```
 
 ### Direct Usage

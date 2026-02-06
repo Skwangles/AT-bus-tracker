@@ -29,7 +29,7 @@ The annotator is a standalone HTML/JavaScript application that allows users to:
 
 ## Environment Variables
 
-This application does not use any CV_ environment variables. It is a standalone client-side tool.
+This application does not use any SX_ environment variables. It is a standalone client-side tool.
 
 ## Scripts
 

@@ -56,36 +56,36 @@ The Map Merge tool combines two separate SLAM maps by:
 ## Environment Variables
 
 ### Required Variables
-- `CV_DB_DIR` - Directory containing SQLite database files
+- `SX_DB_DIR` - Directory containing SQLite database files
 
 ### Optional Variables
-- `CV_MERGE_1_NAME` - Name of the first input database (default: uses command-line argument)
-- `CV_MERGE_2_NAME` - Name of the second input database (default: uses command-line argument)
-- `CV_MERGE_OUTPUT_NAME` - Name of the output merged database (default: uses command-line argument)
-- `CV_MERGE_2_ZONE` - Zone name for the second map (required)
-- `CV_MERGE_1_OVERWRITE_ZONE_NAME` - Zone name for the first map (optional, overwrites existing zones)
-- `CV_MERGE_OVERWRITE_EXISTING_OUTPUT` - Overwrite existing output file if true (default: `false`)
+- `SX_MERGE_1_NAME` - Name of the first input database (default: uses command-line argument)
+- `SX_MERGE_2_NAME` - Name of the second input database (default: uses command-line argument)
+- `SX_MERGE_OUTPUT_NAME` - Name of the output merged database (default: uses command-line argument)
+- `SX_MERGE_2_ZONE` - Zone name for the second map (required)
+- `SX_MERGE_1_OVERWRITE_ZONE_NAME` - Zone name for the first map (optional, overwrites existing zones)
+- `SX_MERGE_OVERWRITE_EXISTING_OUTPUT` - Overwrite existing output file if true (default: `false`)
 
 ## Scripts
 
-### `bin/scripts/cv_run_7_merge_maps.sh`
+### `bin/scripts/sx_run_7_merge_maps.sh`
 Merges two maps using labeled merge points:
 
 **Usage:**
 ```bash
-./bin/scripts/cv_run_7_merge_maps.sh [MAP1] [MAP2] [OUTPUT] [ZONE2] [ZONE1]
+./bin/scripts/sx_run_7_merge_maps.sh [MAP1] [MAP2] [OUTPUT] [ZONE2] [ZONE1]
 ```
 
 **Arguments:**
-- `MAP1` - First input database (or `CV_MERGE_1_NAME`)
-- `MAP2` - Second input database (or `CV_MERGE_2_NAME`)
-- `OUTPUT` - Output merged database (or `CV_MERGE_OUTPUT_NAME`)
-- `ZONE2` - Zone name for second map (or `CV_MERGE_2_ZONE`)
-- `ZONE1` - Zone name for first map (optional, or `CV_MERGE_1_OVERWRITE_ZONE_NAME`)
+- `MAP1` - First input database (or `SX_MERGE_1_NAME`)
+- `MAP2` - Second input database (or `SX_MERGE_2_NAME`)
+- `OUTPUT` - Output merged database (or `SX_MERGE_OUTPUT_NAME`)
+- `ZONE2` - Zone name for second map (or `SX_MERGE_2_ZONE`)
+- `ZONE1` - Zone name for first map (optional, or `SX_MERGE_1_OVERWRITE_ZONE_NAME`)
 
 **Example:**
 ```bash
-./bin/scripts/cv_run_7_merge_maps.sh map1.db map2.db merged.db "Building A" "Building B"
+./bin/scripts/sx_run_7_merge_maps.sh map1.db map2.db merged.db "Building A" "Building B"
 ```
 
 ## Architecture
@@ -170,9 +170,9 @@ graph TB
 ## Pipeline Position
 
 The Map Merge tool runs **after** the following steps:
-- `cv_run_2_map.sh` - VSLAM mapping (creates individual maps)
-- `cv_run_4_export_sqlite.sh` - Database export
-- `cv_run_6_prune_graph.sh` - Graph pruning (optional)
+- `sx_run_2_map.sh` - VSLAM mapping (creates individual maps)
+- `sx_run_4_export_sqlite.sh` - Database export
+- `sx_run_6_prune_graph.sh` - Graph pruning (optional)
 
 **Before:**
 - Two separate maps must be created and exported
@@ -224,7 +224,7 @@ make
 sudo make install
 ```
 
-The binary `cv_merge_maps` will be created in `../../bin/linux/` or installed to `/usr/local/bin/`.
+The binary `sx_merge_maps` will be created in `../../bin/linux/` or installed to `/usr/local/bin/`.
 
 ## Usage
 
@@ -234,12 +234,12 @@ See [Python viewer and CLI](#python-viewer-and-cli) for examples.
 
 ### Legacy shell script
 ```bash
-./bin/scripts/cv_run_7_merge_maps.sh
+./bin/scripts/sx_run_7_merge_maps.sh
 ```
 
 ### Legacy binary
 ```bash
-cv_merge_maps <first_map> <second_map> <output_map> --zone2 <zone2_name> [--zone1 <zone1_name>] [--overwrite]
+sx_merge_maps <first_map> <second_map> <output_map> --zone2 <zone2_name> [--zone1 <zone1_name>] [--overwrite]
 ```
 
 **Options:**

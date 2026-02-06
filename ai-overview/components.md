@@ -292,19 +292,19 @@ Common environment variables used across components:
 
 ```bash
 # Core paths
-CV_HOME_DIR=/path/to/sitexplorer
-CV_KEYFRAME_IMG_DIR=/path/to/images
-CV_DB_DIR=/path/to/databases
+SX_HOME_DIR=/path/to/sitexplorer
+SX_KEYFRAME_IMG_DIR=/path/to/images
+SX_DB_DIR=/path/to/databases
 
 # Processing parameters
-CV_COORDS_TO_METRES=10
-CV_PRUNE_GRID_SIZE=5.0
-CV_AUTHORING_PORT=3005
+SX_COORDS_TO_METRES=10
+SX_PRUNE_GRID_SIZE=5.0
+SX_AUTHORING_PORT=3005
 
 # Feature flags
-CV_VSLAM_MAP=true
-CV_GRAPH_PRUNE=true
-CV_START_AUTHORING=true
+SX_VSLAM_MAP=true
+SX_GRAPH_PRUNE=true
+SX_START_AUTHORING=true
 ```
 
 ## Development Guidelines

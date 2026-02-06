@@ -92,7 +92,7 @@ function apply_configuration {
     local config_json=$(cat "$config_file")
     
     # Process features
-    local features=$(echo "$config_json" | jq -r '.features | to_entries | .[] | "CV_\(.key | ascii_upcase)=\(.value)"')
+    local features=$(echo "$config_json" | jq -r '.features | to_entries | .[] | "SX_\(.key | ascii_upcase)=\(.value)"')
     while IFS= read -r feature; do
         if [ ! -z "$feature" ]; then
             export "$feature"
@@ -100,7 +100,7 @@ function apply_configuration {
     done <<< "$features"
     
     # Process paths
-    local paths=$(echo "$config_json" | jq -r '.paths | to_entries | .[] | "CV_\(.key | ascii_upcase)=\(.value)"')
+    local paths=$(echo "$config_json" | jq -r '.paths | to_entries | .[] | "SX_\(.key | ascii_upcase)=\(.value)"')
     while IFS= read -r path; do
         if [ ! -z "$path" ]; then
             local key=$(echo "$path" | cut -d'=' -f1)
@@ -111,7 +111,7 @@ function apply_configuration {
     done <<< "$paths"
     
     # Process config
-    local configs=$(echo "$config_json" | jq -r '.config | to_entries | .[] | "CV_\(.key | ascii_upcase)=\(.value)"')
+    local configs=$(echo "$config_json" | jq -r '.config | to_entries | .[] | "SX_\(.key | ascii_upcase)=\(.value)"')
     while IFS= read -r config; do
         if [ ! -z "$config" ]; then
             local key=$(echo "$config" | cut -d'=' -f1)
@@ -144,11 +144,11 @@ CUSTOM_ENV_FILE="$2"
 
 # Set up paths
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-CV_HOME_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")"
-CONFIG_DIR="$CV_HOME_DIR/configs"
+SX_HOME_DIR="$(dirname "$(dirname "$SCRIPT_DIR")")"
+CONFIG_DIR="$SX_HOME_DIR/configs"
 
 # Load base environment
-load_env_file "$CV_HOME_DIR/.env"
+load_env_file "$SX_HOME_DIR/.env"
 
 # Load profile configuration
 PROFILE_FILE="$CONFIG_DIR/$PROFILE_NAME.json"
@@ -160,7 +160,7 @@ fi
 apply_configuration "$PROFILE_FILE" "$PROFILE_NAME"
 
 # Load sensitive data
-load_env_file "$CV_HOME_DIR/.env.secrets"
+load_env_file "$SX_HOME_DIR/.env.secrets"
 
 # Load custom environment file if provided
 if [ ! -z "$CUSTOM_ENV_FILE" ]; then
@@ -180,6 +180,6 @@ source <(env | grep -v '^_' | awk -F= '{print "export " $1}')
 set +a
 
 # Copy environment files to Node.js projects
-copy_env_to_node_projects "$CV_HOME_DIR/.env" "$CV_HOME_DIR"
+copy_env_to_node_projects "$SX_HOME_DIR/.env" "$SX_HOME_DIR"
 
 echo "Configuration loaded successfully for profile: $PROFILE_NAME" 

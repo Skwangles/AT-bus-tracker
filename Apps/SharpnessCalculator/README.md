@@ -9,22 +9,22 @@ The Sharpness Calculator processes images in a directory and calculates sharpnes
 ## Environment Variables
 
 ### Required Variables (from script)
-- `CV_HOME_DIR` - Root directory of the Sitexplorer project
-- `CV_KEYFRAME_IMG_DIR` - Directory containing keyframe images to process
-- `CV_PRECALCULATE_IMAGE_SHARPNESS_JSON_PATH` - Output JSON file path for sharpness results
+- `SX_HOME_DIR` - Root directory of the Sitexplorer project
+- `SX_KEYFRAME_IMG_DIR` - Directory containing keyframe images to process
+- `SX_PRECALCULATE_IMAGE_SHARPNESS_JSON_PATH` - Output JSON file path for sharpness results
 
 ## Scripts
 
-### `bin/scripts/cv_run_5_sharpness_calculate.sh`
+### `bin/scripts/sx_run_5_sharpness_calculate.sh`
 Calculates sharpness for all images in the keyframe directory:
 
 **Usage:**
 ```bash
-./bin/scripts/cv_run_5_sharpness_calculate.sh [CV_HOME_DIR] [KEYFRAME_DIR] [OUTPUT_JSON]
+./bin/scripts/sx_run_5_sharpness_calculate.sh [SX_HOME_DIR] [KEYFRAME_DIR] [OUTPUT_JSON]
 ```
 
 **Environment Variables:**
-- Uses `CV_KEYFRAME_IMG_DIR` and `CV_PRECALCULATE_IMAGE_SHARPNESS_JSON_PATH`
+- Uses `SX_KEYFRAME_IMG_DIR` and `SX_PRECALCULATE_IMAGE_SHARPNESS_JSON_PATH`
 
 **Features:**
 - Creates Python virtual environment if needed
@@ -108,15 +108,15 @@ sharpness = variance(Laplacian(grayscale(image)))
 ## Pipeline Position
 
 The Sharpness Calculator runs **after** the following steps:
-- `cv_run_1_process_files.sh` - File processing (creates keyframe images)
-- `cv_run_2_map.sh` - VSLAM mapping
-- `cv_run_4_export_sqlite.sh` - Database export
+- `sx_run_1_process_files.sh` - File processing (creates keyframe images)
+- `sx_run_2_map.sh` - VSLAM mapping
+- `sx_run_4_export_sqlite.sh` - Database export
 
 **Before:**
 - Keyframe images must be extracted and available
 
 **After:**
-- Sharpness data available for graph pruning (`cv_run_6_prune_graph.sh`)
+- Sharpness data available for graph pruning (`sx_run_6_prune_graph.sh`)
 - Used by GraphProcessor to select best representative nodes
 
 ## Dependencies
@@ -134,14 +134,14 @@ pip install -r requirements.txt
 
 Or via the script (automatically creates venv):
 ```bash
-./bin/scripts/cv_run_5_sharpness_calculate.sh
+./bin/scripts/sx_run_5_sharpness_calculate.sh
 ```
 
 ## Usage
 
 ### Via Script
 ```bash
-./bin/scripts/cv_run_5_sharpness_calculate.sh
+./bin/scripts/sx_run_5_sharpness_calculate.sh
 ```
 
 ### Direct Usage
