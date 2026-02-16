@@ -29,5 +29,5 @@ fi
 
 cp $SX_ENV_PATH Apps/authoring-backend/.env || error_exit "Failed to copy .env to Apps/authoring-backend/"
 cp $SX_ENV_PATH Apps/GraphProcessor/.env || error_exit "Failed to copy .env to Apps/GraphProcessor/"
-cp $SX_ENV_PATH Apps/map_data_init/.env || error_exit "Failed to copy .env to Apps/map_data_init/"
+cp $SX_ENV_PATH Apps/meta_data_init/.env || error_exit "Failed to copy .env to Apps/meta_data_init/"
 cp $SX_ENV_PATH Apps/ImageProcessor/.env || error_exit "Failed to copy .env to Apps/ImageProcessor/"

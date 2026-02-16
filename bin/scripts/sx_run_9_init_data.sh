@@ -23,6 +23,6 @@ if [[ -z "$SX_HOME_DIR" ]]; then
     error_exit "SX_HOME_DIR is not set"
 fi
 
-cd "$SX_HOME_DIR"/Apps/map_data_init || error_exit "Failed to change directory"
+cd "$SX_HOME_DIR"/Apps/meta_data_init || error_exit "Failed to change directory"
 npm run build || error_exit "Failed to build the project"
 npm run start || error_exit "Failed to start the project"

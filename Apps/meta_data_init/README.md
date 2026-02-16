@@ -33,7 +33,7 @@ No external dependencies required - uses only Python standard library:
 
 ```bash
 # Clone the repository
-cd Apps/map_data_init
+cd Apps/meta_data_init
 
 # The module is ready to use
 ```

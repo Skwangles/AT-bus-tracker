@@ -71,7 +71,7 @@ function copy_env_to_node_projects {
         "Apps/authoring-backend"
         "Apps/ImageProcessor"
         "Apps/GraphPruner"
-        "Apps/map_data_init"
+        "Apps/meta_data_init"
     )
     
     for project in "${node_projects[@]}"; do

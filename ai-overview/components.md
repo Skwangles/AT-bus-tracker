@@ -149,7 +149,7 @@ def calculate_sharpness(image_path):
 - JSON output for integration with graph pruning
 - PIL-based image processing
 
-### 5. Map Data Initialization (`Apps/map_data_init/`)
+### 5. Map Data Initialization (`Apps/meta_data_init/`)
 
 **Purpose**: Converts 3D spatial data to 2D floorplan projections
 

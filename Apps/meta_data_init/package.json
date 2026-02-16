@@ -1,5 +1,5 @@
 {
-  "name": "map_data_init",
+  "name": "meta_data_init",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
