@@ -1,0 +1,11 @@
+services:
+  at-bus-tracker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: at-bus-tracker:local
+    env_file:
+      - .env
+    ports:
+      - "${PORT:-3000}:3000"
+    restart: unless-stopped

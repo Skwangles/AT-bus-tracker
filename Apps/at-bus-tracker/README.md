@@ -24,6 +24,42 @@ npm start
 
 Open [http://localhost:3000](http://localhost:3000).
 
+## Docker Compose deployment
+
+```mermaid
+flowchart LR
+  Browser[Browser] -->|HTTP 3000| Container[at-bus-tracker container]
+  Container -->|AT_API_KEY| AT[Auckland Transport API]
+```
+
+1. Create the runtime environment file:
+
+   ```bash
+   cd Apps/at-bus-tracker
+   cp .env.example .env
+   ```
+
+2. Set `AT_API_KEY` in `.env`.
+
+3. Build and run with Docker Compose:
+
+   ```bash
+   docker compose up --build -d
+   ```
+
+4. Check service status/logs:
+
+   ```bash
+   docker compose ps
+   docker compose logs -f at-bus-tracker
+   ```
+
+5. Stop the deployment:
+
+   ```bash
+   docker compose down
+   ```
+
 ## Environment
 
 | Variable | Default | Purpose |
